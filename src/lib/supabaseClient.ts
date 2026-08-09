@@ -17,6 +17,28 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
     })
   : null;
 
+function isLocalOrigin(origin: string): boolean {
+  try {
+    const hostname = new URL(origin).hostname;
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+  } catch {
+    return false;
+  }
+}
+
+/** Keep magic links on the deployed app, never on localhost from a production build. */
+export function authRedirectOrigin(): string {
+  const currentOrigin = typeof window === "undefined" ? "" : window.location.origin;
+  if (!configuredAppUrl) return currentOrigin;
+  try {
+    const configuredOrigin = new URL(configuredAppUrl).origin;
+    if (isLocalOrigin(configuredOrigin) && !isLocalOrigin(currentOrigin)) return currentOrigin;
+    return configuredOrigin;
+  } catch {
+    return currentOrigin;
+  }
+}
+
 function authCallbackParams(): URLSearchParams[] {
   if (typeof window === "undefined") return [];
   return [
@@ -63,14 +85,7 @@ export function rememberAuthEmail(email: string): void {
 
 export async function sendMagicLink(email: string): Promise<void> {
   if (!supabase) throw new Error("Supabase is not configured");
-  let emailRedirectTo = window.location.origin;
-  if (configuredAppUrl) {
-    try {
-      emailRedirectTo = new URL(configuredAppUrl).origin;
-    } catch {
-      // Fall back to the current origin if a deployment has an invalid URL.
-    }
-  }
+  const emailRedirectTo = authRedirectOrigin();
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {

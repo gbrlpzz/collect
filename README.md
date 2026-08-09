@@ -80,7 +80,7 @@ In Supabase Authentication → URL Configuration:
 - add the deployed origin and local development origin to **Additional Redirect URLs**;
 - configure a trusted SMTP provider for production email delivery.
 
-Magic links are one-time links and expire. `collect` now detects an expired callback, preserves the last email address in the current browser session, and offers **Send a new link** from the same screen. If an email security scanner consumes a link first, request another link rather than reusing the old one. Set `VITE_APP_URL` to the canonical deployed origin so links generated from a preview or local development page still return to the real app.
+Magic links are one-time links and expire. `collect` now detects an expired callback, preserves the last email address in the current browser session, and offers **Send a new link** from the same screen. If an email security scanner consumes a link first, request another link rather than reusing the old one. Set `VITE_APP_URL` to the canonical deployed origin so links generated from a preview or local development page still return to the real app. Also set the Supabase **Site URL** to that same origin; the email template’s redirect must not be a localhost URL.
 
 ### 3. Establish the first administrator
 
@@ -93,7 +93,7 @@ supabase secrets set \
   --project-ref "$SUPABASE_PROJECT_REF"
 ```
 
-Open the app, request a magic link for that exact address, sign in, and create the first project. The first project setup names the workspace. The `bootstrap-workspace` function creates the organization and its initial admin membership atomically, and only while the database has no organization yet. If `BOOTSTRAP_ADMIN_EMAIL` is omitted, the first authenticated user can bootstrap an empty database; setting it is recommended.
+Open the app, request a magic link for that exact address, and sign in. On an empty deployment, the first successful bootstrap is routed directly to the Admin workspace; there is no separate admin password or admin login. Create the first project there. The first project setup names the workspace. The `bootstrap-workspace` function creates the organization and its initial admin membership atomically, and only while the database has no organization yet. If `BOOTSTRAP_ADMIN_EMAIL` is omitted, the first authenticated user can bootstrap an empty database; setting it is recommended.
 
 To add another administrator after they have authenticated once, an existing administrator can run this intentionally explicit SQL in the Supabase SQL editor:
 

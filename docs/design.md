@@ -1,6 +1,6 @@
 # Interface baseline
 
-The MVP uses a deliberately neutral, Apple HIG-inspired baseline: white and soft gray surfaces, system typography, minimal chrome, generous spacing, and text-first state communication. This is a design foundation, not a reimplementation of Apple-owned visual assets.
+The MVP uses a deliberately monochrome, Apple HIG-inspired baseline: a `#f5f5f7` soft-gray canvas, white paper surfaces, neutral black/gray text, system typography, minimal chrome, generous spacing, and text-first state communication. This is a design foundation, not a reimplementation of Apple-owned visual assets.
 
 This is also a data-quality decision. A contributor working in sunlight, gloves, stress, low bandwidth, or an unfamiliar device needs accessible controls and unambiguous state feedback. Ease of use is part of collection reliability, not decoration around it.
 
@@ -13,6 +13,7 @@ Reference the official guidance when making UI decisions:
 
 - Use semantic HTML and native controls wherever possible.
 - Keep touch targets comfortable and labels explicit; never make color the only signal.
+- Keep the visual language monochrome: neutral grays only, with state communicated through words, weight, position, and shape.
 - Establish hierarchy with typography, spacing, and alignment before adding containers or decoration.
 - Use sheets, concise secondary actions, and progressive disclosure for supporting detail.
 - Keep the active collection surface focused on the observation, not queue internals or admin metrics.
