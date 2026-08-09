@@ -32,8 +32,8 @@ export function AdminDashboard({ project, projects = [], observations, onNavigat
   return (
     <main className="page page-admin">
       <div className="page-heading admin-heading">
-        <div><Eyebrow>Admin</Eyebrow><h1>Projects</h1></div>
-        <Button variant="primary" icon="plus" onClick={() => onNavigate("new-project")}>New</Button>
+        <div><Eyebrow>Admin workspace</Eyebrow><h1>Projects</h1></div>
+        <Button variant="primary" icon="plus" onClick={() => onNavigate("new-project")}>New project</Button>
       </div>
 
       <section className="admin-section">
@@ -45,7 +45,7 @@ export function AdminDashboard({ project, projects = [], observations, onNavigat
             <Icon name="chevron-right" size={19} />
           </button>)}</div>
         ) : (
-          <div className="empty-list-state"><strong>No projects yet</strong><span>Create the first project, define its schema, and invite contributors.</span><Button variant="secondary" icon="plus" onClick={() => onNavigate("new-project")}>Create project</Button></div>
+          <div className="empty-list-state"><strong>Set up your workspace</strong><span>Create a project, define its schema, and invite contributors.</span><Button variant="secondary" icon="plus" onClick={() => onNavigate("new-project")}>Create project</Button></div>
         )}
       </section>
 
