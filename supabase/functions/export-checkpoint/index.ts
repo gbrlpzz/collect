@@ -63,13 +63,30 @@ async function buildExport(service: SupabaseClient, userId: string, projectId: s
   if (mediaError) return json({ error: "Media metadata could not be read" }, { status: 500 });
   const media = (mediaRows ?? []) as Record<string, unknown>[];
   const schemaIds = [...new Set(submissionRows.map((submission) => String(submission.schema_id)))];
-  const { data: schemas, error: schemaError } = schemaIds.length
-    ? await service.from("project_schemas").select("id,version,schema_json,published_at").in("id", schemaIds).order("version", { ascending: true })
-    : { data: [], error: null };
+  let schemaQuery = service.from("project_schemas").select("id,version,schema_json,published_at").eq("project_id", projectId).not("published_at", "is", null).order("version", { ascending: true });
+  if (schemaIds.length) schemaQuery = schemaQuery.in("id", schemaIds);
+  const { data: schemas, error: schemaError } = await schemaQuery;
   if (schemaError) return json({ error: "Schema history could not be read" }, { status: 500 });
   const { data: readiness } = await service.from("device_project_status").select("device_id,contributor_id,last_seen_at,last_sync_success_at,pending_submissions,pending_media,app_version,schema_versions_cached,fieldwork_complete").eq("project_id", projectId);
+  const { data: members } = await service.from("project_members").select("user_id,role").eq("project_id", projectId).order("assigned_at", { ascending: true });
+  const { data: invites } = await service.from("project_invites").select("email,invited_user_id,status").eq("project_id", projectId);
 
   const contributorReadiness = readiness ?? [];
+  const contributorRows = (members ?? []).map((member) => {
+    const invite = (invites ?? []).find((candidate) => candidate.invited_user_id === member.user_id);
+    const status = contributorReadiness.find((candidate) => candidate.contributor_id === member.user_id);
+    return {
+      contributor_id: member.user_id,
+      email: invite?.email ?? "",
+      role: member.role,
+      invite_status: invite?.status ?? "",
+      last_seen_at: status?.last_seen_at ?? null,
+      last_sync_success_at: status?.last_sync_success_at ?? null,
+      pending_submissions: status?.pending_submissions ?? null,
+      pending_media: status?.pending_media ?? null,
+      fieldwork_complete: status?.fieldwork_complete ?? false,
+    };
+  });
   const checkpointId = crypto.randomUUID();
   const schemaVersions = ((schemas ?? []) as Record<string, unknown>[]).map((schema) => schema.version);
 
@@ -81,6 +98,10 @@ async function buildExport(service: SupabaseClient, userId: string, projectId: s
   const mediaCsv = [
     csvRow(["media_id", "submission_id", "field_id", "mime_type", "byte_size", "sha256", "captured_at", "status", "export_path"]),
     ...media.map((item) => csvRow([item.id, item.submission_id, item.field_id, item.mime_type, item.byte_size, item.sha256, item.captured_at, item.status, `media/${item.submission_id}/${mediaExportName(item)}`])),
+  ].join("\n");
+  const contributorsCsv = [
+    csvRow(["contributor_id", "email", "role", "invite_status", "last_seen_at", "last_sync_success_at", "pending_submissions", "pending_media", "fieldwork_complete"]),
+    ...contributorRows.map((row) => csvRow([row.contributor_id, row.email, row.role, row.invite_status, row.last_seen_at, row.last_sync_success_at, row.pending_submissions, row.pending_media, row.fieldwork_complete])),
   ].join("\n");
   const features = submissionRows.map(locationFeature).filter((feature): feature is Record<string, unknown> => Boolean(feature));
   const geojson = JSON.stringify({ type: "FeatureCollection", features });
@@ -106,6 +127,7 @@ async function buildExport(service: SupabaseClient, userId: string, projectId: s
     "data/submissions.jsonl": strToU8(jsonl),
     "data/submissions.csv": strToU8(submissionsCsv),
     "data/media.csv": strToU8(mediaCsv),
+    "data/contributors.csv": strToU8(contributorsCsv),
     "data/submissions.geojson": strToU8(geojson),
   };
   for (const schema of (schemas ?? []) as Record<string, unknown>[]) entries[`schema/schema-v${schema.version}.json`] = strToU8(JSON.stringify(schema.schema_json, null, 2));

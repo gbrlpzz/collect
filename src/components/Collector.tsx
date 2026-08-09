@@ -32,6 +32,7 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
   const hasValue = (value: unknown) => {
     if (Array.isArray(value)) return value.length > 0;
     if (value && typeof value === "object" && "localDatetime" in value) return Boolean((value as { localDatetime?: string }).localDatetime);
+    if (value && typeof value === "object" && "value" in value) return (value as { value?: unknown }).value !== undefined && (value as { value?: unknown }).value !== "";
     return value !== undefined && value !== null && value !== "";
   };
   const completedRequired = requiredFields.filter((field) => {

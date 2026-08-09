@@ -13,6 +13,73 @@ interface MediaInput {
   sha256?: string | null;
 }
 
+type SchemaField = {
+  key?: string;
+  type?: string;
+  label?: string;
+  required?: boolean;
+  config?: Record<string, unknown>;
+  options?: Array<{ id?: string; value?: string }>;
+  children?: SchemaField[];
+};
+
+function isBlank(value: unknown): boolean {
+  if (value === undefined || value === null || value === "") return true;
+  return Array.isArray(value) && value.length === 0;
+}
+
+function optionIsKnown(field: SchemaField, value: unknown): boolean {
+  const options = field.options ?? [];
+  return typeof value === "string" && options.some((option) => option.id === value || option.value === value);
+}
+
+function validateFields(fields: SchemaField[], payload: Record<string, unknown>, path = ""): string | null {
+  for (const field of fields) {
+    if (!field.key || field.type === "heading") continue;
+    const label = path ? `${path}.${field.key}` : field.key;
+    const value = payload[field.key];
+    if (field.required && isBlank(value)) return `${label} is required`;
+    if (isBlank(value)) continue;
+
+    const config = field.config ?? {};
+    if (field.type === "short_text" || field.type === "long_text") {
+      if (typeof value !== "string") return `${label} must be text`;
+      if (config.minLength !== undefined && value.length < Number(config.minLength)) return `${label} is too short`;
+      if (config.maxLength !== undefined && value.length > Number(config.maxLength)) return `${label} is too long`;
+    } else if (field.type === "number") {
+      const numberValue = value && typeof value === "object" && "value" in value ? (value as { value?: unknown }).value : value;
+      if (typeof numberValue !== "number" || !Number.isFinite(numberValue)) return `${label} must be a finite number`;
+      if (config.integer === true && !Number.isInteger(numberValue)) return `${label} must be an integer`;
+      if (config.min !== undefined && numberValue < Number(config.min)) return `${label} is below the minimum`;
+      if (config.max !== undefined && numberValue > Number(config.max)) return `${label} is above the maximum`;
+    } else if (field.type === "single_choice" || field.type === "tri_state") {
+      if (typeof value !== "string") return `${label} must be one choice`;
+      if (field.type === "tri_state" && !["yes", "no", "unknown"].includes(value)) return `${label} is not a valid tri-state value`;
+      if (field.type === "single_choice" && !optionIsKnown(field, value) && value !== "other") return `${label} is not a published option`;
+    } else if (field.type === "multiple_choice") {
+      if (!Array.isArray(value) || value.some((item) => !optionIsKnown(field, item))) return `${label} contains an unpublished option`;
+    } else if (field.type === "date") {
+      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(Date.parse(`${value}T00:00:00Z`))) return `${label} must be an ISO date`;
+    } else if (field.type === "datetime") {
+      if (typeof value !== "object" || value === null || typeof (value as { localDatetime?: unknown }).localDatetime !== "string") return `${label} must include a local datetime`;
+    } else if (field.type === "location") {
+      const location = value as Record<string, unknown>;
+      if (typeof location.latitude !== "number" || !Number.isFinite(location.latitude) || location.latitude < -90 || location.latitude > 90 || typeof location.longitude !== "number" || !Number.isFinite(location.longitude) || location.longitude < -180 || location.longitude > 180 || typeof location.accuracy !== "number" || !Number.isFinite(location.accuracy) || location.accuracy < 0) return `${label} is not a valid location`;
+    } else if (field.type === "photo" || field.type === "audio") {
+      if (!Array.isArray(value)) return `${label} must contain media identifiers`;
+      if (config.minCount !== undefined && value.length < Number(config.minCount)) return `${label} does not contain enough media`;
+      if (config.maxCount !== undefined && value.length > Number(config.maxCount)) return `${label} contains too much media`;
+    } else if (field.type === "repeatable_group") {
+      if (!Array.isArray(value) || value.some((row) => !row || typeof row !== "object" || Array.isArray(row))) return `${label} must be an array of objects`;
+      for (const [index, row] of (value as Array<Record<string, unknown>>).entries()) {
+        const error = validateFields(field.children ?? [], row, `${label}[${index}]`);
+        if (error) return error;
+      }
+    }
+  }
+  return null;
+}
+
 function mediaPath(projectId: string, submissionId: string, mediaId: string): string {
   return `projects/${projectId}/submissions/${submissionId}/${mediaId}`;
 }
@@ -36,12 +103,15 @@ async function createSubmission(service: SupabaseClient, userId: string, body: R
 
   const { data: schema, error: schemaError } = await service
     .from("project_schemas")
-    .select("id,version")
+    .select("id,version,schema_json")
     .eq("project_id", projectId)
     .eq("version", schemaVersion)
     .not("published_at", "is", null)
     .maybeSingle();
   if (schemaError || !schema) return invalid("Unknown schema version", 409);
+
+  const payloadError = validateFields((schema.schema_json?.fields ?? []) as SchemaField[], payload as Record<string, unknown>);
+  if (payloadError) return invalid(`Payload does not match the published schema: ${payloadError}`, 422);
 
   const canonicalPayloadHash = await sha256(canonicalJson(payload));
   const suppliedHash = typeof body.payload_hash === "string" ? body.payload_hash : null;
@@ -103,7 +173,10 @@ async function createSubmission(service: SupabaseClient, userId: string, body: R
       captured_at: item.captured_at ?? null,
     }));
     const { error: mediaError } = await service.from("submission_media").insert(rows);
-    if (mediaError) return invalid("Submission media metadata could not be stored", 500);
+    if (mediaError) {
+      await service.from("submissions").delete().eq("id", submissionId).eq("status", "RECEIVED");
+      return invalid("Submission media metadata could not be stored", 500);
+    }
   }
   return json({ accepted: true, idempotent: false });
 }

@@ -18,7 +18,7 @@ import { SyncSheet } from "./components/SyncSheet";
 import { TopBar } from "./components/TopBar";
 import { authSession, isSupabaseConfigured, localBackendKey, supabase } from "./lib/supabaseClient";
 import { claimInvites, probeRemoteHealth, reportDeviceStatus, syncRemoteObservation } from "./lib/remoteBackend";
-import { cloneSchemaDraft, createCheckpoint, createRemoteProject, loadAssignedProject, updateProjectStatus } from "./lib/adminBackend";
+import { cloneSchemaDraft, createCheckpoint, createRemoteProject, loadAssignedProject, loadUserAdminAccess, updateProjectStatus } from "./lib/adminBackend";
 
 const APP_VERSION = (import.meta.env.VITE_APP_VERSION as string | undefined) ?? "0.1.0";
 
@@ -31,6 +31,7 @@ export default function App() {
   const [hydrated, setHydrated] = useState(false);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
   const [session, setSession] = useState<Session | null>(null);
+  const [canAdmin, setCanAdmin] = useState(!isSupabaseConfigured);
   const [previewUnlocked, setPreviewUnlocked] = useState(false);
   const [localCacheAvailable, setLocalCacheAvailable] = useState(false);
   const [syncSheetOpen, setSyncSheetOpen] = useState(false);
@@ -71,6 +72,7 @@ export default function App() {
       const belongsToCurrentBackend = !isSupabaseConfigured || storedBackendKey === localBackendKey;
       setLocalCacheAvailable(Boolean(saved && belongsToCurrentBackend));
       if (saved && belongsToCurrentBackend) {
+        setCanAdmin(!isSupabaseConfigured || saved.mode === "admin");
         setState((current) => ({
           ...current,
           ...saved,
@@ -85,9 +87,10 @@ export default function App() {
   useEffect(() => {
     if (!supabase || !session) return;
     let active = true;
-    void loadAssignedProject().then((remoteProject) => {
-      if (!active || !remoteProject) return;
-      setState((current) => ({ ...current, project: remoteProject }));
+    void Promise.all([loadAssignedProject(), loadUserAdminAccess()]).then(([remoteProject, adminAccess]) => {
+      if (!active) return;
+      setCanAdmin(adminAccess || !remoteProject);
+      if (remoteProject) setState((current) => ({ ...current, project: remoteProject }));
     }).catch(() => undefined);
     return () => { active = false; };
   }, [session]);
@@ -117,6 +120,7 @@ export default function App() {
   const navigate = (view: View) => setState((current) => ({ ...current, view }));
 
   const changeMode = (mode: AppMode) => {
+    if (mode === "admin" && !canAdmin) return;
     setState((current) => ({ ...current, mode, view: mode === "admin" ? "admin" : "home" }));
     setSyncSheetOpen(false);
   };
@@ -417,7 +421,7 @@ export default function App() {
   return (
     (!hydrated || authLoading || requiresAuthentication) ? <AuthScreen configured={isSupabaseConfigured} onPreview={!isSupabaseConfigured ? () => setPreviewUnlocked(true) : undefined} /> :
     <div className="app-shell">
-      <TopBar mode={state.mode} view={state.view} onModeChange={changeMode} onNavigate={navigate} userEmail={session?.user.email} isPreview={!isSupabaseConfigured} onSignOut={() => void signOut()} />
+      <TopBar mode={state.mode} view={state.view} onModeChange={changeMode} onNavigate={navigate} canAdmin={canAdmin} userEmail={session?.user.email} isPreview={!isSupabaseConfigured} onSignOut={() => void signOut()} />
       <div className="main-shell">
         {state.mode === "contributor" && state.view === "home" && <ContributorHome project={state.project} observations={state.observations} hasDraft={hasDraft} onNavigate={navigate} />}
         {state.mode === "contributor" && state.view === "project" && <ProjectOverview project={state.project} observations={state.observations} onNavigate={navigate} onOpenSync={() => setSyncSheetOpen(true)} onFinishFieldwork={() => void finishFieldwork()} />}
