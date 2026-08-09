@@ -56,16 +56,17 @@ async function hydrateProject(client: ReturnType<typeof requireClient>, row: Rec
   return projectFromRemote(row, organization, schema, contributorCount ?? 0, completeSubmissions ?? 0, latest?.server_received_at ? new Date(latest.server_received_at).toLocaleString() : "No submissions yet");
 }
 
-export async function loadAssignedProjects(): Promise<Project[]> {
+export async function loadAssignedProjects(): Promise<Project[] | null> {
   const client = requireClient();
   const { data: projects, error } = await client.from("projects").select("id,organization_id,name,description,instructions,status").order("created_at", { ascending: false });
-  if (error || !projects?.length) return [];
+  if (error) return null;
+  if (!projects?.length) return [];
   const hydrated = await Promise.all((projects as Record<string, any>[]).map((row) => hydrateProject(client, row)));
   return hydrated.filter((project): project is Project => Boolean(project));
 }
 
 export async function loadAssignedProject(): Promise<Project | null> {
-  return (await loadAssignedProjects())[0] ?? null;
+  return (await loadAssignedProjects())?.[0] ?? null;
 }
 
 export async function loadUserAdminAccess(): Promise<boolean> {
@@ -104,7 +105,7 @@ export async function createRemoteProject(input: NewProjectInput): Promise<Proje
     const response = await client.functions.invoke("send-project-invite", { body: { project_id: project.id, email: email.trim() } });
     if (response.error) throw response.error;
   }
-  return (await loadAssignedProjects()).find((candidate) => candidate.id === project.id) ?? projectFromRemote(project, { id: organizationId, name: "Onrange" }, { id: schemaId, version: 1, schema_json: schemaJson }, input.emails.length, 0, "No submissions yet");
+  return (await loadAssignedProjects())?.find((candidate) => candidate.id === project.id) ?? projectFromRemote(project, { id: organizationId, name: "Onrange" }, { id: schemaId, version: 1, schema_json: schemaJson }, input.emails.length, 0, "No submissions yet");
 }
 
 export async function createCheckpoint(projectId: string): Promise<{ checkpointId: string; downloadUrl: string | null }> {
