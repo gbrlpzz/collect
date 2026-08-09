@@ -36,6 +36,8 @@ The canonical backend is described in `supabase/migrations/20260809180000_collec
 3. Deploy the functions with `supabase functions deploy` from the repository.
 4. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Vercel. Never put a service-role key in client variables.
 
+Contributor invitations use Supabase Auth email. Optional administrator reminder emails use the provider adapter in `send-project-ping`; set the Edge Function secrets `RESEND_API_KEY` and `MAIL_FROM` when a mail provider is available. Collection and synchronization do not depend on reminder delivery.
+
 The service role is used only inside Edge Functions. Submission sync is metadata → resumable media → finalization; the browser marks a record synced only after the finalization receipt. `collect-media` and `collect-exports` are private buckets.
 
 ## Product surfaces
