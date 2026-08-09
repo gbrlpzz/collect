@@ -1,18 +1,33 @@
 # collect
 
-`collect` is a mobile-first, offline-first field data collection interface for scientific research, territorial work, ecological monitoring, and structured observation.
+`collect` is an open-source, mobile-first, offline-first field data collector for scientific research, ecological monitoring, territorial work, surveys, inventories, and structured observation where connectivity is unreliable.
 
-This repository contains the MVP collector and its local-first storage foundation. It is deliberately presented as a calm Apple HIG-inspired field surface while the hard guarantees live below the interface:
+The project is part of an open, well-designed science stack. Too much science software is badly designed; too much well-designed software is not reliable enough for fieldwork. `collect` is an attempt to do both: a calm, native-feeling interface with infrastructure that treats field observations as evidence, while keeping the whole stack open and deployable by the organizations that use it.
 
-- drafts persist in IndexedDB while a contributor works;
-- a submission crosses an explicit local transaction boundary before the UI shows a local receipt;
-- submissions, media, outbox operations, and receipts have separate durable stores;
-- stable client IDs are generated before any future network operation;
-- a recovery ZIP can be exported from the device, including schemas, JSONL records, metadata, and captured media blobs;
-- persistence/quota status is checked through the browser Storage API;
-- the service worker is only an application-shell enhancement, never the only copy of field data.
+The contributor experience is intentionally small:
 
-The production adapter uses Supabase Auth, Postgres, private Storage/TUS uploads, RLS policies, and server finalization. When credentials are absent, the app remains available in a clearly labeled local review mode.
+```text
+Open → Observe → Submit
+```
+
+The administrator experience is:
+
+```text
+Create → Define → Assign → Monitor → Export
+```
+
+## What the MVP guarantees
+
+- A local receipt is shown only after the submission, media metadata/blobs, and outbox operations commit to IndexedDB.
+- Every submission and media object has a stable client-generated ID before network work begins.
+- Sync is metadata → media → finalization. Only a durable server finalization receipt can move a local record to `SYNCED`.
+- Same-ID/different-content conflicts are explicit; finalized observations are immutable.
+- Published schema versions are immutable and historical observations retain their original version.
+- Local data, media, drafts, and the outbox survive refresh, app termination, intermittent connectivity, and later relaunches.
+- Unsynced data can be exported from the device as a recovery ZIP.
+- Storage persistence is requested and quota pressure is surfaced without deleting unsynced fieldwork.
+
+The browser cannot promise survival after physical device destruction, manual site-data clearing, or complete browser removal. Persistent storage remains under browser control; recovery export is the explicit escape hatch.
 
 ## Run locally
 
@@ -21,40 +36,120 @@ npm install
 npm run dev
 ```
 
-The production build is checked with:
+The local build and tests are:
 
 ```bash
 npm run build
+npm test
 ```
 
-## Supabase setup
+Without Supabase variables, the app opens a clearly labeled local interface preview. That preview is not a field deployment and does not provide server receipts.
 
-The canonical backend is described in `supabase/migrations/20260809180000_collect_mvp.sql` and the Edge Functions under `supabase/functions/`.
+## Deploy a new instance
 
-1. Create a Supabase project and configure Auth email/magic-link URLs for the Vercel origin.
-2. Apply the migration in the Supabase SQL editor or with the Supabase CLI.
-3. Deploy the functions with `supabase functions deploy` from the repository.
-4. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Vercel. Never put a service-role key in client variables.
+The repository is designed to be redeployed against a new Supabase project and a new Vercel project. No service-role secret belongs in the browser.
 
-Contributor invitations use Supabase Auth email. Optional administrator reminder emails use the provider adapter in `send-project-ping`; set the Edge Function secrets `RESEND_API_KEY` and `MAIL_FROM` when a mail provider is available. Collection and synchronization do not depend on reminder delivery.
+### 1. Create Supabase
 
-The service role is used only inside Edge Functions. Submission sync is metadata → resumable media → finalization; the browser marks a record synced only after the finalization receipt. `collect-media` and `collect-exports` are private buckets.
+Create a Supabase project in the region appropriate for the field organization. Apply the migrations in filename order:
 
-## Product surfaces
+```bash
+supabase db push --project-ref "$SUPABASE_PROJECT_REF"
+```
 
-- **Fieldwork**: assigned project, offline-ready project overview, structured collector, local receipt, sync sheet, recovery export.
-- **Admin**: project dashboard, readiness list, schema version setup, contributor management, checkpoint export, and project creation wizard.
+The migrations create Postgres tables, RLS policies, private Storage buckets, immutable-schema/submission protections, and the race-safe first-workspace function.
 
-The top-right surface switch is a review shortcut for the MVP. Authentication and role enforcement belong to the Supabase-backed production shell.
+Deploy the Edge Functions:
 
-## Infrastructure boundaries
+```bash
+for function in health claim-invites device-status send-project-invite send-project-ping export-checkpoint sync-submission; do
+  supabase functions deploy "$function" --project-ref "$SUPABASE_PROJECT_REF"
+done
+supabase functions deploy bootstrap-workspace --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+```
 
-The collector should eventually call a `BackendAdapter` with these operations:
+The functions authenticate the bearer token themselves with the Supabase service client. The service-role key is used only inside Edge Functions.
 
-1. create idempotent submission metadata;
-2. upload each media object with a stable object path and resumable protocol;
-3. finalize only after every expected media object is acknowledged;
-4. return a durable receipt;
-5. report device/project heartbeat separately.
+### 2. Configure Auth before the first login
 
-Never treat request initiation, `navigator.onLine`, or a successful media upload as a completed submission. Only the server finalization receipt may move a local record to `SYNCED`. The no-credentials demo adapter is useful for interface review, but it is not a field deployment.
+In Supabase Authentication → URL Configuration:
+
+- set **Site URL** to the deployed app origin, for example `https://your-collect.vercel.app`;
+- add the deployed origin and local development origin to **Additional Redirect URLs**;
+- configure a trusted SMTP provider for production email delivery.
+
+Magic links are one-time links and expire. `collect` now detects an expired callback, preserves the last email address in the current browser session, and offers **Send a new link** from the same screen. If an email security scanner consumes a link first, request another link rather than reusing the old one.
+
+### 3. Establish the first administrator
+
+For a fresh deployment, set the optional bootstrap guard before the first sign-in:
+
+```bash
+supabase secrets set \
+  APP_URL=https://your-collect.vercel.app \
+  BOOTSTRAP_ADMIN_EMAIL=admin@example.org \
+  --project-ref "$SUPABASE_PROJECT_REF"
+```
+
+Open the app, request a magic link for that exact address, sign in, and create the first project. The first project setup names the workspace. The `bootstrap-workspace` function creates the organization and its initial admin membership atomically, and only while the database has no organization yet. If `BOOTSTRAP_ADMIN_EMAIL` is omitted, the first authenticated user can bootstrap an empty database; setting it is recommended.
+
+To add another administrator after they have authenticated once, an existing administrator can run this intentionally explicit SQL in the Supabase SQL editor:
+
+```sql
+insert into public.organization_members (organization_id, user_id, role)
+select 'YOUR_ORGANIZATION_UUID', id, 'admin'
+from auth.users
+where lower(email) = lower('another-admin@example.org')
+on conflict (organization_id, user_id)
+do update set role = 'admin';
+```
+
+The user can then request a fresh magic link from the app and will see the Admin surface. Contributor invitations remain project-scoped and do not grant administrator access.
+
+### 4. Deploy the frontend
+
+Set these Vercel environment variables for Preview and Production:
+
+```text
+VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+VITE_APP_VERSION=0.1.0
+VITE_ORGANIZATION_NAME=Your organization
+```
+
+`VITE_SUPABASE_ANON_KEY` is accepted as a legacy fallback. Never use `SUPABASE_SERVICE_ROLE_KEY` as a `VITE_` variable.
+
+Then deploy:
+
+```bash
+npm run build
+vercel --prod
+```
+
+For a fully automated deployment, connect the GitHub repository to Vercel and enable production deployments from `main`. Keep database migrations and function deployments in the deployment checklist; a frontend-only deploy must not be treated as a backend migration.
+
+Optional reminder email delivery is provider-backed and never part of synchronization correctness:
+
+```bash
+supabase secrets set RESEND_API_KEY=re_... MAIL_FROM='Collect <fieldwork@example.org>' --project-ref "$SUPABASE_PROJECT_REF"
+```
+
+## Architecture
+
+- `src/` — React/Vite PWA and contributor/admin surfaces.
+- `src/lib/localStore.ts` — IndexedDB persistence, local receipt boundary, lease, recovery data.
+- `src/lib/remoteBackend.ts` — contributor synchronization adapter.
+- `src/lib/adminBackend.ts` — project, schema, contributor, readiness, and export adapter.
+- `supabase/migrations/` — canonical Postgres/RLS/storage schema.
+- `supabase/functions/` — authenticated ingestion, finalization, invitations, heartbeat, exports, and first-workspace bootstrap.
+- `docs/architecture.md` — reliability boundaries and backend contract.
+- `docs/design.md` — Apple HIG-inspired UI baseline.
+- `AGENTS.md` — instructions for coding agents and maintainers.
+
+## Reliability boundary
+
+Never treat `navigator.onLine`, request initiation, a successful media upload, or an optimistic UI update as synchronization. Only the server finalization receipt can make a submission `SYNCED`. Never delete unsynced records or media automatically. Never put research payloads, coordinates, media URLs, or service credentials into production telemetry.
+
+## License
+
+This project is intended to remain permissively licensed and self-hostable. Add the chosen license file before the first public release.
