@@ -16,6 +16,8 @@ The administrator experience is:
 Create → Define → Assign → Monitor → Export
 ```
 
+Design is part of robustness. In difficult field conditions, accessible controls, low cognitive load, and clear local/sync states reduce observation mistakes and improve the quality of the resulting scientific data.
+
 ## What the MVP guarantees
 
 - A local receipt is shown only after the submission, media metadata/blobs, and outbox operations commit to IndexedDB.
@@ -113,7 +115,7 @@ Set these Vercel environment variables for Preview and Production:
 ```text
 VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-VITE_APP_VERSION=0.1.0
+VITE_APP_VERSION=0.1.1
 VITE_ORGANIZATION_NAME=Your organization
 ```
 
@@ -150,6 +152,8 @@ supabase secrets set RESEND_API_KEY=re_... MAIL_FROM='Collect <fieldwork@example
 
 Never treat `navigator.onLine`, request initiation, a successful media upload, or an optimistic UI update as synchronization. Only the server finalization receipt can make a submission `SYNCED`. Never delete unsynced records or media automatically. Never put research payloads, coordinates, media URLs, or service credentials into production telemetry.
 
-## License
+## License and business model
 
-This project is intended to remain permissively licensed and self-hostable. Add the chosen license file before the first public release.
+The core is licensed under **GNU Affero General Public License v3 or later**. This keeps the science stack open, allows commercial use and paid hosted operation by us or others, and requires operators of modified network versions to offer the corresponding source to the people who use them. It is a better fit for a networked science tool than a source-available restriction while the project is intended to remain genuinely open.
+
+The `collect` name, logos, and other brand assets are not granted by the software license. Hosted operations, support, implementation, managed infrastructure, and future proprietary services can be monetized separately. If a future commercial licensing exception is needed, it should be introduced as a separately reviewed dual-licensing policy rather than quietly weakening the open-source terms.
