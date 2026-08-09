@@ -18,7 +18,7 @@ import { SyncSheet } from "./components/SyncSheet";
 import { TopBar } from "./components/TopBar";
 import { authSession, isSupabaseConfigured, localBackendKey, supabase } from "./lib/supabaseClient";
 import { claimInvites, probeRemoteHealth, reportDeviceStatus, syncRemoteObservation } from "./lib/remoteBackend";
-import { createCheckpoint, createRemoteProject, loadAssignedProjects, loadUserAdminAccess, updateProjectStatus } from "./lib/adminBackend";
+import { bootstrapWorkspace, createCheckpoint, createRemoteProject, defaultOrganizationName, loadAssignedProjects, loadUserAdminAccess, updateProjectStatus } from "./lib/adminBackend";
 
 const APP_VERSION = (import.meta.env.VITE_APP_VERSION as string | undefined) ?? "0.1.2";
 
@@ -99,12 +99,32 @@ export default function App() {
   useEffect(() => {
     if (!supabase || !session) return;
     let active = true;
-    void Promise.all([loadAssignedProjects(), loadUserAdminAccess()]).then(([remoteProjects, adminAccess]) => {
+    void Promise.all([loadAssignedProjects(), loadUserAdminAccess()]).then(async ([remoteProjects, adminAccess]) => {
       if (!active) return;
       if (remoteProjects === null) return;
-      setCanAdmin(adminAccess || !remoteProjects.length);
+      let hasAdminAccess = adminAccess;
+      // On a fresh deployment the first authenticated person should land in
+      // setup, not in an empty contributor surface. The Edge Function remains
+      // the authority: it only succeeds for the configured bootstrap email or
+      // for the first empty database when no guard is set.
+      if (!hasAdminAccess && remoteProjects.length === 0) {
+        try {
+          await bootstrapWorkspace(defaultOrganizationName);
+          hasAdminAccess = true;
+        } catch {
+          // A contributor on an existing deployment may have no assignment.
+          // Keep them in the contributor surface; the server has denied setup.
+        }
+      }
+      if (!active) return;
+      setCanAdmin(hasAdminAccess);
       if (remoteProjects.length) setState((current) => ({ ...current, projects: remoteProjects, project: remoteProjects.find((candidate) => candidate.id === current.project.id) ?? remoteProjects[0] }));
-      else setState((current) => ({ ...current, projects: [] }));
+      else setState((current) => ({
+        ...current,
+        projects: [],
+        mode: hasAdminAccess ? "admin" : current.mode,
+        view: hasAdminAccess ? "admin" : current.view,
+      }));
     }).catch(() => undefined);
     return () => { active = false; };
   }, [session]);
