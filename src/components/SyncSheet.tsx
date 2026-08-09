@@ -1,6 +1,6 @@
 import type { Observation } from "../types";
 import { Icon } from "./Icon";
-import { Button, Divider, IconButton, StatusBadge } from "./Primitives";
+import { Button, IconButton } from "./Primitives";
 
 interface SyncSheetProps {
   observations: Observation[];
@@ -21,16 +21,13 @@ export function SyncSheet({ observations, lastSyncAt, isSyncing, onClose, onSync
         <div className="sheet-handle" />
         <div className="sheet-heading">
           <div>
-            <span className="sheet-kicker">Project sync</span>
-            <h2 id="sync-sheet-title">Your fieldwork is safe here.</h2>
+            <span className="sheet-kicker">Sync</span>
+            <h2 id="sync-sheet-title">{hasPending ? `${pending.length} waiting` : "Up to date"}</h2>
           </div>
           <IconButton label="Close sync status" icon="x" onClick={onClose} />
         </div>
 
-        <div className={`sync-hero ${hasPending ? "sync-hero-pending" : "sync-hero-complete"}`}>
-          <div className="sync-hero-icon"><Icon name={hasPending ? "cloud" : "check"} size={24} /></div>
-          <div><strong>{hasPending ? `${pending.length} observation${pending.length === 1 ? "" : "s"} waiting` : "Everything is synced"}</strong><span>{hasPending ? "Saved on this device. Waiting for a usable connection." : "The server has acknowledged every complete submission."}</span></div>
-        </div>
+        <p className="sheet-copy">{hasPending ? "Saved on this device. Sync will continue when the server is reachable." : "The server has acknowledged every complete observation."}</p>
 
         {hasPending && (
           <div className="sync-operation-list">
@@ -44,10 +41,8 @@ export function SyncSheet({ observations, lastSyncAt, isSyncing, onClose, onSync
           </div>
         )}
 
-        <Divider />
         <div className="sync-facts">
           <div><span>Last successful sync</span><strong>{lastSyncAt ? new Date(lastSyncAt).toLocaleString() : "Not yet on this device"}</strong></div>
-          <div><span>Storage</span><strong>Protected locally</strong></div>
         </div>
 
         <Button variant="primary" fullWidth icon="refresh" onClick={onSync} disabled={isSyncing || !hasPending}>
