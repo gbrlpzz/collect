@@ -18,7 +18,7 @@ import { SyncSheet } from "./components/SyncSheet";
 import { TopBar } from "./components/TopBar";
 import { authSession, isSupabaseConfigured, localBackendKey, supabase } from "./lib/supabaseClient";
 import { claimInvites, probeRemoteHealth, reportDeviceStatus, syncRemoteObservation } from "./lib/remoteBackend";
-import { cloneSchemaDraft, createCheckpoint, createRemoteProject, loadAssignedProject, loadUserAdminAccess, updateProjectStatus } from "./lib/adminBackend";
+import { createCheckpoint, createRemoteProject, loadAssignedProject, loadUserAdminAccess, updateProjectStatus } from "./lib/adminBackend";
 
 const APP_VERSION = (import.meta.env.VITE_APP_VERSION as string | undefined) ?? "0.1.0";
 
@@ -339,19 +339,6 @@ export default function App() {
     }
   };
 
-  const draftSchema = async () => {
-    if (!isSupabaseConfigured || !session) {
-      showToast("A new local schema draft is ready to edit");
-      return;
-    }
-    try {
-      await cloneSchemaDraft(state.project);
-      showToast(`Schema v${state.project.schemaVersion + 1} draft created`);
-    } catch {
-      showToast("The schema draft could not be created");
-    }
-  };
-
   const toggleProjectStatus = async () => {
     const nextStatus = state.project.status === "active" ? "closed" : "active";
     if (nextStatus === "closed" && !window.confirm("Close collection for new observations? Existing offline fieldwork can still synchronize.")) return;
@@ -427,7 +414,7 @@ export default function App() {
         {state.mode === "contributor" && state.view === "project" && <ProjectOverview project={state.project} observations={state.observations} onNavigate={navigate} onOpenSync={() => setSyncSheetOpen(true)} onFinishFieldwork={() => void finishFieldwork()} />}
         {state.mode === "contributor" && state.view === "collector" && <Collector project={state.project} draft={state.draft} lastSavedAt={state.lastSavedAt} onDraftChange={updateDraft} onSubmit={submitObservation} onBack={() => navigate("project")} isSaving={isSaving} />}
         {state.mode === "admin" && state.view === "admin" && <AdminDashboard project={state.project} observations={state.observations} onNavigate={navigate} />}
-        {state.mode === "admin" && state.view === "admin-project" && <AdminProject project={state.project} observations={state.observations} onBack={() => navigate("admin")} onToast={showToast} onExport={() => void exportCheckpoint()} onDraftSchema={() => void draftSchema()} onToggleStatus={() => void toggleProjectStatus()} />}
+        {state.mode === "admin" && state.view === "admin-project" && <AdminProject project={state.project} observations={state.observations} onBack={() => navigate("admin")} onToast={showToast} onExport={() => void exportCheckpoint()} onSchemaPublished={(project) => setState((current) => ({ ...current, project }))} onToggleStatus={() => void toggleProjectStatus()} />}
         {state.mode === "admin" && state.view === "new-project" && <NewProjectWizard onBack={() => navigate("admin")} onPublish={publishProject} />}
       </div>
 
