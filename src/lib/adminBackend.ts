@@ -1,7 +1,10 @@
 import type { FieldDefinition, Project } from "../types";
 import { supabase } from "./supabaseClient";
 
+export const defaultOrganizationName = ((import.meta.env.VITE_ORGANIZATION_NAME as string | undefined) ?? "Onrange").trim() || "Onrange";
+
 export interface NewProjectInput {
+  organizationName: string;
   name: string;
   description: string;
   instructions: string;
@@ -22,6 +25,16 @@ export interface ContributorReadiness {
 function requireClient() {
   if (!supabase) throw new Error("Supabase is not configured");
   return supabase;
+}
+
+export async function bootstrapWorkspace(name: string): Promise<{ id: string; name: string }> {
+  const client = requireClient();
+  const { data, error } = await client.functions.invoke("bootstrap-workspace", {
+    body: { organization_name: name.trim() || defaultOrganizationName },
+  });
+  if (error) throw error;
+  if (!data?.organization_id) throw new Error("The first workspace could not be created");
+  return { id: data.organization_id, name: data.organization_name ?? (name.trim() || defaultOrganizationName) };
 }
 
 function projectFromRemote(row: Record<string, any>, organization: Record<string, any>, schema: Record<string, any> | null, contributorCount: number, completeSubmissions: number, lastReceived: string): Project {
@@ -89,10 +102,14 @@ export async function createRemoteProject(input: NewProjectInput): Promise<Proje
   if (userError || !userData.user) throw new Error("Authentication is required to create a project");
   const { data: membership } = await client.from("organization_members").select("organization_id").eq("user_id", userData.user.id).eq("role", "admin").limit(1).maybeSingle();
   let organizationId = membership?.organization_id as string | undefined;
+  let organizationName = defaultOrganizationName;
   if (!organizationId) {
-    const { data: organization, error: organizationError } = await client.from("organizations").insert({ name: "Onrange", created_by: userData.user.id }).select("id").single();
-    if (organizationError || !organization) throw new Error("Workspace could not be created");
+    const organization = await bootstrapWorkspace(input.organizationName);
     organizationId = organization.id;
+    organizationName = organization.name;
+  } else {
+    const { data: organization } = await client.from("organizations").select("name").eq("id", organizationId).maybeSingle();
+    organizationName = organization?.name ?? defaultOrganizationName;
   }
   const { data: project, error: projectError } = await client.from("projects").insert({ organization_id: organizationId, name: input.name.trim() || "Untitled field project", description: input.description, instructions: input.instructions, created_by: userData.user.id }).select("id,name,description,instructions,status,organization_id").single();
   if (projectError || !project) throw new Error("Project could not be created");
@@ -105,7 +122,7 @@ export async function createRemoteProject(input: NewProjectInput): Promise<Proje
     const response = await client.functions.invoke("send-project-invite", { body: { project_id: project.id, email: email.trim() } });
     if (response.error) throw response.error;
   }
-  return (await loadAssignedProjects())?.find((candidate) => candidate.id === project.id) ?? projectFromRemote(project, { id: organizationId, name: "Onrange" }, { id: schemaId, version: 1, schema_json: schemaJson }, input.emails.length, 0, "No submissions yet");
+  return (await loadAssignedProjects())?.find((candidate) => candidate.id === project.id) ?? projectFromRemote(project, { id: organizationId, name: organizationName }, { id: schemaId, version: 1, schema_json: schemaJson }, input.emails.length, 0, "No submissions yet");
 }
 
 export async function createCheckpoint(projectId: string): Promise<{ checkpointId: string; downloadUrl: string | null }> {

@@ -15,3 +15,9 @@ verify_jwt = false
 
 [functions.export-checkpoint]
 verify_jwt = false
+
+[functions.send-project-ping]
+verify_jwt = false
+
+[functions.bootstrap-workspace]
+verify_jwt = false
