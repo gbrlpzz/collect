@@ -7,12 +7,13 @@ interface TopBarProps {
   view: View;
   onModeChange: (mode: AppMode) => void;
   onNavigate: (view: View) => void;
+  canAdmin?: boolean;
   userEmail?: string | null;
   isPreview?: boolean;
   onSignOut?: () => void;
 }
 
-export function TopBar({ mode, view, onModeChange, onNavigate, userEmail, isPreview = false, onSignOut }: TopBarProps) {
+export function TopBar({ mode, view, onModeChange, onNavigate, canAdmin = true, userEmail, isPreview = false, onSignOut }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const isAdmin = mode === "admin";
   const accountLabel = isPreview ? "Preview" : userEmail ?? "Account";
@@ -32,7 +33,7 @@ export function TopBar({ mode, view, onModeChange, onNavigate, userEmail, isPrev
             <div className="account-menu" role="menu">
               <div className="account-menu-heading">{isPreview ? "Interface preview" : userEmail ?? "Signed in"}</div>
               <button role="menuitem" className={!isAdmin ? "account-menu-selected" : ""} onClick={() => { onModeChange("contributor"); setMenuOpen(false); }}>Fieldwork</button>
-              <button role="menuitem" className={isAdmin ? "account-menu-selected" : ""} onClick={() => { onModeChange("admin"); setMenuOpen(false); }}>Admin</button>
+              {canAdmin && <button role="menuitem" className={isAdmin ? "account-menu-selected" : ""} onClick={() => { onModeChange("admin"); setMenuOpen(false); }}>Admin</button>}
               {onSignOut && <button role="menuitem" className="account-menu-signout" onClick={() => { onSignOut(); setMenuOpen(false); }}>{isPreview ? "Exit preview" : "Sign out"}</button>}
             </div>
           )}
