@@ -1,6 +1,6 @@
 # collect
 
-`collect` is an open-source, mobile-first, offline-first field data collector for scientific research, ecological monitoring, territorial work, surveys, inventories, and structured observation where connectivity is unreliable.
+`collect` is a source-available, mobile-first, offline-first field data collector for scientific research, ecological monitoring, territorial work, surveys, inventories, and structured observation where connectivity is unreliable.
 
 The project is part of an open, well-designed science stack. Too much science software is badly designed; too much well-designed software is not reliable enough for fieldwork. `collect` is an attempt to do both: a calm, native-feeling interface with infrastructure that treats field observations as evidence, while keeping the whole stack open and deployable by the organizations that use it.
 
@@ -80,7 +80,7 @@ In Supabase Authentication → URL Configuration:
 - add the deployed origin and local development origin to **Additional Redirect URLs**;
 - configure a trusted SMTP provider for production email delivery.
 
-Magic links are one-time links and expire. `collect` now detects an expired callback, preserves the last email address in the current browser session, and offers **Send a new link** from the same screen. If an email security scanner consumes a link first, request another link rather than reusing the old one.
+Magic links are one-time links and expire. `collect` now detects an expired callback, preserves the last email address in the current browser session, and offers **Send a new link** from the same screen. If an email security scanner consumes a link first, request another link rather than reusing the old one. Set `VITE_APP_URL` to the canonical deployed origin so links generated from a preview or local development page still return to the real app.
 
 ### 3. Establish the first administrator
 
@@ -115,7 +115,8 @@ Set these Vercel environment variables for Preview and Production:
 ```text
 VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-VITE_APP_VERSION=0.1.1
+VITE_APP_VERSION=0.1.2
+VITE_APP_URL=https://your-collect.vercel.app
 VITE_ORGANIZATION_NAME=Your organization
 ```
 
@@ -154,6 +155,8 @@ Never treat `navigator.onLine`, request initiation, a successful media upload, o
 
 ## License and business model
 
-The core is licensed under **GNU Affero General Public License v3 or later**. This keeps the science stack open, allows commercial use and paid hosted operation by us or others, and requires operators of modified network versions to offer the corresponding source to the people who use them. It is a better fit for a networked science tool than a source-available restriction while the project is intended to remain genuinely open.
+The current source is licensed under the **Business Source License 1.1 (BUSL-1.1)**. This is intentionally source-available, not OSI open source: the repository is readable, forkable, and useful for evaluation, education, contribution, and personal research, while production use by an institution or commercial organization requires a separate commercial license. An individual researcher may use it for personal, noncommercial research without charge. Each version converts to GPL-3.0-or-later on its stated change date.
 
-The `collect` name, logos, and other brand assets are not granted by the software license. Hosted operations, support, implementation, managed infrastructure, and future proprietary services can be monetized separately. If a future commercial licensing exception is needed, it should be introduced as a separately reviewed dual-licensing policy rather than quietly weakening the open-source terms.
+This is the deliberate compromise for the early science stack: researchers can inspect and use the system personally, while institutional deployments, commercial products, hosted offerings, implementation, support, and managed infrastructure can fund the work. The exact institutional boundary should be reviewed by counsel before the first public release; it must not be described as open source while BUSL restrictions apply.
+
+The `collect` name, logos, and other brand assets are not granted by the software license. A future open-core or dual-license policy can be evaluated separately, but it should never be introduced by silently weakening the terms of an existing release.
