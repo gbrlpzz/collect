@@ -32,7 +32,7 @@ npm run build
 The canonical backend is described in `supabase/migrations/20260809180000_collect_mvp.sql` and the Edge Functions under `supabase/functions/`.
 
 1. Create a Supabase project and configure Auth email/magic-link URLs for the Vercel origin.
-2. Apply the migration in the SQL editor or with the Supabase CLI.
+2. Apply the migration in the Supabase SQL editor or with the Supabase CLI.
 3. Deploy the functions with `supabase functions deploy` from the repository.
 4. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Vercel. Never put a service-role key in client variables.
 

@@ -1,0 +1,17 @@
+[functions.health]
+verify_jwt = false
+
+[functions.sync-submission]
+verify_jwt = false
+
+[functions.device-status]
+verify_jwt = false
+
+[functions.claim-invites]
+verify_jwt = false
+
+[functions.send-project-invite]
+verify_jwt = false
+
+[functions.export-checkpoint]
+verify_jwt = false
