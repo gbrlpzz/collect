@@ -12,7 +12,7 @@ interface ProjectOverviewProps {
 
 export function ProjectOverview({ project, observations, onNavigate, onOpenSync, onFinishFieldwork }: ProjectOverviewProps) {
   const waitingCount = observations.filter((item) => item.status !== "SYNCED").length;
-  const syncedCount = Math.max(0, project.completeSubmissions + observations.filter((item) => item.status === "SYNCED").length - (project.id === "project-valladolid-houses" ? 2 : 0));
+  const syncedCount = project.completeSubmissions;
 
   return (
     <main className="page page-project">
