@@ -170,4 +170,5 @@ export const initialState = {
   storagePersistence: "unknown" as const,
   storageUsage: null,
   project: demoProject,
+  projects: [demoProject],
 };

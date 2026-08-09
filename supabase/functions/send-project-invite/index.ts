@@ -18,7 +18,7 @@ Deno.serve(async (request) => {
 
     let invitedUserId: string | null = null;
     const inviteResult = await service.auth.admin.inviteUserByEmail(email, {
-      redirectTo: Deno.env.get("APP_URL") ?? undefined,
+      redirectTo: Deno.env.get("APP_URL") ?? "https://collect-tawny.vercel.app",
     });
     if (!inviteResult.error) invitedUserId = inviteResult.data.user?.id ?? null;
     else if (!/already|registered|exists/i.test(inviteResult.error.message)) return json({ error: "The invitation could not be sent" }, { status: 502 });

@@ -44,11 +44,7 @@ function projectFromRemote(row: Record<string, any>, organization: Record<string
   };
 }
 
-export async function loadAssignedProject(): Promise<Project | null> {
-  const client = requireClient();
-  const { data: projects, error } = await client.from("projects").select("id,organization_id,name,description,instructions,status").order("created_at", { ascending: false }).limit(1);
-  if (error || !projects?.length) return null;
-  const row = projects[0] as Record<string, any>;
+async function hydrateProject(client: ReturnType<typeof requireClient>, row: Record<string, any>): Promise<Project | null> {
   const [{ data: organization }, { data: schema }, { count: contributorCount }, { count: completeSubmissions }, { data: latest }] = await Promise.all([
     client.from("organizations").select("id,name,logo_path").eq("id", row.organization_id).maybeSingle(),
     client.from("project_schemas").select("id,version,schema_json").eq("project_id", row.id).not("published_at", "is", null).order("version", { ascending: false }).limit(1).maybeSingle(),
@@ -58,6 +54,18 @@ export async function loadAssignedProject(): Promise<Project | null> {
   ]);
   if (!organization || !schema) return null;
   return projectFromRemote(row, organization, schema, contributorCount ?? 0, completeSubmissions ?? 0, latest?.server_received_at ? new Date(latest.server_received_at).toLocaleString() : "No submissions yet");
+}
+
+export async function loadAssignedProjects(): Promise<Project[]> {
+  const client = requireClient();
+  const { data: projects, error } = await client.from("projects").select("id,organization_id,name,description,instructions,status").order("created_at", { ascending: false });
+  if (error || !projects?.length) return [];
+  const hydrated = await Promise.all((projects as Record<string, any>[]).map((row) => hydrateProject(client, row)));
+  return hydrated.filter((project): project is Project => Boolean(project));
+}
+
+export async function loadAssignedProject(): Promise<Project | null> {
+  return (await loadAssignedProjects())[0] ?? null;
 }
 
 export async function loadUserAdminAccess(): Promise<boolean> {
@@ -96,7 +104,7 @@ export async function createRemoteProject(input: NewProjectInput): Promise<Proje
     const response = await client.functions.invoke("send-project-invite", { body: { project_id: project.id, email: email.trim() } });
     if (response.error) throw response.error;
   }
-  return (await loadAssignedProject()) ?? projectFromRemote(project, { id: organizationId, name: "Onrange" }, { id: schemaId, version: 1, schema_json: schemaJson }, input.emails.length, 0, "No submissions yet");
+  return (await loadAssignedProjects()).find((candidate) => candidate.id === project.id) ?? projectFromRemote(project, { id: organizationId, name: "Onrange" }, { id: schemaId, version: 1, schema_json: schemaJson }, input.emails.length, 0, "No submissions yet");
 }
 
 export async function createCheckpoint(projectId: string): Promise<{ checkpointId: string; downloadUrl: string | null }> {
@@ -112,6 +120,34 @@ export async function cloneSchemaDraft(project: Project): Promise<void> {
   const schemaId = crypto.randomUUID();
   const schemaJson = { schema_id: schemaId, version: nextVersion, project_id: project.id, published_at: null, fields: project.fields };
   const { error } = await client.from("project_schemas").insert({ id: schemaId, project_id: project.id, version: nextVersion, schema_json: schemaJson, published_at: null });
+  if (error) throw error;
+}
+
+export interface SchemaDraft {
+  id: string;
+  version: number;
+  projectId: string;
+  fields: FieldDefinition[];
+}
+
+export async function createSchemaDraft(project: Project): Promise<SchemaDraft> {
+  const client = requireClient();
+  const nextVersion = project.schemaVersion + 1;
+  const { data: existing } = await client.from("project_schemas").select("id,version,schema_json").eq("project_id", project.id).eq("version", nextVersion).maybeSingle();
+  if (existing) return { id: existing.id, version: existing.version, projectId: project.id, fields: existing.schema_json?.fields ?? project.fields };
+  const schemaId = crypto.randomUUID();
+  const schemaJson = { schema_id: schemaId, version: nextVersion, project_id: project.id, published_at: null, fields: project.fields };
+  const { error } = await client.from("project_schemas").insert({ id: schemaId, project_id: project.id, version: nextVersion, schema_json: schemaJson, published_at: null });
+  if (error) throw error;
+  return { id: schemaId, version: nextVersion, projectId: project.id, fields: project.fields };
+}
+
+export async function publishSchemaDraft(draft: SchemaDraft): Promise<void> {
+  const client = requireClient();
+  const { data: userData, error: userError } = await client.auth.getUser();
+  if (userError || !userData.user) throw new Error("Authentication is required to publish a schema");
+  const schemaJson = { schema_id: draft.id, version: draft.version, project_id: draft.projectId, published_at: new Date().toISOString(), fields: draft.fields };
+  const { error } = await client.from("project_schemas").update({ schema_json: schemaJson, published_at: new Date().toISOString(), published_by: userData.user.id }).eq("id", draft.id).is("published_at", null);
   if (error) throw error;
 }
 

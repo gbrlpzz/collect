@@ -106,6 +106,7 @@ export interface MediaAsset {
 
 export interface Observation {
   id: string;
+  projectId?: string;
   createdAt: string;
   clientCreatedAt?: string;
   schemaVersion?: number;
@@ -126,4 +127,5 @@ export interface AppState {
   storagePersistence: "unknown" | "granted" | "not-granted";
   storageUsage: number | null;
   project: Project;
+  projects?: Project[];
 }

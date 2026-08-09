@@ -141,6 +141,7 @@ export async function saveAppState(state: AppState, backendKey = "preview"): Pro
   transaction.objectStore(SETTINGS_STORE).put({ mode: state.mode, view: state.view }, "session");
   transaction.objectStore(SETTINGS_STORE).put(backendKey, "backend");
   transaction.objectStore(PROJECTS_STORE).put(state.project, state.project.id);
+  state.projects?.forEach((project) => transaction.objectStore(PROJECTS_STORE).put(project, project.id));
   transaction.objectStore(DRAFTS_STORE).put(state.draft, "active");
   state.observations.forEach((observation) => transaction.objectStore(SUBMISSIONS_STORE).put(observation, observation.id));
   await transactionComplete;
