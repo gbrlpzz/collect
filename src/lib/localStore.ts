@@ -118,13 +118,28 @@ export async function loadAppState(): Promise<Partial<AppState> | null> {
   }
 }
 
-export async function saveAppState(state: AppState): Promise<void> {
+export async function getStoredBackendKey(): Promise<string | null> {
+  if (!("indexedDB" in window)) return null;
+  try {
+    const database = await openDatabase();
+    const transaction = database.transaction(SETTINGS_STORE, "readonly");
+    const transactionComplete = waitForTransaction(transaction);
+    const resultRequest = createRequest(transaction.objectStore(SETTINGS_STORE).get("backend"));
+    const [result] = await Promise.all([resultRequest, transactionComplete]);
+    return typeof result === "string" ? result : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveAppState(state: AppState, backendKey = "preview"): Promise<void> {
   if (!("indexedDB" in window)) throw new Error("IndexedDB is unavailable in this browser");
   const database = await openDatabase();
   const transaction = database.transaction([APP_STATE_STORE, SETTINGS_STORE, PROJECTS_STORE, DRAFTS_STORE, SUBMISSIONS_STORE], "readwrite");
   const transactionComplete = waitForTransaction(transaction);
   transaction.objectStore(APP_STATE_STORE).put(state, STATE_KEY);
   transaction.objectStore(SETTINGS_STORE).put({ mode: state.mode, view: state.view }, "session");
+  transaction.objectStore(SETTINGS_STORE).put(backendKey, "backend");
   transaction.objectStore(PROJECTS_STORE).put(state.project, state.project.id);
   transaction.objectStore(DRAFTS_STORE).put(state.draft, "active");
   state.observations.forEach((observation) => transaction.objectStore(SUBMISSIONS_STORE).put(observation, observation.id));
