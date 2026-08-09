@@ -78,6 +78,7 @@ In Supabase Authentication → URL Configuration:
 
 - set **Site URL** to the deployed app origin, for example `https://your-collect.vercel.app`;
 - add the deployed origin and local development origin to **Additional Redirect URLs**;
+- if the Magic Link email template has been customized, use Supabase’s `{{ .ConfirmationURL }}` variable; never hard-code `http://localhost:3000` in the template;
 - configure a trusted SMTP provider for production email delivery.
 
 Magic links are one-time links and expire. `collect` now detects an expired callback, preserves the last email address in the current browser session, and offers **Send a new link** from the same screen. If an email security scanner consumes a link first, request another link rather than reusing the old one. Set `VITE_APP_URL` to the canonical deployed origin so links generated from a preview or local development page still return to the real app. Also set the Supabase **Site URL** to that same origin; the email template’s redirect must not be a localhost URL.
