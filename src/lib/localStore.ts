@@ -12,6 +12,7 @@ const OUTBOX_STORE = "outbox";
 const RECEIPTS_STORE = "receipts";
 const DEVICE_STATE_STORE = "device-state";
 const STATE_KEY = "singleton";
+const EXPLICIT_SIGN_OUT_KEY = "explicit-sign-out";
 
 const ALL_STORES = [
   APP_STATE_STORE,
@@ -130,6 +131,28 @@ export async function getStoredBackendKey(): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+export async function getExplicitSignOut(): Promise<boolean> {
+  if (!("indexedDB" in window)) return false;
+  try {
+    const database = await openDatabase();
+    const transaction = database.transaction(SETTINGS_STORE, "readonly");
+    const transactionComplete = waitForTransaction(transaction);
+    const resultRequest = createRequest(transaction.objectStore(SETTINGS_STORE).get(EXPLICIT_SIGN_OUT_KEY));
+    const [result] = await Promise.all([resultRequest, transactionComplete]);
+    return result === true;
+  } catch {
+    return false;
+  }
+}
+
+export async function setExplicitSignOut(value: boolean): Promise<void> {
+  if (!("indexedDB" in window)) return;
+  const database = await openDatabase();
+  const transaction = database.transaction(SETTINGS_STORE, "readwrite");
+  transaction.objectStore(SETTINGS_STORE).put(value, EXPLICIT_SIGN_OUT_KEY);
+  await waitForTransaction(transaction);
 }
 
 export async function saveAppState(state: AppState, backendKey = "preview"): Promise<void> {
