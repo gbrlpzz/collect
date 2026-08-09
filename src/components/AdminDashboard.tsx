@@ -3,7 +3,7 @@ import type { FieldDefinition, Observation, Project, View } from "../types";
 import { Icon } from "./Icon";
 import { Avatar, Button, Divider, Eyebrow, IconButton, StatusBadge } from "./Primitives";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
-import { createSchemaDraft, loadProjectReadiness, publishSchemaDraft, sendProjectInvite, type ContributorReadiness, type SchemaDraft } from "../lib/adminBackend";
+import { createSchemaDraft, loadProjectReadiness, publishSchemaDraft, sendProjectInvite, sendProjectPing, type ContributorReadiness, type SchemaDraft } from "../lib/adminBackend";
 import { createFieldForType, fieldWithType, schemaFieldTypes } from "../data";
 
 interface AdminDashboardProps {
@@ -176,7 +176,16 @@ function ContributorsPanel({ projectId, waitingCount, onToast }: { projectId: st
     }
   };
 
-  if (remoteRows) return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Assigned contributors</Eyebrow><h2>{remoteRows.length} people on this project</h2><p>Readiness is based on the last status reported by each device.</p></div><Button variant="secondary" icon="plus" onClick={() => void invite()}>Add contributor</Button></div><Divider /><div className="contributor-list">{remoteRows.length ? remoteRows.map((row) => <div className="contributor-row" key={row.id}><Avatar initials={row.email.slice(0, 2).toUpperCase()} muted={!row.ready} /><div className="contributor-copy"><strong>{row.email}</strong><span>{row.status}</span></div><StatusBadge tone={row.ready ? "soft" : "neutral"}>{row.ready ? "Confirmed synced" : "Needs attention"}</StatusBadge>{row.ready ? <Icon name="check" size={17} /> : <Button variant="tertiary" icon="send" onClick={() => onToast(`Ping requested for ${row.email}.`)}>Ping</Button>}</div>) : <div className="empty-list-state"><strong>No contributors assigned</strong><span>Invite the field team when the project is ready.</span></div>}</div></section>;
+  const ping = async (contributorId: string, email: string) => {
+    try {
+      await sendProjectPing(projectId, contributorId);
+      onToast(`Reminder sent to ${email}`);
+    } catch {
+      onToast("Email reminders need a configured mail provider");
+    }
+  };
+
+  if (remoteRows) return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Assigned contributors</Eyebrow><h2>{remoteRows.length} people on this project</h2><p>Readiness is based on the last status reported by each device.</p></div><Button variant="secondary" icon="plus" onClick={() => void invite()}>Add contributor</Button></div><Divider /><div className="contributor-list">{remoteRows.length ? remoteRows.map((row) => <div className="contributor-row" key={row.id}><Avatar initials={row.email.slice(0, 2).toUpperCase()} muted={!row.ready} /><div className="contributor-copy"><strong>{row.email}</strong><span>{row.status}</span></div><StatusBadge tone={row.ready ? "soft" : "neutral"}>{row.ready ? "Confirmed synced" : "Needs attention"}</StatusBadge>{row.ready ? <Icon name="check" size={17} /> : <Button variant="tertiary" icon="send" onClick={() => void ping(row.id, row.email)}>Ping</Button>}</div>) : <div className="empty-list-state"><strong>No contributors assigned</strong><span>Invite the field team when the project is ready.</span></div>}</div></section>;
   if (isSupabaseConfigured) return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Assigned contributors</Eyebrow><h2>Checking the roster</h2><p>Readiness is based on the last status reported by each device.</p></div></div></section>;
 
   return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Assigned contributors</Eyebrow><h2>Preview roster</h2><p>Preview data is not connected to a live contributor roster.</p></div><Button variant="secondary" icon="plus" onClick={() => onToast("Contributor invites are available after connecting Supabase")}>Add contributor</Button></div><Divider /><div className="empty-list-state"><span>{waitingCount} local observations waiting in preview.</span></div></section>;

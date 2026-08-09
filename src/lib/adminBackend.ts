@@ -158,6 +158,12 @@ export async function sendProjectInvite(projectId: string, email: string): Promi
   if (error) throw error;
 }
 
+export async function sendProjectPing(projectId: string, contributorId: string): Promise<void> {
+  const client = requireClient();
+  const { error } = await client.functions.invoke("send-project-ping", { body: { project_id: projectId, contributor_id: contributorId } });
+  if (error) throw error;
+}
+
 export async function updateProjectStatus(projectId: string, status: "active" | "closed"): Promise<void> {
   const client = requireClient();
   const { error } = await client.from("projects").update({ status }).eq("id", projectId);
