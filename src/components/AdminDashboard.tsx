@@ -4,17 +4,21 @@ import { Icon } from "./Icon";
 import { Avatar, Button, Divider, Eyebrow, IconButton, StatusBadge } from "./Primitives";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
 import { createSchemaDraft, loadProjectReadiness, publishSchemaDraft, sendProjectInvite, type ContributorReadiness, type SchemaDraft } from "../lib/adminBackend";
+import { createFieldForType, fieldWithType, schemaFieldTypes } from "../data";
 
 interface AdminDashboardProps {
   project: Project;
+  projects?: Project[];
   observations: Observation[];
   onNavigate: (view: View) => void;
+  onSelectProject: (project: Project) => void;
 }
 
-export function AdminDashboard({ project, observations, onNavigate }: AdminDashboardProps) {
-  const hasProject = project.id !== "empty-project";
+export function AdminDashboard({ project, projects = [], observations, onNavigate, onSelectProject }: AdminDashboardProps) {
+  const projectList = projects.filter((candidate) => candidate.id !== "empty-project");
+  const hasProject = projectList.length > 0 || project.id !== "empty-project";
   const localWaiting = observations.filter((item) => item.status !== "SYNCED").length;
-  const receivedCount = Math.max(0, project.completeSubmissions + observations.filter((item) => item.status === "SYNCED").length - (project.id === "project-valladolid-houses" ? 2 : 0));
+  const receivedCount = project.completeSubmissions;
   const [readiness, setReadiness] = useState<ContributorReadiness[] | null>(null);
 
   useEffect(() => {
@@ -35,11 +39,11 @@ export function AdminDashboard({ project, observations, onNavigate }: AdminDashb
       <section className="admin-section">
         <div className="section-heading-row"><h2>Active fieldwork</h2></div>
         {hasProject ? (
-          <button className="admin-project-card" onClick={() => onNavigate("admin-project")}>
-            <div className="admin-project-leading"><div className="organization-mark">{project.organizationMark}</div><div><div className="admin-project-title-row"><h3>{project.name}</h3></div><p>{project.organization} · Schema v{project.schemaVersion}</p></div></div>
-            <div className="admin-project-stats"><span>{receivedCount} received</span><span>{project.contributors} contributors</span><span>{isSupabaseConfigured ? reportedWaiting === null ? "Checking status" : `${reportedWaiting} reported waiting` : `${localWaiting} local waiting`}</span></div>
+          <div className="admin-project-list">{(projectList.length ? projectList : [project]).map((candidate) => <button className="admin-project-card" key={candidate.id} onClick={() => { onSelectProject(candidate); onNavigate("admin-project"); }}>
+            <div className="admin-project-leading"><div className="organization-mark">{candidate.organizationMark}</div><div><div className="admin-project-title-row"><h3>{candidate.name}</h3></div><p>{candidate.organization} · Schema v{candidate.schemaVersion}</p></div></div>
+            <div className="admin-project-stats"><span>{candidate.id === project.id ? receivedCount : candidate.completeSubmissions} received</span><span>{candidate.contributors} contributors</span><span>{candidate.id === project.id ? isSupabaseConfigured ? reportedWaiting === null ? "Checking status" : `${reportedWaiting} reported waiting` : `${localWaiting} local waiting` : "Open for status"}</span></div>
             <Icon name="chevron-right" size={19} />
-          </button>
+          </button>)}</div>
         ) : (
           <div className="empty-list-state"><strong>No projects yet</strong><span>Create the first project, define its schema, and invite contributors.</span><Button variant="secondary" icon="plus" onClick={() => onNavigate("new-project")}>Create project</Button></div>
         )}
@@ -73,7 +77,7 @@ interface AdminProjectProps {
 export function AdminProject({ project, observations, onBack, onToast, onExport, onSchemaPublished, onToggleStatus }: AdminProjectProps) {
   const [tab, setTab] = useState<AdminTab>("setup");
   const [readiness, setReadiness] = useState<ContributorReadiness[] | null>(null);
-  const receivedCount = Math.max(0, project.completeSubmissions + observations.filter((item) => item.status === "SYNCED").length - (project.id === "project-valladolid-houses" ? 2 : 0));
+  const receivedCount = project.completeSubmissions;
   const waitingCount = observations.filter((item) => item.status !== "SYNCED").length;
 
   useEffect(() => {
@@ -96,8 +100,6 @@ export function AdminProject({ project, observations, onBack, onToast, onExport,
     </main>
   );
 }
-
-const schemaFieldTypes: FieldDefinition["type"][] = ["short_text", "long_text", "number", "single_choice", "multiple_choice", "tri_state", "date", "datetime", "location", "photo", "audio", "repeatable_group"];
 
 function SchemaPanel({ project, onToast, onPublished }: { project: Project; onToast: (message: string) => void; onPublished: (project: Project) => void }) {
   const [draft, setDraft] = useState<SchemaDraft | null>(null);
@@ -140,7 +142,7 @@ function SchemaDraftEditor({ project, draft, busy, setBusy, onCancel, onToast, o
       setBusy(false);
     }
   };
-  return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Schema draft</Eyebrow><h2>Version {draft.version}</h2><p>Review the draft, then publish an immutable version.</p></div><StatusBadge tone="soft">Draft</StatusBadge></div><Divider /><div className="builder-list">{fields.map((field, index) => <div className="builder-row" key={field.id}><span className="builder-index">{String(index + 1).padStart(2, "0")}</span><div className="builder-controls"><input className="builder-inline-input" value={field.label} aria-label={`Draft field ${index + 1} label`} onChange={(event) => updateField(field.id, { label: event.target.value })} /><div><input className="builder-key-input" value={field.key} aria-label={`${field.label} machine key`} onChange={(event) => updateField(field.id, { key: event.target.value.replace(/[^a-zA-Z0-9_]/g, "_") })} /><select className="builder-select" value={field.type} aria-label={`${field.label} type`} onChange={(event) => updateField(field.id, { type: event.target.value as FieldDefinition["type"] })}>{schemaFieldTypes.map((type) => <option value={type} key={type}>{type.replaceAll("_", " ")}</option>)}</select></div></div><label className="builder-required"><input type="checkbox" checked={Boolean(field.required)} onChange={(event) => updateField(field.id, { required: event.target.checked })} /> Required</label><IconButton label={`Remove ${field.label}`} icon="x" onClick={() => removeField(field.id)} /></div>)}</div><button className="add-field-row" onClick={() => setFields((current) => [...current, { id: crypto.randomUUID(), key: `field_${current.length + 1}`, label: "New field", type: "short_text" }])}><Icon name="plus" size={17} /> Add field</button><div className="schema-builder-note"><Icon name="shield" size={17} /><span>Published schemas are immutable. Existing observations stay attached to their original version.</span></div><div className="wizard-actions"><Button variant="secondary" onClick={onCancel} disabled={busy}>Cancel</Button><Button variant="primary" icon="check" onClick={() => void publish()} disabled={busy}>{busy ? "Publishing…" : "Publish version"}</Button></div></section>;
+  return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Schema draft</Eyebrow><h2>Version {draft.version}</h2><p>Review the draft, then publish an immutable version.</p></div><StatusBadge tone="soft">Draft</StatusBadge></div><Divider /><div className="builder-list">{fields.map((field, index) => <div className="builder-row" key={field.id}><span className="builder-index">{String(index + 1).padStart(2, "0")}</span><div className="builder-controls"><input className="builder-inline-input" value={field.label} aria-label={`Draft field ${index + 1} label`} onChange={(event) => updateField(field.id, { label: event.target.value })} /><div><input className="builder-key-input" value={field.key} aria-label={`${field.label} machine key`} onChange={(event) => updateField(field.id, { key: event.target.value.replace(/[^a-zA-Z0-9_]/g, "_") })} /><select className="builder-select" value={field.type} aria-label={`${field.label} type`} onChange={(event) => updateField(field.id, fieldWithType(field, event.target.value as Exclude<FieldDefinition["type"], "heading">))}>{schemaFieldTypes.map((type) => <option value={type} key={type}>{type.replaceAll("_", " ")}</option>)}</select></div></div><label className="builder-required"><input type="checkbox" checked={Boolean(field.required)} onChange={(event) => updateField(field.id, { required: event.target.checked })} /> Required</label><IconButton label={`Remove ${field.label}`} icon="x" onClick={() => removeField(field.id)} /></div>)}</div><button className="add-field-row" onClick={() => setFields((current) => [...current, createFieldForType("short_text", current.length + 1)])}><Icon name="plus" size={17} /> Add field</button><div className="schema-builder-note"><Icon name="shield" size={17} /><span>Published schemas are immutable. Existing observations stay attached to their original version.</span></div><div className="wizard-actions"><Button variant="secondary" onClick={onCancel} disabled={busy}>Cancel</Button><Button variant="primary" icon="check" onClick={() => void publish()} disabled={busy}>{busy ? "Publishing…" : "Publish version"}</Button></div></section>;
 }
 
 function ContributorsPanel({ projectId, waitingCount, onToast }: { projectId: string; waitingCount: number; onToast: (message: string) => void }) {
