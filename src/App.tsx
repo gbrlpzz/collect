@@ -6,7 +6,7 @@ import { isSubmissionPending, isSubmissionRetryable } from "./types";
 import type { AppMode, AppState, View } from "./types";
 import type { MediaAsset } from "./types";
 import { emptyProject, initialState } from "./data";
-import { acquireSyncLease, commitLocalSubmission, estimateLocalStorage, getOrCreateDeviceId, getStoredBackendKey, loadAppState, markLocalSubmissionsSynced, mediaFromAssets, recordOutboxFailure, releaseSyncLease, saveAppState } from "./lib/localStore";
+import { acquireSyncLease, commitLocalSubmission, estimateLocalStorage, getExplicitSignOut, getOrCreateDeviceId, getStoredBackendKey, loadAppState, markLocalSubmissionsSynced, mediaFromAssets, recordOutboxFailure, releaseSyncLease, saveAppState, setExplicitSignOut } from "./lib/localStore";
 import { AdminDashboard, AdminProject } from "./components/AdminDashboard";
 import { AuthScreen } from "./components/AuthScreen";
 import { Collector } from "./components/Collector";
@@ -18,7 +18,7 @@ import { SyncSheet } from "./components/SyncSheet";
 import { TopBar } from "./components/TopBar";
 import { authSession, isSupabaseConfigured, localBackendKey, supabase } from "./lib/supabaseClient";
 import { claimInvites, probeRemoteHealth, reportDeviceStatus, syncRemoteObservation } from "./lib/remoteBackend";
-import { createCheckpoint, createRemoteProject, loadAssignedProject, loadUserAdminAccess, updateProjectStatus } from "./lib/adminBackend";
+import { createCheckpoint, createRemoteProject, loadAssignedProjects, loadUserAdminAccess, updateProjectStatus } from "./lib/adminBackend";
 
 const APP_VERSION = (import.meta.env.VITE_APP_VERSION as string | undefined) ?? "0.1.0";
 
@@ -27,6 +27,7 @@ export default function App() {
     ...initialState,
     observations: [],
     project: emptyProject,
+    projects: [],
   } : initialState);
   const [hydrated, setHydrated] = useState(false);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
@@ -34,6 +35,7 @@ export default function App() {
   const [canAdmin, setCanAdmin] = useState(!isSupabaseConfigured);
   const [previewUnlocked, setPreviewUnlocked] = useState(false);
   const [localCacheAvailable, setLocalCacheAvailable] = useState(false);
+  const [explicitSignOut, setExplicitSignOutState] = useState(false);
   const [syncSheetOpen, setSyncSheetOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -51,13 +53,21 @@ export default function App() {
     void authSession().then(({ data }) => {
       if (active) {
         setSession(data.session);
+        if (data.session) {
+          setExplicitSignOutState(false);
+          void setExplicitSignOut(false).catch(() => undefined);
+        }
         setAuthLoading(false);
         if (data.session) void claimInvites().catch(() => undefined);
       }
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
-      if (nextSession) void claimInvites().catch(() => undefined);
+      if (nextSession) {
+        setExplicitSignOutState(false);
+        void setExplicitSignOut(false).catch(() => undefined);
+        void claimInvites().catch(() => undefined);
+      }
     });
     return () => {
       active = false;
@@ -67,8 +77,9 @@ export default function App() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([loadAppState(), getStoredBackendKey()]).then(([saved, storedBackendKey]) => {
+    Promise.all([loadAppState(), getStoredBackendKey(), getExplicitSignOut()]).then(([saved, storedBackendKey, storedExplicitSignOut]) => {
       if (!active) return;
+      setExplicitSignOutState(storedExplicitSignOut);
       const belongsToCurrentBackend = !isSupabaseConfigured || storedBackendKey === localBackendKey;
       setLocalCacheAvailable(Boolean(saved && belongsToCurrentBackend));
       if (saved && belongsToCurrentBackend) {
@@ -77,6 +88,7 @@ export default function App() {
           ...current,
           ...saved,
           project: { ...current.project, ...(saved.project ?? {}) },
+          projects: saved.projects ?? (saved.project ? [saved.project] : current.projects),
         }));
       }
       setHydrated(true);
@@ -87,10 +99,12 @@ export default function App() {
   useEffect(() => {
     if (!supabase || !session) return;
     let active = true;
-    void Promise.all([loadAssignedProject(), loadUserAdminAccess()]).then(([remoteProject, adminAccess]) => {
+    void Promise.all([loadAssignedProjects(), loadUserAdminAccess()]).then(([remoteProjects, adminAccess]) => {
       if (!active) return;
-      setCanAdmin(adminAccess || !remoteProject);
-      if (remoteProject) setState((current) => ({ ...current, project: remoteProject }));
+      if (remoteProjects === null) return;
+      setCanAdmin(adminAccess || !remoteProjects.length);
+      if (remoteProjects.length) setState((current) => ({ ...current, projects: remoteProjects, project: remoteProjects.find((candidate) => candidate.id === current.project.id) ?? remoteProjects[0] }));
+      else setState((current) => ({ ...current, projects: [] }));
     }).catch(() => undefined);
     return () => { active = false; };
   }, [session]);
@@ -109,6 +123,7 @@ export default function App() {
   }, []);
 
   const pendingCount = useMemo(() => state.observations.filter((item) => isSubmissionPending(item.status)).length, [state.observations]);
+  const selectedObservations = useMemo(() => state.observations.filter((item) => !item.projectId || item.projectId === state.project.id), [state.observations, state.project.id]);
   const hasDraft = useMemo(() => Object.entries(state.draft).some(([key, value]) => key !== "observed_date" && value !== "" && value !== undefined), [state.draft]);
 
   const showToast = (message: string) => {
@@ -119,6 +134,8 @@ export default function App() {
 
   const navigate = (view: View) => setState((current) => ({ ...current, view }));
 
+  const selectProject = (project: AppState["project"], view: View = "project") => setState((current) => ({ ...current, project, view }));
+
   const changeMode = (mode: AppMode) => {
     if (mode === "admin" && !canAdmin) return;
     setState((current) => ({ ...current, mode, view: mode === "admin" ? "admin" : "home" }));
@@ -127,7 +144,9 @@ export default function App() {
 
   const signOut = async () => {
     if (supabase) await supabase.auth.signOut().catch(() => undefined);
+    await setExplicitSignOut(true).catch(() => undefined);
     setSession(null);
+    setExplicitSignOutState(true);
     setPreviewUnlocked(false);
     setSyncSheetOpen(false);
   };
@@ -149,6 +168,7 @@ export default function App() {
       const deviceId = await getOrCreateDeviceId();
       const observation = {
         id,
+        projectId: state.project.id,
         createdAt: "Just now",
         clientCreatedAt: createdAt,
         schemaVersion: state.project.schemaVersion,
@@ -176,6 +196,7 @@ export default function App() {
       setState((current) => ({
         ...current,
         observations: [...current.observations, observation],
+        fieldworkComplete: { ...(current.fieldworkComplete ?? {}), [state.project.id]: false },
         draft: { observed_date: new Date().toISOString().slice(0, 10) },
         lastSavedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         view: "project",
@@ -222,20 +243,32 @@ export default function App() {
         const deviceId = isSupabaseConfigured ? await getOrCreateDeviceId() : "demo-device";
         for (const observation of pending) {
           try {
+            const project = state.projects?.find((candidate) => candidate.id === observation.projectId) ?? state.project;
             const receipt = isSupabaseConfigured
-              ? await syncRemoteObservation({ observation, project: state.project, deviceId, appVersion: APP_VERSION })
+              ? await syncRemoteObservation({ observation, project, deviceId, appVersion: APP_VERSION })
               : null;
+            const receiptAt = new Date().toISOString();
             await markLocalSubmissionsSynced([observation.id], {
-              receivedAt: new Date().toISOString(),
+              receivedAt: receiptAt,
               finalizedAt: receipt?.finalized_at ?? null,
               serverStatus: receipt?.status ?? "COMPLETE",
               demo: !isSupabaseConfigured,
             });
-              setState((current) => ({
-                ...current,
-                observations: current.observations.map((item) => item.id === observation.id ? { ...item, status: "SYNCED" as const, deviceId } : item),
-                lastSyncAt: new Date().toISOString(),
-              }));
+              setState((current) => {
+                const nextProjects = (current.projects ?? []).map((candidate) => candidate.id === project.id
+                  ? { ...candidate, completeSubmissions: candidate.completeSubmissions + 1, lastReceived: "Just now" }
+                  : candidate);
+                const nextProject = current.project.id === project.id
+                  ? { ...current.project, completeSubmissions: current.project.completeSubmissions + 1, lastReceived: "Just now" }
+                  : current.project;
+                return {
+                  ...current,
+                  project: nextProject,
+                  projects: nextProjects,
+                  observations: current.observations.map((item) => item.id === observation.id ? { ...item, status: "SYNCED" as const, deviceId } : item),
+                  lastSyncAt: receiptAt,
+                };
+              });
           } catch (error) {
             const message = error instanceof Error ? error.message : "Synchronization could not be completed";
             const actionRequired = /unknown schema|revoked|forbidden|not authorized|permission|conflict|corrupt/i.test(message);
@@ -248,15 +281,19 @@ export default function App() {
           }
         }
         if (isSupabaseConfigured) {
-          void reportDeviceStatus({
-            device_id: deviceId,
-            project_id: state.project.id,
-            pending_submissions: 0,
-            pending_media: 0,
-            app_version: APP_VERSION,
-            schema_versions_cached: [state.project.schemaVersion],
-            fieldwork_complete: false,
-          }).catch(() => undefined);
+          const completedIds = new Set(pending.map((observation) => observation.id));
+          await Promise.all((state.projects ?? [state.project]).map((project) => {
+            const projectObservations = state.observations.filter((observation) => (observation.projectId ?? state.project.id) === project.id && !completedIds.has(observation.id));
+            return reportDeviceStatus({
+              device_id: deviceId,
+              project_id: project.id,
+              pending_submissions: projectObservations.filter((observation) => observation.status !== "SYNCED").length,
+              pending_media: projectObservations.reduce((total, observation) => total + (observation.media?.length ?? 0), 0),
+              app_version: APP_VERSION,
+              schema_versions_cached: [project.schemaVersion],
+              fieldwork_complete: state.fieldworkComplete?.[project.id] ?? false,
+            }).catch(() => undefined);
+          }));
         }
         completed = true;
         showToast(isSupabaseConfigured ? "All saved observations are synced" : "All saved observations are synced in demo mode");
@@ -291,6 +328,36 @@ export default function App() {
     };
   }, [pendingCount, session]);
 
+  useEffect(() => {
+    if (!isSupabaseConfigured || !session || !hydrated || !state.projects?.length) return;
+    let active = true;
+    const report = async () => {
+      const deviceId = await getOrCreateDeviceId().catch(() => null);
+      if (!deviceId || !active) return;
+      await Promise.all(state.projects!.map((project) => {
+        const projectObservations = state.observations.filter((observation) => (observation.projectId ?? state.project.id) === project.id);
+        return reportDeviceStatus({
+          device_id: deviceId,
+          project_id: project.id,
+          pending_submissions: projectObservations.filter((observation) => observation.status !== "SYNCED").length,
+          pending_media: projectObservations.filter((observation) => observation.status !== "SYNCED").reduce((total, observation) => total + (observation.media?.length ?? 0), 0),
+          app_version: APP_VERSION,
+          schema_versions_cached: [project.schemaVersion],
+          fieldwork_complete: state.fieldworkComplete?.[project.id] ?? false,
+        }).catch(() => undefined);
+      }));
+    };
+    const attempt = () => { void report(); };
+    attempt();
+    window.addEventListener("online", attempt);
+    window.addEventListener("visibilitychange", attempt);
+    return () => {
+      active = false;
+      window.removeEventListener("online", attempt);
+      window.removeEventListener("visibilitychange", attempt);
+    };
+  }, [hydrated, pendingCount, session, state.fieldworkComplete, state.lastSyncAt, state.observations, state.project.id, state.projects]);
+
   const exportRecoveryPackage = async () => {
     const unsynced = state.observations.filter((item) => item.status !== "SYNCED");
     const entries: Record<string, Uint8Array> = {
@@ -317,7 +384,7 @@ export default function App() {
   const publishProject = async (input: Parameters<typeof createRemoteProject>[0]) => {
     if (isSupabaseConfigured && session) {
       const remoteProject = await createRemoteProject(input);
-      setState((current) => ({ ...current, project: remoteProject }));
+      setState((current) => ({ ...current, project: remoteProject, projects: [...(current.projects ?? []).filter((candidate) => candidate.id !== remoteProject.id), remoteProject] }));
       showToast("Project published and invitations sent");
     } else {
       showToast("Project published in local demo mode");
@@ -350,7 +417,10 @@ export default function App() {
         return;
       }
     }
-    setState((current) => ({ ...current, project: { ...current.project, status: nextStatus } }));
+    setState((current) => {
+      const project = { ...current.project, status: nextStatus as "active" | "closed" };
+      return { ...current, project, projects: (current.projects ?? []).map((candidate) => candidate.id === project.id ? project : candidate) };
+    });
     showToast(nextStatus === "closed" ? "Collection closed" : "Collection reopened");
   };
 
@@ -363,7 +433,8 @@ export default function App() {
       }
       setState((current) => ({ ...current, draft: { observed_date: new Date().toISOString().slice(0, 10) } }));
     }
-    if (pendingCount) {
+    const currentProjectPending = selectedObservations.filter((item) => item.status !== "SYNCED").length;
+    if (currentProjectPending) {
       const synced = await syncNow();
       if (!synced) {
         setSyncSheetOpen(true);
@@ -371,7 +442,7 @@ export default function App() {
       }
     }
     const saved = await loadAppState();
-    const remaining = saved?.observations?.filter((item) => isSubmissionPending(item.status)) ?? state.observations.filter((item) => isSubmissionPending(item.status));
+    const remaining = (saved?.observations ?? state.observations).filter((item) => (item.projectId ?? state.project.id) === state.project.id && isSubmissionPending(item.status));
     if (remaining.length) {
       setSyncSheetOpen(true);
       showToast("Fieldwork is still waiting for synchronization");
@@ -393,6 +464,7 @@ export default function App() {
           schema_versions_cached: [state.project.schemaVersion],
           fieldwork_complete: true,
         });
+        setState((current) => ({ ...current, fieldworkComplete: { ...(current.fieldworkComplete ?? {}), [current.project.id]: true } }));
       } catch {
         showToast("The server could not confirm completion yet");
         return;
@@ -402,7 +474,7 @@ export default function App() {
   };
 
   const requiresAuthentication = isSupabaseConfigured
-    ? !session && !localCacheAvailable
+    ? !session && (!localCacheAvailable || explicitSignOut)
     : !previewUnlocked;
 
   return (
@@ -410,11 +482,11 @@ export default function App() {
     <div className="app-shell">
       <TopBar mode={state.mode} view={state.view} onModeChange={changeMode} onNavigate={navigate} canAdmin={canAdmin} userEmail={session?.user.email} isPreview={!isSupabaseConfigured} onSignOut={() => void signOut()} />
       <div className="main-shell">
-        {state.mode === "contributor" && state.view === "home" && <ContributorHome project={state.project} observations={state.observations} hasDraft={hasDraft} onNavigate={navigate} />}
-        {state.mode === "contributor" && state.view === "project" && <ProjectOverview project={state.project} observations={state.observations} onNavigate={navigate} onOpenSync={() => setSyncSheetOpen(true)} onFinishFieldwork={() => void finishFieldwork()} />}
+        {state.mode === "contributor" && state.view === "home" && <ContributorHome projects={state.projects?.length ? state.projects : state.project.id === "empty-project" ? [] : [state.project]} observations={state.observations} hasDraft={hasDraft} onNavigate={navigate} onSelectProject={(project) => selectProject(project)} />}
+        {state.mode === "contributor" && state.view === "project" && <ProjectOverview project={state.project} observations={selectedObservations} onNavigate={navigate} onOpenSync={() => setSyncSheetOpen(true)} onFinishFieldwork={() => void finishFieldwork()} />}
         {state.mode === "contributor" && state.view === "collector" && <Collector project={state.project} draft={state.draft} lastSavedAt={state.lastSavedAt} onDraftChange={updateDraft} onSubmit={submitObservation} onBack={() => navigate("project")} isSaving={isSaving} />}
-        {state.mode === "admin" && state.view === "admin" && <AdminDashboard project={state.project} observations={state.observations} onNavigate={navigate} />}
-        {state.mode === "admin" && state.view === "admin-project" && <AdminProject project={state.project} observations={state.observations} onBack={() => navigate("admin")} onToast={showToast} onExport={() => void exportCheckpoint()} onSchemaPublished={(project) => setState((current) => ({ ...current, project }))} onToggleStatus={() => void toggleProjectStatus()} />}
+        {state.mode === "admin" && state.view === "admin" && <AdminDashboard project={state.project} projects={state.projects} observations={state.observations} onNavigate={navigate} onSelectProject={(project) => selectProject(project, "admin-project")} />}
+        {state.mode === "admin" && state.view === "admin-project" && <AdminProject project={state.project} observations={selectedObservations} onBack={() => navigate("admin")} onToast={showToast} onExport={() => void exportCheckpoint()} onSchemaPublished={(project) => setState((current) => ({ ...current, project, projects: (current.projects ?? []).map((candidate) => candidate.id === project.id ? project : candidate) }))} onToggleStatus={() => void toggleProjectStatus()} />}
         {state.mode === "admin" && state.view === "new-project" && <NewProjectWizard onBack={() => navigate("admin")} onPublish={publishProject} />}
       </div>
 
