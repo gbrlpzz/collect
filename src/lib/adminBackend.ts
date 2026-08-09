@@ -60,6 +60,20 @@ export async function loadAssignedProject(): Promise<Project | null> {
   return projectFromRemote(row, organization, schema, contributorCount ?? 0, completeSubmissions ?? 0, latest?.server_received_at ? new Date(latest.server_received_at).toLocaleString() : "No submissions yet");
 }
 
+export async function loadUserAdminAccess(): Promise<boolean> {
+  const client = requireClient();
+  const { data: userData, error: userError } = await client.auth.getUser();
+  if (userError || !userData.user) return false;
+  const { data, error } = await client
+    .from("organization_members")
+    .select("organization_id")
+    .eq("user_id", userData.user.id)
+    .eq("role", "admin")
+    .limit(1)
+    .maybeSingle();
+  return !error && Boolean(data);
+}
+
 export async function createRemoteProject(input: NewProjectInput): Promise<Project> {
   const client = requireClient();
   const { data: userData, error: userError } = await client.auth.getUser();
