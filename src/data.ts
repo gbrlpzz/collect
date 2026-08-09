@@ -130,6 +130,21 @@ export const demoProject: Project = {
   fields: projectFields,
 };
 
+export const emptyProject: Project = {
+  id: "empty-project",
+  organization: "Onrange",
+  organizationMark: "O",
+  name: "No project yet",
+  description: "Create a project to begin collecting.",
+  instructions: "",
+  status: "active",
+  schemaVersion: 0,
+  contributors: 0,
+  completeSubmissions: 0,
+  lastReceived: "No submissions yet",
+  fields: [],
+};
+
 export const initialState = {
   view: "home" as const,
   mode: "contributor" as const,
