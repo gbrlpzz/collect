@@ -45,15 +45,20 @@ export function FieldRenderer({ field, value, onChange, onCaptureLocation, onAdd
   }
 
   if (field.type === "number") {
+    const numberValue = value && typeof value === "object" && "value" in value ? (value as { value?: unknown }).value : value;
     return (
       <div className="number-input-wrap">
         <input
           className="field-input"
           id={field.key}
           type="number"
-          value={stringValue}
-          onChange={(event) => onChange(event.target.value)}
-          min={Number(field.config?.min ?? 0)}
+          value={typeof numberValue === "number" ? String(numberValue) : typeof numberValue === "string" ? numberValue : ""}
+          onChange={(event) => {
+            const raw = event.target.value;
+            onChange(raw === "" ? "" : { value: Number(raw), unit: field.config?.unit ? String(field.config.unit) : null });
+          }}
+          min={field.config?.min === undefined ? undefined : Number(field.config.min)}
+          max={field.config?.max === undefined ? undefined : Number(field.config.max)}
           step={field.config?.integer ? 1 : "any"}
           inputMode="numeric"
         />
