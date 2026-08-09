@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import type { MediaAsset, Project } from "../types";
 import { Icon } from "./Icon";
-import { Button, Eyebrow, IconButton, StatusBadge } from "./Primitives";
+import { Button, Eyebrow } from "./Primitives";
 import { FieldRenderer } from "./FieldRenderer";
 
 interface CollectorProps {
@@ -108,25 +108,19 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
       <div className="collector-topbar">
         <button className="back-button" onClick={onBack}><Icon name="arrow-left" size={17} /> Project</button>
         <div className="collector-title">
-          <strong>New observation</strong>
+          <strong>Observation</strong>
           <span>{project.name}</span>
         </div>
-        <StatusBadge tone="soft">{lastSavedAt ? "Saved on this device" : "Autosave active"}</StatusBadge>
+        <span className="collector-save-state">{lastSavedAt ? "Saved locally" : ""}</span>
       </div>
 
       <div className="collector-progress-row">
-        <div className="collector-progress-copy"><Eyebrow>Observation</Eyebrow><span>{completedRequired} of {requiredFields.length} required fields</span></div>
+        <div className="collector-progress-copy"><span>{completedRequired} of {requiredFields.length} required</span></div>
         <span className="collector-progress-number">{progress}%</span>
       </div>
       <div className="progress-track"><span style={{ width: `${Math.max(progress, 4)}%` }} /></div>
 
       <div className="collector-surface">
-        <div className="collector-intro">
-          <Eyebrow>Schema v{project.schemaVersion}</Eyebrow>
-          <h1>Record what you see.</h1>
-          <p>All changes are saved locally as you work. You can close the app at any point.</p>
-        </div>
-
         <div className="collector-fields">
           {project.fields.map((field) => {
             if (field.type === "heading") {
@@ -164,10 +158,9 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
 
         <input ref={fileInputRef} className="visually-hidden" type="file" accept={project.fields.find((field) => field.key === activeMediaField)?.type === "audio" ? "audio/*" : "image/*"} multiple={Boolean(project.fields.find((field) => field.key === activeMediaField)?.config?.multiple) || Number(project.fields.find((field) => field.key === activeMediaField)?.config?.maxCount ?? 1) > 1} onChange={handleMediaChange} />
 
-        <div className="collector-receipt-note"><Icon name="shield" size={16} /><span>Submit means saved on this device first. Syncing happens separately.</span></div>
-        <Button variant="primary" fullWidth icon="check" onClick={handleSubmit} disabled={isSaving}>{isSaving ? "Saving locally…" : "Save observation"}</Button>
+        <div className="collector-receipt-note"><Icon name="check" size={15} /><span>Changes are saved on this device.</span></div>
       </div>
-      <div className="collector-bottom-note"><Icon name="lock" size={14} /><span>Local-first field collection</span></div>
+      <div className="collector-action-bar"><Button variant="primary" fullWidth iconAfter="arrow-right" onClick={handleSubmit} disabled={isSaving}>{isSaving ? "Saving…" : "Save observation"}</Button></div>
     </main>
   );
 }
