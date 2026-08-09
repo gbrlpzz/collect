@@ -1,6 +1,6 @@
 # Agent guidance for collect
 
-`collect` is infrastructure for trustworthy field evidence, not a generic form builder. It belongs to an open, well-designed science stack: the interface should be calm and legible, and the data path should remain dependable when the network, browser lifecycle, or device storage is hostile.
+`collect` is infrastructure for trustworthy field evidence, not a generic form builder. It belongs to a well-designed, source-available science stack: the interface should be calm and legible, and the data path should remain dependable when the network, browser lifecycle, or device storage is hostile.
 
 ## Product principles
 

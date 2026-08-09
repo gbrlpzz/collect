@@ -20,7 +20,7 @@ import { authSession, isSupabaseConfigured, localBackendKey, supabase } from "./
 import { claimInvites, probeRemoteHealth, reportDeviceStatus, syncRemoteObservation } from "./lib/remoteBackend";
 import { createCheckpoint, createRemoteProject, loadAssignedProjects, loadUserAdminAccess, updateProjectStatus } from "./lib/adminBackend";
 
-const APP_VERSION = (import.meta.env.VITE_APP_VERSION as string | undefined) ?? "0.1.1";
+const APP_VERSION = (import.meta.env.VITE_APP_VERSION as string | undefined) ?? "0.1.2";
 
 export default function App() {
   const [state, setState] = useState<AppState>(() => isSupabaseConfigured ? {

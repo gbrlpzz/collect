@@ -27,12 +27,25 @@ function requireClient() {
   return supabase;
 }
 
+async function readableFunctionError(error: unknown, fallback: string): Promise<Error> {
+  const context = error && typeof error === "object" ? (error as { context?: unknown }).context : null;
+  if (context && typeof context === "object" && "clone" in context && typeof (context as { clone?: unknown }).clone === "function") {
+    try {
+      const body = await (context as Response).clone().json() as { error?: unknown };
+      if (typeof body.error === "string" && body.error.trim()) return new Error(body.error);
+    } catch {
+      // Use the safe, user-facing fallback below when the response is not JSON.
+    }
+  }
+  return new Error(fallback);
+}
+
 export async function bootstrapWorkspace(name: string): Promise<{ id: string; name: string }> {
   const client = requireClient();
   const { data, error } = await client.functions.invoke("bootstrap-workspace", {
     body: { organization_name: name.trim() || defaultOrganizationName },
   });
-  if (error) throw error;
+  if (error) throw await readableFunctionError(error, "The first workspace could not be created");
   if (!data?.organization_id) throw new Error("The first workspace could not be created");
   return { id: data.organization_id, name: data.organization_name ?? (name.trim() || defaultOrganizationName) };
 }

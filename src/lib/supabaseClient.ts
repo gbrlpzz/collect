@@ -2,6 +2,7 @@ import { createClient, type Session, type SupabaseClient } from "@supabase/supab
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const publishableKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
+const configuredAppUrl = (import.meta.env.VITE_APP_URL as string | undefined)?.trim();
 
 export const isSupabaseConfigured = Boolean(url && publishableKey);
 export const localBackendKey = url ? `supabase:${url}` : "preview";
@@ -62,13 +63,21 @@ export function rememberAuthEmail(email: string): void {
 
 export async function sendMagicLink(email: string): Promise<void> {
   if (!supabase) throw new Error("Supabase is not configured");
+  let emailRedirectTo = window.location.origin;
+  if (configuredAppUrl) {
+    try {
+      emailRedirectTo = new URL(configuredAppUrl).origin;
+    } catch {
+      // Fall back to the current origin if a deployment has an invalid URL.
+    }
+  }
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
       // The first workspace administrator may not have an existing account yet.
       // Project invitations still use the server-side admin invite flow.
       shouldCreateUser: true,
-      emailRedirectTo: window.location.origin,
+      emailRedirectTo,
     },
   });
   if (error) throw error;
