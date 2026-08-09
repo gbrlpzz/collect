@@ -67,7 +67,7 @@ export async function createRemoteProject(input: NewProjectInput): Promise<Proje
   const { data: membership } = await client.from("organization_members").select("organization_id").eq("user_id", userData.user.id).eq("role", "admin").limit(1).maybeSingle();
   let organizationId = membership?.organization_id as string | undefined;
   if (!organizationId) {
-    const { data: organization, error: organizationError } = await client.from("organizations").insert({ name: "My field workspace", created_by: userData.user.id }).select("id").single();
+    const { data: organization, error: organizationError } = await client.from("organizations").insert({ name: "Onrange", created_by: userData.user.id }).select("id").single();
     if (organizationError || !organization) throw new Error("Workspace could not be created");
     organizationId = organization.id;
   }
@@ -82,7 +82,7 @@ export async function createRemoteProject(input: NewProjectInput): Promise<Proje
     const response = await client.functions.invoke("send-project-invite", { body: { project_id: project.id, email: email.trim() } });
     if (response.error) throw response.error;
   }
-  return (await loadAssignedProject()) ?? projectFromRemote(project, { id: organizationId, name: "My field workspace" }, { id: schemaId, version: 1, schema_json: schemaJson }, input.emails.length, 0, "No submissions yet");
+  return (await loadAssignedProject()) ?? projectFromRemote(project, { id: organizationId, name: "Onrange" }, { id: schemaId, version: 1, schema_json: schemaJson }, input.emails.length, 0, "No submissions yet");
 }
 
 export async function createCheckpoint(projectId: string): Promise<{ checkpointId: string; downloadUrl: string | null }> {

@@ -12,6 +12,7 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ project, observations, onNavigate }: AdminDashboardProps) {
+  const hasProject = project.id !== "empty-project";
   const waitingCount = observations.filter((item) => item.status !== "SYNCED").length;
   const receivedCount = Math.max(0, project.completeSubmissions + observations.filter((item) => item.status === "SYNCED").length - (project.id === "project-valladolid-houses" ? 2 : 0));
 
@@ -19,44 +20,33 @@ export function AdminDashboard({ project, observations, onNavigate }: AdminDashb
     <main className="page page-admin">
       <div className="page-heading admin-heading">
         <div>
-          <Eyebrow>Admin workspace</Eyebrow>
-          <h1>Field operations.</h1>
-          <p className="lede">Create, assign, monitor, and export without touching a database.</p>
+          <Eyebrow>Admin</Eyebrow>
+          <h1>Projects</h1>
         </div>
-        <Button variant="primary" icon="plus" onClick={() => onNavigate("new-project")}>New project</Button>
-      </div>
-
-      <div className="admin-stat-grid">
-        <div className="stat-card"><span>Active projects</span><strong>1</strong><small>1 collection open</small></div>
-        <div className="stat-card"><span>Complete submissions</span><strong>{receivedCount}</strong><small>Received by the server</small></div>
-        <div className="stat-card"><span>Contributor readiness</span><strong>2 / 3</strong><small>Confirmed fully synced</small></div>
+        <Button variant="primary" icon="plus" onClick={() => onNavigate("new-project")}>New</Button>
       </div>
 
       <section className="admin-section">
-        <div className="section-heading-row"><div><Eyebrow>Projects</Eyebrow><h2>Active fieldwork</h2></div><button className="text-button" onClick={() => onNavigate("new-project")}>Create another <Icon name="plus" size={15} /></button></div>
-        <button className="admin-project-card" onClick={() => onNavigate("admin-project")}>
-          <div className="admin-project-leading"><div className="organization-mark">{project.organizationMark}</div><div><div className="admin-project-title-row"><h3>{project.name}</h3><StatusBadge tone="dark">Active</StatusBadge></div><p>{project.organization} · Schema v{project.schemaVersion}</p></div></div>
-          <div className="admin-project-stats"><span><strong>{receivedCount}</strong><small>received</small></span><span><strong>{project.contributors}</strong><small>contributors</small></span><span><strong>{waitingCount || 3}</strong><small>reported waiting</small></span></div>
-          <Icon name="chevron-right" size={19} />
-        </button>
+        <div className="section-heading-row"><div><h2>Active fieldwork</h2></div></div>
+        {hasProject ? (
+          <button className="admin-project-card" onClick={() => onNavigate("admin-project")}>
+            <div className="admin-project-leading"><div className="organization-mark">{project.organizationMark}</div><div><div className="admin-project-title-row"><h3>{project.name}</h3></div><p>{project.organization} · Schema v{project.schemaVersion}</p></div></div>
+            <div className="admin-project-stats"><span>{receivedCount} received</span><span>{project.contributors} contributors</span><span>{waitingCount || 3} reported waiting</span></div>
+            <Icon name="chevron-right" size={19} />
+          </button>
+        ) : (
+          <div className="empty-list-state"><strong>No projects yet</strong><span>Create the first project, define its schema, and invite contributors.</span><Button variant="secondary" icon="plus" onClick={() => onNavigate("new-project")}>Create project</Button></div>
+        )}
       </section>
 
-      <div className="admin-lower-grid">
-        <section className="surface-card readiness-card">
-          <div className="card-heading-row"><div><Eyebrow>Readiness</Eyebrow><h2>Before final export</h2></div><Icon name="shield" size={19} /></div>
-          <p className="muted-copy">A contributor can be offline without the server knowing what is still on their device.</p>
-          <div className="readiness-list">
-            <div><Avatar initials="GP" /><div><strong>Gabriele Pizzi</strong><span>Ready · 48 submissions</span></div><Icon name="check" size={16} /></div>
-            <div><Avatar initials="MA" muted /><div><strong>Marco Alberti</strong><span>2 pending · reported 12 min ago</span></div><button className="mini-link">Ping</button></div>
-            <div><Avatar initials="SA" muted /><div><strong>Sara Antonelli</strong><span>Last seen yesterday · 22 received</span></div><button className="mini-link">Ping</button></div>
-          </div>
-        </section>
-        <section className="surface-card audit-card">
-          <div className="card-heading-row"><div><Eyebrow>Recent activity</Eyebrow><h2>Project events</h2></div><Icon name="more" size={18} /></div>
-          <div className="audit-list"><div><span className="audit-time">09:32</span><p><strong>48 submissions</strong> received from Gabriele</p></div><div><span className="audit-time">Yesterday</span><p>Schema <strong>v3</strong> published</p></div><div><span className="audit-time">Aug 07</span><p>Project assigned to <strong>3 contributors</strong></p></div></div>
-          <Divider /><button className="text-button">View audit trail <Icon name="arrow-right" size={15} /></button>
-        </section>
-      </div>
+      {hasProject && <section className="admin-readiness">
+        <div className="section-heading-row"><h2>Readiness</h2><p>Last reported device status</p></div>
+        <div className="readiness-list">
+          <div><Avatar initials="GP" /><div><strong>Gabriele Pizzi</strong><span>Ready · 48 submissions</span></div><Icon name="check" size={16} /></div>
+          <div><Avatar initials="MA" muted /><div><strong>Marco Alberti</strong><span>2 pending · reported 12 min ago</span></div><button className="mini-link">Ping</button></div>
+          <div><Avatar initials="SA" muted /><div><strong>Sara Antonelli</strong><span>Last seen yesterday · 22 received</span></div><button className="mini-link">Ping</button></div>
+        </div>
+      </section>}
     </main>
   );
 }

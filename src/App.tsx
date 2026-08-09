@@ -5,8 +5,8 @@ import type { Session } from "@supabase/supabase-js";
 import { isSubmissionPending, isSubmissionRetryable } from "./types";
 import type { AppMode, AppState, View } from "./types";
 import type { MediaAsset } from "./types";
-import { initialState } from "./data";
-import { acquireSyncLease, commitLocalSubmission, estimateLocalStorage, getOrCreateDeviceId, loadAppState, markLocalSubmissionsSynced, mediaFromAssets, recordOutboxFailure, releaseSyncLease, saveAppState } from "./lib/localStore";
+import { emptyProject, initialState } from "./data";
+import { acquireSyncLease, commitLocalSubmission, estimateLocalStorage, getOrCreateDeviceId, getStoredBackendKey, loadAppState, markLocalSubmissionsSynced, mediaFromAssets, recordOutboxFailure, releaseSyncLease, saveAppState } from "./lib/localStore";
 import { AdminDashboard, AdminProject } from "./components/AdminDashboard";
 import { AuthScreen } from "./components/AuthScreen";
 import { Collector } from "./components/Collector";
@@ -16,7 +16,7 @@ import { NewProjectWizard } from "./components/NewProjectWizard";
 import { ProjectOverview } from "./components/ProjectOverview";
 import { SyncSheet } from "./components/SyncSheet";
 import { TopBar } from "./components/TopBar";
-import { authSession, isSupabaseConfigured, supabase } from "./lib/supabaseClient";
+import { authSession, isSupabaseConfigured, localBackendKey, supabase } from "./lib/supabaseClient";
 import { claimInvites, probeRemoteHealth, reportDeviceStatus, syncRemoteObservation } from "./lib/remoteBackend";
 import { cloneSchemaDraft, createCheckpoint, createRemoteProject, loadAssignedProject, updateProjectStatus } from "./lib/adminBackend";
 
@@ -26,11 +26,12 @@ export default function App() {
   const [state, setState] = useState<AppState>(() => isSupabaseConfigured ? {
     ...initialState,
     observations: [],
-    project: { ...initialState.project, completeSubmissions: 0, contributors: 0, lastReceived: "No submissions yet" },
+    project: emptyProject,
   } : initialState);
   const [hydrated, setHydrated] = useState(false);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
   const [session, setSession] = useState<Session | null>(null);
+  const [previewUnlocked, setPreviewUnlocked] = useState(false);
   const [localCacheAvailable, setLocalCacheAvailable] = useState(false);
   const [syncSheetOpen, setSyncSheetOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -65,10 +66,11 @@ export default function App() {
 
   useEffect(() => {
     let active = true;
-    loadAppState().then((saved) => {
+    Promise.all([loadAppState(), getStoredBackendKey()]).then(([saved, storedBackendKey]) => {
       if (!active) return;
-      setLocalCacheAvailable(Boolean(saved));
-      if (saved) {
+      const belongsToCurrentBackend = !isSupabaseConfigured || storedBackendKey === localBackendKey;
+      setLocalCacheAvailable(Boolean(saved && belongsToCurrentBackend));
+      if (saved && belongsToCurrentBackend) {
         setState((current) => ({
           ...current,
           ...saved,
@@ -91,10 +93,10 @@ export default function App() {
   }, [session]);
 
   useEffect(() => {
-    if (hydrated && (!isSupabaseConfigured || session || localCacheAvailable)) {
-      void saveAppState(state).catch((error) => setStorageError(error instanceof Error && /quota|space|storage/i.test(error.message) ? "Device storage is becoming full. Sync collected data soon; unsynced records will not be deleted." : "Local storage needs attention. Your last confirmed receipt remains available."));
+    if (hydrated && (previewUnlocked || session || (isSupabaseConfigured && localCacheAvailable))) {
+      void saveAppState(state, localBackendKey).catch((error) => setStorageError(error instanceof Error && /quota|space|storage/i.test(error.message) ? "Device storage is becoming full. Sync collected data soon; unsynced records will not be deleted." : "Local storage needs attention. Your last confirmed receipt remains available."));
     }
-  }, [hydrated, localCacheAvailable, session, state]);
+  }, [hydrated, localCacheAvailable, previewUnlocked, session, state]);
 
   useEffect(() => {
     void requestStoragePersistence(setState, setStorageError);
@@ -116,6 +118,13 @@ export default function App() {
 
   const changeMode = (mode: AppMode) => {
     setState((current) => ({ ...current, mode, view: mode === "admin" ? "admin" : "home" }));
+    setSyncSheetOpen(false);
+  };
+
+  const signOut = async () => {
+    if (supabase) await supabase.auth.signOut().catch(() => undefined);
+    setSession(null);
+    setPreviewUnlocked(false);
     setSyncSheetOpen(false);
   };
 
@@ -401,10 +410,14 @@ export default function App() {
     showToast("All fieldwork synced");
   };
 
+  const requiresAuthentication = isSupabaseConfigured
+    ? !session && !localCacheAvailable
+    : !previewUnlocked;
+
   return (
-    isSupabaseConfigured && (authLoading || (!session && !localCacheAvailable)) ? <AuthScreen /> :
+    (!hydrated || authLoading || requiresAuthentication) ? <AuthScreen configured={isSupabaseConfigured} onPreview={!isSupabaseConfigured ? () => setPreviewUnlocked(true) : undefined} /> :
     <div className="app-shell">
-      <TopBar mode={state.mode} view={state.view} onModeChange={changeMode} onNavigate={navigate} isRemote={isSupabaseConfigured} />
+      <TopBar mode={state.mode} view={state.view} onModeChange={changeMode} onNavigate={navigate} userEmail={session?.user.email} isPreview={!isSupabaseConfigured} onSignOut={() => void signOut()} />
       <div className="main-shell">
         {state.mode === "contributor" && state.view === "home" && <ContributorHome project={state.project} observations={state.observations} hasDraft={hasDraft} onNavigate={navigate} />}
         {state.mode === "contributor" && state.view === "project" && <ProjectOverview project={state.project} observations={state.observations} onNavigate={navigate} onOpenSync={() => setSyncSheetOpen(true)} onFinishFieldwork={() => void finishFieldwork()} />}
