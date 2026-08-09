@@ -128,4 +128,5 @@ export interface AppState {
   storageUsage: number | null;
   project: Project;
   projects?: Project[];
+  fieldworkComplete?: Record<string, boolean>;
 }
