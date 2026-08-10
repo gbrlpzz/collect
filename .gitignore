@@ -7,3 +7,5 @@ dist/
 *.local
 *.log
 agent-browser-state/
+supabase/.temp/
+supabase/.branches/
