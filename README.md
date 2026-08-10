@@ -70,6 +70,8 @@ The last flag is intentionally explicit because it sends an email. The script ne
 
 This command does not create a Supabase or Vercel account. It provisions a project that already exists. Connect the repository to Vercel, set the `VITE_*` variables below, and enable production deploys from `main`; or run `vercel --prod` after the build.
 
+The repository also includes a manual **Deploy collect** GitHub Actions workflow. Add repository secrets for `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `APP_URL`, `BOOTSTRAP_ADMIN_EMAIL`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID`. Set the browser `VITE_*` values in the Vercel project; add `VITE_SUPABASE_PUBLISHABLE_KEY` as a GitHub secret only if the workflow’s optional magic-link action will be used. The workflow runs tests, provisions Supabase, builds, and deploys the production bundle. Its magic-link option is off by default and must be deliberately selected to send an email.
+
 ### 1. Create Supabase
 
 Create a Supabase project in the region appropriate for the field organization. Apply the migrations in filename order:
