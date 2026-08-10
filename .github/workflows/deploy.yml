@@ -1,0 +1,71 @@
+name: Deploy collect
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_magic_link:
+        description: Request one sign-in link for BOOTSTRAP_ADMIN_EMAIL after provisioning
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collect-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      APP_URL: ${{ secrets.APP_URL }}
+      BOOTSTRAP_ADMIN_EMAIL: ${{ secrets.BOOTSTRAP_ADMIN_EMAIL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Check out the release
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Verify the release
+        run: npm test
+
+      - name: Provision Supabase and Auth
+        run: |
+          if [ "${{ inputs.issue_magic_link }}" = "true" ]; then
+            npm run provision -- --issue-magic-link
+          else
+            npm run provision
+          fi
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel
+
+      - name: Pull Vercel production configuration
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build the production bundle
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy the verified bundle
+        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
