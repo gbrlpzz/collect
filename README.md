@@ -51,12 +51,32 @@ Without Supabase variables, the app opens a clearly labeled local interface prev
 
 The repository is designed to be redeployed against a new Supabase project and a new Vercel project. No service-role secret belongs in the browser.
 
+### One-command provisioning
+
+For a repeatable setup, install the Supabase CLI and export the deployment inputs below. The provisioning command configures the hosted Auth URL and magic-link template through the Supabase Management API, applies the ordered migrations, sets the server-side bootstrap guard, deploys every Edge Function, and can request the first administrator’s link.
+
+```bash
+export SUPABASE_ACCESS_TOKEN=...          # Supabase account token; keep it private
+export SUPABASE_PROJECT_REF=...           # for example lrqlrufwrytpwhgclmyo
+export APP_URL=https://your-collect.vercel.app
+export BOOTSTRAP_ADMIN_EMAIL=admin@example.org
+export VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+
+# Add SUPABASE_DB_PASSWORD only if the CLI asks for the database password.
+npm run provision -- --issue-magic-link
+```
+
+The last flag is intentionally explicit because it sends an email. The script never prints or stores the one-time token, and it only uses the publishable browser key for the Auth request. `SUPABASE_ACCESS_TOKEN`, database credentials, and the service-role key never enter the frontend bundle. Add local development or preview URLs only when needed with `SUPABASE_REDIRECT_URLS`, as a comma-separated list.
+
+This command does not create a Supabase or Vercel account. It provisions a project that already exists. Connect the repository to Vercel, set the `VITE_*` variables below, and enable production deploys from `main`; or run `vercel --prod` after the build.
+
 ### 1. Create Supabase
 
 Create a Supabase project in the region appropriate for the field organization. Apply the migrations in filename order:
 
 ```bash
-supabase db push --project-ref "$SUPABASE_PROJECT_REF"
+supabase link --project-ref "$SUPABASE_PROJECT_REF"
+supabase db push --linked
 ```
 
 The migrations create Postgres tables, RLS policies, private Storage buckets, immutable-schema/submission protections, and the race-safe first-workspace function.
@@ -82,6 +102,10 @@ In Supabase Authentication → URL Configuration:
 - configure a trusted SMTP provider for production email delivery.
 
 Magic links are one-time links and expire. `collect` now detects an expired callback, preserves the last email address in the current browser session, and offers **Send a new link** from the same screen. If an email security scanner consumes a link first, request another link rather than reusing the old one. Set `VITE_APP_URL` to the canonical deployed origin so links generated from a preview or local development page still return to the real app. Also set the Supabase **Site URL** to that same origin; the email template’s redirect must not be a localhost URL.
+
+### Install on iPhone
+
+Open the deployed app in Safari, tap **Share**, choose **Add to Home Screen**, then tap **Add**. Open `collect` from the new Home Screen icon before fieldwork; the installed PWA keeps the application shell available when the connection disappears. The sign-in screen repeats these steps on iPhone when the app is not already installed.
 
 ### 3. Establish the first administrator
 
