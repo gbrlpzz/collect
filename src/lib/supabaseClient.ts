@@ -1,4 +1,4 @@
-import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type EmailOtpType, type Session, type SupabaseClient } from "@supabase/supabase-js";
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const publishableKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
@@ -47,6 +47,19 @@ function authCallbackParams(): URLSearchParams[] {
   ];
 }
 
+function authTokenHashParams(): { tokenHash: string; type: EmailOtpType } | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  const tokenHash = params.get("token_hash");
+  if (!tokenHash) return null;
+  const requestedType = params.get("type");
+  const supportedTypes: EmailOtpType[] = ["email", "invite", "magiclink", "recovery", "email_change", "signup"];
+  const type = supportedTypes.includes(requestedType as EmailOtpType)
+    ? (requestedType as EmailOtpType)
+    : "email";
+  return { tokenHash, type };
+}
+
 /**
  * Supabase returns expired or already-used magic-link errors in the callback
  * URL. Keep this separate from session parsing so the UI can explain what
@@ -63,6 +76,28 @@ export function authCallbackError(): string | null {
     return "That one-time link expired or was already used. Request a new link below.";
   }
   return "That sign-in link could not be used. Request a new one below.";
+}
+
+/**
+ * Remove callback credentials and errors from the address bar after Supabase
+ * has finished processing them. Access tokens belong in the client session,
+ * never in a URL that remains visible or can be copied into another app.
+ */
+export function clearAuthCallbackUrl(): void {
+  if (typeof window === "undefined" || !window.history?.replaceState) return;
+  const url = new URL(window.location.href);
+  const callbackKeys = new Set([
+    "code",
+    "token_hash",
+    "error",
+    "error_code",
+    "error_description",
+    "error_reason",
+    "type",
+  ]);
+  for (const key of callbackKeys) url.searchParams.delete(key);
+  url.hash = "";
+  window.history.replaceState(window.history.state, document.title, `${url.pathname}${url.search}`);
 }
 
 export function pendingAuthEmail(): string {
@@ -98,7 +133,20 @@ export async function sendMagicLink(email: string): Promise<void> {
   if (error) throw error;
 }
 
-export function authSession(): Promise<{ data: { session: Session | null }; error: Error | null }> {
-  if (!supabase) return Promise.resolve({ data: { session: null }, error: null });
-  return supabase.auth.getSession();
+export async function authSession(): Promise<{ data: { session: Session | null }; error: Error | null }> {
+  if (!supabase) return { data: { session: null }, error: null };
+  const tokenHash = authTokenHashParams();
+  if (tokenHash) {
+    const result = await supabase.auth.verifyOtp({ token_hash: tokenHash.tokenHash, type: tokenHash.type });
+    // Token-hash callbacks are single-use credentials. Remove them whether
+    // verification succeeded or returned an explicit Auth error.
+    clearAuthCallbackUrl();
+    return { data: { session: result.data.session }, error: result.error };
+  }
+  const result = await supabase.auth.getSession();
+  // getSession waits for Supabase's URL detection to finish. Only then is it
+  // safe to clean the fragment; this preserves the implicit-flow fallback
+  // while ensuring expired/error callbacks never leave a token-shaped URL.
+  if (result.data.session || authCallbackError()) clearAuthCallbackUrl();
+  return result;
 }
