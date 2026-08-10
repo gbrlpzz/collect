@@ -102,7 +102,7 @@ async function updateAuthConfig({ projectRef, accessToken, appUrl, redirectUrls 
       uri_allow_list: redirectUrls.join(","),
       mailer_subjects_magic_link: "Your collect sign-in link",
       mailer_templates_magic_link_content:
-        '<h2>Sign in to collect</h2><p>Use the link below to open your fieldwork workspace. This link expires shortly and can only be used once.</p><p><a href="{{ .ConfirmationURL }}">Open collect</a></p><p>If you did not request this, you can ignore this email.</p>',
+        '<h2>Sign in to collect</h2><p>Use the link below to open your fieldwork workspace. This link expires shortly and can only be used once.</p><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email">Open collect</a></p><p>If you did not request this, you can ignore this email.</p>',
     }),
   });
 
