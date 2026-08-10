@@ -8,8 +8,22 @@ interface AuthScreenProps {
   onPreview?: () => void;
 }
 
+function isAppleMobileBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const userAgent = navigator.userAgent;
+  const iPadDesktopMode = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  return /iPhone|iPad|iPod/.test(userAgent) || iPadDesktopMode;
+}
+
+function isStandaloneApp(): boolean {
+  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
+  const standaloneNavigator = navigator as Navigator & { standalone?: boolean };
+  return Boolean(window.matchMedia?.("(display-mode: standalone)").matches || standaloneNavigator.standalone);
+}
+
 export function AuthScreen({ configured, onPreview }: AuthScreenProps) {
   const emailInputId = useId();
+  const showInstallHint = isAppleMobileBrowser() && !isStandaloneApp();
   const [email, setEmail] = useState(pendingAuthEmail);
   const [sent, setSent] = useState(false);
   const [callbackIssue, setCallbackIssue] = useState<string | null>(() => authCallbackError());
@@ -64,6 +78,7 @@ export function AuthScreen({ configured, onPreview }: AuthScreenProps) {
           <div className="auth-sent"><Eyebrow>Check your inbox</Eyebrow><h1>Link sent.</h1><p>Open the newest link sent to <strong>{email}</strong> on this device. Each link works once and then expires.</p><p className="auth-sent-hint">If you do not see it, check spam. Do not use an older message.</p>{error && <p className="auth-error" role="alert">{error}</p>}<button className="text-button" onClick={() => void submit()} disabled={busy}>{busy ? "Sending…" : "Send a new link"} <Icon name="refresh" size={15} /></button><button className="text-button" onClick={() => { setSent(false); setError(null); setCallbackIssue(null); }}>Use another email <Icon name="arrow-right" size={15} /></button></div>
         )}
         {!configured && onPreview && <button className="auth-preview-button" onClick={onPreview}>Open interface preview <Icon name="arrow-right" size={15} /></button>}
+        {showInstallHint && <details className="auth-install-help"><summary><Icon name="plus" size={16} /> Add collect to Home Screen</summary><div className="auth-install-content"><p>For reliable offline fieldwork, install collect from Safari.</p><ol><li>Tap <strong>Share</strong>.</li><li>Tap <strong>Add to Home Screen</strong>.</li><li>Tap <strong>Add</strong>.</li></ol><p>Open collect from the new icon when you are ready to work offline.</p></div></details>}
       </section>
       <p className="auth-footnote"><Icon name="lock" size={14} /> Previously downloaded fieldwork remains available offline.</p>
     </main>
