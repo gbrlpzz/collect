@@ -121,6 +121,13 @@ export function rememberAuthEmail(email: string): void {
 export async function sendMagicLink(email: string): Promise<void> {
   if (!supabase) throw new Error("Supabase is not configured");
   const emailRedirectTo = authRedirectOrigin();
+  if (isLocalOrigin(emailRedirectTo)) {
+    // A magic link that returns to localhost can only be opened on the same
+    // machine/browser that requested it — never on a phone or another device.
+    // Deployments must set VITE_APP_URL to the canonical origin so links
+    // always return to the real app (see .env.example).
+    console.warn("[collect] VITE_APP_URL is not set; sign-in links will return to", emailRedirectTo);
+  }
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
