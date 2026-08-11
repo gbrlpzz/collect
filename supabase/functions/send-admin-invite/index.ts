@@ -25,7 +25,7 @@ Deno.serve(async (request) => {
       redirectTo: Deno.env.get("APP_URL") ?? "https://collect-tawny.vercel.app",
     });
     if (inviteResult.error && !/already|registered|exists/i.test(inviteResult.error.message)) {
-      return json({ error: "The invitation could not be sent" }, { status: 502 });
+      return json({ error: `The invitation could not be sent: ${inviteResult.error.message}` }, { status: 502 });
     }
     const invitedUserId = inviteResult.data?.user?.id ?? null;
 
