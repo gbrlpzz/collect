@@ -12,14 +12,14 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 | Form builder (M4) | ✅ | typed fields, draft→immutable version publishing, semantic_uri hook |
 | Exports (M5) | ✅ | checkpoints, JSONL/CSV/GeoJSON/media/manifest ZIP, recovery package |
 | Recovery (M6) | ✅ | recovery mode on DB failure, stored-data recovery export, storage pressure |
-| Field hardening (M7) | 🟡 | live E2E + §54 test suite in progress |
+| Field hardening (M7) | ✅ | live E2E 20/20 + §54 test suites (23 tests) |
 | License → Apache-2.0 | ✅ | LICENSE/NOTICE swapped, README rewritten, holder Gabriele Pizzi |
 | Backend security audit (G1–G7) | ✅ | migration 20260810120000 + function hardening deployed |
 | Issue #18 privacy disclosure | ✅ | "What collect records on this device" in project view |
-| §54 critical failure tests | 🟡 | IDB integration + component suites in progress |
-| Export-format docs + demo dataset | 🟡 | export-format.md pending |
-| CI: Deno check for edge functions | 🟡 | pending |
-| Live E2E verification | 🟡 | pending |
+| §54 critical failure tests | ✅ | 23 tests: ledger survival, lease, recovery, validation, sync sheet |
+| Export-format docs + demo dataset | ✅ | docs/export-format.md + docs/demo-dataset |
+| CI: Deno check for edge functions | ✅ | deno check + fmt in ci.yml |
+| Live E2E verification | ✅ | 20/20 checks against lrqlrufwrytpwhgclmyo (create→TUS→confirm→finalize→heartbeat→checkpoint ZIP) |
 
 ## Spec coverage checklist
 

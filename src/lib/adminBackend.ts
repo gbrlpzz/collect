@@ -124,8 +124,15 @@ export async function createRemoteProject(input: NewProjectInput): Promise<Proje
     const { data: organization } = await client.from("organizations").select("name").eq("id", organizationId).maybeSingle();
     organizationName = organization?.name ?? defaultOrganizationName;
   }
-  const { data: project, error: projectError } = await client.from("projects").insert({ organization_id: organizationId, name: input.name.trim() || "Untitled field project", description: input.description, instructions: input.instructions, created_by: userData.user.id }).select("id,name,description,instructions,status,organization_id").single();
-  if (projectError || !project) throw new Error("Project could not be created");
+  // No .select() here: INSERT ... RETURNING re-applies the SELECT policy, whose
+  // membership check cannot see the just-inserted row in the same statement.
+  // The id is client-generated (stable identity), inserted first, then read
+  // back in a separate statement.
+  const projectId = crypto.randomUUID();
+  const { error: projectError } = await client.from("projects").insert({ id: projectId, organization_id: organizationId, name: input.name.trim() || "Untitled field project", description: input.description, instructions: input.instructions, created_by: userData.user.id });
+  if (projectError) throw new Error("Project could not be created");
+  const { data: project, error: projectReadError } = await client.from("projects").select("id,name,description,instructions,status,organization_id").eq("id", projectId).maybeSingle();
+  if (projectReadError || !project) throw new Error("Project could not be created");
   const schemaId = crypto.randomUUID();
   const schemaJson = { schema_id: schemaId, version: 1, project_id: project.id, published_at: new Date().toISOString(), fields: input.fields };
   const { error: schemaError } = await client.from("project_schemas").insert({ id: schemaId, project_id: project.id, version: 1, schema_json: schemaJson, published_at: new Date().toISOString(), published_by: userData.user.id });
