@@ -48,6 +48,7 @@ export interface DurableMedia {
   byteSize: number;
   originalFilename: string;
   capturedAt?: string;
+  captureSource?: string;
   sha256?: string;
   blob?: Blob;
   uploadState: "QUEUED" | "SYNCED";
@@ -61,6 +62,7 @@ export interface OutboxOperation {
   attempts: number;
   createdAt: string;
   nextAttemptAt: string;
+  lastAttemptAt: string | null;
   lastError: string | null;
   state: "QUEUED" | "IN_PROGRESS" | "ACKNOWLEDGED" | "RETRYABLE_ERROR" | "ACTION_REQUIRED";
 }
@@ -116,6 +118,61 @@ export async function loadAppState(): Promise<Partial<AppState> | null> {
     };
   } catch {
     return null;
+  }
+}
+
+export interface StoredRecoveryData {
+  submissions: Observation[];
+  media: DurableMedia[];
+  outbox: OutboxOperation[];
+  drafts: unknown;
+  projects: unknown;
+  appState: unknown;
+}
+
+/**
+ * Read every local store directly. This is the recovery-mode path: it works
+ * even when the app-state singleton is missing or corrupt, and it is what the
+ * recovery export and "known records" sync use when normal boot fails.
+ */
+export async function readStoredRecoveryData(): Promise<StoredRecoveryData> {
+  const database = await openDatabase();
+  const transaction = database.transaction(ALL_STORES, "readonly");
+  const transactionComplete = waitForTransaction(transaction);
+  const [submissions, media, outbox, drafts, projects, appState] = await Promise.all([
+    createRequest(transaction.objectStore(SUBMISSIONS_STORE).getAll()),
+    createRequest(transaction.objectStore(MEDIA_STORE).getAll()),
+    createRequest(transaction.objectStore(OUTBOX_STORE).getAll()),
+    createRequest(transaction.objectStore(DRAFTS_STORE).get("active")),
+    createRequest(transaction.objectStore(PROJECTS_STORE).getAll()),
+    createRequest(transaction.objectStore(APP_STATE_STORE).get(STATE_KEY)),
+  ]);
+  await transactionComplete;
+  return {
+    submissions: submissions as Observation[],
+    media: media as DurableMedia[],
+    outbox: outbox as OutboxOperation[],
+    drafts,
+    projects,
+    appState,
+  };
+}
+
+/** A lightweight boot probe so the app can distinguish "empty database" from
+ * "database needs attention" instead of silently booting blank. */
+export async function probeLocalDatabase(): Promise<{ ok: boolean; error: string | null }> {
+  if (!("indexedDB" in window)) return { ok: false, error: "IndexedDB is not available in this browser" };
+  try {
+    const database = await openDatabase();
+    const transaction = database.transaction([APP_STATE_STORE, SUBMISSIONS_STORE], "readonly");
+    await Promise.all([
+      createRequest(transaction.objectStore(APP_STATE_STORE).get(STATE_KEY)),
+      createRequest(transaction.objectStore(SUBMISSIONS_STORE).getAll()),
+      waitForTransaction(transaction),
+    ]);
+    return { ok: true, error: null };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "The local database could not be opened" };
   }
 }
 
@@ -193,6 +250,7 @@ export async function commitLocalSubmission(input: {
     attempts: 0,
     createdAt: input.submission.clientCreatedAt,
     nextAttemptAt: input.submission.clientCreatedAt,
+    lastAttemptAt: null,
     lastError: null,
     state: "QUEUED",
   } satisfies OutboxOperation, `submission:${input.submission.id}`);
@@ -204,6 +262,7 @@ export async function commitLocalSubmission(input: {
     attempts: 0,
     createdAt: input.submission.clientCreatedAt,
     nextAttemptAt: input.submission.clientCreatedAt,
+    lastAttemptAt: null,
     lastError: null,
     state: "QUEUED",
   } satisfies OutboxOperation, `media:${media.id}`));
@@ -215,6 +274,7 @@ export async function commitLocalSubmission(input: {
     attempts: 0,
     createdAt: input.submission.clientCreatedAt,
     nextAttemptAt: input.submission.clientCreatedAt,
+    lastAttemptAt: null,
     lastError: null,
     state: "QUEUED",
   } satisfies OutboxOperation, `finalize:${input.submission.id}`);
@@ -321,6 +381,7 @@ export async function recordOutboxFailure(id: string, message: string, actionReq
           ...operation,
           attempts,
           lastError: message,
+          lastAttemptAt: new Date(now).toISOString(),
           nextAttemptAt: new Date(now + delay).toISOString(),
           state: actionRequired ? "ACTION_REQUIRED" : "RETRYABLE_ERROR",
         }, operation.id);
@@ -418,6 +479,7 @@ export function mediaFromAssets(assets: MediaAsset[], submissionId: string, fiel
     byteSize: asset.byteSize,
     originalFilename: asset.name,
     capturedAt: asset.capturedAt,
+    captureSource: asset.captureSource,
     sha256: asset.sha256,
     blob: asset.blob,
     uploadState: "QUEUED",

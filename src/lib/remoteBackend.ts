@@ -19,7 +19,21 @@ function requireClient() {
 async function invoke<T>(functionName: string, body: Record<string, unknown>, schema: z.ZodType<T>): Promise<T> {
   const client = requireClient();
   const { data, error } = await client.functions.invoke(functionName, { body });
-  if (error) throw error;
+  if (error) {
+    // Supabase wraps non-2xx responses in FunctionsHttpError whose message is
+    // only a status line. The server's reason lives in the response body; it
+    // is what drives ACTION_REQUIRED classification and honest UI copy.
+    const context = error && typeof error === "object" ? (error as { context?: unknown }).context : null;
+    if (context && typeof context === "object" && "clone" in context && typeof (context as { clone?: unknown }).clone === "function") {
+      try {
+        const body = await (context as Response).clone().json() as { error?: unknown };
+        if (typeof body.error === "string" && body.error.trim()) throw new Error(body.error);
+      } catch (caught) {
+        if (caught instanceof Error && caught.message !== "Unexpected end of JSON input") throw caught;
+      }
+    }
+    throw error;
+  }
   return schema.parse(data);
 }
 
@@ -28,6 +42,11 @@ export interface RemoteSyncInput {
   project: Project;
   deviceId: string;
   appVersion: string;
+}
+
+export interface SyncProgressCallbacks {
+  onPhase?: (submissionId: string, phase: string) => void;
+  onMediaProgress?: (submissionId: string, mediaId: string, percent: number) => void;
 }
 
 export async function createRemoteSubmission({ observation, project, deviceId, appVersion }: RemoteSyncInput): Promise<void> {
@@ -51,12 +70,13 @@ export async function createRemoteSubmission({ observation, project, deviceId, a
       byte_size: asset.byteSize,
       original_filename: asset.name,
       captured_at: asset.capturedAt ?? observation.clientCreatedAt ?? new Date().toISOString(),
+      capture_source: asset.captureSource ?? "picker",
       sha256: asset.sha256 ?? null,
     })),
   }, z.object({ accepted: z.boolean(), idempotent: z.boolean().optional() }));
 }
 
-export async function uploadRemoteMedia({ observation, project, asset }: { observation: Observation; project: Project; asset: MediaAsset }): Promise<void> {
+export async function uploadRemoteMedia({ observation, project, asset, onProgress }: { observation: Observation; project: Project; asset: MediaAsset; onProgress?: (percent: number) => void }): Promise<void> {
   const client = requireClient();
   if (!asset.blob) throw new Error(`Media ${asset.id} has no local blob`);
   const objectName = buildMediaObjectPath(project.id, observation.id, asset.id);
@@ -80,6 +100,9 @@ export async function uploadRemoteMedia({ observation, project, asset }: { obser
         authorization: `Bearer ${accessToken}`,
         apikey: publishableKey,
       },
+      onProgress: onProgress ? (bytesSent: number, bytesTotal: number) => {
+        if (bytesTotal > 0) onProgress(Math.min(100, Math.round((bytesSent / bytesTotal) * 100)));
+      } : undefined,
       metadata: {
         bucketName: "collect-media",
         objectName,
@@ -111,18 +134,28 @@ export async function finalizeRemoteSubmission({ observation }: { observation: O
   return receipt;
 }
 
-export async function syncRemoteObservation(input: RemoteSyncInput): Promise<RemoteReceipt> {
-  await setLocalSubmissionStatus(input.observation.id, "SYNCING_METADATA");
-  await markOutboxOperation(`submission:${input.observation.id}`, "IN_PROGRESS");
+export async function syncRemoteObservation(input: RemoteSyncInput, progress: SyncProgressCallbacks = {}): Promise<RemoteReceipt> {
+  const id = input.observation.id;
+  progress.onPhase?.(id, "SYNCING_METADATA");
+  await setLocalSubmissionStatus(id, "SYNCING_METADATA");
+  await markOutboxOperation(`submission:${id}`, "IN_PROGRESS");
   await createRemoteSubmission(input);
-  await setLocalSubmissionStatus(input.observation.id, "SYNCING_MEDIA");
+  progress.onPhase?.(id, "SYNCING_MEDIA");
+  await setLocalSubmissionStatus(id, "SYNCING_MEDIA");
   for (const asset of input.observation.media ?? []) {
     await markOutboxOperation(`media:${asset.id}`, "IN_PROGRESS");
-    await uploadRemoteMedia({ observation: input.observation, project: input.project, asset });
+    await uploadRemoteMedia({
+      observation: input.observation,
+      project: input.project,
+      asset,
+      onProgress: (percent) => progress.onMediaProgress?.(id, asset.id, percent),
+    });
     await markOutboxOperation(`media:${asset.id}`, "ACKNOWLEDGED");
+    progress.onMediaProgress?.(id, asset.id, 100);
   }
-  await setLocalSubmissionStatus(input.observation.id, "FINALIZING");
-  await markOutboxOperation(`finalize:${input.observation.id}`, "IN_PROGRESS");
+  progress.onPhase?.(id, "FINALIZING");
+  await setLocalSubmissionStatus(id, "FINALIZING");
+  await markOutboxOperation(`finalize:${id}`, "IN_PROGRESS");
   return finalizeRemoteSubmission({ observation: input.observation });
 }
 

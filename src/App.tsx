@@ -6,15 +6,16 @@ import { isSubmissionPending, isSubmissionRetryable } from "./types";
 import type { AppMode, AppState, View } from "./types";
 import type { MediaAsset } from "./types";
 import { emptyProject, initialState } from "./data";
-import { acquireSyncLease, commitLocalSubmission, estimateLocalStorage, getExplicitSignOut, getOrCreateDeviceId, getStoredBackendKey, loadAppState, markLocalSubmissionsSynced, mediaFromAssets, recordOutboxFailure, releaseSyncLease, saveAppState, setExplicitSignOut } from "./lib/localStore";
+import { acquireSyncLease, commitLocalSubmission, estimateLocalStorage, getExplicitSignOut, getOrCreateDeviceId, getOutboxOperations, getStoredBackendKey, loadAppState, markLocalSubmissionsSynced, mediaFromAssets, probeLocalDatabase, readStoredRecoveryData, recordOutboxFailure, releaseSyncLease, saveAppState, setExplicitSignOut } from "./lib/localStore";
 import { AdminDashboard, AdminProject } from "./components/AdminDashboard";
 import { AuthScreen } from "./components/AuthScreen";
 import { Collector } from "./components/Collector";
 import { ContributorHome } from "./components/ContributorHome";
+import { Button, Eyebrow } from "./components/Primitives";
 import { Icon } from "./components/Icon";
 import { NewProjectWizard } from "./components/NewProjectWizard";
 import { ProjectOverview } from "./components/ProjectOverview";
-import { SyncSheet } from "./components/SyncSheet";
+import { SyncSheet, type SyncProgressEntry } from "./components/SyncSheet";
 import { TopBar } from "./components/TopBar";
 import { authSession, isSupabaseConfigured, localBackendKey, supabase } from "./lib/supabaseClient";
 import { claimInvites, probeRemoteHealth, reportDeviceStatus, syncRemoteObservation } from "./lib/remoteBackend";
@@ -38,8 +39,10 @@ export default function App() {
   const [explicitSignOut, setExplicitSignOutState] = useState(false);
   const [syncSheetOpen, setSyncSheetOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState<Record<string, SyncProgressEntry>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
+  const [dbError, setDbError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<number | undefined>(undefined);
   const syncOwnerRef = useRef(`sync-worker-${crypto.randomUUID()}`);
@@ -77,21 +80,36 @@ export default function App() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([loadAppState(), getStoredBackendKey(), getExplicitSignOut()]).then(([saved, storedBackendKey, storedExplicitSignOut]) => {
+    void probeLocalDatabase().then((probe) => {
       if (!active) return;
-      setExplicitSignOutState(storedExplicitSignOut);
-      const belongsToCurrentBackend = !isSupabaseConfigured || storedBackendKey === localBackendKey;
-      setLocalCacheAvailable(Boolean(saved && belongsToCurrentBackend));
-      if (saved && belongsToCurrentBackend) {
-        setCanAdmin(!isSupabaseConfigured || saved.mode === "admin");
-        setState((current) => ({
-          ...current,
-          ...saved,
-          project: { ...current.project, ...(saved.project ?? {}) },
-          projects: saved.projects ?? (saved.project ? [saved.project] : current.projects),
-        }));
+      if (!probe.ok) {
+        // Recovery mode: never boot a blank state over an unreadable database,
+        // and never let the autosave effect overwrite it (see autosave guard).
+        setDbError(probe.error);
+        setHydrated(true);
+        return;
       }
-      setHydrated(true);
+      return Promise.all([loadAppState(), getStoredBackendKey(), getExplicitSignOut()]).then(([saved, storedBackendKey, storedExplicitSignOut]) => {
+        if (!active) return;
+        setExplicitSignOutState(storedExplicitSignOut);
+        const belongsToCurrentBackend = !isSupabaseConfigured || storedBackendKey === localBackendKey;
+        setLocalCacheAvailable(Boolean(saved && belongsToCurrentBackend));
+        if (saved && belongsToCurrentBackend) {
+          setCanAdmin(!isSupabaseConfigured || saved.mode === "admin");
+          setState((current) => ({
+            ...current,
+            ...saved,
+            project: { ...current.project, ...(saved.project ?? {}) },
+            projects: saved.projects ?? (saved.project ? [saved.project] : current.projects),
+          }));
+        }
+        setHydrated(true);
+      });
+    }).catch(() => {
+      if (active) {
+        setDbError("The local database could not be opened");
+        setHydrated(true);
+      }
     });
     return () => { active = false; };
   }, []);
@@ -130,10 +148,35 @@ export default function App() {
   }, [session]);
 
   useEffect(() => {
-    if (hydrated && (previewUnlocked || session || (isSupabaseConfigured && localCacheAvailable))) {
-      void saveAppState(state, localBackendKey).catch((error) => setStorageError(error instanceof Error && /quota|space|storage/i.test(error.message) ? "Device storage is becoming full. Sync collected data soon; unsynced records will not be deleted." : "Local storage needs attention. Your last confirmed receipt remains available."));
-    }
-  }, [hydrated, localCacheAvailable, previewUnlocked, session, state]);
+    if (dbError || !hydrated) return;
+    if (!(previewUnlocked || session || (isSupabaseConfigured && localCacheAvailable))) return;
+    const markReady = () => {
+      const readyIds = (state.projects?.length ? state.projects : [state.project]).map((candidate) => candidate.id);
+      setState((current) => {
+        const offlineReady = { ...(current.offlineReady ?? {}), ...Object.fromEntries(readyIds.map((id) => [id, true])) };
+        if (JSON.stringify(offlineReady) === JSON.stringify(current.offlineReady ?? {})) return current;
+        return { ...current, offlineReady };
+      });
+    };
+    const persist = () => {
+      void saveAppState(state, localBackendKey).then(markReady).catch((error) => setStorageError(error instanceof Error && /quota|space|storage/i.test(error.message) ? "Device storage is becoming full. Sync collected data soon; unsynced records will not be deleted." : "Local storage needs attention. Your last confirmed receipt remains available."));
+    };
+    // Debounced draft autosave: keystrokes never trigger a full-state write;
+    // the latest change commits shortly after typing stops, and a page-hide
+    // flush guarantees nothing is lost when the app disappears.
+    const timer = window.setTimeout(persist, 400);
+    const flush = () => {
+      window.clearTimeout(timer);
+      persist();
+    };
+    window.addEventListener("pagehide", flush);
+    window.addEventListener("visibilitychange", flush);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pagehide", flush);
+      window.removeEventListener("visibilitychange", flush);
+    };
+  }, [hydrated, localCacheAvailable, previewUnlocked, session, state, dbError]);
 
   useEffect(() => {
     void requestStoragePersistence(setState, setStorageError);
@@ -265,7 +308,10 @@ export default function App() {
           try {
             const project = state.projects?.find((candidate) => candidate.id === observation.projectId) ?? state.project;
             const receipt = isSupabaseConfigured
-              ? await syncRemoteObservation({ observation, project, deviceId, appVersion: APP_VERSION })
+              ? await syncRemoteObservation({ observation, project, deviceId, appVersion: APP_VERSION }, {
+                  onPhase: (submissionId, phase) => setSyncProgress((current) => ({ ...current, [submissionId]: { phase, media: current[submissionId]?.media ?? {} } })),
+                  onMediaProgress: (submissionId, mediaId, percent) => setSyncProgress((current) => ({ ...current, [submissionId]: { phase: current[submissionId]?.phase ?? "SYNCING_MEDIA", media: { ...(current[submissionId]?.media ?? {}), [mediaId]: percent } } })),
+                })
               : null;
             const receiptAt = new Date().toISOString();
             await markLocalSubmissionsSynced([observation.id], {
@@ -289,9 +335,19 @@ export default function App() {
                   lastSyncAt: receiptAt,
                 };
               });
+            setSyncProgress((current) => {
+              const next = { ...current };
+              delete next[observation.id];
+              return next;
+            });
           } catch (error) {
             const message = error instanceof Error ? error.message : "Synchronization could not be completed";
-            const actionRequired = /unknown schema|revoked|forbidden|not authorized|permission|conflict|corrupt/i.test(message);
+            setSyncProgress((current) => {
+              const next = { ...current };
+              delete next[observation.id];
+              return next;
+            });
+            const actionRequired = /unknown schema|revoked|forbidden|not authorized|permission|conflict|corrupt|assignment is not active|belongs to another|immutable|does not match the published schema|is not a published option|not configured as the first administrator/i.test(message);
             await recordOutboxFailure(observation.id, message, actionRequired);
             setState((current) => ({
               ...current,
@@ -324,6 +380,7 @@ export default function App() {
     } finally {
       window.clearInterval(leaseRefreshTimer);
       setIsSyncing(false);
+      if (completed) setSyncProgress({});
       void releaseSyncLease(syncOwnerRef.current).catch(() => undefined);
     }
     return completed;
@@ -331,6 +388,8 @@ export default function App() {
 
   const syncNowRef = useRef(syncNow);
   syncNowRef.current = syncNow;
+  const isSyncingRef = useRef(isSyncing);
+  isSyncingRef.current = isSyncing;
 
   useEffect(() => {
     if (!isSupabaseConfigured || !session || !pendingCount) return;
@@ -347,6 +406,36 @@ export default function App() {
       window.removeEventListener("visibilitychange", attempt);
     };
   }, [pendingCount, session]);
+
+  // Durable backoff scheduler: retry operations whose nextAttemptAt has
+  // elapsed, on a fixed cadence and when the app returns to the foreground.
+  // Correctness never depends on this timer — the same queue is processed on
+  // launch, online events, and manual Sync Now.
+  useEffect(() => {
+    if (!isSupabaseConfigured || !session || !hydrated) return;
+    let timer: number | undefined;
+    const check = () => {
+      if (isSyncingRef.current) return;
+      void getOutboxOperations().then((operations) => {
+        const due = operations.some((operation) =>
+          (operation.state === "QUEUED" || operation.state === "RETRYABLE_ERROR") &&
+          new Date(operation.nextAttemptAt).getTime() <= Date.now());
+        if (due) {
+          void probeRemoteHealth().then((available) => {
+            if (available) void syncNowRef.current();
+          });
+        }
+      }).catch(() => undefined);
+    };
+    timer = window.setInterval(check, 30_000);
+    window.addEventListener("visibilitychange", check);
+    window.addEventListener("online", check);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("visibilitychange", check);
+      window.removeEventListener("online", check);
+    };
+  }, [isSupabaseConfigured, session, hydrated]);
 
   useEffect(() => {
     if (!isSupabaseConfigured || !session || !hydrated || !state.projects?.length) return;
@@ -502,7 +591,7 @@ export default function App() {
     <div className="app-shell">
       <TopBar mode={state.mode} view={state.view} onModeChange={changeMode} onNavigate={navigate} canAdmin={canAdmin} userEmail={session?.user.email} isPreview={!isSupabaseConfigured} onSignOut={() => void signOut()} />
       <div className="main-shell">
-        {state.mode === "contributor" && state.view === "home" && <ContributorHome projects={state.projects?.length ? state.projects : state.project.id === "empty-project" ? [] : [state.project]} observations={state.observations} hasDraft={hasDraft} onNavigate={navigate} onSelectProject={(project) => selectProject(project)} />}
+        {state.mode === "contributor" && state.view === "home" && <ContributorHome projects={state.projects?.length ? state.projects : state.project.id === "empty-project" ? [] : [state.project]} observations={state.observations} hasDraft={hasDraft} offlineReady={state.offlineReady ?? {}} onNavigate={navigate} onSelectProject={(project) => selectProject(project)} onMakeAvailableOffline={(project) => { void saveAppState({ ...state, project, view: state.view, mode: state.mode }, localBackendKey).then(() => { setState((current) => ({ ...current, offlineReady: { ...(current.offlineReady ?? {}), [project.id]: true } })); showToast("Ready to work offline"); }).catch(() => showToast("This device could not store the project yet")); }} />}
         {state.mode === "contributor" && state.view === "project" && <ProjectOverview project={state.project} observations={selectedObservations} onNavigate={navigate} onOpenSync={() => setSyncSheetOpen(true)} onFinishFieldwork={() => void finishFieldwork()} />}
         {state.mode === "contributor" && state.view === "collector" && <Collector project={state.project} draft={state.draft} lastSavedAt={state.lastSavedAt} onDraftChange={updateDraft} onSubmit={submitObservation} onBack={() => navigate("project")} isSaving={isSaving} />}
         {state.mode === "admin" && state.view === "admin" && <AdminDashboard project={state.project} projects={state.projects} observations={state.observations} onNavigate={navigate} onSelectProject={(project) => selectProject(project, "admin-project")} />}
@@ -518,7 +607,7 @@ export default function App() {
         </nav>
       )}
 
-      {syncSheetOpen && <SyncSheet observations={state.observations} lastSyncAt={state.lastSyncAt} isSyncing={isSyncing} onClose={() => setSyncSheetOpen(false)} onSync={syncNow} onRecoveryExport={exportRecoveryPackage} />}
+      {syncSheetOpen && <SyncSheet observations={state.observations} lastSyncAt={state.lastSyncAt} isSyncing={isSyncing} progress={syncProgress} onClose={() => setSyncSheetOpen(false)} onSync={syncNow} onRecoveryExport={exportRecoveryPackage} />}
       {storageError && <div className="storage-alert" role="alert"><Icon name="info" size={16} /><span>{storageError}</span><button onClick={() => setStorageError(null)} aria-label="Dismiss local storage alert"><Icon name="x" size={15} /></button></div>}
       {toast && <div className="toast" role="status"><Icon name="check" size={16} /><span>{toast}</span></div>}
     </div>

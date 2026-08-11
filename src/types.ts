@@ -60,6 +60,8 @@ export interface FieldDefinition {
   type: FieldType;
   description?: string;
   required?: boolean;
+  /** Nullable future-facing hook for ontology mapping; not surfaced in the MVP UI. */
+  semantic_uri?: string | null;
   config?: Record<string, string | number | boolean>;
   options?: FieldOption[];
   children?: FieldDefinition[];
@@ -99,6 +101,7 @@ export interface MediaAsset {
   mimeType: string;
   byteSize: number;
   capturedAt?: string;
+  captureSource?: string;
   sha256?: string;
   fieldId?: string;
   blob?: Blob;
@@ -129,4 +132,6 @@ export interface AppState {
   project: Project;
   projects?: Project[];
   fieldworkComplete?: Record<string, boolean>;
+  /** Projects whose metadata, schema, and shell assets have been stored for offline use. */
+  offlineReady?: Record<string, boolean>;
 }

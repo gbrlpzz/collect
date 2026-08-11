@@ -68,20 +68,42 @@ export function FieldRenderer({ field, value, onChange, onCaptureLocation, onAdd
   }
 
   if (field.type === "single_choice") {
+    const otherOption = field.options?.find((option) => option.value === "other" || option.id.endsWith("-other"));
+    const storedValue = value && typeof value === "object" && "value" in value ? (value as { value?: unknown }).value : value;
+    const storedOtherText = value && typeof value === "object" && "otherText" in value ? String((value as { otherText?: unknown }).otherText ?? "") : "";
+    const isOther = storedValue === "other" || (otherOption !== undefined && storedValue === otherOption.id);
     return (
       <div className="choice-grid">
-        {field.options?.map((option) => (
-          <button
-            type="button"
-            key={option.id}
-            className={`choice-button ${value === option.id ? "choice-selected" : ""}`}
-            aria-pressed={value === option.id}
-            onClick={() => onChange(option.id)}
-          >
-            <span>{option.label}</span>
-            {value === option.id && <Icon name="check" size={16} />}
-          </button>
-        ))}
+        {field.options?.map((option) => {
+          const selected = option.id === storedValue || (option.value === "other" && isOther);
+          return (
+            <button
+              type="button"
+              key={option.id}
+              className={`choice-button ${selected ? "choice-selected" : ""}`}
+              aria-pressed={selected}
+              onClick={() => onChange(option.value === "other" && otherOption ? { value: otherOption.id, otherText: storedOtherText } : option.id)}
+            >
+              <span>{option.label}</span>
+              {selected && <Icon name="check" size={16} />}
+            </button>
+          );
+        })}
+        {otherOption && isOther && (
+          <div className="other-value-row">
+            <label className="field-help-label" htmlFor={`${field.key}-other`}>Specify other</label>
+            <input
+              id={`${field.key}-other`}
+              className="field-input"
+              type="text"
+              value={storedOtherText}
+              placeholder="Describe the other value…"
+              maxLength={200}
+              autoComplete="off"
+              onChange={(event) => onChange({ value: otherOption.id, otherText: event.target.value })}
+            />
+          </div>
+        )}
       </div>
     );
   }

@@ -27,6 +27,7 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
   const [locationError, setLocationError] = useState<string | null>(null);
   const allMediaAssets = useMemo(() => Object.values(mediaByField).flat(), [mediaByField]);
   const [errorKey, setErrorKey] = useState<string | null>(null);
+  const [errorText, setErrorText] = useState<string | null>(null);
   const fields = useMemo(() => project.fields.filter((field) => field.type !== "heading"), [project.fields]);
   const requiredFields = fields.filter((field) => field.required);
   const hasValue = (value: unknown) => {
@@ -55,6 +56,7 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
       });
       setLocationError(null);
       setErrorKey(null);
+      setErrorText(null);
     };
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -79,6 +81,7 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
       byteSize: file.size,
       fieldId: activeMediaField,
       capturedAt: new Date().toISOString(),
+      captureSource: "picker",
       blob: file,
     } satisfies MediaAsset));
     const maxCount = Number(field.config?.maxCount ?? 5);
@@ -86,7 +89,33 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
     setMediaByField((current) => ({ ...current, [activeMediaField]: nextAssets }));
     onDraftChange(activeMediaField, nextAssets);
     setErrorKey(null);
+    setErrorText(null);
     event.target.value = "";
+  };
+
+  const fieldConfigError = (field: typeof fields[number]): string | null => {
+    const value = draft[field.key];
+    const config = field.config ?? {};
+    if (field.type === "short_text" || field.type === "long_text") {
+      if (typeof value === "string" && config.minLength !== undefined && value.length < Number(config.minLength)) return `Enter at least ${config.minLength} characters.`;
+      return null;
+    }
+    if (field.type === "number") {
+      if (value && typeof value === "object" && "value" in value) {
+        const numberValue = Number((value as { value?: unknown }).value);
+        if (!Number.isNaN(numberValue)) {
+          if (config.min !== undefined && numberValue < Number(config.min)) return `Minimum is ${config.min}.`;
+          if (config.max !== undefined && numberValue > Number(config.max)) return `Maximum is ${config.max}.`;
+        }
+      }
+      return null;
+    }
+    if (field.type === "photo" || field.type === "audio") {
+      const count = (mediaByField[field.key] ?? []).length;
+      if (config.minCount !== undefined && count < Number(config.minCount)) return `Add at least ${config.minCount} ${field.type === "photo" ? "photos" : "recordings"}.`;
+      return null;
+    }
+    return null;
   };
 
   const handleSubmit = () => {
@@ -97,7 +126,15 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
     });
     if (missing) {
       setErrorKey(missing.key);
+      setErrorText(null);
       document.getElementById(`field-${missing.key}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    const invalid = fields.map((field) => ({ field, error: fieldConfigError(field) })).find((entry) => entry.error);
+    if (invalid) {
+      setErrorKey(invalid.field.key);
+      setErrorText(invalid.error);
+      document.getElementById(`field-${invalid.field.key}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     const mediaValues = Object.fromEntries(project.fields.filter((field) => field.type === "photo" || field.type === "audio").map((field) => [field.key, (mediaByField[field.key] ?? []).map((asset) => asset.id)]));
@@ -140,14 +177,14 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
                   <label htmlFor={field.type === "short_text" || field.type === "number" || field.type === "date" ? field.key : undefined}>
                     {field.label}{field.required && <span className="required-mark">Required</span>}
                   </label>
-                  {isError && <span className="field-error-copy">Complete this field</span>}
+                  {isError && <span className="field-error-copy">{errorText ?? "Complete this field"}</span>}
                 </div>
                 {field.description && <p className="field-description">{field.description}</p>}
                 <FieldRenderer
                   field={field}
                   value={field.type === "photo" || field.type === "audio" ? fieldMediaNames : draft[field.key]}
                   photoNames={fieldMediaNames}
-                  onChange={(value) => { onDraftChange(field.key, value); setErrorKey(null); }}
+                  onChange={(value) => { onDraftChange(field.key, value); setErrorKey(null); setErrorText(null); }}
                   onCaptureLocation={captureLocation}
                   onAddPhoto={() => { setActiveMediaField(field.key); window.setTimeout(() => fileInputRef.current?.click(), 0); }}
                   locationError={field.type === "location" ? locationError : null}

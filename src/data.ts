@@ -6,7 +6,7 @@ export const schemaFieldTypes: Exclude<FieldType, "heading">[] = ["short_text", 
 
 export function createFieldForType(type: Exclude<FieldType, "heading">, index: number): FieldDefinition {
   const id = crypto.randomUUID();
-  const field: FieldDefinition = { id, key: `field_${index}`, label: "New field", type };
+  const field: FieldDefinition = { id, key: `field_${index}`, label: "New field", type, semantic_uri: null };
   if (type === "single_choice" || type === "multiple_choice") {
     field.options = [
       choice(`${id}-option-1`, "option_1", "Option 1"),
@@ -206,6 +206,7 @@ export const initialState = {
   storagePersistence: "unknown" as const,
   storageUsage: null,
   fieldworkComplete: {},
+  offlineReady: { [demoProject.id]: true },
   project: demoProject,
   projects: [demoProject],
 };
