@@ -5,6 +5,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Collector } from "../src/components/Collector";
 import { FieldRenderer } from "../src/components/FieldRenderer";
 import { SyncSheet } from "../src/components/SyncSheet";
+import { ClearButton, ConfirmationDialog } from "../src/components/Primitives";
 import type { FieldDefinition, Project } from "../src/types";
 
 const fields: FieldDefinition[] = [
@@ -112,6 +113,30 @@ describe("FieldRenderer single choice with Other (§10)", () => {
     const input = screen.getByPlaceholderText(/describe the other/i) as HTMLInputElement;
     fireEvent.change(input, { target: { value: "School" } });
     expect((input as HTMLInputElement).value).toBe("School");
+  });
+});
+
+
+describe("native input primitives (§HIG)", () => {
+  it("ClearButton clears a prefilled text field and calls onDraftChange", () => {
+    const onDraftChange = vi.fn();
+    const draft = { observed_date: "2026-08-10", site_code: "VA-001", people_count: { value: 3, unit: null } };
+    render(<Collector project={validationProject} draft={draft} lastSavedAt={null} onDraftChange={onDraftChange} onSubmit={() => undefined} onBack={() => undefined} isSaving={false} />);
+    const input = screen.getByRole("textbox", { name: /site code/i }) as HTMLInputElement;
+    expect(input.value).toBe("VA-001");
+    fireEvent.click(screen.getByRole("button", { name: /clear site code/i }));
+    expect(onDraftChange).toHaveBeenCalledWith("site_code", "");
+  });
+
+  it("ConfirmationDialog presents an alertdialog with confirm and cancel", () => {
+    const onConfirm = vi.fn();
+    const onCancel = vi.fn();
+    render(<ConfirmationDialog title="Close collection?" message="Existing offline fieldwork can still synchronize." confirmLabel="Close collection" cancelLabel="Keep open" onConfirm={onConfirm} onCancel={onCancel} />);
+    expect(screen.getByRole("alertdialog")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /keep open/i }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: /close collection/i }));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 });
 

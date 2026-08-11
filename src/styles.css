@@ -294,7 +294,7 @@ p { line-height: 1.45; }
 .panel-heading h2 { margin-top: 2px; }
 .panel-heading p { margin-top: 7px; color: var(--secondary); font-size: 0.8125rem; }
 .schema-list, .contributor-list { margin-top: 20px; border-top: 1px solid var(--separator); }
-.schema-field-row { min-height: 62px; display: grid; grid-template-columns: 32px minmax(0, 1fr) 140px 70px 18px; align-items: center; gap: 12px; border-bottom: 1px solid var(--separator-light); }
+.schema-field-row { min-height: 62px; display: grid; grid-template-columns: 32px minmax(0, 1fr) 140px 70px; align-items: center; gap: 12px; border-bottom: 1px solid var(--separator-light); }
 .schema-index { color: var(--tertiary); font-size: 0.6875rem; font-variant-numeric: tabular-nums; }
 .schema-field-row > div { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .schema-field-row strong { overflow: hidden; font-size: 0.8750rem; text-overflow: ellipsis; white-space: nowrap; }
@@ -685,3 +685,132 @@ button { -webkit-user-select: none; user-select: none; }
 .auth-card { border: 0; background: transparent; box-shadow: none; }
 .auth-steps { overflow: hidden; border: 1px solid var(--separator-light); border-radius: 12px; background: var(--paper); }
 .auth-label { margin-top: 22px; }
+
+
+/* HIG audit corrections: legibility, adaptive contrast, and complete hit areas. */
+:root {
+  --secondary: rgba(60, 60, 67, .75);
+  --tertiary: rgba(60, 60, 67, .74);
+  --destructive: #ff3b30;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --secondary: rgba(235, 235, 245, .78);
+    --tertiary: rgba(235, 235, 245, .62);
+    --destructive: #ff453a;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --text: #000;
+    --secondary: #303038;
+    --tertiary: #50505a;
+    --separator: rgba(0, 0, 0, .52);
+    --separator-light: rgba(0, 0, 0, .34);
+    --grouped: rgba(118, 118, 128, .2);
+    --focus-ring: rgba(0, 0, 0, .38);
+  }
+}
+
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
+  :root {
+    --text: #fff;
+    --secondary: #f2f2f7;
+    --tertiary: #d1d1d6;
+    --separator: rgba(255, 255, 255, .68);
+    --separator-light: rgba(255, 255, 255, .42);
+    --grouped: rgba(118, 118, 128, .34);
+    --focus-ring: rgba(255, 255, 255, .42);
+  }
+}
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { font-size: 1.0625rem; }
+h1 { font-size: clamp(2.125rem, 5vw, 2.75rem); }
+.wordmark { min-height: var(--control-height); display: inline-flex; align-items: center; }
+.button, .field-input, .builder-inline-input, .builder-key-input, .builder-select { font-size: 1.0625rem; }
+.field-label-row label { font-size: 1.0625rem; }
+.choice-button { font-size: 1.0625rem; }
+.auth-steps li > span:first-child { font-size: .6875rem; }
+
+/* Every interactive affordance, including a small visual icon, retains a
+   44 pt activation region. */
+.capture-card .button { min-height: var(--control-height); font-size: .9375rem; }
+.download-offline-button { min-height: var(--control-height); }
+.storage-alert button { width: var(--control-height); height: var(--control-height); }
+.media-remove { top: 0; right: 0; width: var(--control-height); height: var(--control-height); background: transparent; }
+.media-remove::before { position: absolute; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,.68); content: ""; }
+.media-remove svg { position: relative; z-index: 1; }
+.tri-state, .segmented-control { min-height: 48px; }
+.tri-state button, .segmented-control button { min-height: 44px; }
+
+.button-destructive { background: var(--destructive); color: #fff; }
+.button-destructive:hover { background: color-mix(in srgb, var(--destructive) 88%, #000); }
+.button-destructive:active { opacity: .68; }
+
+.button:focus-visible, .back-button:focus-visible, .project-row:focus-visible,
+.list-row:focus-visible, .admin-project-card:focus-visible, .choice-button:focus-visible,
+.mobile-tabbar button:focus-visible, .clear-button:focus-visible, .media-remove:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.button:active, .back-button:active, .project-row:active, .list-row:active,
+.admin-project-card:active, .account-menu button:active { opacity: .68; }
+
+/* Apple's text-field guidance calls for a trailing clear affordance when a
+   field has content. It stays visually quiet but remains a full hit target. */
+.input-with-clear { position: relative; }
+.input-with-clear > .field-input { padding-right: 52px; }
+.clear-button { position: absolute; top: 50%; right: 0; width: var(--control-height); height: var(--control-height); display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--secondary); transform: translateY(-50%); }
+.clear-button:hover { background: var(--grouped); color: var(--text); }
+.input-with-clear-textarea .clear-button { top: 6px; transform: none; }
+
+/* A real alertdialog replaces browser confirm/prompt chrome. On iPhone it
+   behaves like a scoped action sheet; on larger screens it is centered. */
+.dialog-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,.32); }
+.confirmation-dialog { width: min(100%, 420px); padding: 24px; border: 1px solid var(--separator-light); border-radius: 16px; background: var(--paper); box-shadow: 0 18px 48px rgba(0,0,0,.2); }
+.dialog-copy h2 { font-size: 1.375rem; }
+.dialog-copy p { margin-top: 9px; color: var(--secondary); font-size: 1rem; line-height: 1.45; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+.dialog-actions .button { min-width: 104px; }
+@media (max-width: 680px) {
+  .dialog-backdrop { align-items: flex-end; padding: 0; }
+  .confirmation-dialog { width: 100%; padding: 22px 16px calc(16px + env(safe-area-inset-bottom)); border-radius: 22px 22px 0 0; border-bottom: 0; }
+  .dialog-actions { flex-direction: column; }
+  .dialog-actions .button { width: 100%; }
+}
+
+
+/* Safe-area and material behavior for installed iOS PWAs. */
+.topbar { height: calc(52px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); }
+.topbar-inner { height: 52px; }
+.main-shell { min-height: calc(100vh - 52px - env(safe-area-inset-top)); }
+.collector-topbar { height: calc(52px + env(safe-area-inset-top)); min-height: calc(52px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); grid-template-rows: 52px; }
+.collector-field { scroll-margin-top: calc(70px + env(safe-area-inset-top)); }
+.storage-alert { top: calc(72px + env(safe-area-inset-top)); }
+
+@media (prefers-reduced-transparency: reduce) {
+  .topbar, .collector-topbar, .collector-action-bar, .mobile-tabbar, .account-menu {
+    background: var(--paper);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .sheet-backdrop { background: rgba(0,0,0,.48); }
+}
+
+
+/* Activity indicator inside buttons (HIG: indicate non-instant actions). */
+.button-busy { cursor: progress; }
+.button-spinner { width: 16px; height: 16px; flex: 0 0 auto; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; opacity: .8; animation: button-spin .7s linear infinite; }
+@keyframes button-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .button-spinner { animation-duration: 1.4s; }
+}
+
+.toast { gap: 9px; text-align: left; }
+.toast span { flex: 1; }
+.toast button { width: var(--control-height); height: var(--control-height); flex: 0 0 auto; display: grid; place-items: center; margin: -6px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; opacity: .8; }
+.toast button:hover { background: rgba(128,128,128,.25); }
+.toast button:active { opacity: .6; }

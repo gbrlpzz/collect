@@ -17,7 +17,7 @@ export function ProjectOverview({ project, observations, onNavigate, onOpenSync,
   return (
     <main className="page page-project">
       <div className="back-row">
-        <button className="back-button" onClick={() => onNavigate("home")}><Icon name="arrow-left" size={17} /> Projects</button>
+        <button className="back-button" onClick={() => onNavigate("home")}><Icon name="chevron-left" size={17} /> Projects</button>
       </div>
 
       <section className="project-intro">

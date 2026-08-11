@@ -147,7 +147,8 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
 
   const focusField = (key: string) => {
     const section = document.getElementById(`field-${key}`);
-    section?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    section?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
     window.setTimeout(() => {
       const target = section?.querySelector<HTMLElement>("input, textarea, select, button");
       target?.focus();
@@ -179,7 +180,7 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
   return (
     <main className="collector-page">
       <div className="collector-topbar">
-        <button className="back-button" onClick={onBack} aria-label="Back to project"><Icon name="arrow-left" size={17} /> Project</button>
+        <button className="back-button" onClick={onBack} aria-label="Back to project"><Icon name="chevron-left" size={17} /> Project</button>
         <div className="collector-title">
           <strong>New observation</strong>
           <span>{project.name}</span>
@@ -191,7 +192,7 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
         <div className="collector-progress-copy"><span className="collector-progress-title">Required fields</span><span>{completedRequired} of {requiredFields.length}</span></div>
         <span className="collector-progress-number">{progress}%</span>
       </div>
-      <div className="progress-track" role="progressbar" aria-label="Required fields completed" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><span style={{ width: `${Math.max(progress, requiredFields.length ? 4 : 0)}%` }} /></div>
+      <div className="progress-track" role="progressbar" aria-label="Required fields completed" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><span style={{ width: `${progress}%` }} /></div>
 
       <div className="collector-surface">
         <div className="collector-fields">
@@ -202,15 +203,18 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
                 {group.fields.map((field) => {
                   const isError = errorKey === field.key;
                   const fieldMediaAssets = field.type === "photo" || field.type === "audio" ? (mediaByField[field.key] ?? []) : [];
+                  const descriptionId = field.description ? `field-description-${field.key}` : null;
+                  const errorId = isError ? `field-error-${field.key}` : null;
+                  const describedBy = [descriptionId, errorId].filter(Boolean).join(" ") || undefined;
                   return (
-                    <section className={`collector-field ${isError ? "field-error" : ""}`} id={`field-${field.key}`} aria-labelledby={`field-label-${field.key}`} key={field.id}>
+                    <section className={`collector-field ${isError ? "field-error" : ""}`} id={`field-${field.key}`} aria-labelledby={`field-label-${field.key}`} aria-describedby={describedBy} aria-invalid={isError || undefined} key={field.id}>
                       <div className="field-label-row">
                         <label id={`field-label-${field.key}`} htmlFor={["short_text", "long_text", "number", "date", "datetime"].includes(field.type) ? field.key : undefined}>
                           {field.label}{field.required && <span className="required-mark">Required</span>}
                         </label>
-                        {isError && <span className="field-error-copy" role="alert">{errorText ?? "Complete this field"}</span>}
+                        {isError && <span className="field-error-copy" id={errorId ?? undefined} role="alert">{errorText ?? "Complete this field"}</span>}
                       </div>
-                      {field.description && <p className="field-description">{field.description}</p>}
+                      {field.description && <p className="field-description" id={descriptionId ?? undefined}>{field.description}</p>}
                       <FieldRenderer
                         field={field}
                         value={fieldMediaAssets.length ? fieldMediaAssets : draft[field.key]}
@@ -221,6 +225,9 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
                         onCaptureLocation={() => captureLocation(field.key)}
                         onAddPhoto={() => { setActiveMediaField(field.key); window.setTimeout(() => fileInputRef.current?.click(), 0); }}
                         locationError={field.type === "location" ? locationError : null}
+                        required={field.required}
+                        describedBy={describedBy}
+                        invalid={isError}
                       />
                     </section>
                   );
@@ -234,7 +241,7 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
 
         <div className="collector-receipt-note"><Icon name="check" size={15} /><span>Your draft saves automatically on this device.</span></div>
       </div>
-      <div className="collector-action-bar"><Button variant="primary" fullWidth iconAfter="arrow-right" onClick={handleSubmit} disabled={isSaving}>{isSaving ? "Saving…" : "Save observation"}</Button></div>
+      <div className="collector-action-bar"><Button variant="primary" fullWidth iconAfter="arrow-right" onClick={handleSubmit} disabled={isSaving} busy={isSaving}>{isSaving ? "Saving…" : "Save observation"}</Button></div>
     </main>
   );
 }

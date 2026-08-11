@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
 import type { FieldDefinition, LocationValue, MediaAsset } from "../types";
 import { Icon } from "./Icon";
-import { Button, SegmentedControl } from "./Primitives";
+import { Button, ClearButton, SegmentedControl } from "./Primitives";
 
 interface FieldRendererProps {
   field: FieldDefinition;
@@ -15,17 +15,22 @@ interface FieldRendererProps {
   mediaAssets?: MediaAsset[];
   onRemoveMedia?: (index: number) => void;
   locationError?: string | null;
+  required?: boolean;
+  describedBy?: string;
+  invalid?: boolean;
 }
 
 function MediaTile({
   asset,
   index,
   type,
+  fieldLabel,
   onRemove,
 }: {
   asset: MediaAsset;
   index: number;
   type: "photo" | "audio";
+  fieldLabel: string;
   onRemove?: () => void;
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -49,7 +54,7 @@ function MediaTile({
       )}
       <span className="media-tile-index">{index + 1}</span>
       {onRemove && (
-        <button type="button" className="media-remove" onClick={onRemove} aria-label={`Remove ${type} ${index + 1}`}>
+        <button type="button" className="media-remove" onClick={onRemove} aria-label={`Remove ${type} ${index + 1} from ${fieldLabel}`}>
           <Icon name="x" size={14} />
         </button>
       )}
@@ -67,38 +72,56 @@ export function FieldRenderer({
   mediaAssets,
   onRemoveMedia,
   locationError,
+  required = false,
+  describedBy,
+  invalid = false,
 }: FieldRendererProps) {
   const stringValue = typeof value === "string" ? value : "";
+  const accessibilityProps = {
+    "aria-describedby": describedBy || undefined,
+    "aria-invalid": invalid || undefined,
+    "aria-required": required || undefined,
+  };
 
   if (field.type === "short_text") {
     return (
-      <input
-        className="field-input"
-        id={field.key}
-        value={stringValue}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={String(field.config?.placeholder ?? "")}
-        maxLength={Number(field.config?.maxLength ?? 1000)}
-        autoComplete="off"
-        autoCapitalize="sentences"
-        enterKeyHint="next"
-      />
+      <div className="input-with-clear">
+        <input
+          className="field-input"
+          id={field.key}
+          required={required}
+          {...accessibilityProps}
+          value={stringValue}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={String(field.config?.placeholder ?? "")}
+          maxLength={Number(field.config?.maxLength ?? 1000)}
+          autoComplete="off"
+          autoCapitalize="sentences"
+          enterKeyHint="next"
+        />
+        {stringValue && <ClearButton label={`Clear ${field.label}`} onClick={() => onChange("")} />}
+      </div>
     );
   }
 
   if (field.type === "long_text") {
     return (
-      <textarea
-        className="field-input field-textarea"
-        id={field.key}
-        value={stringValue}
-        onChange={(event) => onChange(event.target.value)}
-        maxLength={Number(field.config?.maxLength ?? 5000)}
-        placeholder="Write what you observed…"
-        rows={4}
-        autoCapitalize="sentences"
-        enterKeyHint="enter"
-      />
+      <div className="input-with-clear input-with-clear-textarea">
+        <textarea
+          className="field-input field-textarea"
+          id={field.key}
+          required={required}
+          {...accessibilityProps}
+          value={stringValue}
+          onChange={(event) => onChange(event.target.value)}
+          maxLength={Number(field.config?.maxLength ?? 5000)}
+          placeholder="Write what you observed…"
+          rows={4}
+          autoCapitalize="sentences"
+          enterKeyHint="enter"
+        />
+        {stringValue && <ClearButton label={`Clear ${field.label}`} onClick={() => onChange("")} />}
+      </div>
     );
   }
 
@@ -110,6 +133,8 @@ export function FieldRenderer({
           className="field-input"
           id={field.key}
           type="number"
+          required={required}
+          {...accessibilityProps}
           value={typeof numberValue === "number" && !Number.isNaN(numberValue) ? String(numberValue) : typeof numberValue === "string" ? numberValue : ""}
           onChange={(event) => {
             const raw = event.target.value;
@@ -133,7 +158,7 @@ export function FieldRenderer({
     const storedOtherText = value && typeof value === "object" && "otherText" in value ? String((value as { otherText?: unknown }).otherText ?? "") : "";
     const isOther = storedValue === "other" || (otherOption !== undefined && storedValue === otherOption.id);
     return (
-      <div className="choice-grid" role="group" aria-label={field.label}>
+      <div className="choice-grid" role="group" aria-label={field.label} {...accessibilityProps}>
         {field.options?.map((option) => {
           const selected = option.id === storedValue || (option.value === "other" && isOther);
           return (
@@ -152,18 +177,23 @@ export function FieldRenderer({
         {otherOption && isOther && (
           <div className="other-value-row">
             <label className="field-help-label" htmlFor={`${field.key}-other`}>Specify other</label>
-            <input
-              id={`${field.key}-other`}
-              className="field-input"
-              type="text"
-              value={storedOtherText}
-              placeholder="Describe the other value…"
-              maxLength={200}
-              autoComplete="off"
-              autoCapitalize="sentences"
-              enterKeyHint="done"
-              onChange={(event) => onChange({ value: otherOption.id, otherText: event.target.value })}
-            />
+            <div className="input-with-clear">
+              <input
+                id={`${field.key}-other`}
+                className="field-input"
+                type="text"
+                required={required}
+                {...accessibilityProps}
+                value={storedOtherText}
+                placeholder="Describe the other value…"
+                maxLength={200}
+                autoComplete="off"
+                autoCapitalize="sentences"
+                enterKeyHint="done"
+                onChange={(event) => onChange({ value: otherOption.id, otherText: event.target.value })}
+              />
+              {storedOtherText && <ClearButton label="Clear other value" onClick={() => onChange({ value: otherOption.id, otherText: "" })} />}
+            </div>
           </div>
         )}
       </div>
@@ -176,16 +206,16 @@ export function FieldRenderer({
       { value: "no", label: "No" },
       { value: "unknown", label: "Unknown" },
     ];
-    return <SegmentedControl className="tri-state" options={values} value={typeof value === "string" ? value : undefined} onChange={onChange} label={field.label} />;
+    return <SegmentedControl className="tri-state" options={values} value={typeof value === "string" ? value : undefined} onChange={onChange} label={field.label} describedBy={describedBy} required={required} invalid={invalid} />;
   }
 
   if (field.type === "date") {
-    return <input id={field.key} className="field-input" type="date" value={stringValue} onChange={(event) => onChange(event.target.value)} autoComplete="off" />;
+    return <input id={field.key} className="field-input" type="date" required={required} {...accessibilityProps} value={stringValue} onChange={(event) => onChange(event.target.value)} autoComplete="off" />;
   }
 
   if (field.type === "datetime") {
     const datetime = value && typeof value === "object" ? value as { localDatetime?: string } : {};
-    return <input id={field.key} className="field-input" type="datetime-local" value={datetime.localDatetime ?? ""} onChange={(event) => {
+    return <input id={field.key} className="field-input" type="datetime-local" required={required} {...accessibilityProps} value={datetime.localDatetime ?? ""} onChange={(event) => {
       const date = new Date(event.target.value);
       const offsetMinutes = -date.getTimezoneOffset();
       const sign = offsetMinutes >= 0 ? "+" : "-";
@@ -198,7 +228,7 @@ export function FieldRenderer({
   if (field.type === "multiple_choice") {
     const selected = Array.isArray(value) ? value.map(String) : [];
     return (
-      <div className="choice-grid" role="group" aria-label={field.label}>
+      <div className="choice-grid" role="group" aria-label={field.label} {...accessibilityProps}>
         {field.options?.map((option) => {
           const isSelected = selected.includes(option.id);
           return <button type="button" key={option.id} className={`choice-button ${isSelected ? "choice-selected" : ""}`} aria-pressed={isSelected} onClick={() => onChange(isSelected ? selected.filter((item) => item !== option.id) : [...selected, option.id])}><span>{option.label}</span>{isSelected && <Icon name="check" size={18} />}</button>;
@@ -211,7 +241,7 @@ export function FieldRenderer({
     const location = value as LocationValue | undefined;
     return (
       <>
-        <div className={`capture-card ${location ? "capture-complete" : ""}`}>
+        <div className={`capture-card ${location ? "capture-complete" : ""}`} role="group" aria-label={field.label} {...accessibilityProps}>
           <div className="capture-icon"><Icon name="location" size={20} /></div>
           <div className="capture-copy">
             {location ? (
@@ -226,7 +256,7 @@ export function FieldRenderer({
               </>
             )}
           </div>
-          <Button variant="secondary" onClick={onCaptureLocation}>{location ? "Recapture" : "Capture"}</Button>
+          <Button variant="secondary" aria-label={`${location ? "Recapture" : "Capture"} ${field.label}`} onClick={onCaptureLocation}>{location ? "Recapture" : "Capture"}</Button>
         </div>
         {locationError && <p className="field-help-error" role="alert">{locationError}</p>}
       </>
@@ -237,10 +267,10 @@ export function FieldRenderer({
     const assets = mediaAssets ?? photoNames.map((name, index) => ({ id: `${field.key}-${index}`, name, mimeType: field.type === "photo" ? "image/*" : "audio/*", byteSize: 0, fieldId: field.key }));
     const maxCount = Number(field.config?.maxCount ?? 5);
     return (
-      <div className="media-field">
+      <div className="media-field" role="group" aria-label={field.label} {...accessibilityProps}>
         <div className="photo-strip">
-          {assets.map((asset, index) => <MediaTile key={`${asset.id}-${index}`} asset={asset} index={index} type={field.type as "photo" | "audio"} onRemove={onRemoveMedia ? () => onRemoveMedia(index) : undefined} />)}
-          {assets.length < maxCount && <button type="button" className="add-media" onClick={onAddPhoto} aria-label={field.type === "audio" ? "Add audio" : "Add a photo"}>
+          {assets.map((asset, index) => <MediaTile key={`${asset.id}-${index}`} asset={asset} index={index} type={field.type as "photo" | "audio"} fieldLabel={field.label} onRemove={onRemoveMedia ? () => onRemoveMedia(index) : undefined} />)}
+          {assets.length < maxCount && <button type="button" className="add-media" onClick={onAddPhoto} aria-label={field.type === "audio" ? `Add audio for ${field.label}` : `Add a photo for ${field.label}`}>
             <Icon name={field.type === "audio" ? "mic" : "camera"} size={22} />
             <span>{field.type === "audio" ? "Record" : "Add"}</span>
           </button>}
@@ -256,11 +286,11 @@ export function FieldRenderer({
   if (field.type === "repeatable_group") {
     const rows = Array.isArray(value) ? value as Array<Record<string, unknown>> : [];
     return (
-      <div className="repeatable-group">
+      <div className="repeatable-group" role="group" aria-label={field.label} {...accessibilityProps}>
         {rows.map((row, rowIndex) => (
           <div className="repeatable-row" key={rowIndex}>
             <div className="repeatable-row-heading"><strong>{field.label} {rowIndex + 1}</strong><button type="button" className="text-button" onClick={() => onChange(rows.filter((_, index) => index !== rowIndex))}>Remove</button></div>
-            {field.children?.map((child) => <div className="repeatable-child" key={child.id}><label htmlFor={`${field.key}-${rowIndex}-${child.key}`}>{child.label}</label><FieldRenderer field={{ ...child, key: `${field.key}-${rowIndex}-${child.key}` }} value={row[child.key]} onChange={(childValue) => onChange(rows.map((current, index) => index === rowIndex ? { ...current, [child.key]: childValue } : current))} onCaptureLocation={onCaptureLocation} onAddPhoto={onAddPhoto} photoNames={[]} mediaAssets={[]} locationError={locationError} /></div>)}
+            {field.children?.map((child) => <div className="repeatable-child" key={child.id}><label htmlFor={`${field.key}-${rowIndex}-${child.key}`}>{child.label}</label><FieldRenderer field={{ ...child, key: `${field.key}-${rowIndex}-${child.key}` }} value={row[child.key]} onChange={(childValue) => onChange(rows.map((current, index) => index === rowIndex ? { ...current, [child.key]: childValue } : current))} onCaptureLocation={onCaptureLocation} onAddPhoto={onAddPhoto} photoNames={[]} mediaAssets={[]} locationError={locationError} required={child.required} /></div>)}
           </div>
         ))}
         <Button variant="secondary" icon="plus" onClick={() => onChange([...rows, {}])}>Add {field.label.toLowerCase()}</Button>

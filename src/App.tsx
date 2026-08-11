@@ -11,7 +11,7 @@ import { AdminDashboard, AdminProject } from "./components/AdminDashboard";
 import { AuthScreen } from "./components/AuthScreen";
 import { Collector } from "./components/Collector";
 import { ContributorHome } from "./components/ContributorHome";
-import { Button, Eyebrow } from "./components/Primitives";
+import { Button, ConfirmationDialog, Eyebrow, type ConfirmationDialogProps } from "./components/Primitives";
 import { Icon } from "./components/Icon";
 import { NewProjectWizard } from "./components/NewProjectWizard";
 import { ProjectOverview } from "./components/ProjectOverview";
@@ -22,6 +22,7 @@ import { claimInvites, probeRemoteHealth, reportDeviceStatus, syncRemoteObservat
 import { bootstrapWorkspace, createCheckpoint, createRemoteProject, defaultOrganizationName, loadAssignedProjects, loadUserAdminAccess, updateProjectStatus } from "./lib/adminBackend";
 
 const APP_VERSION = (import.meta.env.VITE_APP_VERSION as string | undefined) ?? "0.1.2";
+type ConfirmationRequest = Pick<ConfirmationDialogProps, "title" | "message" | "confirmLabel" | "cancelLabel" | "destructive">;
 
 const entryRole = (() => {
   if (typeof window === "undefined") return null;
@@ -55,6 +56,8 @@ export default function App() {
   const [storageError, setStorageError] = useState<string | null>(null);
   const [dbError, setDbError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [confirmation, setConfirmation] = useState<ConfirmationRequest | null>(null);
+  const confirmationResolverRef = useRef<((confirmed: boolean) => void) | null>(null);
   const toastTimerRef = useRef<number | undefined>(undefined);
   const syncOwnerRef = useRef(`sync-worker-${crypto.randomUUID()}`);
 
@@ -215,7 +218,20 @@ export default function App() {
   const showToast = (message: string) => {
     setToast(message);
     if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    // Time-boxing is a heuristic fallback only: the message is visible long
+    // enough to be read, and an explicit dismiss button remains available.
     toastTimerRef.current = window.setTimeout(() => setToast(null), 3600);
+  };
+
+  const requestConfirmation = (request: ConfirmationRequest) => new Promise<boolean>((resolve) => {
+    confirmationResolverRef.current = resolve;
+    setConfirmation(request);
+  });
+
+  const resolveConfirmation = (confirmed: boolean) => {
+    confirmationResolverRef.current?.(confirmed);
+    confirmationResolverRef.current = null;
+    setConfirmation(null);
   };
 
   const navigate = (view: View) => setState((current) => ({ ...current, view }));
@@ -540,7 +556,15 @@ export default function App() {
 
   const toggleProjectStatus = async () => {
     const nextStatus = state.project.status === "active" ? "closed" : "active";
-    if (nextStatus === "closed" && !window.confirm("Close collection for new observations? Existing offline fieldwork can still synchronize.")) return;
+    if (nextStatus === "closed") {
+      const confirmed = await requestConfirmation({
+        title: "Close collection?",
+        message: "New observations will be blocked. Existing offline fieldwork can still synchronize.",
+        confirmLabel: "Close collection",
+        cancelLabel: "Keep open",
+      });
+      if (!confirmed) return;
+    }
     if (isSupabaseConfigured && session) {
       try {
         await updateProjectStatus(state.project.id, nextStatus);
@@ -558,7 +582,13 @@ export default function App() {
 
   const finishFieldwork = async () => {
     if (hasDraft) {
-      const discardDraft = window.confirm("You have an unfinished observation. Finish fieldwork without saving that draft?");
+      const discardDraft = await requestConfirmation({
+        title: "Discard unfinished observation?",
+        message: "This draft has not been submitted. Discarding it removes only the unfinished draft from this device.",
+        confirmLabel: "Discard draft",
+        cancelLabel: "Keep editing",
+        destructive: true,
+      });
       if (!discardDraft) {
         navigate("collector");
         return;
@@ -624,14 +654,15 @@ export default function App() {
 
       {state.mode === "contributor" && state.view !== "collector" && (
         <nav className="mobile-tabbar" aria-label="Fieldwork navigation">
-          <button className={state.view === "home" ? "mobile-tab-active" : ""} aria-current={state.view === "home" ? "page" : undefined} onClick={() => navigate("home")}><Icon name="folder" size={19} /><span>Projects</span></button>
-          <button className={state.view === "project" ? "mobile-tab-active" : ""} aria-current={state.view === "project" ? "page" : undefined} onClick={() => navigate("project")}><Icon name="file" size={19} /><span>Project</span></button>
+          <button className={state.view === "home" ? "mobile-tab-active" : ""} aria-current={state.view === "home" ? "page" : undefined} onClick={() => navigate("home")}><Icon name="folder" size={19} filled={state.view === "home"} /><span>Projects</span></button>
+          <button className={state.view === "project" ? "mobile-tab-active" : ""} aria-current={state.view === "project" ? "page" : undefined} onClick={() => navigate("project")}><Icon name="file" size={19} filled={state.view === "project"} /><span>Project</span></button>
         </nav>
       )}
 
       {syncSheetOpen && <SyncSheet observations={state.observations} lastSyncAt={state.lastSyncAt} isSyncing={isSyncing} progress={syncProgress} onClose={() => setSyncSheetOpen(false)} onSync={syncNow} onRecoveryExport={exportRecoveryPackage} />}
+      {confirmation && <ConfirmationDialog {...confirmation} onConfirm={() => resolveConfirmation(true)} onCancel={() => resolveConfirmation(false)} />}
       {storageError && <div className="storage-alert" role="alert"><Icon name="info" size={16} /><span>{storageError}</span><button onClick={() => setStorageError(null)} aria-label="Dismiss local storage alert"><Icon name="x" size={15} /></button></div>}
-      {toast && <div className="toast" role="status"><Icon name="check" size={16} /><span>{toast}</span></div>}
+      {toast && <div className="toast" role="status"><Icon name="check" size={16} /><span>{toast}</span><button onClick={() => setToast(null)} aria-label="Dismiss message"><Icon name="x" size={14} /></button></div>}
     </div>
   );
 }

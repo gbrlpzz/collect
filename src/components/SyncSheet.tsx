@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+
 import type { Observation, SubmissionState } from "../types";
 import { estimateLocalStorage, getOutboxOperations, type OutboxOperation } from "../lib/localStore";
 import { Icon } from "./Icon";
@@ -32,6 +34,8 @@ export function SyncSheet({ observations, lastSyncAt, isSyncing, progress, onClo
   const hasPending = pending.length > 0;
   const [storage, setStorage] = useState<{ usage: number | null; quota: number | null; persisted: boolean | null } | null>(null);
   const [operations, setOperations] = useState<OutboxOperation[] | null>(null);
+  const sheetRef = useRef<HTMLElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -41,12 +45,36 @@ export function SyncSheet({ observations, lastSyncAt, isSyncing, progress, onClo
   }, []);
 
   useEffect(() => {
-    const closeOnEscape = (event: KeyboardEvent) => {
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     document.addEventListener("keydown", closeOnEscape);
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [onClose]);
+
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    return () => {
+      if (previousFocusRef.current?.isConnected) previousFocusRef.current.focus();
+    };
+  }, []);
+
+  const keepFocusInside = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (event.key !== "Tab") return;
+    const focusable = Array.from(sheetRef.current?.querySelectorAll<HTMLElement>(
+      "button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex='-1'])"
+    ) ?? []);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
 
   const activeProgress = pending.map((item) => ({ observation: item, entry: progress[item.id] })).filter((row) => row.entry);
   const syncingCount = activeProgress.length;
@@ -56,14 +84,14 @@ export function SyncSheet({ observations, lastSyncAt, isSyncing, progress, onClo
 
   return (
     <div className="sheet-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="sync-sheet-title" aria-describedby="sync-sheet-copy">
+      <section ref={sheetRef} className="bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="sync-sheet-title" aria-describedby="sync-sheet-copy" onKeyDown={keepFocusInside}>
         <div className="sheet-handle" />
         <div className="sheet-heading">
           <div>
             <span className="sheet-kicker">Sync</span>
             <h2 id="sync-sheet-title">{isSyncing && syncingCount ? `Syncing ${syncingCount} of ${pending.length}…` : hasPending ? `${pending.length} waiting` : "Up to date"}</h2>
           </div>
-          <IconButton label="Close sync status" icon="x" onClick={onClose} />
+          <IconButton label="Close sync status" icon="x" autoFocus onClick={onClose} />
         </div>
 
         <p className="sheet-copy" id="sync-sheet-copy">{hasPending ? "Saved on this device. Sync will continue when the server is reachable." : "The server has acknowledged every complete observation."}</p>
@@ -77,8 +105,8 @@ export function SyncSheet({ observations, lastSyncAt, isSyncing, progress, onClo
                   <strong>{String(observation.values.site_code ?? "New observation")}</strong>
                   <span>{entry.phase === "SYNCING_MEDIA" ? "Uploading media…" : entry.phase === "FINALIZING" ? "Finalizing on server…" : "Sending metadata…"}</span>
                   {entry.phase === "SYNCING_MEDIA" && Object.entries(entry.media).map(([mediaId, percent]) => (
-                    <span className="media-progress" key={mediaId}>
-                      <span className="media-progress-track"><span style={{ width: `${percent}%` }} /></span>
+                    <span className="media-progress" key={mediaId} aria-live="polite">
+                      <span className="media-progress-track" role="progressbar" aria-label={`Media upload ${percent}% complete`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}><span style={{ width: `${percent}%` }} /></span>
                       <span>{percent < 100 ? `${percent}%` : "uploaded"}</span>
                     </span>
                   ))}
@@ -116,7 +144,7 @@ export function SyncSheet({ observations, lastSyncAt, isSyncing, progress, onClo
           </details>
         )}
 
-        <Button variant="primary" fullWidth icon="refresh" onClick={onSync} disabled={isSyncing || !hasPending}>
+        <Button variant="primary" fullWidth icon="refresh" onClick={onSync} disabled={isSyncing || !hasPending} busy={isSyncing}>
           {isSyncing ? "Syncing…" : hasPending ? "Sync now" : "Up to date"}
         </Button>
         <button className="recovery-button" onClick={onRecoveryExport}><Icon name="download" size={15} /> Export unsynced recovery package</button>

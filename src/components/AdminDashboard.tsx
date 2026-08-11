@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FieldDefinition, Observation, Project, View } from "../types";
 import { Icon } from "./Icon";
-import { Avatar, Button, Divider, Eyebrow, IconButton, StatusBadge } from "./Primitives";
+import { Avatar, Button, Divider, EmailPrompt, Eyebrow, IconButton, StatusBadge } from "./Primitives";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
 import { createSchemaDraft, loadProjectReadiness, publishSchemaDraft, sendProjectInvite, sendProjectPing, type ContributorReadiness, type SchemaDraft } from "../lib/adminBackend";
 import { createFieldForType, fieldWithType, schemaFieldTypes } from "../data";
@@ -88,15 +88,23 @@ export function AdminProject({ project, observations, onBack, onToast, onExport,
 
   return (
     <main className="page page-admin-project">
-      <div className="back-row"><button className="back-button" onClick={onBack}><Icon name="arrow-left" size={17} /> Projects</button><StatusBadge tone={project.status === "active" ? "dark" : "soft"}>{project.status === "active" ? "Active" : "Closed"}</StatusBadge></div>
+      <div className="back-row"><button className="back-button" onClick={onBack}><Icon name="chevron-left" size={17} /> Projects</button><StatusBadge tone={project.status === "active" ? "dark" : "soft"}>{project.status === "active" ? "Active" : "Closed"}</StatusBadge></div>
       <div className="admin-project-header"><div><Eyebrow>{project.organization}</Eyebrow><h1>{project.name}</h1><p className="lede">{project.description}</p></div><Button variant="secondary" icon={project.status === "active" ? "lock" : "refresh"} onClick={onToggleStatus}>{project.status === "active" ? "Close collection" : "Reopen collection"}</Button></div>
       <div className="admin-metrics"><div><span>Complete submissions</span><strong>{receivedCount}</strong></div><div><span>Contributors</span><strong>{project.contributors}</strong></div><div><span>Last received</span><strong>{project.lastReceived}</strong></div></div>
       <div className="admin-tabs" role="tablist" aria-label="Project administration">
-        {(["setup", "contributors", "export"] as AdminTab[]).map((item) => <button key={item} role="tab" aria-selected={tab === item} className={tab === item ? "tab-active" : ""} onClick={() => setTab(item)}>{item === "setup" ? "Setup" : item === "contributors" ? "Contributors" : "Export"}</button>)}
+        {(["setup", "contributors", "export"] as AdminTab[]).map((item) => <button key={item} type="button" id={`admin-tab-${item}`} role="tab" aria-selected={tab === item} aria-controls={`admin-panel-${item}`} tabIndex={tab === item ? 0 : -1} className={tab === item ? "tab-active" : ""} onClick={() => setTab(item)} onKeyDown={(event) => {
+          if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+          event.preventDefault();
+          const tabs = ["setup", "contributors", "export"] as AdminTab[];
+          const direction = event.key === "ArrowLeft" ? -1 : 1;
+          const next = tabs[(tabs.indexOf(item) + direction + tabs.length) % tabs.length];
+          setTab(next);
+          window.requestAnimationFrame(() => document.getElementById(`admin-tab-${next}`)?.focus());
+        }}>{item === "setup" ? "Setup" : item === "contributors" ? "Contributors" : "Export"}</button>)}
       </div>
-      {tab === "setup" && <SchemaPanel project={project} onToast={onToast} onPublished={onSchemaPublished} />}
-      {tab === "contributors" && <ContributorsPanel projectId={project.id} waitingCount={waitingCount} onToast={onToast} />}
-      {tab === "export" && <ExportPanel project={project} receivedCount={receivedCount} readiness={readiness} onExport={onExport} />}
+      {tab === "setup" && <div id="admin-panel-setup" role="tabpanel" aria-labelledby="admin-tab-setup"><SchemaPanel project={project} onToast={onToast} onPublished={onSchemaPublished} /></div>}
+      {tab === "contributors" && <div id="admin-panel-contributors" role="tabpanel" aria-labelledby="admin-tab-contributors"><ContributorsPanel projectId={project.id} waitingCount={waitingCount} onToast={onToast} /></div>}
+      {tab === "export" && <div id="admin-panel-export" role="tabpanel" aria-labelledby="admin-tab-export"><ExportPanel project={project} receivedCount={receivedCount} readiness={readiness} onExport={onExport} /></div>}
     </main>
   );
 }
@@ -118,7 +126,7 @@ function SchemaPanel({ project, onToast, onPublished }: { project: Project; onTo
   };
 
   if (draft) return <SchemaDraftEditor project={project} draft={draft} busy={busy} setBusy={setBusy} onCancel={() => setDraft(null)} onToast={onToast} onPublished={onPublished} />;
-  return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Published schema</Eyebrow><h2>Version {project.schemaVersion}</h2><p>Immutable for historical observations</p></div><Button variant="secondary" icon="file" onClick={() => void startDraft()} disabled={busy}>Edit as draft</Button></div><Divider /><div className="schema-list">{dataFields.map((field, index) => <div className="schema-field-row" key={field.id}><span className="schema-index">{String(index + 1).padStart(2, "0")}</span><div><strong>{field.label}</strong><span>{field.key}</span></div><span className="schema-type">{field.type.replaceAll("_", " ")}</span><span className="schema-required">{field.required ? "Required" : "Optional"}</span><Icon name="chevron-right" size={16} /></div>)}</div></section>;
+  return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Published schema</Eyebrow><h2>Version {project.schemaVersion}</h2><p>Immutable for historical observations</p></div><Button variant="secondary" icon="file" onClick={() => void startDraft()} disabled={busy}>Edit as draft</Button></div><Divider /><div className="schema-list">{dataFields.map((field, index) => <div className="schema-field-row" key={field.id}><span className="schema-index">{String(index + 1).padStart(2, "0")}</span><div><strong>{field.label}</strong><span>{field.key}</span></div><span className="schema-type">{field.type.replaceAll("_", " ")}</span><span className="schema-required">{field.required ? "Required" : "Optional"}</span></div>)}</div></section>;
 }
 
 function SchemaDraftEditor({ project, draft, busy, setBusy, onCancel, onToast, onPublished }: { project: Project; draft: SchemaDraft; busy: boolean; setBusy: (value: boolean) => void; onCancel: () => void; onToast: (message: string) => void; onPublished: (project: Project) => void }) {
@@ -142,7 +150,7 @@ function SchemaDraftEditor({ project, draft, busy, setBusy, onCancel, onToast, o
       setBusy(false);
     }
   };
-  return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Schema draft</Eyebrow><h2>Version {draft.version}</h2><p>Review the draft, then publish an immutable version.</p></div><StatusBadge tone="soft">Draft</StatusBadge></div><Divider /><div className="builder-list">{fields.map((field, index) => <div className="builder-row" key={field.id}><span className="builder-index">{String(index + 1).padStart(2, "0")}</span><div className="builder-controls"><input className="builder-inline-input" value={field.label} aria-label={`Draft field ${index + 1} label`} onChange={(event) => updateField(field.id, { label: event.target.value })} /><div><input className="builder-key-input" value={field.key} aria-label={`${field.label} machine key`} onChange={(event) => updateField(field.id, { key: event.target.value.replace(/[^a-zA-Z0-9_]/g, "_") })} /><select className="builder-select" value={field.type} aria-label={`${field.label} type`} onChange={(event) => updateField(field.id, fieldWithType(field, event.target.value as Exclude<FieldDefinition["type"], "heading">))}>{schemaFieldTypes.map((type) => <option value={type} key={type}>{type.replaceAll("_", " ")}</option>)}</select></div></div><label className="builder-required"><input type="checkbox" checked={Boolean(field.required)} onChange={(event) => updateField(field.id, { required: event.target.checked })} /> Required</label><IconButton label={`Remove ${field.label}`} icon="x" onClick={() => removeField(field.id)} /></div>)}</div><button className="add-field-row" onClick={() => setFields((current) => [...current, createFieldForType("short_text", current.length + 1)])}><Icon name="plus" size={17} /> Add field</button><div className="schema-builder-note"><Icon name="shield" size={17} /><span>Published schemas are immutable. Existing observations stay attached to their original version.</span></div><div className="wizard-actions"><Button variant="secondary" onClick={onCancel} disabled={busy}>Cancel</Button><Button variant="primary" icon="check" onClick={() => void publish()} disabled={busy}>{busy ? "Publishing…" : "Publish version"}</Button></div></section>;
+  return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Schema draft</Eyebrow><h2>Version {draft.version}</h2><p>Review the draft, then publish an immutable version.</p></div><StatusBadge tone="soft">Draft</StatusBadge></div><Divider /><div className="builder-list">{fields.map((field, index) => <div className="builder-row" key={field.id}><span className="builder-index">{String(index + 1).padStart(2, "0")}</span><div className="builder-controls"><input className="builder-inline-input" value={field.label} aria-label={`Draft field ${index + 1} label`} onChange={(event) => updateField(field.id, { label: event.target.value })} /><div><input className="builder-key-input" value={field.key} aria-label={`${field.label} machine key`} onChange={(event) => updateField(field.id, { key: event.target.value.replace(/[^a-zA-Z0-9_]/g, "_") })} /><select className="builder-select" value={field.type} aria-label={`${field.label} type`} onChange={(event) => updateField(field.id, fieldWithType(field, event.target.value as Exclude<FieldDefinition["type"], "heading">))}>{schemaFieldTypes.map((type) => <option value={type} key={type}>{type.replaceAll("_", " ")}</option>)}</select></div></div><label className="builder-required"><input type="checkbox" checked={Boolean(field.required)} onChange={(event) => updateField(field.id, { required: event.target.checked })} /> Required</label><IconButton label={`Remove ${field.label}`} icon="x" onClick={() => removeField(field.id)} /></div>)}</div><button className="add-field-row" onClick={() => setFields((current) => [...current, createFieldForType("short_text", current.length + 1)])}><Icon name="plus" size={17} /> Add field</button><div className="schema-builder-note"><Icon name="shield" size={17} /><span>Published schemas are immutable. Existing observations stay attached to their original version.</span></div><div className="wizard-actions"><Button variant="secondary" onClick={onCancel} disabled={busy}>Cancel</Button><Button variant="primary" icon="check" onClick={() => void publish()} disabled={busy} busy={busy}>{busy ? "Publishing…" : "Publish version"}</Button></div></section>;
 }
 
 function ContributorsPanel({ projectId, waitingCount, onToast }: { projectId: string; waitingCount: number; onToast: (message: string) => void }) {
@@ -160,20 +168,25 @@ function ContributorsPanel({ projectId, waitingCount, onToast }: { projectId: st
     void loadProjectReadiness(projectId).then(setRemoteRows).catch(() => setRemoteRows([]));
   }, [projectId]);
 
-  const invite = async () => {
-    const email = window.prompt("Contributor email address")?.trim();
-    if (!email) return;
-    if (!isSupabaseConfigured) {
-      onToast("Contributor invites are available after connecting Supabase");
-      return;
-    }
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviting, setInviting] = useState(false);
+
+  const invite = async (email: string) => {
+    setInviting(true);
+    setInviteOpen(false);
     try {
       await sendProjectInvite(projectId, email);
       onToast(`Invitation sent to ${email}`);
       refresh();
     } catch {
       onToast("The invitation could not be sent");
+    } finally {
+      setInviting(false);
     }
+  };
+
+  const inviteUnavailable = () => {
+    onToast("Contributor invites are available after connecting Supabase");
   };
 
   const ping = async (contributorId: string, email: string) => {
@@ -185,10 +198,10 @@ function ContributorsPanel({ projectId, waitingCount, onToast }: { projectId: st
     }
   };
 
-  if (remoteRows) return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Assigned contributors</Eyebrow><h2>{remoteRows.length} people on this project</h2><p>Readiness is based on the last status reported by each device.</p></div><Button variant="secondary" icon="plus" onClick={() => void invite()}>Add contributor</Button></div><Divider /><div className="contributor-list">{remoteRows.length ? remoteRows.map((row) => <div className="contributor-row" key={row.id}><Avatar initials={row.email.slice(0, 2).toUpperCase()} muted={!row.ready} /><div className="contributor-copy"><strong>{row.email}</strong><span>{row.status}</span></div><StatusBadge tone={row.ready ? "soft" : "neutral"}>{row.ready ? "Confirmed synced" : "Needs attention"}</StatusBadge>{row.ready ? <Icon name="check" size={17} /> : <Button variant="tertiary" icon="send" onClick={() => void ping(row.id, row.email)}>Ping</Button>}</div>) : <div className="empty-list-state"><strong>No contributors assigned</strong><span>Invite the field team when the project is ready.</span></div>}</div></section>;
+  if (remoteRows) return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Assigned contributors</Eyebrow><h2>{remoteRows.length} people on this project</h2><p>Readiness is based on the last status reported by each device.</p></div><Button variant="secondary" icon="plus" onClick={() => setInviteOpen(true)} disabled={inviting}>Add contributor</Button></div><Divider /><div className="contributor-list">{remoteRows.length ? remoteRows.map((row) => <div className="contributor-row" key={row.id}><Avatar initials={row.email.slice(0, 2).toUpperCase()} muted={!row.ready} /><div className="contributor-copy"><strong>{row.email}</strong><span>{row.status}</span></div><StatusBadge tone={row.ready ? "soft" : "neutral"}>{row.ready ? "Confirmed synced" : "Needs attention"}</StatusBadge>{row.ready ? <Icon name="check" size={17} /> : <Button variant="tertiary" icon="send" onClick={() => void ping(row.id, row.email)}>Ping</Button>}</div>) : <div className="empty-list-state"><strong>No contributors assigned</strong><span>Invite the field team when the project is ready.</span></div>}</div>{inviteOpen && isSupabaseConfigured && <EmailPrompt title="Add contributor" message="They will receive an invitation to join this project." confirmLabel="Send invite" onSubmit={(email) => void invite(email)} onCancel={() => setInviteOpen(false)} />}</section>;
   if (isSupabaseConfigured) return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Assigned contributors</Eyebrow><h2>Checking the roster</h2><p>Readiness is based on the last status reported by each device.</p></div></div></section>;
 
-  return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Assigned contributors</Eyebrow><h2>Preview roster</h2><p>Preview data is not connected to a live contributor roster.</p></div><Button variant="secondary" icon="plus" onClick={() => onToast("Contributor invites are available after connecting Supabase")}>Add contributor</Button></div><Divider /><div className="empty-list-state"><span>{waitingCount} local observations waiting in preview.</span></div></section>;
+  return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Assigned contributors</Eyebrow><h2>Preview roster</h2><p>Preview data is not connected to a live contributor roster.</p></div><Button variant="secondary" icon="plus" onClick={inviteUnavailable}>Add contributor</Button></div><Divider /><div className="empty-list-state"><span>{waitingCount} local observations waiting in preview.</span></div></section>;
 }
 
 function ExportPanel({ project, receivedCount, readiness, onExport }: { project: Project; receivedCount: number; readiness: ContributorReadiness[] | null; onExport: () => void }) {

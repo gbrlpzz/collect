@@ -2,6 +2,7 @@ import type { SVGProps } from "react";
 
 export type IconName =
   | "arrow-left"
+  | "chevron-left"
   | "arrow-right"
   | "archive"
   | "camera"
@@ -33,14 +34,15 @@ export type IconName =
 interface IconProps extends SVGProps<SVGSVGElement> {
   name: IconName;
   size?: number;
+  filled?: boolean;
 }
 
-export function Icon({ name, size = 20, strokeWidth = 1.8, ...props }: IconProps) {
+export function Icon({ name, size = 20, strokeWidth = 1.8, filled = false, ...props }: IconProps) {
   const common = {
     width: size,
     height: size,
     viewBox: "0 0 24 24",
-    fill: "none",
+    fill: filled ? "currentColor" : "none",
     stroke: "currentColor",
     strokeWidth,
     strokeLinecap: "round" as const,
@@ -52,6 +54,8 @@ export function Icon({ name, size = 20, strokeWidth = 1.8, ...props }: IconProps
   switch (name) {
     case "arrow-left":
       return <svg {...common}><path d="M19 12H5M12 19l-7-7 7-7" /></svg>;
+    case "chevron-left":
+      return <svg {...common}><path d="m15 18-6-6 6-6" /></svg>;
     case "arrow-right":
       return <svg {...common}><path d="M5 12h14M12 5l7 7-7 7" /></svg>;
     case "archive":

@@ -1,7 +1,7 @@
 import { useId, useState } from "react";
 import { authCallbackError, pendingAuthEmail, rememberAuthEmail, sendMagicLink } from "../lib/supabaseClient";
 import { Icon } from "./Icon";
-import { Button, Eyebrow } from "./Primitives";
+import { Button, ClearButton, Eyebrow } from "./Primitives";
 
 interface AuthScreenProps {
   configured: boolean;
@@ -21,9 +21,15 @@ function isStandaloneApp(): boolean {
   return Boolean(window.matchMedia?.("(display-mode: standalone)").matches || standaloneNavigator.standalone);
 }
 
+function isLocalDevelopmentOrigin(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+}
+
 export function AuthScreen({ configured, onPreview }: AuthScreenProps) {
   const emailInputId = useId();
   const showInstallHint = isAppleMobileBrowser() && !isStandaloneApp();
+  const showLocalRedirectHint = configured && isLocalDevelopmentOrigin();
   const [email, setEmail] = useState(pendingAuthEmail);
   const [sent, setSent] = useState(false);
   const [callbackIssue, setCallbackIssue] = useState<string | null>(() => authCallbackError());
@@ -66,10 +72,19 @@ export function AuthScreen({ configured, onPreview }: AuthScreenProps) {
             <h1 id="auth-title">{callbackIssue ? "Request a new link." : "Sign in to collect."}</h1>
             <p>{configured ? callbackIssue ? "Enter the invited email address and we’ll send a fresh one-time link." : "Use the email address your administrator invited. We’ll send a one-time link." : "This deployment is not connected to an authentication service yet."}</p>
             {configured && <ol className="auth-steps" aria-label="Sign-in steps"><li><span>1</span><span>Enter your invited email.</span></li><li><span>2</span><span>Tap Continue.</span></li><li><span>3</span><span>Open the newest email on this device.</span></li></ol>}
-            <label className="auth-label" htmlFor={emailInputId}>Email address<input id={emailInputId} className="field-input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" inputMode="email" autoCapitalize="none" spellCheck={false} disabled={!configured} /></label>
+            <div className="auth-label">
+              <label htmlFor={emailInputId}>Email address</label>
+              <div className="input-with-clear">
+                <input id={emailInputId} className="field-input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" inputMode="email" autoCapitalize="none" spellCheck={false} disabled={!configured} />
+                {email && configured && <ClearButton label="Clear email address" onClick={() => setEmail("")} />}
+              </div>
+            </div>
             {(callbackIssue || error) && <p className="auth-error" role="alert">{callbackIssue ?? error}</p>}
+            {showLocalRedirectHint && <p className="auth-config-note"><Icon name="info" size={16} /><span>Local preview: sign-in links return to the deployed app. Open the deployed address on your phone.</span></p>}
             {configured ? (
-              <Button variant="primary" fullWidth iconAfter="arrow-right" onClick={submit} disabled={busy || !email.trim()}>{busy ? "Sending…" : "Continue"}</Button>
+              <form onSubmit={(event) => { event.preventDefault(); void submit(); }}>
+                <Button type="submit" variant="primary" fullWidth iconAfter="arrow-right" disabled={busy || !email.trim()} busy={busy}>{busy ? "Sending…" : "Continue"}</Button>
+              </form>
             ) : (
               <div className="auth-config-note"><Icon name="info" size={16} /><span>Sign-in will be available when the project’s Supabase connection is configured.</span></div>
             )}

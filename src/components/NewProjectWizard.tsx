@@ -48,7 +48,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
 
   return (
     <main className="page page-wizard">
-      <div className="back-row"><button className="back-button" onClick={onBack}><Icon name="arrow-left" size={17} /> Admin workspace</button><StatusBadge tone="soft">New project</StatusBadge></div>
+      <div className="back-row"><button className="back-button" onClick={onBack}><Icon name="chevron-left" size={17} /> Admin workspace</button><StatusBadge tone="soft">New project</StatusBadge></div>
       <div className="wizard-heading"><Eyebrow>Project setup</Eyebrow><h1>Start a field project.</h1><p className="lede">A short setup path for a reliable collection surface.</p></div>
       <div className="wizard-steps" aria-label="Project setup progress">{wizardSteps.map((label, index) => <div className={`wizard-step ${step === index + 1 ? "wizard-step-active" : ""} ${step > index + 1 ? "wizard-step-done" : ""}`} key={label}><span>{step > index + 1 ? <Icon name="check" size={13} /> : index + 1}</span><strong>{label}</strong></div>)}</div>
 
@@ -59,7 +59,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
         {step === 4 && <div className="wizard-form"><div><Eyebrow>Step 4 of 4</Eyebrow><h2>Ready to publish.</h2><p>Publishing makes this schema available offline to the assigned field team.</p></div><div className="publish-summary"><div><span>Project</span><strong>{projectName || "Untitled field project"}</strong></div><div><span>Fields</span><strong>{fields.filter((field) => field.type !== "heading").length} typed fields</strong></div><div><span>Contributors</span><strong>{emails.split(/[\n,]+/).filter((email) => email.trim()).length} invitations</strong></div><div><span>Schema version</span><strong>v1</strong></div></div><div className="publish-receipt"><Icon name="shield" size={21} /><div><strong>Safe to publish</strong><span>Once published, this version cannot be edited. A later change creates a new draft.</span></div></div></div>}
         <Divider />
         {error && <p className="auth-error" role="alert">{error}</p>}
-        <div className="wizard-actions"><Button variant="secondary" onClick={() => step === 1 ? onBack() : setStep((current) => current - 1)} disabled={publishing}>{step === 1 ? "Cancel" : "Back"}</Button>{step < 4 ? <Button variant="primary" iconAfter="arrow-right" onClick={continueStep}>Continue</Button> : <Button variant="primary" icon="check" onClick={publish} disabled={publishing}>{publishing ? "Publishing…" : "Publish project"}</Button>}</div>
+        <div className="wizard-actions"><Button variant="secondary" onClick={() => step === 1 ? onBack() : setStep((current) => current - 1)} disabled={publishing}>{step === 1 ? "Cancel" : "Back"}</Button>{step < 4 ? <Button variant="primary" iconAfter="arrow-right" onClick={continueStep}>Continue</Button> : <Button variant="primary" icon="check" onClick={publish} disabled={publishing} busy={publishing}>{publishing ? "Publishing…" : "Publish project"}</Button>}</div>
       </section>
     </main>
   );

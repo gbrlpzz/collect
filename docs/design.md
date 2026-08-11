@@ -66,3 +66,55 @@ These are the official references used for the current interface system:
 - A saved local draft is visible while typing. This is more prominent than a
   typical native form because the local receipt boundary is a product promise,
   not decorative status.
+
+
+## HIG audit — 2026-08-11
+
+The interface was re-audited against the locally cached Apple HIG pages for
+[Designing for iOS](https://developer.apple.com/design/human-interface-guidelines/designing-for-ios),
+[Typography](https://developer.apple.com/design/human-interface-guidelines/typography),
+[Layout](https://developer.apple.com/design/human-interface-guidelines/layout),
+[Color](https://developer.apple.com/design/human-interface-guidelines/color),
+[Materials](https://developer.apple.com/design/human-interface-guidelines/materials),
+[Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility),
+[Dark Mode](https://developer.apple.com/design/human-interface-guidelines/dark-mode),
+[Motion](https://developer.apple.com/design/human-interface-guidelines/motion),
+[Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons),
+[Tab bars](https://developer.apple.com/design/human-interface-guidelines/tab-bars),
+[Sheets](https://developer.apple.com/design/human-interface-guidelines/sheets),
+[Text fields](https://developer.apple.com/design/human-interface-guidelines/text-fields),
+[Progress indicators](https://developer.apple.com/design/human-interface-guidelines/progress-indicators),
+[Toolbars](https://developer.apple.com/design/human-interface-guidelines/toolbars), and
+[Lists and tables](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables).
+
+The audit focuses on the collection path first: 17 pt primary input text,
+44 pt hit regions, logical keyboard input, clear text actions, semantic state,
+system-adaptive contrast, and native-style sheets/dialogs. The app uses
+Liquid Glass-like translucency only for navigation and action chrome; grouped
+content surfaces stay opaque.
+
+### Explicit deviation records
+
+These are the few intentional deviations from platform guidance. Every other
+screen and control follows the HIG defaults above.
+
+#### Full-screen observation task
+
+- **HIG rule:** [Tab bars](https://developer.apple.com/design/human-interface-guidelines/tab-bars) should remain visible while navigating between top-level sections; full-screen task presentations can temporarily cover navigation.
+- **Why this is better here:** An observation is a focused, field-site task. Keeping the tab bar out of the collection surface prevents accidental navigation and leaves the bottom reach zone for the one required completion action.
+- **Scope:** Contributor observation screen only; project and project-list navigation retain the tab bar.
+- **Risk check:** Back remains available in the navigation bar, the task has one labelled primary action, and the screen is not used to navigate between top-level areas.
+
+#### Monochrome accent
+
+- **HIG rule:** Prefer semantic system colors and use color consistently for status and hierarchy.
+- **Why this is better here:** Field evidence status must remain readable in bright sunlight and under uncertainty; words, checkmarks, grouping, and shape communicate state without assigning red/green meaning to observations.
+- **Scope:** Collect’s custom accent and state tokens only; system appearance and increased-contrast variants are still supplied.
+- **Risk check:** Color is never the sole state cue; contrast is tested in both appearances and the increased-contrast media query strengthens tokens.
+
+#### Web PWA symbol/material approximation
+
+- **HIG rule:** Use SF Symbols and system-provided materials for native controls and navigation.
+- **Why this is better here:** This is a source-available web PWA, not a signed UIKit/SwiftUI bundle. The implementation uses a small, consistent SVG symbol set and CSS material approximation while preserving the same semantic roles, sizing, and visual hierarchy.
+- **Scope:** `src/components/Icon.tsx` and browser CSS chrome only; no custom symbol treatment is used to replace text labels or accessibility names.
+- **Risk check:** Icons remain secondary to labels, use consistent stroke weight, and all interactive elements retain text or accessible labels and 44 pt hit regions.
