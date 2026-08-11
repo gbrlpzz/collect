@@ -93,6 +93,18 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 | 66 | Definition of done | 🟡 | audit pending |
 | 67 | The final product standard | 🟡 | audit pending |
 
+## Multi-user pass (2026-08-11)
+
+| Item | Status | Notes |
+|---|---|---|
+| Invite-only accounts | ✅ | `shouldCreateUser:false`; platform signups disabled; accounts via invites only |
+| Administrator invitations | ✅ | `send-admin-invite` function + adminBackend.inviteAdministrator (UI pending) |
+| Project-admin role invites | ✅ | `send-project-invite` accepts role; `loadUserAdminAccess` includes project admins |
+| Per-account local databases | ✅ | IndexedDB scoped by user id; account switch reloads; isolation test |
+| Dual PWA identity | ✅ | `/` white contributor PWA · `/?role=admin` black Admin PWA; icons/manifests/apple-touch |
+| Magic links return to deployed app | ✅ | `VITE_APP_URL` set locally + documented; Supabase accepts deployed-origin redirects |
+| App.tsx role entry + scope wiring | 🟡 | committed with the UI pass (shared file) |
+
 ## Gap work queue
 
 _(filled from audits)_

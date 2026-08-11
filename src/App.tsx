@@ -6,7 +6,7 @@ import { isSubmissionPending, isSubmissionRetryable } from "./types";
 import type { AppMode, AppState, View } from "./types";
 import type { MediaAsset } from "./types";
 import { emptyProject, initialState } from "./data";
-import { acquireSyncLease, commitLocalSubmission, estimateLocalStorage, getExplicitSignOut, getOrCreateDeviceId, getOutboxOperations, getStoredBackendKey, loadAppState, markLocalSubmissionsSynced, mediaFromAssets, probeLocalDatabase, readStoredRecoveryData, recordOutboxFailure, releaseSyncLease, saveAppState, setExplicitSignOut } from "./lib/localStore";
+import { acquireSyncLease, commitLocalSubmission, estimateLocalStorage, getExplicitSignOut, getOrCreateDeviceId, getOutboxOperations, getStoredBackendKey, loadAppState, markLocalSubmissionsSynced, mediaFromAssets, probeLocalDatabase, readStoredRecoveryData, recordOutboxFailure, releaseSyncLease, saveAppState, setExplicitSignOut, setLocalScope } from "./lib/localStore";
 import { AdminDashboard, AdminProject } from "./components/AdminDashboard";
 import { AuthScreen } from "./components/AuthScreen";
 import { Collector } from "./components/Collector";
@@ -23,13 +23,24 @@ import { bootstrapWorkspace, createCheckpoint, createRemoteProject, defaultOrgan
 
 const APP_VERSION = (import.meta.env.VITE_APP_VERSION as string | undefined) ?? "0.1.2";
 
+const entryRole = (() => {
+  if (typeof window === "undefined") return null;
+  const role = new URLSearchParams(window.location.search).get("role");
+  return role === "admin" || role === "contributor" ? role : null;
+})();
+
 export default function App() {
-  const [state, setState] = useState<AppState>(() => isSupabaseConfigured ? {
-    ...initialState,
-    observations: [],
-    project: emptyProject,
-    projects: [],
-  } : initialState);
+  const [state, setState] = useState<AppState>(() => ({
+    ...(isSupabaseConfigured ? {
+      ...initialState,
+      observations: [],
+      project: emptyProject,
+      projects: [],
+    } : initialState),
+    // A dedicated install (?role=admin or ?role=contributor) starts directly
+    // in its surface; the general URL keeps the previous behavior.
+    ...(entryRole === "admin" ? { mode: "admin" as const, view: "admin" as const } : entryRole === "contributor" ? { mode: "contributor" as const } : {}),
+  }));
   const [hydrated, setHydrated] = useState(false);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
   const [session, setSession] = useState<Session | null>(null);
@@ -53,25 +64,36 @@ export default function App() {
       return;
     }
     let active = true;
-    void authSession().then(({ data }) => {
-      if (active) {
-        setSession(data.session);
-        if (data.session) {
-          setExplicitSignOutState(false);
-          void setExplicitSignOut(false).catch(() => undefined);
+    let lastUserId: string | null = null;
+    const applySession = (nextSession: Session | null) => {
+      if (!active) return;
+      const userId = nextSession?.user.id ?? null;
+      if (userId !== lastUserId) {
+        // Every account gets its own IndexedDB database. Switching accounts
+        // (or signing out to an anonymous scope) must never reuse another
+        // person's cached projects, drafts, media, or outbox.
+        setLocalScope(userId ?? "default");
+        if (lastUserId !== null && userId !== null) {
+          // A different person signed in: reset in-memory state and reload so
+          // every effect re-runs against the new account's local database.
+          setHydrated(false);
+          setLocalCacheAvailable(false);
+          setState((current) => ({ ...current, observations: [], project: emptyProject, projects: [], draft: { observed_date: new Date().toISOString().slice(0, 10) }, fieldworkComplete: {} }));
+          window.location.reload();
+          return;
         }
-        setAuthLoading(false);
-        if (data.session) void claimInvites().catch(() => undefined);
+        lastUserId = userId;
       }
-    });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
       if (nextSession) {
         setExplicitSignOutState(false);
         void setExplicitSignOut(false).catch(() => undefined);
-        void claimInvites().catch(() => undefined);
       }
-    });
+      setAuthLoading(false);
+      if (nextSession) void claimInvites().catch(() => undefined);
+    };
+    void authSession().then(({ data }) => applySession(data.session));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => applySession(nextSession));
     return () => {
       active = false;
       listener.subscription.unsubscribe();
@@ -79,6 +101,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (isSupabaseConfigured && authLoading) return;
     let active = true;
     void probeLocalDatabase().then((probe) => {
       if (!active) return;
@@ -112,7 +135,7 @@ export default function App() {
       }
     });
     return () => { active = false; };
-  }, []);
+  }, [authLoading]);
 
   useEffect(() => {
     if (!supabase || !session) return;
