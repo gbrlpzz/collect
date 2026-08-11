@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { authCallbackError, pendingAuthEmail, rememberAuthEmail, sendMagicLink } from "../lib/supabaseClient";
+import { authCallbackError, isStandalonePwa, pendingAuthEmail, rememberAuthEmail, sendMagicLink, verifySignInCode } from "../lib/supabaseClient";
 import { Icon } from "./Icon";
 import { Button, ClearButton, Eyebrow } from "./Primitives";
 
@@ -30,11 +30,16 @@ export function AuthScreen({ configured, onPreview }: AuthScreenProps) {
   const emailInputId = useId();
   const showInstallHint = isAppleMobileBrowser() && !isStandaloneApp();
   const showLocalRedirectHint = configured && isLocalDevelopmentOrigin();
+  const showStandaloneNote = configured && isStandalonePwa();
   const [email, setEmail] = useState(pendingAuthEmail);
   const [sent, setSent] = useState(false);
   const [callbackIssue, setCallbackIssue] = useState<string | null>(() => authCallbackError());
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [codeMode, setCodeMode] = useState(false);
+  const [code, setCode] = useState("");
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [codeBusy, setCodeBusy] = useState(false);
 
   const submit = async () => {
     const address = email.trim();
@@ -62,6 +67,28 @@ export function AuthScreen({ configured, onPreview }: AuthScreenProps) {
     }
   };
 
+  const verifyCode = async () => {
+    const address = email.trim();
+    const token = code.trim();
+    if (!address || token.length !== 6) return;
+    setCodeBusy(true);
+    setCodeError(null);
+    try {
+      await verifySignInCode(address, token);
+      // Session updates flow through the auth listener; this screen unmounts.
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message.toLowerCase() : "";
+      if (message.includes("expired") || message.includes("invalid") || message.includes("token")) {
+        setCodeError("That code is invalid or expired. Check the newest email for the current code.");
+      } else {
+        setCodeError("That code could not be verified. Check the email and try again.");
+      }
+      setCodeError((current) => `${current ?? ""}${current ? " " : ""}If the email has no 6-digit code, its template needs the sign-in code added — the link in that email still works.`.trim());
+    } finally {
+      setCodeBusy(false);
+    }
+  };
+
   return (
     <main className="auth-page">
       <div className="auth-mark">collect<span>.</span></div>
@@ -71,6 +98,7 @@ export function AuthScreen({ configured, onPreview }: AuthScreenProps) {
             <Eyebrow>{configured ? callbackIssue ? "Sign in again" : "Sign in" : "Authentication required"}</Eyebrow>
             <h1 id="auth-title">{callbackIssue ? "Request a new link." : "Sign in to collect."}</h1>
             <p>{configured ? callbackIssue ? "Enter the invited email address and we’ll send a fresh one-time link." : "Use the email address your administrator invited. We’ll send a one-time link." : "This deployment is not connected to an authentication service yet."}</p>
+            {showStandaloneNote && <p className="auth-config-note"><Icon name="info" size={16} /><span>This installed app keeps its own sign-in. If you signed in on the web, sign in again here — synced data returns from the server.</span></p>}
             {configured && <ol className="auth-steps" aria-label="Sign-in steps"><li><span>1</span><span>Enter your invited email.</span></li><li><span>2</span><span>Tap Continue.</span></li><li><span>3</span><span>Open the newest email on this device.</span></li></ol>}
             <div className="auth-label">
               <label htmlFor={emailInputId}>Email address</label>
@@ -90,7 +118,22 @@ export function AuthScreen({ configured, onPreview }: AuthScreenProps) {
             )}
           </>
         ) : (
-          <div className="auth-sent"><Eyebrow>Check your inbox</Eyebrow><h1>Link sent.</h1><p>Open the newest link sent to <strong>{email}</strong> on this device. Each link works once and then expires.</p><p className="auth-sent-hint">If you do not see it, check spam. Do not use an older message.</p>{error && <p className="auth-error" role="alert">{error}</p>}<button className="text-button" onClick={() => void submit()} disabled={busy}>{busy ? "Sending…" : "Send a new link"} <Icon name="refresh" size={15} /></button><button className="text-button" onClick={() => { setSent(false); setError(null); setCallbackIssue(null); }}>Use another email <Icon name="arrow-right" size={15} /></button></div>
+          <div className="auth-sent"><Eyebrow>Check your inbox</Eyebrow><h1>Link sent.</h1><p>Open the newest link sent to <strong>{email}</strong> on this device. Each link works once and then expires.</p><p className="auth-sent-hint">If you do not see it, check spam. Do not use an older message.</p>{error && <p className="auth-error" role="alert">{error}</p>}
+            {codeMode ? (
+              <div className="auth-code">
+                <label className="auth-label" htmlFor="auth-code-input">6-digit code from the email<input id="auth-code-input" className="field-input" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={(event) => { setCode(event.target.value.replace(/\D/g, "").slice(0, 6)); setCodeError(null); }} placeholder="000000" disabled={codeBusy} /></label>
+                {codeError && <p className="auth-error" role="alert">{codeError}</p>}
+                <Button variant="primary" fullWidth onClick={() => void verifyCode()} disabled={codeBusy || code.length !== 6} busy={codeBusy}>{codeBusy ? "Verifying…" : "Verify code"}</Button>
+                <button className="text-button" onClick={() => { setCodeMode(false); setCode(""); setCodeError(null); }}>Back to the sign-in link <Icon name="arrow-right" size={15} /></button>
+              </div>
+            ) : (
+              <>
+                <button className="text-button" onClick={() => void submit()} disabled={busy}>{busy ? "Sending…" : "Send a new link"} <Icon name="refresh" size={15} /></button>
+                <button className="text-button" onClick={() => { setSent(false); setError(null); setCallbackIssue(null); }}>Use another email <Icon name="arrow-right" size={15} /></button>
+                {configured && <button className="text-button" onClick={() => { setCodeMode(true); setCodeError(null); }}>Enter the code from the email instead <Icon name="arrow-right" size={15} /></button>}
+              </>
+            )}
+          </div>
         )}
         {!configured && onPreview && <button className="auth-preview-button" onClick={onPreview}>Open interface preview <Icon name="arrow-right" size={15} /></button>}
         {showInstallHint && <details className="auth-install-help"><summary><Icon name="plus" size={16} /> Add collect to Home Screen</summary><div className="auth-install-content"><p>For reliable offline fieldwork, install collect from Safari.</p><ol><li>Tap <strong>Share</strong>.</li><li>Tap <strong>Add to Home Screen</strong>.</li><li>Tap <strong>Add</strong>.</li></ol><p>Open collect from the new icon when you are ready to work offline.</p></div></details>}
