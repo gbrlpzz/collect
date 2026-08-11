@@ -69,7 +69,9 @@ In Supabase **Authentication → URL Configuration**:
 - add the deployed origin and local development origin to **Additional Redirect URLs**;
 - configure the **Magic Link template** to use collect's clean token-hash callback:
   `<a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email">Open collect</a>`;
-  never hard-code `http://localhost:3000` in the template;
+  never hard-code `http://localhost:3000` in the template; include the code
+  for installed-app sign-in by adding
+  `<p>Or enter this code in the app: <strong>{{ .Token }}</strong></p>`;
 - configure a trusted SMTP provider for production email delivery.
 
 Magic links are one-time links and expire. The token-hash callback avoids

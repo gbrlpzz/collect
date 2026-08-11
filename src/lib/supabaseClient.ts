@@ -100,6 +100,24 @@ export function clearAuthCallbackUrl(): void {
   window.history.replaceState(window.history.state, document.title, `${url.pathname}${url.search}`);
 }
 
+/** True when this page is running as an installed PWA (home-screen app). */
+export function isStandalonePwa(): boolean {
+  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
+  const standaloneNavigator = navigator as Navigator & { standalone?: boolean };
+  return Boolean(window.matchMedia?.("(display-mode: standalone)").matches || standaloneNavigator.standalone);
+}
+
+/**
+ * Verify the six-digit code from the sign-in email. Unlike a magic link, the
+ * code is typed into the current app, so it works identically in Safari and
+ * in an installed PWA — the two storage containers iOS keeps separate.
+ */
+export async function verifySignInCode(email: string, code: string): Promise<void> {
+  if (!supabase) throw new Error("Supabase is not configured");
+  const { error } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: "email" });
+  if (error) throw error;
+}
+
 export function pendingAuthEmail(): string {
   if (typeof window === "undefined") return "";
   try {

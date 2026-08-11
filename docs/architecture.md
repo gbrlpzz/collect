@@ -39,6 +39,28 @@ create_submission → confirm/upload each deterministic object path → finalize
 
 The client preflights media acknowledgement so an interruption after a completed TUS upload does not create a second object. Finalization verifies the expected media count and every media row before returning the durable receipt.
 
+## Web vs installed app storage (iOS)
+
+On iOS, an installed PWA runs in its own storage container: Safari and the
+home-screen app do **not** share cookies, localStorage, or IndexedDB. The
+same is true for the service worker cache. Android and desktop Chrome share
+storage with the browser, so this section only matters on iOS.
+
+Consequences and behavior:
+
+- A session created in Safari is invisible to the installed app, and vice
+  versa. Each container keeps its own persisted session after its own
+  sign-in; there is no cross-container storage API on iOS.
+- Local drafts, media, and the outbox are per-container. The **server is the
+  shared source of truth**: once submissions sync, every container sees the
+  same cloud data, and idempotent client IDs make duplication impossible.
+- Sign-in bridges the containers through the mailbox: the magic link and the
+  six-digit email code both work from any container. The code is recommended
+  inside an installed app because it does not depend on where the email link
+  opens.
+- `isStandalonePwa()` (src/lib/supabaseClient.ts) lets the UI adapt copy and
+  offer the code path when running installed.
+
 ## What the browser cannot promise
 
 The browser cannot guarantee survival after physical device destruction, manual site-data clearing, or browser removal. Persistent storage is requested and quota is monitored, but it remains under browser control. The contributor recovery ZIP is the explicit escape hatch for unsynced data.
