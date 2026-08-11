@@ -14,6 +14,7 @@ Deno.serve(async (request) => {
     const body = await request.json() as Record<string, unknown>;
     const projectId = String(body.project_id ?? "");
     const email = String(body.email ?? "").trim().toLowerCase();
+    const role = body.role === "admin" ? "admin" : "contributor";
     if (!projectId || !email || !email.includes("@")) {
       return json({ error: "Project and contributor email are required" }, {
         status: 400,
@@ -61,7 +62,7 @@ Deno.serve(async (request) => {
       await service.from("project_members").upsert({
         project_id: projectId,
         user_id: invitedUserId,
-        role: "contributor",
+        role,
       }, { onConflict: "project_id,user_id" });
     }
     await service.from("audit_events").insert({
@@ -69,7 +70,7 @@ Deno.serve(async (request) => {
       project_id: projectId,
       actor_id: user.id,
       action: "contributor_invited",
-      metadata: { email },
+      metadata: { email, role },
     });
     return json({ accepted: true, invited: true });
   } catch (error) {

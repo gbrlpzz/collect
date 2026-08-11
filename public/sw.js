@@ -1,7 +1,7 @@
 const CACHE = "collect-shell-v2";
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(["/", "/manifest.webmanifest", "/icon.svg"])));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(["/", "/manifest.webmanifest", "/manifest-admin.webmanifest", "/icon.svg", "/icon-admin.svg", "/icon-512.png", "/icon-admin-512.png"])));
 });
 
 self.addEventListener("activate", (event) => {

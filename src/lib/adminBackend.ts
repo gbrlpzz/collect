@@ -99,14 +99,11 @@ export async function loadUserAdminAccess(): Promise<boolean> {
   const client = requireClient();
   const { data: userData, error: userError } = await client.auth.getUser();
   if (userError || !userData.user) return false;
-  const { data, error } = await client
-    .from("organization_members")
-    .select("organization_id")
-    .eq("user_id", userData.user.id)
-    .eq("role", "admin")
-    .limit(1)
-    .maybeSingle();
-  return !error && Boolean(data);
+  const [{ data: orgAdmin }, { data: projectAdmin }] = await Promise.all([
+    client.from("organization_members").select("organization_id").eq("user_id", userData.user.id).eq("role", "admin").limit(1).maybeSingle(),
+    client.from("project_members").select("project_id").eq("user_id", userData.user.id).eq("role", "admin").limit(1).maybeSingle(),
+  ]);
+  return Boolean(orgAdmin) || Boolean(projectAdmin);
 }
 
 export async function createRemoteProject(input: NewProjectInput): Promise<Project> {
@@ -189,9 +186,31 @@ export async function publishSchemaDraft(draft: SchemaDraft): Promise<void> {
   if (error) throw error;
 }
 
-export async function sendProjectInvite(projectId: string, email: string): Promise<void> {
+/**
+ * Invite a new workspace administrator. Account creation and membership are
+ * handled server-side by the send-admin-invite function; the generic sign-in
+ * screen can never create accounts.
+ */
+export async function inviteAdministrator(email: string): Promise<void> {
   const client = requireClient();
-  const { error } = await client.functions.invoke("send-project-invite", { body: { project_id: projectId, email } });
+  const { error } = await client.functions.invoke("send-admin-invite", { body: { email } });
+  if (error) {
+    const context = error && typeof error === "object" ? (error as { context?: unknown }).context : null;
+    if (context && typeof context === "object" && "clone" in context && typeof (context as { clone?: unknown }).clone === "function") {
+      try {
+        const body = await (context as Response).clone().json() as { error?: unknown };
+        if (typeof body.error === "string" && body.error.trim()) throw new Error(body.error);
+      } catch (caught) {
+        if (caught instanceof Error) throw caught;
+      }
+    }
+    throw error;
+  }
+}
+
+export async function sendProjectInvite(projectId: string, email: string, role: "contributor" | "admin" = "contributor"): Promise<void> {
+  const client = requireClient();
+  const { error } = await client.functions.invoke("send-project-invite", { body: { project_id: projectId, email, role } });
   if (error) throw error;
 }
 

@@ -2,6 +2,22 @@ import type { AppState, MediaAsset, Observation, SubmissionState } from "../type
 
 const DB_NAME = "collect-local-v1";
 const DB_VERSION = 2;
+let activeLocalScope = "default";
+
+/**
+ * Each authenticated account gets its own IndexedDB database. This prevents
+ * cached projects, drafts, media, and outbox rows from being reused when a
+ * different person signs in on the same browser/device. The default scope is
+ * retained for the isolated unit-test database.
+ */
+export function setLocalScope(scope: string): void {
+  const normalized = scope.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "_").slice(0, 120);
+  activeLocalScope = normalized || "default";
+}
+
+export function localDatabaseName(): string {
+  return activeLocalScope === "default" ? DB_NAME : `${DB_NAME}-${activeLocalScope}`;
+}
 const APP_STATE_STORE = "app-state";
 const SETTINGS_STORE = "settings";
 const PROJECTS_STORE = "projects";
@@ -84,7 +100,7 @@ function waitForTransaction(transaction: IDBTransaction): Promise<void> {
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    const request = indexedDB.open(localDatabaseName(), DB_VERSION);
     request.onupgradeneeded = () => {
       const database = request.result;
       ALL_STORES.forEach((storeName) => {

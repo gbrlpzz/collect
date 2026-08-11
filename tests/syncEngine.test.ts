@@ -15,6 +15,7 @@ import {
   recordOutboxFailure,
   releaseSyncLease,
   saveAppState,
+  setLocalScope,
   setLocalSubmissionStatus,
   type DurableMedia,
   type DurableSubmission,
@@ -232,6 +233,24 @@ describe("local ledger survival (§54 lifecycle)", () => {
     expect(recovery.submissions).toHaveLength(1);
     expect(recovery.media).toHaveLength(1);
     expect(recovery.outbox).toHaveLength(3);
+  });
+
+  it("per-account local databases isolate cached projects and outbox rows", async () => {
+    const { submission, media, observation } = makeSubmission();
+    await commitLocalSubmission({ submission, media, observation });
+
+    // The same device, but a different account: it must see none of it.
+    setLocalScope("another-user-id");
+    const otherState = await loadAppState();
+    const otherOperations = await getOutboxOperations();
+    expect(otherState).toBeNull();
+    expect(otherOperations).toHaveLength(0);
+
+    // Back to the original account: everything is still there.
+    setLocalScope("default");
+    const ownState = await loadAppState();
+    expect(ownState?.observations).toHaveLength(1);
+    expect((await getOutboxOperations()).length).toBe(3);
   });
 
   it("protocol helpers: deterministic paths, outbox keys, receipt semantics", () => {

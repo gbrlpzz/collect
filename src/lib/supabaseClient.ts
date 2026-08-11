@@ -124,9 +124,10 @@ export async function sendMagicLink(email: string): Promise<void> {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      // The first workspace administrator may not have an existing account yet.
-      // Project invitations still use the server-side admin invite flow.
-      shouldCreateUser: true,
+      // Invite-only: accounts are created exclusively by an administrator
+      // (project invitation or administrator invitation). The generic
+      // sign-in screen must never create accounts by itself.
+      shouldCreateUser: false,
       emailRedirectTo,
     },
   });
