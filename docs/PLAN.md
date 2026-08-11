@@ -103,7 +103,7 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 | Per-account local databases | ✅ | IndexedDB scoped by user id; account switch reloads; isolation test |
 | Dual PWA identity | ✅ | `/` white contributor PWA · `/?role=admin` black Admin PWA; icons/manifests/apple-touch |
 | Magic links return to deployed app | ✅ | `VITE_APP_URL` set locally + documented; Supabase accepts deployed-origin redirects |
-| App.tsx role entry + scope wiring | 🟡 | committed with the UI pass (shared file) |
+| App.tsx role entry + scope wiring | ✅ | 78f8f06; deployed with the UI pass |
 
 ## Gap work queue
 
