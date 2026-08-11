@@ -61,21 +61,28 @@ export async function projectAccess(
   return { project, admin };
 }
 
-/**
- * Optional administrator allow-list. When ALLOWED_EMAIL_PATTERNS is set (a
- * comma-separated list of exact addresses and/or @domain suffixes), only
- * matching emails may be invited as administrators. Contributor invitations
- * are unrestricted: admins invite whoever they need. Unset = any address may
- * become an administrator (the default for self-hosted deployments).
- */
-export function isEmailAllowed(email: string): boolean {
-  const raw = Deno.env.get("ALLOWED_EMAIL_PATTERNS")?.trim();
-  if (!raw) return true;
+function matchesAllowedPattern(pattern: string, email: string): boolean {
+  const candidate = pattern.trim().toLowerCase();
   const address = email.trim().toLowerCase();
-  return raw.split(",").map((entry) => entry.trim().toLowerCase()).filter(Boolean).some((pattern) => {
-    if (pattern.startsWith("@")) return address.endsWith(pattern);
-    return address === pattern;
-  });
+  if (candidate.startsWith("@")) return address.endsWith(candidate);
+  return address === candidate;
+}
+
+/**
+ * Administrator allow-list. The ALLOWED_EMAIL_PATTERNS secret (a
+ * comma-separated list of exact addresses and/or @domain suffixes) takes
+ * precedence; otherwise private.allowed_admin_patterns decides. Contributor
+ * invitations are unrestricted: admins invite whoever they need. When no
+ * patterns are configured anywhere, any address may become an administrator
+ * (the default for self-hosted deployments).
+ */
+export async function isEmailAllowed(service: SupabaseClient, email: string): Promise<boolean> {
+  const raw = Deno.env.get("ALLOWED_EMAIL_PATTERNS")?.trim();
+  if (raw) return raw.split(",").map((entry) => entry.trim()).filter(Boolean).some((pattern) => matchesAllowedPattern(pattern, email));
+  const { data } = await service.from("allowed_admin_patterns").select("pattern");
+  const patterns = (data ?? []).map((row) => String((row as { pattern?: unknown }).pattern ?? "")).filter(Boolean);
+  if (!patterns.length) return true;
+  return patterns.some((pattern) => matchesAllowedPattern(pattern, email));
 }
 
 export function errorMessage(error: unknown): string {

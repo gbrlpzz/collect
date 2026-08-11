@@ -19,7 +19,7 @@ Deno.serve(async (request) => {
       .limit(1)
       .maybeSingle();
     if (!membership) return json({ error: "Administrator access is required" }, { status: 403 });
-    if (!isEmailAllowed(email)) return json({ error: "This address is not on the invitation allow-list" }, { status: 403 });
+    if (!(await isEmailAllowed(service, email))) return json({ error: "This address is not on the administrator allow-list" }, { status: 403 });
 
     // Create the account (invite email) or reuse an existing one.
     const inviteResult = await service.auth.admin.inviteUserByEmail(email, {

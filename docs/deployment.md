@@ -152,6 +152,32 @@ magic-link option is off by default and must be deliberately selected to send
 an email. Keep database migrations and function deployments in the deployment
 checklist; a frontend-only deploy must not be treated as a backend migration.
 
+### 4b. Administrator allow-list
+
+By default any address can be invited as a workspace administrator. To
+restrict who may *become* an admin (contributor invitations stay open to any
+address), configure allow-list patterns — exact emails and/or `@domain`
+suffixes. Two equivalent sources, checked in order:
+
+1. The `ALLOWED_EMAIL_PATTERNS` secret (takes precedence when set):
+
+```bash
+supabase secrets set \
+  ALLOWED_EMAIL_PATTERNS='info@gabrielepizzi.com,@fieldteam.org' \
+  --project-ref "$SUPABASE_PROJECT_REF"
+```
+
+2. Otherwise the `private.allowed_admin_patterns` table (manageable via SQL):
+
+```sql
+insert into private.allowed_admin_patterns (pattern) values
+  ('info@gabrielepizzi.com'),
+  ('@fieldteam.org');
+```
+
+Administrator invitations are rejected with 403 unless the address matches a
+pattern; contributors can always be invited to projects without restriction.
+
 ### 5. Optional reminder email
 
 Contributor pings use a provider-abstracted mail helper. With Resend:
