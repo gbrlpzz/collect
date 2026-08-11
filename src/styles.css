@@ -459,3 +459,229 @@ p { line-height: 1.45; }
 .privacy-disclosure summary { min-height: 44px; display: flex; align-items: center; gap: 7px; color: var(--secondary); font-size: 0.875rem; font-weight: 600; cursor: pointer; }
 .privacy-disclosure ul { margin: 0 0 10px; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 8px; color: var(--secondary); font-size: 0.8125rem; line-height: 1.45; }
 .privacy-disclosure li strong { color: var(--text); font-weight: 600; }
+
+
+/* -------------------------------------------------------------------------
+   Native system layer
+
+   The UI follows Apple's Human Interface Guidelines as the default language:
+   system/grouped surfaces, a navigation bar, inset list rows, native controls,
+   Dynamic Type-friendly rem units, 44 pt hit targets, and progressive
+   disclosure. Monochrome is intentional for field legibility and evidence
+   states; it is not a substitute for labels or shape.
+   ------------------------------------------------------------------------- */
+:root {
+  --canvas: #f2f2f7; /* systemGroupedBackground */
+  --paper: #ffffff; /* secondarySystemGroupedBackground */
+  --text: rgba(0, 0, 0, .9);
+  --secondary: rgba(60, 60, 67, .72);
+  --tertiary: rgba(60, 60, 67, .48);
+  --separator: rgba(60, 60, 67, .29);
+  --separator-light: rgba(60, 60, 67, .15);
+  --grouped: rgba(118, 118, 128, .12); /* systemGray6 */
+  --grouped-strong: rgba(118, 118, 128, .22);
+  --focus: rgba(0, 0, 0, .9);
+  --focus-ring: rgba(0, 0, 0, .18);
+  --error: rgba(0, 0, 0, .84);
+  --glass: rgba(249, 249, 251, .86);
+  --accent: #000000;
+  --accent-hover: #1c1c1e;
+  --accent-text: #ffffff;
+  --selection-bg: rgba(0, 0, 0, .9);
+  --radius: 10px;
+  --radius-large: 14px;
+  --control-height: 44px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #000000;
+    --paper: #1c1c1e;
+    --text: rgba(255, 255, 255, .94);
+    --secondary: rgba(235, 235, 245, .68);
+    --tertiary: rgba(235, 235, 245, .46);
+    --separator: rgba(84, 84, 88, .72);
+    --separator-light: rgba(84, 84, 88, .5);
+    --grouped: rgba(118, 118, 128, .24);
+    --grouped-strong: rgba(118, 118, 128, .38);
+    --focus: rgba(255, 255, 255, .94);
+    --focus-ring: rgba(255, 255, 255, .24);
+    --error: rgba(255, 255, 255, .9);
+    --glass: rgba(28, 28, 30, .86);
+    --accent: #ffffff;
+    --accent-hover: #f2f2f7;
+    --accent-text: #000000;
+    --selection-bg: rgba(255, 255, 255, .92);
+  }
+}
+
+html { background: var(--canvas); }
+body { background: var(--canvas); }
+button, a, input, textarea, select, label { touch-action: manipulation; }
+button { -webkit-user-select: none; user-select: none; }
+
+/* Native buttons do not grow or shrink when pressed; they communicate state
+   through the system-like opacity change instead. */
+.button { min-height: var(--control-height); border-radius: 10px; font-size: 1rem; letter-spacing: -.01em; transition: background-color .16s ease, color .16s ease, opacity .16s ease; }
+.button:active { transform: none; opacity: .68; }
+.button-primary { background: var(--accent); color: var(--accent-text); }
+.button-primary:hover { background: var(--accent-hover); }
+.button-secondary { background: var(--grouped); color: var(--text); }
+.button-secondary:hover { background: var(--grouped-strong); }
+.button-tertiary, .button-quiet { min-height: var(--control-height); }
+.icon-button { width: var(--control-height); height: var(--control-height); }
+.icon-button:hover, .account-button:hover, .account-button-open { background: var(--grouped); color: var(--text); }
+.text-button { min-height: var(--control-height); font-size: .9375rem; }
+
+/* Navigation bars and tab bars use a translucent system material only for
+   chrome. Collection data itself remains opaque and readable. */
+.main-shell { min-height: calc(100vh - 52px); }
+.topbar { height: 52px; border-bottom-color: var(--separator-light); background: var(--glass); }
+.topbar-inner { padding-right: max(16px, env(safe-area-inset-right)); padding-left: max(16px, env(safe-area-inset-left)); }
+.wordmark { font-size: 1.125rem; letter-spacing: -.06em; }
+.account-button { min-height: var(--control-height); border-radius: 10px; }
+.account-menu { top: 48px; border-color: var(--separator-light); border-radius: 13px; box-shadow: 0 12px 34px rgba(0,0,0,.16); }
+.account-menu button { min-height: var(--control-height); border-radius: 9px; }
+
+/* Inset grouped lists are the shared language for contributor and admin
+   surfaces. Rows remain plain buttons; containers are used only when they
+   communicate grouping or afford a system action. */
+.project-list, .admin-project-list, .readiness-list, .schema-list, .contributor-list { overflow: hidden; border: 1px solid var(--separator-light); border-radius: 14px; background: var(--paper); }
+.project-list { border-top: 1px solid var(--separator-light); }
+.project-row, .list-row { min-height: 64px; padding: 10px 14px; }
+.project-row + .project-row, .list-row + .list-row { border-top: 1px solid var(--separator-light); }
+.project-row:hover, .list-row:hover, .admin-project-card:hover { background: var(--grouped); }
+.project-row-wrap + .project-row-wrap { border-top: 1px solid var(--separator-light); }
+.resume-row { border: 1px solid var(--separator-light); }
+.admin-project-card { min-height: 76px; padding: 12px 16px; border: 0; border-bottom: 1px solid var(--separator-light); background: var(--paper); }
+.admin-project-card:last-child { border-bottom: 0; }
+.empty-list-state { padding: 20px 16px; border-bottom: 0; }
+
+/* Collection is an inset, grouped list rather than a generic form. One group
+   is one mental unit; a field is one quiet row inside it. */
+.collector-page { width: min(100%, 760px); padding-right: 16px; padding-left: 16px; padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
+.collector-topbar { min-height: 52px; margin: 0 -16px; padding: 0 16px; border-bottom-color: var(--separator-light); background: var(--glass); }
+.collector-title strong { font-size: 1rem; }
+.collector-title span { max-width: 220px; font-size: .75rem; }
+.collector-save-state { display: inline-flex; align-items: center; gap: 4px; max-width: 130px; color: var(--secondary); font-size: .75rem; white-space: nowrap; }
+.collector-progress-row { padding-top: 20px; color: var(--secondary); font-size: .8125rem; }
+.collector-progress-copy { gap: 6px; }
+.collector-progress-title { color: var(--text); font-weight: 600; }
+.progress-track { height: 4px; margin-top: 9px; background: var(--grouped-strong); }
+.progress-track span { background: var(--accent); }
+.collector-surface { margin-top: 20px; }
+.collector-fields { gap: 22px; }
+.collector-group { overflow: hidden; border: 1px solid var(--separator-light); border-radius: 14px; background: var(--paper); box-shadow: 0 1px 2px rgba(0,0,0,.025); }
+.field-section-heading { display: block; padding: 15px 16px 11px; background: var(--grouped); }
+.field-section-heading .eyebrow { margin-bottom: 4px; color: var(--secondary); letter-spacing: .02em; }
+.field-section-heading p { color: var(--secondary); font-size: .8125rem; }
+.collector-group-body { background: var(--paper); }
+.collector-field { padding: 17px 16px 19px; border-top: 1px solid var(--separator-light); scroll-margin-top: 70px; }
+.collector-group-body .collector-field:first-child { border-top: 0; }
+.field-label-row { gap: 10px; }
+.field-label-row label { min-height: 24px; color: var(--text); font-size: 1rem; font-weight: 600; line-height: 1.35; }
+.required-mark { color: var(--secondary); font-size: .75rem; font-weight: 500; }
+.field-description { margin: 5px 0 10px; color: var(--secondary); font-size: .875rem; line-height: 1.4; }
+.field-input, .builder-inline-input, .builder-key-input, .builder-select { min-height: var(--control-height); border: 0; border-radius: 10px; outline: 0; background: var(--paper); box-shadow: 0 0 0 1px var(--separator) inset; color: var(--text); font-size: 1rem; }
+.field-input { padding-right: 13px; padding-left: 13px; }
+.field-input:hover, .builder-inline-input:hover, .builder-key-input:hover, .builder-select:hover { border-color: transparent; box-shadow: 0 0 0 1px var(--text) inset; }
+.field-input:focus, .builder-inline-input:focus, .builder-key-input:focus, .builder-select:focus { border-color: transparent; box-shadow: 0 0 0 1px var(--text) inset, 0 0 0 3px var(--focus-ring); }
+.field-input::placeholder { color: var(--tertiary); opacity: 1; }
+.field-textarea { min-height: 104px; padding-top: 11px; padding-bottom: 11px; line-height: 1.45; }
+.number-input-wrap .field-input { padding-right: 78px; }
+.number-input-wrap span { right: 13px; font-size: .875rem; }
+
+/* Choice rows mirror grouped iOS list rows. The checkmark is the visible
+   selection cue; monochrome contrast and aria-pressed cover non-colour users. */
+.choice-grid { gap: 1px; overflow: hidden; border: 1px solid var(--separator-light); border-radius: 10px; background: var(--separator-light); }
+.choice-button { min-height: 48px; padding: 0 14px; border: 0; border-radius: 0; background: var(--paper); font-size: 1rem; }
+.choice-button:hover { background: var(--grouped); }
+.choice-button:active { opacity: .68; }
+.choice-selected { border: 0; box-shadow: none; background: var(--grouped); font-weight: 600; }
+.choice-selected:hover { background: var(--grouped-strong); }
+.tri-state, .segmented-control { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 2px; border: 0; border-radius: 10px; background: var(--grouped); }
+.tri-state button, .segmented-control button { min-height: 40px; border: 0; border-radius: 8px; background: transparent; color: var(--secondary); font-size: .9375rem; }
+.tri-state .tri-selected, .segmented-control .segmented-control-selected { background: var(--paper); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); font-weight: 600; }
+.segmented-control button:active { opacity: .68; }
+
+.capture-card { min-height: 68px; display: flex; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid var(--separator-light); border-radius: 10px; background: var(--paper); }
+.capture-icon { width: 32px; height: 32px; border-radius: 9px; background: var(--grouped); color: var(--secondary); }
+.capture-copy strong { font-size: .9375rem; }
+.capture-copy span { font-size: .75rem; }
+.capture-card .button { min-height: 40px; padding: 0 12px; font-size: .875rem; }
+.capture-complete { box-shadow: 0 0 0 1px var(--text) inset; }
+
+.media-field { padding-top: 1px; }
+.photo-strip { gap: 8px; }
+.media-tile, .photo-placeholder, .add-media { position: relative; width: 76px; height: 76px; overflow: hidden; border-radius: 10px; }
+.media-tile { border: 1px solid var(--separator-light); background: var(--grouped); }
+.media-tile img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.media-tile-icon { position: absolute; inset: 0; display: grid; place-items: center; color: var(--secondary); }
+.media-tile-index { position: absolute; right: 5px; bottom: 5px; min-width: 18px; padding: 2px 4px; border-radius: 5px; background: rgba(0,0,0,.68); color: white; font-size: .6875rem; text-align: center; }
+.media-remove { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: rgba(0,0,0,.68); color: white; }
+.media-remove:active { opacity: .68; }
+.add-media { border: 1px dashed var(--separator); background: transparent; color: var(--text); font-size: .6875rem; }
+.add-media:hover { background: var(--grouped); }
+.add-media span { font-size: .6875rem; }
+.media-caption { padding-top: 9px; color: var(--secondary); font-size: .75rem; }
+.field-error { box-shadow: inset 3px 0 0 var(--text); }
+.field-error .field-input, .field-error .capture-card, .field-error .choice-grid, .field-error .photo-placeholder, .field-error .add-media { box-shadow: 0 0 0 1px var(--text) inset; }
+.field-error-copy, .field-help-error { color: var(--error); font-size: .8125rem; font-weight: 600; }
+.field-help-error { margin-top: 8px; }
+.other-value-row { gap: 6px; margin-top: 9px; }
+.field-help-label { color: var(--secondary); font-size: .875rem; }
+.repeatable-group { gap: 10px; }
+.repeatable-row { padding: 12px; border: 1px solid var(--separator-light); border-radius: 10px; background: var(--grouped); }
+.repeatable-child { margin-top: 12px; }
+.repeatable-child > label { margin-bottom: 6px; color: var(--secondary); font-size: .875rem; }
+.collector-receipt-note { padding: 16px 2px 2px; color: var(--secondary); font-size: .8125rem; }
+.collector-action-bar { padding: 10px max(16px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); border-top-color: var(--separator-light); background: var(--glass); box-shadow: 0 -4px 16px rgba(0,0,0,.06); }
+.collector-action-bar .button { width: min(100%, 728px); }
+
+/* Sheets are the native progressive-disclosure surface for sync and recovery. */
+.sheet-backdrop { background: rgba(0,0,0,.32); }
+.bottom-sheet { border-radius: 22px 22px 0 0; border: 1px solid var(--separator-light); border-bottom: 0; }
+.sheet-handle { width: 36px; height: 5px; margin-bottom: 18px; background: var(--grouped-strong); }
+
+/* The contributor tabs are navigation, not an action bar. They appear only
+   outside the observation screen, matching Apple's tab-bar guidance. */
+.mobile-tabbar { display: none; }
+
+@media (max-width: 680px) {
+  .page { padding-right: 16px; padding-left: 16px; }
+  .page-contributor, .page-project { padding-bottom: calc(106px + env(safe-area-inset-bottom)); }
+  .mobile-tabbar { position: fixed; right: 0; bottom: 0; left: 0; z-index: 30; min-height: calc(50px + env(safe-area-inset-bottom)); display: flex; align-items: flex-start; padding: 3px max(8px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(8px, env(safe-area-inset-left)); border-top: 1px solid var(--separator-light); background: var(--glass); -webkit-backdrop-filter: blur(22px) saturate(180%); backdrop-filter: blur(22px) saturate(180%); }
+  .mobile-tabbar button { min-width: 0; min-height: 49px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 2px 4px; border: 0; background: transparent; color: var(--secondary); font-size: .6875rem; font-weight: 500; }
+  .mobile-tabbar button svg { width: 20px; height: 20px; }
+  .mobile-tabbar button.mobile-tab-active { color: var(--text); font-weight: 650; }
+  .mobile-tabbar button:active { opacity: .68; }
+  .project-row, .list-row { padding-right: 12px; padding-left: 12px; }
+  .project-row-meta span { max-width: 92px; }
+  .collector-topbar { grid-template-columns: minmax(92px,1fr) auto minmax(92px,1fr); }
+  .collector-save-state { max-width: 95px; overflow: hidden; text-overflow: ellipsis; }
+  .collector-title span { max-width: 150px; }
+  .collector-action-bar { padding-right: max(16px, env(safe-area-inset-right)); padding-left: max(16px, env(safe-area-inset-left)); }
+  .admin-project-card { padding-right: 12px; padding-left: 12px; }
+}
+
+@media (min-width: 681px) {
+  .mobile-tabbar { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button, .progress-track span { transition: none; }
+}
+
+
+/* Small labels are sentence case by default. Group headers are the one place
+   where the compact all-caps treatment helps people scan a long observation. */
+.eyebrow { text-transform: none; letter-spacing: -.01em; font-size: .8125rem; }
+.field-section-heading .eyebrow { text-transform: uppercase; letter-spacing: .02em; font-size: .75rem; }
+.admin-tabs button, .wizard-step { min-height: 44px; }
+.builder-required { min-height: 44px; }
+
+/* The sign-in gate is an app entry screen, not a marketing card. */
+.auth-page { justify-content: flex-start; padding-top: max(72px, calc(72px + env(safe-area-inset-top))); }
+.auth-card { border: 0; background: transparent; box-shadow: none; }
+.auth-steps { overflow: hidden; border: 1px solid var(--separator-light); border-radius: 12px; background: var(--paper); }
+.auth-label { margin-top: 22px; }

@@ -21,3 +21,48 @@ Reference the official guidance when making UI decisions:
 - Respect system font scaling, light/dark appearance, reduced motion, keyboard navigation, and focus visibility.
 - Avoid animation that delays data entry or obscures whether a write completed.
 - Treat offline and error states as normal product states with factual copy, not alarming decoration.
+
+
+## Native iOS interaction contract
+
+The default is Apple's Human Interface Guidelines. We deviate only when the
+fieldwork reliability contract requires a different behavior, and each
+exception must be explainable in terms of data preservation or offline use.
+These are the official references used for the current interface system:
+
+- [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines) — the primary reference.
+- [Layout](https://developer.apple.com/design/human-interface-guidelines/layout) — hierarchy, margins, safe areas, and adaptation.
+- [Typography](https://developer.apple.com/design/human-interface-guidelines/typography) — system typography and Dynamic Type.
+- [Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility) — legibility, assistive technologies, and non-colour state communication.
+- [Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons) — immediate, clearly labelled actions.
+- [Lists and tables](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables) — grouped rows for related content and settings-like navigation.
+- [Tab bars](https://developer.apple.com/design/human-interface-guidelines/tab-bars) — top-level navigation only, never a replacement for an action button.
+- [Toolbars](https://developer.apple.com/design/human-interface-guidelines/toolbars) — compact navigation and contextual actions.
+- [Action sheets](https://developer.apple.com/design/human-interface-guidelines/action-sheets) — progressive disclosure for sync and recovery actions.
+- [Materials](https://developer.apple.com/design/human-interface-guidelines/materials) — translucent chrome only; collected evidence stays on opaque surfaces.
+- [Selection and input](https://developer.apple.com/design/human-interface-guidelines/selection-and-input) — native input and selection behavior.
+
+### How the contract appears in collect
+
+| HIG principle | collect implementation |
+| --- | --- |
+| One clear hierarchy | A navigation bar identifies the current surface; the observation screen has one primary action: **Save observation**. |
+| Comfortable touch interaction | Interactive controls use a 44 px minimum target, with larger rows for repeated field choices. |
+| Native input behavior | Semantic HTML inputs (`date`, `datetime-local`, numeric input, file picker), system keyboard hints, visible labels, and browser focus are preferred over custom widgets. |
+| Group related content | Field definitions are rendered as inset grouped sections and list rows, not a generic form-builder canvas. |
+| Progressive disclosure | Sync details, privacy detail, and recovery actions live in sheets or disclosures instead of competing with collection. |
+| Accessible state | Words, checkmarks, selection shape, focus, and live status text communicate state; colour is never the only signal. |
+| Respect system settings | System font stacks, rem-based type, light/dark appearance, safe-area insets, keyboard navigation, and reduced motion are supported. |
+| Preserve the task | Offline receipts are explicit and factual. The interface never turns a request start or upload completion into a server receipt. |
+
+### Deliberate deviations
+
+- The collection action is a persistent bottom action because a contributor must
+  be able to finish an observation with one reachable thumb action while moving
+  through a site. It is not used for navigation.
+- The interface remains monochrome rather than adopting semantic iOS tint
+  colours. Research observations need strong, calm contrast in sunlight and
+  under uncertainty; words and shape carry state instead.
+- A saved local draft is visible while typing. This is more prominent than a
+  typical native form because the local receipt boundary is a product promise,
+  not decorative status.

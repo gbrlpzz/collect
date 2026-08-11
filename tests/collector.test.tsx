@@ -68,6 +68,18 @@ describe("Collector validation (§10 client-side enforcement)", () => {
     fireEvent.click(screen.getByRole("button", { name: /save observation/i }));
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
+
+  it("lets contributors remove an attached photo before saving", () => {
+    const onSubmit = vi.fn();
+    const draft = { observed_date: "2026-08-10", site_code: "VA-001" };
+    render(<Collector project={project} draft={draft} lastSavedAt={null} onDraftChange={() => undefined} onSubmit={onSubmit} onBack={() => undefined} isSaving={false} />);
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [new File([new Blob(["x"])], "site.jpg", { type: "image/jpeg" })] } });
+    fireEvent.click(screen.getByRole("button", { name: /remove photo 1/i }));
+    fireEvent.click(screen.getByRole("button", { name: /save observation/i }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getAllByText(/complete this field/i).length).toBeGreaterThan(0);
+  });
 });
 
 describe("FieldRenderer single choice with Other (§10)", () => {

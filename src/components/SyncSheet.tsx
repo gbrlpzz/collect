@@ -40,6 +40,14 @@ export function SyncSheet({ observations, lastSyncAt, isSyncing, progress, onClo
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+
   const activeProgress = pending.map((item) => ({ observation: item, entry: progress[item.id] })).filter((row) => row.entry);
   const syncingCount = activeProgress.length;
   const statusLabel = (status: SubmissionState): string =>
@@ -48,7 +56,7 @@ export function SyncSheet({ observations, lastSyncAt, isSyncing, progress, onClo
 
   return (
     <div className="sheet-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="sync-sheet-title">
+      <section className="bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="sync-sheet-title" aria-describedby="sync-sheet-copy">
         <div className="sheet-handle" />
         <div className="sheet-heading">
           <div>
@@ -58,7 +66,7 @@ export function SyncSheet({ observations, lastSyncAt, isSyncing, progress, onClo
           <IconButton label="Close sync status" icon="x" onClick={onClose} />
         </div>
 
-        <p className="sheet-copy">{hasPending ? "Saved on this device. Sync will continue when the server is reachable." : "The server has acknowledged every complete observation."}</p>
+        <p className="sheet-copy" id="sync-sheet-copy">{hasPending ? "Saved on this device. Sync will continue when the server is reachable." : "The server has acknowledged every complete observation."}</p>
 
         {activeProgress.length > 0 && (
           <div className="sync-operation-list">

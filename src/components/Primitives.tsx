@@ -28,6 +28,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
 }
 
+/**
+ * The shared action primitive. Native buttons have an explicit type so an
+ * action never submits an unrelated form by accident. Keeping the primitive
+ * small also makes contributor and admin actions feel like one system.
+ */
 export function Button({
   variant = "secondary",
   icon,
@@ -35,10 +40,12 @@ export function Button({
   children,
   fullWidth = false,
   className = "",
+  type = "button",
   ...props
 }: ButtonProps) {
   return (
     <button
+      type={type}
       className={`button button-${variant}${fullWidth ? " button-full" : ""} ${className}`.trim()}
       {...props}
     >
@@ -49,21 +56,61 @@ export function Button({
   );
 }
 
+interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children" | "aria-label"> {
+  label: string;
+  icon: IconName;
+}
+
 export function IconButton({
   label,
   icon,
-  onClick,
   className = "",
-}: {
+  type = "button",
+  ...props
+}: IconButtonProps) {
+  return (
+    <button type={type} className={`icon-button ${className}`.trim()} aria-label={label} {...props}>
+      <Icon name={icon} size={19} />
+    </button>
+  );
+}
+
+export interface SegmentOption {
+  value: string;
   label: string;
-  icon: IconName;
-  onClick?: () => void;
+}
+
+/** A compact, accessible choice among a small set of mutually exclusive values. */
+export function SegmentedControl({
+  options,
+  value,
+  onChange,
+  label,
+  className,
+}: {
+  options: SegmentOption[];
+  value: string | undefined;
+  onChange: (value: string) => void;
+  label: string;
   className?: string;
 }) {
   return (
-    <button className={`icon-button ${className}`.trim()} aria-label={label} onClick={onClick}>
-      <Icon name={icon} size={19} />
-    </button>
+    <div className={`segmented-control ${className ?? ""}`.trim()} role="group" aria-label={label}>
+      {options.map((option) => {
+        const selected = value === option.value;
+        return (
+          <button
+            type="button"
+            key={option.value}
+            className={selected ? "segmented-control-selected" : ""}
+            aria-pressed={selected}
+            onClick={() => onChange(option.value)}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

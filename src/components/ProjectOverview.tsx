@@ -30,8 +30,8 @@ export function ProjectOverview({ project, observations, onNavigate, onOpenSync,
 
       <p className="project-instructions">{project.instructions}</p>
 
-      <Button variant="primary" fullWidth iconAfter="arrow-right" onClick={() => onNavigate("collector")} disabled={project.status === "closed"}>
-        {project.status === "closed" ? "Collection closed" : "Start collecting"}
+      <Button variant="primary" fullWidth icon="plus" onClick={() => onNavigate("collector")} disabled={project.status === "closed"}>
+        {project.status === "closed" ? "Collection closed" : "Add observation"}
       </Button>
 
       <section className="project-list project-list-detail" aria-label="Project status">

@@ -601,9 +601,8 @@ export default function App() {
 
       {state.mode === "contributor" && state.view !== "collector" && (
         <nav className="mobile-tabbar" aria-label="Fieldwork navigation">
-          <button className={state.view === "home" ? "mobile-tab-active" : ""} onClick={() => navigate("home")}><Icon name="folder" size={19} /><span>Projects</span></button>
-          <button className={state.view === "project" ? "mobile-tab-active" : ""} onClick={() => navigate("project")}><Icon name="file" size={19} /><span>Current project</span></button>
-          <button onClick={() => setSyncSheetOpen(true)}><Icon name="refresh" size={19} /><span>{pendingCount ? `${pendingCount} waiting` : "Sync"}</span></button>
+          <button className={state.view === "home" ? "mobile-tab-active" : ""} aria-current={state.view === "home" ? "page" : undefined} onClick={() => navigate("home")}><Icon name="folder" size={19} /><span>Projects</span></button>
+          <button className={state.view === "project" ? "mobile-tab-active" : ""} aria-current={state.view === "project" ? "page" : undefined} onClick={() => navigate("project")}><Icon name="file" size={19} /><span>Project</span></button>
         </nav>
       )}
 

@@ -1,7 +1,8 @@
+import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
-import type { FieldDefinition, LocationValue } from "../types";
+import type { FieldDefinition, LocationValue, MediaAsset } from "../types";
 import { Icon } from "./Icon";
-import { Button } from "./Primitives";
+import { Button, SegmentedControl } from "./Primitives";
 
 interface FieldRendererProps {
   field: FieldDefinition;
@@ -9,11 +10,64 @@ interface FieldRendererProps {
   onChange: (value: unknown) => void;
   onCaptureLocation: () => void;
   onAddPhoto: () => void;
-  photoNames: string[];
+  /** Kept for the small, string-only renderer API used by older callers. */
+  photoNames?: string[];
+  mediaAssets?: MediaAsset[];
+  onRemoveMedia?: (index: number) => void;
   locationError?: string | null;
 }
 
-export function FieldRenderer({ field, value, onChange, onCaptureLocation, onAddPhoto, photoNames, locationError }: FieldRendererProps) {
+function MediaTile({
+  asset,
+  index,
+  type,
+  onRemove,
+}: {
+  asset: MediaAsset;
+  index: number;
+  type: "photo" | "audio";
+  onRemove?: () => void;
+}) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (type !== "photo" || !asset.blob || !asset.mimeType.startsWith("image/")) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(asset.blob);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [asset.blob, asset.mimeType, type]);
+
+  return (
+    <div className="media-tile">
+      {previewUrl ? (
+        <img src={previewUrl} alt={asset.name || `Photo ${index + 1}`} />
+      ) : (
+        <span className="media-tile-icon"><Icon name={type === "audio" ? "mic" : "camera"} size={22} /></span>
+      )}
+      <span className="media-tile-index">{index + 1}</span>
+      {onRemove && (
+        <button type="button" className="media-remove" onClick={onRemove} aria-label={`Remove ${type} ${index + 1}`}>
+          <Icon name="x" size={14} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function FieldRenderer({
+  field,
+  value,
+  onChange,
+  onCaptureLocation,
+  onAddPhoto,
+  photoNames = [],
+  mediaAssets,
+  onRemoveMedia,
+  locationError,
+}: FieldRendererProps) {
   const stringValue = typeof value === "string" ? value : "";
 
   if (field.type === "short_text") {
@@ -26,6 +80,8 @@ export function FieldRenderer({ field, value, onChange, onCaptureLocation, onAdd
         placeholder={String(field.config?.placeholder ?? "")}
         maxLength={Number(field.config?.maxLength ?? 1000)}
         autoComplete="off"
+        autoCapitalize="sentences"
+        enterKeyHint="next"
       />
     );
   }
@@ -40,6 +96,8 @@ export function FieldRenderer({ field, value, onChange, onCaptureLocation, onAdd
         maxLength={Number(field.config?.maxLength ?? 5000)}
         placeholder="Write what you observed…"
         rows={4}
+        autoCapitalize="sentences"
+        enterKeyHint="enter"
       />
     );
   }
@@ -52,7 +110,7 @@ export function FieldRenderer({ field, value, onChange, onCaptureLocation, onAdd
           className="field-input"
           id={field.key}
           type="number"
-          value={typeof numberValue === "number" ? String(numberValue) : typeof numberValue === "string" ? numberValue : ""}
+          value={typeof numberValue === "number" && !Number.isNaN(numberValue) ? String(numberValue) : typeof numberValue === "string" ? numberValue : ""}
           onChange={(event) => {
             const raw = event.target.value;
             onChange(raw === "" ? "" : { value: Number(raw), unit: field.config?.unit ? String(field.config.unit) : null });
@@ -60,7 +118,8 @@ export function FieldRenderer({ field, value, onChange, onCaptureLocation, onAdd
           min={field.config?.min === undefined ? undefined : Number(field.config.min)}
           max={field.config?.max === undefined ? undefined : Number(field.config.max)}
           step={field.config?.integer ? 1 : "any"}
-          inputMode="numeric"
+          inputMode={field.config?.integer ? "numeric" : "decimal"}
+          enterKeyHint="next"
         />
         {field.config?.unit && <span>{String(field.config.unit)}</span>}
       </div>
@@ -73,7 +132,7 @@ export function FieldRenderer({ field, value, onChange, onCaptureLocation, onAdd
     const storedOtherText = value && typeof value === "object" && "otherText" in value ? String((value as { otherText?: unknown }).otherText ?? "") : "";
     const isOther = storedValue === "other" || (otherOption !== undefined && storedValue === otherOption.id);
     return (
-      <div className="choice-grid">
+      <div className="choice-grid" role="group" aria-label={field.label}>
         {field.options?.map((option) => {
           const selected = option.id === storedValue || (option.value === "other" && isOther);
           return (
@@ -85,7 +144,7 @@ export function FieldRenderer({ field, value, onChange, onCaptureLocation, onAdd
               onClick={() => onChange(option.value === "other" && otherOption ? { value: otherOption.id, otherText: storedOtherText } : option.id)}
             >
               <span>{option.label}</span>
-              {selected && <Icon name="check" size={16} />}
+              {selected && <Icon name="check" size={18} />}
             </button>
           );
         })}
@@ -100,6 +159,8 @@ export function FieldRenderer({ field, value, onChange, onCaptureLocation, onAdd
               placeholder="Describe the other value…"
               maxLength={200}
               autoComplete="off"
+              autoCapitalize="sentences"
+              enterKeyHint="done"
               onChange={(event) => onChange({ value: otherOption.id, otherText: event.target.value })}
             />
           </div>
@@ -110,23 +171,15 @@ export function FieldRenderer({ field, value, onChange, onCaptureLocation, onAdd
 
   if (field.type === "tri_state") {
     const values = [
-      ["yes", "Yes"],
-      ["no", "No"],
-      ["unknown", "Unknown"],
+      { value: "yes", label: "Yes" },
+      { value: "no", label: "No" },
+      { value: "unknown", label: "Unknown" },
     ];
-    return (
-      <div className="tri-state" role="group" aria-label={field.label}>
-        {values.map(([key, label]) => (
-          <button type="button" key={key} className={value === key ? "tri-selected" : ""} aria-pressed={value === key} onClick={() => onChange(key)}>
-            {label}
-          </button>
-        ))}
-      </div>
-    );
+    return <SegmentedControl className="tri-state" options={values} value={typeof value === "string" ? value : undefined} onChange={onChange} label={field.label} />;
   }
 
   if (field.type === "date") {
-    return <input id={field.key} className="field-input" type="date" value={stringValue} onChange={(event) => onChange(event.target.value)} />;
+    return <input id={field.key} className="field-input" type="date" value={stringValue} onChange={(event) => onChange(event.target.value)} autoComplete="off" />;
   }
 
   if (field.type === "datetime") {
@@ -138,16 +191,16 @@ export function FieldRenderer({ field, value, onChange, onCaptureLocation, onAdd
       const absoluteMinutes = Math.abs(offsetMinutes);
       const offset = `${sign}${String(Math.floor(absoluteMinutes / 60)).padStart(2, "0")}:${String(absoluteMinutes % 60).padStart(2, "0")}`;
       onChange({ localDatetime: event.target.value, timezoneOffset: offset, utcTimestamp: Number.isNaN(date.getTime()) ? null : date.toISOString() });
-    }} />;
+    }} autoComplete="off" />;
   }
 
   if (field.type === "multiple_choice") {
     const selected = Array.isArray(value) ? value.map(String) : [];
     return (
-      <div className="choice-grid">
+      <div className="choice-grid" role="group" aria-label={field.label}>
         {field.options?.map((option) => {
           const isSelected = selected.includes(option.id);
-          return <button type="button" key={option.id} className={`choice-button ${isSelected ? "choice-selected" : ""}`} aria-pressed={isSelected} onClick={() => onChange(isSelected ? selected.filter((item) => item !== option.id) : [...selected, option.id])}><span>{option.label}</span>{isSelected && <Icon name="check" size={16} />}</button>;
+          return <button type="button" key={option.id} className={`choice-button ${isSelected ? "choice-selected" : ""}`} aria-pressed={isSelected} onClick={() => onChange(isSelected ? selected.filter((item) => item !== option.id) : [...selected, option.id])}><span>{option.label}</span>{isSelected && <Icon name="check" size={18} />}</button>;
         })}
       </div>
     );
@@ -168,34 +221,32 @@ export function FieldRenderer({ field, value, onChange, onCaptureLocation, onAdd
             ) : (
               <>
                 <strong>Location not captured</strong>
-                <span>Coordinates and accuracy are stored with the observation.</span>
+                <span>Coordinates and accuracy stay with this observation.</span>
               </>
             )}
           </div>
-          <Button variant="secondary" onClick={onCaptureLocation}>{location ? "Recapture" : "Capture location"}</Button>
+          <Button variant="secondary" onClick={onCaptureLocation}>{location ? "Recapture" : "Capture"}</Button>
         </div>
-        {locationError && <p className="field-help-error">{locationError}</p>}
+        {locationError && <p className="field-help-error" role="alert">{locationError}</p>}
       </>
     );
   }
 
   if (field.type === "photo" || field.type === "audio") {
+    const assets = mediaAssets ?? photoNames.map((name, index) => ({ id: `${field.key}-${index}`, name, mimeType: field.type === "photo" ? "image/*" : "audio/*", byteSize: 0, fieldId: field.key }));
+    const maxCount = Number(field.config?.maxCount ?? 5);
     return (
       <div className="media-field">
         <div className="photo-strip">
-          {photoNames.map((name, index) => (
-            <div className="photo-placeholder" key={`${name}-${index}`}>
-              <Icon name={field.type === "audio" ? "mic" : "camera"} size={22} />
-              <span>{index + 1}</span>
-            </div>
-          ))}
-          <button type="button" className="add-media" onClick={onAddPhoto} aria-label={field.type === "audio" ? "Add audio" : "Add a photo"}>
-            <Icon name={field.type === "audio" ? "mic" : "plus"} size={22} />
-          </button>
+          {assets.map((asset, index) => <MediaTile key={`${asset.id}-${index}`} asset={asset} index={index} type={field.type as "photo" | "audio"} onRemove={onRemoveMedia ? () => onRemoveMedia(index) : undefined} />)}
+          {assets.length < maxCount && <button type="button" className="add-media" onClick={onAddPhoto} aria-label={field.type === "audio" ? "Add audio" : "Add a photo"}>
+            <Icon name={field.type === "audio" ? "mic" : "camera"} size={22} />
+            <span>{field.type === "audio" ? "Record" : "Add"}</span>
+          </button>}
         </div>
         <div className="media-caption">
-          <span>{photoNames.length ? `${photoNames.length} original${photoNames.length > 1 ? "s" : ""} stored locally` : field.type === "audio" ? "No audio added yet" : "No photos added yet"}</span>
-          <span>{String(field.config?.maxCount ?? 5)} max</span>
+          <span>{assets.length ? `${assets.length} original${assets.length > 1 ? "s" : ""} stored on this device` : field.type === "audio" ? "No audio added yet" : "No photos added yet"}</span>
+          <span>{assets.length} / {maxCount}</span>
         </div>
       </div>
     );
@@ -208,7 +259,7 @@ export function FieldRenderer({ field, value, onChange, onCaptureLocation, onAdd
         {rows.map((row, rowIndex) => (
           <div className="repeatable-row" key={rowIndex}>
             <div className="repeatable-row-heading"><strong>{field.label} {rowIndex + 1}</strong><button type="button" className="text-button" onClick={() => onChange(rows.filter((_, index) => index !== rowIndex))}>Remove</button></div>
-            {field.children?.map((child) => <div className="repeatable-child" key={child.id}><label>{child.label}</label><FieldRenderer field={child} value={row[child.key]} onChange={(childValue) => onChange(rows.map((current, index) => index === rowIndex ? { ...current, [child.key]: childValue } : current))} onCaptureLocation={onCaptureLocation} onAddPhoto={onAddPhoto} photoNames={[]} /></div>)}
+            {field.children?.map((child) => <div className="repeatable-child" key={child.id}><label htmlFor={`${field.key}-${rowIndex}-${child.key}`}>{child.label}</label><FieldRenderer field={{ ...child, key: `${field.key}-${rowIndex}-${child.key}` }} value={row[child.key]} onChange={(childValue) => onChange(rows.map((current, index) => index === rowIndex ? { ...current, [child.key]: childValue } : current))} onCaptureLocation={onCaptureLocation} onAddPhoto={onAddPhoto} photoNames={[]} mediaAssets={[]} locationError={locationError} /></div>)}
           </div>
         ))}
         <Button variant="secondary" icon="plus" onClick={() => onChange([...rows, {}])}>Add {field.label.toLowerCase()}</Button>
