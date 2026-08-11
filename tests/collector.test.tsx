@@ -49,6 +49,14 @@ describe("Collector validation (§10 client-side enforcement)", () => {
     expect(screen.getByText(/maximum is 50/i)).toBeTruthy();
   });
 
+  it("rejects fractional values for integer fields", () => {
+    const onSubmit = vi.fn();
+    render(<Collector project={validationProject} draft={{ observed_date: "2026-08-10", site_code: "VA-001", people_count: { value: 1.5, unit: null } }} lastSavedAt={null} onDraftChange={() => undefined} onSubmit={onSubmit} onBack={() => undefined} isSaving={false} />);
+    fireEvent.click(screen.getByRole("button", { name: /save observation/i }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText(/whole number/i)).toBeTruthy();
+  });
+
   it("enforces text minLength", () => {
     const onSubmit = vi.fn();
     render(<Collector project={validationProject} draft={{ observed_date: "2026-08-10", site_code: "VA" }} lastSavedAt={null} onDraftChange={() => undefined} onSubmit={onSubmit} onBack={() => undefined} isSaving={false} />);

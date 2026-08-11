@@ -50,8 +50,12 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
   const requiredFields = fields.filter((field) => field.required);
   const hasValue = (value: unknown) => {
     if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === "number" && !Number.isFinite(value)) return false;
     if (value && typeof value === "object" && "localDatetime" in value) return Boolean((value as { localDatetime?: string }).localDatetime);
-    if (value && typeof value === "object" && "value" in value) return (value as { value?: unknown }).value !== undefined && (value as { value?: unknown }).value !== "";
+    if (value && typeof value === "object" && "value" in value) {
+      const nestedValue = (value as { value?: unknown }).value;
+      return nestedValue !== undefined && nestedValue !== "" && !(typeof nestedValue === "number" && !Number.isFinite(nestedValue));
+    }
     return value !== undefined && value !== null && value !== "";
   };
   const completedRequired = requiredFields.filter((field) => {
@@ -124,13 +128,13 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
       return null;
     }
     if (field.type === "number") {
-      if (value && typeof value === "object" && "value" in value) {
-        const numberValue = Number((value as { value?: unknown }).value);
-        if (!Number.isNaN(numberValue)) {
-          if (config.min !== undefined && numberValue < Number(config.min)) return `Minimum is ${config.min}.`;
-          if (config.max !== undefined && numberValue > Number(config.max)) return `Maximum is ${config.max}.`;
-        }
-      }
+      const rawNumber = value && typeof value === "object" && "value" in value ? (value as { value?: unknown }).value : value;
+      if (rawNumber === undefined || rawNumber === null || rawNumber === "") return null;
+      const numberValue = typeof rawNumber === "number" ? rawNumber : Number(rawNumber);
+      if (!Number.isFinite(numberValue)) return "Enter a valid number.";
+      if (config.integer && !Number.isInteger(numberValue)) return "Enter a whole number.";
+      if (config.min !== undefined && numberValue < Number(config.min)) return `Minimum is ${config.min}.`;
+      if (config.max !== undefined && numberValue > Number(config.max)) return `Maximum is ${config.max}.`;
       return null;
     }
     if (field.type === "photo" || field.type === "audio") {

@@ -113,7 +113,8 @@ export function FieldRenderer({
           value={typeof numberValue === "number" && !Number.isNaN(numberValue) ? String(numberValue) : typeof numberValue === "string" ? numberValue : ""}
           onChange={(event) => {
             const raw = event.target.value;
-            onChange(raw === "" ? "" : { value: Number(raw), unit: field.config?.unit ? String(field.config.unit) : null });
+            const parsed = Number(raw);
+            onChange(raw === "" ? "" : { value: Number.isFinite(parsed) ? parsed : raw, unit: field.config?.unit ? String(field.config.unit) : null });
           }}
           min={field.config?.min === undefined ? undefined : Number(field.config.min)}
           max={field.config?.max === undefined ? undefined : Number(field.config.max)}
