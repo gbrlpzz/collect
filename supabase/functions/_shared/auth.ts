@@ -61,6 +61,23 @@ export async function projectAccess(
   return { project, admin };
 }
 
+/**
+ * Optional administrator allow-list. When ALLOWED_EMAIL_PATTERNS is set (a
+ * comma-separated list of exact addresses and/or @domain suffixes), only
+ * matching emails may be invited as administrators. Contributor invitations
+ * are unrestricted: admins invite whoever they need. Unset = any address may
+ * become an administrator (the default for self-hosted deployments).
+ */
+export function isEmailAllowed(email: string): boolean {
+  const raw = Deno.env.get("ALLOWED_EMAIL_PATTERNS")?.trim();
+  if (!raw) return true;
+  const address = email.trim().toLowerCase();
+  return raw.split(",").map((entry) => entry.trim().toLowerCase()).filter(Boolean).some((pattern) => {
+    if (pattern.startsWith("@")) return address.endsWith(pattern);
+    return address === pattern;
+  });
+}
+
 export function errorMessage(error: unknown): string {
   // Fixed, non-sensitive strings only: raw Error.message can leak internal
   // details to clients. The operation itself is reported; specifics are never.

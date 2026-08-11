@@ -23,6 +23,14 @@
         touch.rel = "apple-touch-icon";
         touch.href = admin ? "/apple-touch-icon-admin.png" : "/apple-touch-icon.png";
         document.head.appendChild(touch);
+        // Installed-PWA chrome follows the system appearance (contributor only;
+        // the admin identity is dark by design).
+        if (!admin && window.matchMedia) {
+          var mq = window.matchMedia("(prefers-color-scheme: dark)");
+          var applyTheme = function () { theme.content = mq.matches ? "#000000" : "#f2f2f7"; };
+          applyTheme();
+          mq.addEventListener ? mq.addEventListener("change", applyTheme) : mq.addListener(applyTheme);
+        }
         var title = document.createElement("meta");
         title.name = "apple-mobile-web-app-title";
         title.content = admin ? "collect Admin" : "collect";

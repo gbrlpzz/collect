@@ -1,5 +1,5 @@
 import { corsHeaders, json, options } from "../_shared/cors.ts";
-import { errorMessage, requireUser } from "../_shared/auth.ts";
+import { errorMessage, isEmailAllowed, requireUser } from "../_shared/auth.ts";
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return options();
@@ -19,6 +19,7 @@ Deno.serve(async (request) => {
       .limit(1)
       .maybeSingle();
     if (!membership) return json({ error: "Administrator access is required" }, { status: 403 });
+    if (!isEmailAllowed(email)) return json({ error: "This address is not on the invitation allow-list" }, { status: 403 });
 
     // Create the account (invite email) or reuse an existing one.
     const inviteResult = await service.auth.admin.inviteUserByEmail(email, {
