@@ -6,14 +6,20 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 
 | Area | Status | Notes |
 |---|---|---|
-| Local collector (M1) | 🟡 | audit pending |
-| Sync engine (M2) | 🟡 | audit pending |
-| Team workflow (M3) | 🟡 | audit pending |
-| Form builder (M4) | 🟡 | audit pending |
-| Exports (M5) | 🟡 | audit pending |
-| Recovery (M6) | 🟡 | audit pending |
-| Field hardening (M7) | 🟡 | audit pending |
-| License → open source | ❌ | BUSL-1.1 today; decide Apache-2.0 |
+| Local collector (M1) | ✅ | atomic local commit, durable outbox, autosave, media, location |
+| Sync engine (M2) | ✅ | metadata→TUS media→finalization, idempotent, receipts, retry scheduler, lease |
+| Team workflow (M3) | ✅ | orgs, projects, invites, assignments, heartbeats, readiness, ping |
+| Form builder (M4) | ✅ | typed fields, draft→immutable version publishing, semantic_uri hook |
+| Exports (M5) | ✅ | checkpoints, JSONL/CSV/GeoJSON/media/manifest ZIP, recovery package |
+| Recovery (M6) | ✅ | recovery mode on DB failure, stored-data recovery export, storage pressure |
+| Field hardening (M7) | 🟡 | live E2E + §54 test suite in progress |
+| License → Apache-2.0 | ✅ | LICENSE/NOTICE swapped, README rewritten, holder Gabriele Pizzi |
+| Backend security audit (G1–G7) | ✅ | migration 20260810120000 + function hardening deployed |
+| Issue #18 privacy disclosure | ✅ | "What collect records on this device" in project view |
+| §54 critical failure tests | 🟡 | IDB integration + component suites in progress |
+| Export-format docs + demo dataset | 🟡 | export-format.md pending |
+| CI: Deno check for edge functions | 🟡 | pending |
+| Live E2E verification | 🟡 | pending |
 
 ## Spec coverage checklist
 

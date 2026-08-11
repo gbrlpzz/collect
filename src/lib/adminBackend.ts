@@ -1,7 +1,7 @@
 import type { FieldDefinition, Project } from "../types";
 import { supabase } from "./supabaseClient";
 
-export const defaultOrganizationName = ((import.meta.env.VITE_ORGANIZATION_NAME as string | undefined) ?? "Onrange").trim() || "Onrange";
+export const defaultOrganizationName = ((import.meta.env.VITE_ORGANIZATION_NAME as string | undefined) ?? "Field organization").trim() || "Field organization";
 
 export interface NewProjectInput {
   organizationName: string;

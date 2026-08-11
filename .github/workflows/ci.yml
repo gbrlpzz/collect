@@ -17,6 +17,13 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - name: Typecheck Edge Functions
+        run: deno check supabase/functions/**/*.ts
+      - name: Format check Edge Functions
+        run: deno fmt --check supabase/functions

@@ -128,6 +128,7 @@ export interface StoredRecoveryData {
   drafts: unknown;
   projects: unknown;
   appState: unknown;
+  receipts: unknown;
 }
 
 /**
@@ -139,13 +140,14 @@ export async function readStoredRecoveryData(): Promise<StoredRecoveryData> {
   const database = await openDatabase();
   const transaction = database.transaction(ALL_STORES, "readonly");
   const transactionComplete = waitForTransaction(transaction);
-  const [submissions, media, outbox, drafts, projects, appState] = await Promise.all([
+  const [submissions, media, outbox, drafts, projects, appState, receipts] = await Promise.all([
     createRequest(transaction.objectStore(SUBMISSIONS_STORE).getAll()),
     createRequest(transaction.objectStore(MEDIA_STORE).getAll()),
     createRequest(transaction.objectStore(OUTBOX_STORE).getAll()),
     createRequest(transaction.objectStore(DRAFTS_STORE).get("active")),
     createRequest(transaction.objectStore(PROJECTS_STORE).getAll()),
     createRequest(transaction.objectStore(APP_STATE_STORE).get(STATE_KEY)),
+    createRequest(transaction.objectStore(RECEIPTS_STORE).getAll()),
   ]);
   await transactionComplete;
   return {
@@ -155,6 +157,7 @@ export async function readStoredRecoveryData(): Promise<StoredRecoveryData> {
     drafts,
     projects,
     appState,
+    receipts,
   };
 }
 

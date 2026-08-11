@@ -453,3 +453,9 @@ p { line-height: 1.45; }
 /* Single choice "Other" free text */
 .other-value-row { display: flex; flex-direction: column; gap: 5px; margin-top: 2px; }
 .field-help-label { color: var(--secondary); font-size: 0.8125rem; }
+
+/* Privacy transparency disclosure */
+.privacy-disclosure { margin: 26px 0 8px; padding: 0 2px; border-top: 1px solid var(--separator-light); }
+.privacy-disclosure summary { min-height: 44px; display: flex; align-items: center; gap: 7px; color: var(--secondary); font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+.privacy-disclosure ul { margin: 0 0 10px; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 8px; color: var(--secondary); font-size: 0.8125rem; line-height: 1.45; }
+.privacy-disclosure li strong { color: var(--text); font-weight: 600; }

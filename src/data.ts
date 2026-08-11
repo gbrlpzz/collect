@@ -168,7 +168,7 @@ export const demoProject: Project = {
 
 export const emptyProject: Project = {
   id: "empty-project",
-  organization: "Onrange",
+  organization: "Field organization",
   organizationMark: "O",
   name: "No project yet",
   description: "Create a project to begin collecting.",
