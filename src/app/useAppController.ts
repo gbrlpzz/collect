@@ -266,6 +266,10 @@ export function useAppController() {
           setState((current) => ({
             ...current,
             projects: [],
+            // Confirmed empty assignment: hide the cached project so a
+            // revoked contributor cannot keep collecting offline into
+            // ACTION_REQUIRED records.
+            project: emptyProject,
             mode: current.mode,
             view: current.mode === "admin" ? "admin" : "home",
           }));
@@ -277,7 +281,7 @@ export function useAppController() {
   }, [session]);
 
   useEffect(() => {
-    if (dbError || !hydrated) return;
+    if (dbError || !hydrated || collectorPreview) return;
     if (
       !(
         previewUnlocked ||
@@ -400,8 +404,9 @@ export function useAppController() {
   const updateDraft = (key: string, value: unknown) => {
     // Photos/audio persist to MEDIA_STORE immediately (before any debounced
     // autosave), so a force-kill cannot lose a selection. Removed assets are
-    // dropped from the draft store in the same step.
-    if (Array.isArray(value)) {
+    // dropped from the draft store in the same step. Admin previews never
+    // touch the durable draft.
+    if (!collectorPreview && Array.isArray(value)) {
       const assets = value.filter(
         (item): item is MediaAsset =>
           typeof item === "object" &&
@@ -505,6 +510,7 @@ export function useAppController() {
     configured: isSupabaseConfigured,
     session,
     hydrated,
+    enabled: state.mode === "contributor",
     pendingCount,
     state,
     isSyncing,
@@ -673,6 +679,8 @@ export function useAppController() {
       ...current,
       mode: "admin",
       view: "admin-project",
+      // Preview answers are disposable; never leave them as a real draft.
+      draft: { observed_date: new Date().toISOString().slice(0, 10) },
     }));
     showToast("Preview complete");
   };
@@ -683,6 +691,7 @@ export function useAppController() {
       ...current,
       mode: "admin",
       view: "admin-project",
+      draft: { observed_date: new Date().toISOString().slice(0, 10) },
     }));
   };
 

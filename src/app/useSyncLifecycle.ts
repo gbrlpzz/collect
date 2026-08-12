@@ -12,6 +12,8 @@ interface SyncLifecycleInput {
   configured: boolean;
   session: Session | null;
   hydrated: boolean;
+  /** Only the contributor surface reports device status/readiness. */
+  enabled: boolean;
   pendingCount: number;
   state: AppState;
   isSyncing: boolean;
@@ -25,6 +27,7 @@ export function useSyncLifecycle({
   configured,
   session,
   hydrated,
+  enabled,
   pendingCount,
   state,
   isSyncing,
@@ -37,7 +40,7 @@ export function useSyncLifecycle({
   isSyncingRef.current = isSyncing;
 
   useEffect(() => {
-    if (!configured || !session || !pendingCount) return;
+    if (!enabled || !configured || !session || !pendingCount) return;
 
     const visible = () => document.visibilityState !== "hidden";
     const attempt = () => {
@@ -55,10 +58,10 @@ export function useSyncLifecycle({
       window.removeEventListener("online", attempt);
       window.removeEventListener("visibilitychange", attempt);
     };
-  }, [configured, pendingCount, session]);
+  }, [configured, enabled, pendingCount, session]);
 
   useEffect(() => {
-    if (!configured || !session || !hydrated) return;
+    if (!enabled || !configured || !session || !hydrated) return;
 
     const check = () => {
       if (isSyncingRef.current) return;
@@ -88,13 +91,20 @@ export function useSyncLifecycle({
       window.removeEventListener("visibilitychange", check);
       window.removeEventListener("online", check);
     };
-  }, [configured, hydrated, session]);
+  }, [configured, enabled, hydrated, session]);
 
   // Device status heartbeat. Coalesced so keystroke-level state churn cannot
   // spam the network; derived from the durable outbox so acknowledged media
   // and finalized submissions never reappear as pending.
   useEffect(() => {
-    if (!configured || !session || !hydrated || !state.projects?.length) return;
+    if (
+      !enabled ||
+      !configured ||
+      !session ||
+      !hydrated ||
+      !state.projects?.length
+    )
+      return;
     let active = true;
     let timer: number | undefined;
 
@@ -144,5 +154,5 @@ export function useSyncLifecycle({
       window.removeEventListener("online", schedule);
       window.removeEventListener("visibilitychange", schedule);
     };
-  }, [appVersion, configured, hydrated, pendingCount, session, state]);
+  }, [appVersion, configured, enabled, hydrated, pendingCount, session, state]);
 }
