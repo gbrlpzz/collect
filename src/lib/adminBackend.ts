@@ -69,109 +69,62 @@ export async function bootstrapWorkspace(
   };
 }
 
-function projectFromRemote(
-  row: Record<string, any>,
-  organization: Record<string, any>,
-  schema: Record<string, any> | null,
-  contributorCount: number,
-  completeSubmissions: number,
-  lastReceived: string,
-): Project {
-  const fields = Array.isArray(schema?.schema_json?.fields)
-    ? (schema.schema_json.fields as FieldDefinition[])
+interface ProjectOverviewRow {
+  id: string;
+  organization_id: string;
+  organization_name: string;
+  name: string;
+  description: string | null;
+  instructions: string | null;
+  status: string;
+  license: string | null;
+  contact_email: string | null;
+  dataset_identifier: string | null;
+  schema_id: string;
+  schema_version: number;
+  schema_json: { fields?: unknown } | null;
+  contributor_count: number | null;
+  complete_submission_count: number | null;
+  last_received_at: string | null;
+}
+
+function projectFromOverview(row: ProjectOverviewRow): Project {
+  const fields = Array.isArray(row.schema_json?.fields)
+    ? (row.schema_json.fields as FieldDefinition[])
     : [];
   return {
     id: row.id,
-    organizationId: organization.id,
-    organization: organization.name,
-    organizationMark: String(organization.name ?? "O")
+    organizationId: row.organization_id,
+    organization: row.organization_name,
+    organizationMark: String(row.organization_name ?? "O")
       .slice(0, 1)
       .toUpperCase(),
     name: row.name,
     description: row.description ?? "",
     instructions: row.instructions ?? "",
     status: row.status === "closed" ? "closed" : "active",
-    license: row.license ?? null,
-    contactEmail: row.contact_email ?? null,
-    datasetIdentifier: row.dataset_identifier ?? null,
-    schemaVersion: Number(schema?.version ?? 1),
-    schemaId: schema?.id,
-    contributors: contributorCount,
-    completeSubmissions,
-    lastReceived,
+    license: row.license,
+    contactEmail: row.contact_email,
+    datasetIdentifier: row.dataset_identifier,
+    schemaVersion: Number(row.schema_version),
+    schemaId: row.schema_id,
+    contributors: row.contributor_count ?? 0,
+    completeSubmissions: row.complete_submission_count ?? 0,
+    lastReceived: row.last_received_at
+      ? new Date(row.last_received_at).toLocaleString()
+      : "No submissions yet",
     fields,
   };
-}
-
-async function hydrateProject(
-  client: ReturnType<typeof requireClient>,
-  row: Record<string, any>,
-): Promise<Project | null> {
-  const [
-    { data: organization },
-    { data: schema },
-    { count: contributorCount },
-    { count: completeSubmissions },
-    { data: latest },
-  ] = await Promise.all([
-    client
-      .from("organizations")
-      .select("id,name,logo_path")
-      .eq("id", row.organization_id)
-      .maybeSingle(),
-    client
-      .from("project_schemas")
-      .select("id,version,schema_json")
-      .eq("project_id", row.id)
-      .not("published_at", "is", null)
-      .order("version", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    client
-      .from("project_members")
-      .select("user_id", { count: "exact", head: true })
-      .eq("project_id", row.id),
-    client
-      .from("submissions")
-      .select("id", { count: "exact", head: true })
-      .eq("project_id", row.id)
-      .eq("status", "COMPLETE"),
-    client
-      .from("submissions")
-      .select("server_received_at")
-      .eq("project_id", row.id)
-      .eq("status", "COMPLETE")
-      .order("server_received_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
-  if (!organization || !schema) return null;
-  return projectFromRemote(
-    row,
-    organization,
-    schema,
-    contributorCount ?? 0,
-    completeSubmissions ?? 0,
-    latest?.server_received_at
-      ? new Date(latest.server_received_at).toLocaleString()
-      : "No submissions yet",
-  );
 }
 
 export async function loadAssignedProjects(): Promise<Project[] | null> {
   const client = requireClient();
   const { data: projects, error } = await client
-    .from("projects")
-    .select("id,organization_id,name,description,instructions,status")
+    .from("project_overviews")
+    .select("*")
     .order("created_at", { ascending: false });
   if (error) return null;
-  if (!projects?.length) return [];
-  const hydrated = await Promise.all(
-    (projects as Record<string, any>[]).map((row) =>
-      hydrateProject(client, row),
-    ),
-  );
-  return hydrated.filter((project): project is Project => Boolean(project));
+  return ((projects ?? []) as ProjectOverviewRow[]).map(projectFromOverview);
 }
 
 export async function loadAssignedProject(): Promise<Project | null> {
@@ -283,14 +236,16 @@ export async function createRemoteProject(
     (await loadAssignedProjects())?.find(
       (candidate) => candidate.id === project.id,
     ) ??
-    projectFromRemote(
-      project,
-      { id: organizationId, name: organizationName },
-      { id: schemaId, version: 1, schema_json: schemaJson },
-      input.emails.length,
-      0,
-      "No submissions yet",
-    )
+    projectFromOverview({
+      ...project,
+      organization_name: organizationName,
+      schema_id: schemaId,
+      schema_version: 1,
+      schema_json: schemaJson,
+      contributor_count: input.emails.length,
+      complete_submission_count: 0,
+      last_received_at: null,
+    })
   );
 }
 

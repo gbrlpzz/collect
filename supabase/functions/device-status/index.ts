@@ -9,56 +9,69 @@ function nonNegativeInteger(value: unknown): number {
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
-    return json({ error: "Method not allowed" }, {
-      status: 405,
-      headers: corsHeaders,
-    });
+    return json(
+      { error: "Method not allowed" },
+      {
+        status: 405,
+        headers: corsHeaders,
+      },
+    );
   }
   try {
     const { user, service } = await requireUser(request);
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     const deviceId = String(body.device_id ?? "");
     const projectId = String(body.project_id ?? "");
     if (!deviceId || !projectId) {
-      return json({ error: "Device and project are required" }, {
-        status: 400,
-      });
+      return json(
+        { error: "Device and project are required" },
+        {
+          status: 400,
+        },
+      );
     }
     const access = await projectAccess(service, projectId, user.id);
     if (!access) {
-      return json({ error: "Project assignment is not active" }, {
-        status: 403,
-      });
+      return json(
+        { error: "Project assignment is not active" },
+        {
+          status: 403,
+        },
+      );
     }
 
     const pendingSubmissions = nonNegativeInteger(body.pending_submissions);
     const pendingMedia = nonNegativeInteger(body.pending_media);
     const fieldworkComplete = body.fieldwork_complete === true;
     if (fieldworkComplete && (pendingSubmissions > 0 || pendingMedia > 0)) {
-      return json({
-        error: "Fieldwork cannot be complete while operations are pending",
-      }, { status: 409 });
+      return json(
+        {
+          error: "Fieldwork cannot be complete while operations are pending",
+        },
+        { status: 409 },
+      );
     }
 
     const now = new Date().toISOString();
-    const { error: deviceInsertError } = await service.from("devices").insert(
-      {
-        id: deviceId,
-        contributor_id: user.id,
-        app_version: String(body.app_version ?? ""),
-        device_model: String(body.device_model ?? "").slice(0, 120),
-        device_os: String(body.device_os ?? "").slice(0, 40),
-        browser: String(body.browser ?? "").slice(0, 40),
-        last_seen_at: now,
-      },
-    );
+    const { error: deviceInsertError } = await service.from("devices").insert({
+      id: deviceId,
+      contributor_id: user.id,
+      app_version: String(body.app_version ?? ""),
+      device_model: String(body.device_model ?? "").slice(0, 120),
+      device_os: String(body.device_os ?? "").slice(0, 40),
+      browser: String(body.browser ?? "").slice(0, 40),
+      last_seen_at: now,
+    });
     if (
       deviceInsertError &&
       (deviceInsertError as { code?: string }).code !== "23505"
-    ) return json({ error: "Device could not be updated" }, { status: 500 });
-    const { data: device } = await service.from("devices").select(
-      "contributor_id",
-    ).eq("id", deviceId).maybeSingle();
+    )
+      return json({ error: "Device could not be updated" }, { status: 500 });
+    const { data: device } = await service
+      .from("devices")
+      .select("contributor_id")
+      .eq("id", deviceId)
+      .maybeSingle();
     if (!device) {
       return json({ error: "Device could not be updated" }, { status: 500 });
     }
@@ -68,33 +81,42 @@ Deno.serve(async (request) => {
         { status: 409 },
       );
     }
-    const { data: previousStatus } = await service.from("device_project_status")
-      .select("last_sync_success_at").eq("device_id", deviceId).eq(
-        "project_id",
-        projectId,
-      ).maybeSingle();
+    const { data: previousStatus } = await service
+      .from("device_project_status")
+      .select("last_sync_success_at")
+      .eq("device_id", deviceId)
+      .eq("project_id", projectId)
+      .maybeSingle();
 
-    const { error: statusError } = await service.from("device_project_status")
-      .upsert({
-        device_id: deviceId,
-        project_id: projectId,
-        contributor_id: user.id,
-        last_seen_at: now,
-        last_sync_success_at: pendingSubmissions === 0 && pendingMedia === 0
-          ? now
-          : previousStatus?.last_sync_success_at ?? null,
-        pending_submissions: pendingSubmissions,
-        pending_media: pendingMedia,
-        app_version: String(body.app_version ?? ""),
-        schema_versions_cached: Array.isArray(body.schema_versions_cached)
-          ? body.schema_versions_cached
-          : [],
-        fieldwork_complete: fieldworkComplete,
-      }, { onConflict: "device_id,project_id" });
+    const { error: statusError } = await service
+      .from("device_project_status")
+      .upsert(
+        {
+          device_id: deviceId,
+          project_id: projectId,
+          contributor_id: user.id,
+          last_seen_at: now,
+          last_sync_success_at:
+            pendingSubmissions === 0 && pendingMedia === 0
+              ? now
+              : (previousStatus?.last_sync_success_at ?? null),
+          pending_submissions: pendingSubmissions,
+          pending_media: pendingMedia,
+          app_version: String(body.app_version ?? ""),
+          schema_versions_cached: Array.isArray(body.schema_versions_cached)
+            ? body.schema_versions_cached
+            : [],
+          fieldwork_complete: fieldworkComplete,
+        },
+        { onConflict: "device_id,project_id" },
+      );
     if (statusError) {
-      return json({ error: "Device project status could not be recorded" }, {
-        status: 500,
-      });
+      return json(
+        { error: "Device project status could not be recorded" },
+        {
+          status: 500,
+        },
+      );
     }
     return json({ accepted: true });
   } catch (error) {

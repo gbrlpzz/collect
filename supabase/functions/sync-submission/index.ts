@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.112.2";
 import { corsHeaders, json, options } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
 import { canonicalJson, sha256 } from "../_shared/hash.ts";
@@ -31,8 +31,10 @@ function isBlank(value: unknown): boolean {
 
 function optionIsKnown(field: SchemaField, value: unknown): boolean {
   const options = field.options ?? [];
-  return typeof value === "string" &&
-    options.some((option) => option.id === value || option.value === value);
+  return (
+    typeof value === "string" &&
+    options.some((option) => option.id === value || option.value === value)
+  );
 }
 
 function validateFields(
@@ -53,15 +55,18 @@ function validateFields(
       if (
         config.minLength !== undefined &&
         value.length < Number(config.minLength)
-      ) return `${label} is too short`;
+      )
+        return `${label} is too short`;
       if (
         config.maxLength !== undefined &&
         value.length > Number(config.maxLength)
-      ) return `${label} is too long`;
+      )
+        return `${label} is too long`;
     } else if (field.type === "number") {
-      const numberValue = value && typeof value === "object" && "value" in value
-        ? (value as { value?: unknown }).value
-        : value;
+      const numberValue =
+        value && typeof value === "object" && "value" in value
+          ? (value as { value?: unknown }).value
+          : value;
       if (typeof numberValue !== "number" || !Number.isFinite(numberValue)) {
         return `${label} must be a finite number`;
       }
@@ -76,14 +81,16 @@ function validateFields(
       }
     } else if (field.type === "single_choice" || field.type === "tri_state") {
       // single_choice may carry an optional free-text "other" as { value, otherText }.
-      const singleValue = value && typeof value === "object" && "value" in value
-        ? (value as { value?: unknown }).value
-        : value;
+      const singleValue =
+        value && typeof value === "object" && "value" in value
+          ? (value as { value?: unknown }).value
+          : value;
       if (field.type === "tri_state") {
         if (
           typeof singleValue !== "string" ||
           !["yes", "no", "unknown"].includes(singleValue)
-        ) return `${label} is not a valid tri-state value`;
+        )
+          return `${label} is not a valid tri-state value`;
       } else {
         if (typeof singleValue !== "string") {
           return `${label} must be one choice`;
@@ -96,48 +103,63 @@ function validateFields(
       if (
         !Array.isArray(value) ||
         value.some((item) => !optionIsKnown(field, item))
-      ) return `${label} contains an unpublished option`;
+      )
+        return `${label} contains an unpublished option`;
     } else if (field.type === "date") {
       if (
-        typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+        typeof value !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
         Number.isNaN(Date.parse(`${value}T00:00:00Z`))
-      ) return `${label} must be an ISO date`;
+      )
+        return `${label} must be an ISO date`;
     } else if (field.type === "datetime") {
       if (
-        typeof value !== "object" || value === null ||
+        typeof value !== "object" ||
+        value === null ||
         typeof (value as { localDatetime?: unknown }).localDatetime !== "string"
-      ) return `${label} must include a local datetime`;
+      )
+        return `${label} must include a local datetime`;
     } else if (field.type === "location") {
       const location = value as Record<string, unknown>;
       if (
         typeof location.latitude !== "number" ||
-        !Number.isFinite(location.latitude) || location.latitude < -90 ||
-        location.latitude > 90 || typeof location.longitude !== "number" ||
-        !Number.isFinite(location.longitude) || location.longitude < -180 ||
-        location.longitude > 180 || typeof location.accuracy !== "number" ||
-        !Number.isFinite(location.accuracy) || location.accuracy < 0
-      ) return `${label} is not a valid location`;
+        !Number.isFinite(location.latitude) ||
+        location.latitude < -90 ||
+        location.latitude > 90 ||
+        typeof location.longitude !== "number" ||
+        !Number.isFinite(location.longitude) ||
+        location.longitude < -180 ||
+        location.longitude > 180 ||
+        typeof location.accuracy !== "number" ||
+        !Number.isFinite(location.accuracy) ||
+        location.accuracy < 0
+      )
+        return `${label} is not a valid location`;
     } else if (field.type === "photo" || field.type === "audio") {
       if (!Array.isArray(value)) {
         return `${label} must contain media identifiers`;
       }
       if (
-        config.minCount !== undefined && value.length < Number(config.minCount)
-      ) return `${label} does not contain enough media`;
+        config.minCount !== undefined &&
+        value.length < Number(config.minCount)
+      )
+        return `${label} does not contain enough media`;
       if (
-        config.maxCount !== undefined && value.length > Number(config.maxCount)
-      ) return `${label} contains too much media`;
+        config.maxCount !== undefined &&
+        value.length > Number(config.maxCount)
+      )
+        return `${label} contains too much media`;
     } else if (field.type === "repeatable_group") {
       if (
         !Array.isArray(value) ||
-        value.some((row) =>
-          !row || typeof row !== "object" || Array.isArray(row)
+        value.some(
+          (row) => !row || typeof row !== "object" || Array.isArray(row),
         )
-      ) return `${label} must be an array of objects`;
-      for (
-        const [index, row] of (value as Array<Record<string, unknown>>)
-          .entries()
-      ) {
+      )
+        return `${label} must be an array of objects`;
+      for (const [index, row] of (
+        value as Array<Record<string, unknown>>
+      ).entries()) {
         const error = validateFields(
           field.children ?? [],
           row,
@@ -172,19 +194,25 @@ async function createSubmission(
   const schemaVersion = Number(body.schema_version);
   const payload = body.payload;
   const environment =
-    body.environment && typeof body.environment === "object" &&
-      !Array.isArray(body.environment)
-      ? body.environment as Record<string, unknown>
+    body.environment &&
+    typeof body.environment === "object" &&
+    !Array.isArray(body.environment)
+      ? (body.environment as Record<string, unknown>)
       : null;
   if (environment && JSON.stringify(environment).length > 8192) {
     return invalid("Environment metadata is too large", 400);
   }
   const deviceId = String(body.device_id ?? "");
-  const media = Array.isArray(body.media) ? body.media as MediaInput[] : [];
+  const media = Array.isArray(body.media) ? (body.media as MediaInput[]) : [];
   if (
-    !submissionId || !projectId || !Number.isInteger(schemaVersion) ||
-    !deviceId || !payload || typeof payload !== "object"
-  ) return invalid("Submission metadata is incomplete");
+    !submissionId ||
+    !projectId ||
+    !Number.isInteger(schemaVersion) ||
+    !deviceId ||
+    !payload ||
+    typeof payload !== "object"
+  )
+    return invalid("Submission metadata is incomplete");
   if (media.length > 500) {
     return invalid("A submission cannot contain more than 500 media objects");
   }
@@ -193,9 +221,11 @@ async function createSubmission(
   if (!access) return invalid("Project assignment is not active", 403);
 
   // In-app collection consent is a prerequisite for every submission.
-  const { data: profile } = await service.from("contributor_profiles").select(
-    "consent_granted_at,consent_revoked_at",
-  ).eq("user_id", userId).maybeSingle();
+  const { data: profile } = await service
+    .from("contributor_profiles")
+    .select("consent_granted_at,consent_revoked_at")
+    .eq("user_id", userId)
+    .maybeSingle();
   if (!profile?.consent_granted_at || profile.consent_revoked_at) {
     return invalid(
       "Collection consent is required before submitting observations",
@@ -224,9 +254,8 @@ async function createSubmission(
   }
 
   const canonicalPayloadHash = await sha256(canonicalJson(payload));
-  const suppliedHash = typeof body.payload_hash === "string"
-    ? body.payload_hash
-    : null;
+  const suppliedHash =
+    typeof body.payload_hash === "string" ? body.payload_hash : null;
   if (suppliedHash && suppliedHash !== canonicalPayloadHash) {
     return invalid("Payload checksum does not match", 409);
   }
@@ -245,20 +274,24 @@ async function createSubmission(
     .maybeSingle();
   if (existingError) return invalid("Submission lookup failed", 500);
   if (existing) {
-    const { data: existingMedia } = await service.from("submission_media")
-      .select("id,byte_size,sha256").eq("submission_id", submissionId);
-    const existingTuples = (existingMedia ?? []).map((item) =>
-      `${item.id}:${item.byte_size}:${item.sha256 ?? ""}`
-    ).sort();
-    const incomingTuples = media.map((item) =>
-      `${item.media_id}:${item.byte_size}:${item.sha256 ?? ""}`
-    ).sort();
+    const { data: existingMedia } = await service
+      .from("submission_media")
+      .select("id,byte_size,sha256")
+      .eq("submission_id", submissionId);
+    const existingTuples = (existingMedia ?? [])
+      .map((item) => `${item.id}:${item.byte_size}:${item.sha256 ?? ""}`)
+      .sort();
+    const incomingTuples = media
+      .map((item) => `${item.media_id}:${item.byte_size}:${item.sha256 ?? ""}`)
+      .sort();
     const sameMedia =
       JSON.stringify(existingTuples) === JSON.stringify(incomingTuples);
     if (
-      existing.project_id !== projectId || existing.contributor_id !== userId ||
+      existing.project_id !== projectId ||
+      existing.contributor_id !== userId ||
       existing.payload_hash !== canonicalPayloadHash ||
-      existing.expected_media_count !== media.length || !sameMedia
+      existing.expected_media_count !== media.length ||
+      !sameMedia
     ) {
       return invalid(
         "Submission ID conflict: the server already has different content for this identifier",
@@ -268,31 +301,34 @@ async function createSubmission(
     return json({ accepted: true, idempotent: true });
   }
 
-  const attention = body.attention_response &&
-      typeof body.attention_response === "object"
-    ? body.attention_response as {
-      check_key?: unknown;
-      selected_value?: unknown;
-    }
-    : null;
-  const attentionCheckKey = attention &&
-      typeof attention.check_key === "string"
-    ? attention.check_key
-    : null;
-  const attentionSelected = attention &&
-      typeof attention.selected_value === "string"
-    ? attention.selected_value
-    : null;
+  const attention =
+    body.attention_response && typeof body.attention_response === "object"
+      ? (body.attention_response as {
+          check_key?: unknown;
+          selected_value?: unknown;
+        })
+      : null;
+  const attentionCheckKey =
+    attention && typeof attention.check_key === "string"
+      ? attention.check_key
+      : null;
+  const attentionSelected =
+    attention && typeof attention.selected_value === "string"
+      ? attention.selected_value
+      : null;
 
   const correctsSubmissionId = body.corrects_submission_id
     ? String(body.corrects_submission_id)
     : null;
   if (correctsSubmissionId) {
-    const { data: corrected } = await service.from("submissions").select(
-      "project_id,contributor_id",
-    ).eq("id", correctsSubmissionId).maybeSingle();
+    const { data: corrected } = await service
+      .from("submissions")
+      .select("project_id,contributor_id")
+      .eq("id", correctsSubmissionId)
+      .maybeSingle();
     if (
-      !corrected || corrected.project_id !== projectId ||
+      !corrected ||
+      corrected.project_id !== projectId ||
       corrected.contributor_id !== userId
     ) {
       return invalid(
@@ -302,21 +338,22 @@ async function createSubmission(
     }
   }
 
-  const { error: deviceInsertError } = await service.from("devices").insert(
-    {
-      id: deviceId,
-      contributor_id: userId,
-      app_version: String(body.app_version ?? ""),
-      last_seen_at: new Date().toISOString(),
-    },
-  );
+  const { error: deviceInsertError } = await service.from("devices").insert({
+    id: deviceId,
+    contributor_id: userId,
+    app_version: String(body.app_version ?? ""),
+    last_seen_at: new Date().toISOString(),
+  });
   if (
     deviceInsertError &&
     (deviceInsertError as { code?: string }).code !== "23505"
-  ) return invalid("Device status could not be recorded", 500);
-  const { data: device } = await service.from("devices").select(
-    "contributor_id",
-  ).eq("id", deviceId).maybeSingle();
+  )
+    return invalid("Device status could not be recorded", 500);
+  const { data: device } = await service
+    .from("devices")
+    .select("contributor_id")
+    .eq("id", deviceId)
+    .maybeSingle();
   if (!device) return invalid("Device status could not be recorded", 500);
   if (device.contributor_id !== userId) {
     return invalid("Device identifier belongs to another contributor", 409);
@@ -349,16 +386,16 @@ async function createSubmission(
   }
 
   if (attentionCheckKey && attentionSelected) {
-    const { data: check } = await service.from("attention_checks")
+    const { data: check } = await service
+      .from("attention_checks")
       .select("correct_value,guess_probability")
       .eq("key", attentionCheckKey)
       .eq("active", true)
       .maybeSingle();
     if (check) {
       const correct = attentionSelected === check.correct_value;
-      const { error: attentionError } = await service.from(
-        "attention_responses",
-      )
+      const { error: attentionError } = await service
+        .from("attention_responses")
         .insert({
           submission_id: submissionId,
           contributor_id: userId,
@@ -371,7 +408,8 @@ async function createSubmission(
       if (!attentionError) {
         // Binary per-submission flag: the filterable signal admins use.
         try {
-          await service.from("submissions")
+          await service
+            .from("submissions")
             .update({ attention_failed: !correct })
             .eq("id", submissionId);
         } catch {
@@ -401,14 +439,15 @@ async function createSubmission(
       capture_source: item.capture_source ?? "picker",
       captured_at: item.captured_at ?? null,
     }));
-    const { error: mediaError } = await service.from("submission_media").insert(
-      rows,
-    );
+    const { error: mediaError } = await service
+      .from("submission_media")
+      .insert(rows);
     if (mediaError) {
-      await service.from("submissions").delete().eq("id", submissionId).eq(
-        "status",
-        "RECEIVED",
-      );
+      await service
+        .from("submissions")
+        .delete()
+        .eq("id", submissionId)
+        .eq("status", "RECEIVED");
       return invalid("Submission media metadata could not be stored", 500);
     }
   }
@@ -423,9 +462,11 @@ async function confirmMedia(
   const submissionId = String(body.submission_id ?? "");
   const mediaId = String(body.media_id ?? "");
   const objectPath = String(body.object_path ?? "");
-  const { data: submission } = await service.from("submissions").select(
-    "id,project_id,contributor_id",
-  ).eq("id", submissionId).maybeSingle();
+  const { data: submission } = await service
+    .from("submissions")
+    .select("id,project_id,contributor_id")
+    .eq("id", submissionId)
+    .maybeSingle();
   if (!submission || submission.contributor_id !== userId) {
     return invalid("Submission is not available", 403);
   }
@@ -435,9 +476,12 @@ async function confirmMedia(
   if (objectPath !== expectedPath) {
     return invalid("Media object path is not valid", 409);
   }
-  const { data: media } = await service.from("submission_media").select(
-    "id,status,object_path",
-  ).eq("id", mediaId).eq("submission_id", submissionId).maybeSingle();
+  const { data: media } = await service
+    .from("submission_media")
+    .select("id,status,object_path")
+    .eq("id", mediaId)
+    .eq("submission_id", submissionId)
+    .maybeSingle();
   if (!media || media.object_path !== expectedPath) {
     return invalid("Media metadata is not available", 409);
   }
@@ -446,9 +490,9 @@ async function confirmMedia(
   }
 
   const directory = expectedPath.split("/").slice(0, -1).join("/");
-  const { data: objects, error: listError } = await service.storage.from(
-    "collect-media",
-  ).list(directory, { search: mediaId, limit: 20 });
+  const { data: objects, error: listError } = await service.storage
+    .from("collect-media")
+    .list(directory, { search: mediaId, limit: 20 });
   const stored = (objects ?? []).find((object) => object.name === mediaId);
   if (listError || !stored) return json({ confirmed: false, waiting: true });
   // Verify the stored object against the declared metadata. Storage metadata
@@ -464,9 +508,12 @@ async function confirmMedia(
       -1,
   );
   if (Number.isFinite(storedSize) && storedSize >= 0) {
-    const { data: mediaRow } = await service.from("submission_media").select(
-      "byte_size",
-    ).eq("id", mediaId).eq("submission_id", submissionId).maybeSingle();
+    const { data: mediaRow } = await service
+      .from("submission_media")
+      .select("byte_size")
+      .eq("id", mediaId)
+      .eq("submission_id", submissionId)
+      .maybeSingle();
     if (mediaRow && Number(mediaRow.byte_size) !== storedSize) {
       return invalid(
         "Media object size does not match the declared metadata",
@@ -474,9 +521,13 @@ async function confirmMedia(
       );
     }
   }
-  const { error: updateError } = await service.from("submission_media").update({
-    status: "UPLOADED",
-  }).eq("id", mediaId).eq("submission_id", submissionId);
+  const { error: updateError } = await service
+    .from("submission_media")
+    .update({
+      status: "UPLOADED",
+    })
+    .eq("id", mediaId)
+    .eq("submission_id", submissionId);
   if (updateError) {
     return invalid("Media acknowledgement could not be recorded", 500);
   }
@@ -489,9 +540,13 @@ async function finalizeSubmission(
   body: Record<string, unknown>,
 ): Promise<Response> {
   const submissionId = String(body.submission_id ?? "");
-  const { data: submission } = await service.from("submissions").select(
-    "id,project_id,contributor_id,status,expected_media_count,finalized_at,server_received_at",
-  ).eq("id", submissionId).maybeSingle();
+  const { data: submission } = await service
+    .from("submissions")
+    .select(
+      "id,project_id,contributor_id,status,expected_media_count,finalized_at,server_received_at",
+    )
+    .eq("id", submissionId)
+    .maybeSingle();
   if (!submission || submission.contributor_id !== userId) {
     return invalid("Submission is not available", 403);
   }
@@ -506,26 +561,30 @@ async function finalizeSubmission(
     });
   }
 
-  const { data: media, error: mediaError } = await service.from(
-    "submission_media",
-  ).select("id,status").eq("submission_id", submissionId);
+  const { data: media, error: mediaError } = await service
+    .from("submission_media")
+    .select("id,status")
+    .eq("submission_id", submissionId);
   if (mediaError) return invalid("Media status could not be read", 500);
   if (
     (media ?? []).length !== submission.expected_media_count ||
     (media ?? []).some((item) => item.status !== "UPLOADED")
-  ) return invalid("Media is still uploading", 409);
+  )
+    return invalid("Media is still uploading", 409);
 
   // Atomic finalize: only the caller that flips status to COMPLETE gets to
   // mint the receipt timestamp; a concurrent caller that updates zero rows
   // re-reads and returns the stored receipt instead of inventing its own.
-  const { data: updated, error: updateError } = await service.from(
-    "submissions",
-  ).update({
-    status: "COMPLETE",
-    finalized_at: new Date().toISOString(),
-  }).eq("id", submissionId).neq("status", "COMPLETE").select(
-    "finalized_at,server_received_at",
-  ).maybeSingle();
+  const { data: updated, error: updateError } = await service
+    .from("submissions")
+    .update({
+      status: "COMPLETE",
+      finalized_at: new Date().toISOString(),
+    })
+    .eq("id", submissionId)
+    .neq("status", "COMPLETE")
+    .select("finalized_at,server_received_at")
+    .maybeSingle();
   if (updateError) return invalid("Submission could not be finalized", 500);
   if (updated) {
     return json({
@@ -535,9 +594,11 @@ async function finalizeSubmission(
       received_at: updated.server_received_at,
     });
   }
-  const { data: after } = await service.from("submissions").select(
-    "finalized_at,server_received_at",
-  ).eq("id", submissionId).maybeSingle();
+  const { data: after } = await service
+    .from("submissions")
+    .select("finalized_at,server_received_at")
+    .eq("id", submissionId)
+    .maybeSingle();
   return json({
     submission_id: submissionId,
     status: "COMPLETE",
@@ -549,14 +610,17 @@ async function finalizeSubmission(
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
-    return json({ error: "Method not allowed" }, {
-      status: 405,
-      headers: corsHeaders,
-    });
+    return json(
+      { error: "Method not allowed" },
+      {
+        status: 405,
+        headers: corsHeaders,
+      },
+    );
   }
   try {
     const { user, service } = await requireUser(request);
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     const action = String(body.action ?? "");
     if (action === "create_submission") {
       return await createSubmission(service, user.id, body);

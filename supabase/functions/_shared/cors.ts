@@ -3,7 +3,7 @@ export const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
-  "Vary": "Origin",
+  Vary: "Origin",
 };
 
 export function json(body: unknown, init: ResponseInit = {}): Response {

@@ -1,5 +1,5 @@
 import { strToU8, zipSync } from "npm:fflate@0.8.3";
-import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.112.2";
 import { corsHeaders, json, options } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
 import { canonicalJson, sha256 } from "../_shared/hash.ts";
@@ -35,7 +35,7 @@ function mediaExportName(media: Record<string, unknown>): string {
   );
   const extension = original.includes(".")
     ? original.slice(original.lastIndexOf("."))
-    : MIME_EXTENSIONS[String(media.mime_type ?? "")] ?? "";
+    : (MIME_EXTENSIONS[String(media.mime_type ?? "")] ?? "");
   return `${media.id}${extension}`;
 }
 
@@ -73,12 +73,18 @@ async function buildExport(
   }
   const cutoff = new Date().toISOString();
 
-  const { data: project } = await service.from("projects").select(
-    "id,organization_id,name,description,instructions,status,license,contact_email,dataset_identifier",
-  ).eq("id", projectId).maybeSingle();
-  const { data: organization } = await service.from("organizations").select(
-    "id,name,logo_path",
-  ).eq("id", access.project.organization_id).maybeSingle();
+  const { data: project } = await service
+    .from("projects")
+    .select(
+      "id,organization_id,name,description,instructions,status,license,contact_email,dataset_identifier",
+    )
+    .eq("id", projectId)
+    .maybeSingle();
+  const { data: organization } = await service
+    .from("organizations")
+    .select("id,name,logo_path")
+    .eq("id", access.project.organization_id)
+    .maybeSingle();
   const { data: submissions, error: submissionError } = await service
     .from("submissions")
     .select(
@@ -93,14 +99,18 @@ async function buildExport(
   }
   const submissionRows = (submissions ?? []) as Record<string, unknown>[];
   const submissionIds = submissionRows.map((submission) =>
-    String(submission.id)
+    String(submission.id),
   );
   const { data: mediaRows, error: mediaError } = submissionIds.length
-    ? await service.from("submission_media").select(
-      "id,submission_id,field_id,object_path,mime_type,byte_size,original_filename,sha256,captured_at,status",
-    ).in("submission_id", submissionIds).order("created_at", {
-      ascending: true,
-    })
+    ? await service
+        .from("submission_media")
+        .select(
+          "id,submission_id,field_id,object_path,mime_type,byte_size,original_filename,sha256,captured_at,status",
+        )
+        .in("submission_id", submissionIds)
+        .order("created_at", {
+          ascending: true,
+        })
     : { data: [], error: null };
   if (mediaError) {
     return json({ error: "Media metadata could not be read" }, { status: 500 });
@@ -111,51 +121,63 @@ async function buildExport(
       submissionRows.map((submission) => String(submission.schema_id)),
     ),
   ];
-  let schemaQuery = service.from("project_schemas").select(
-    "id,version,schema_json,published_at",
-  ).eq("project_id", projectId).not("published_at", "is", null).order(
-    "version",
-    { ascending: true },
-  );
+  let schemaQuery = service
+    .from("project_schemas")
+    .select("id,version,schema_json,published_at")
+    .eq("project_id", projectId)
+    .not("published_at", "is", null)
+    .order("version", { ascending: true });
   if (schemaIds.length) schemaQuery = schemaQuery.in("id", schemaIds);
   const { data: schemas, error: schemaError } = await schemaQuery;
   if (schemaError) {
     return json({ error: "Schema history could not be read" }, { status: 500 });
   }
-  const { data: readiness } = await service.from("device_project_status")
+  const { data: readiness } = await service
+    .from("device_project_status")
     .select(
       "device_id,contributor_id,last_seen_at,last_sync_success_at,pending_submissions,pending_media,app_version,schema_versions_cached,fieldwork_complete",
-    ).eq("project_id", projectId);
-  const { data: members } = await service.from("project_members").select(
-    "user_id,role",
-  ).eq("project_id", projectId).order("assigned_at", { ascending: true });
+    )
+    .eq("project_id", projectId);
+  const { data: members } = await service
+    .from("project_members")
+    .select("user_id,role")
+    .eq("project_id", projectId)
+    .order("assigned_at", { ascending: true });
   const memberIds = (members ?? []).map((member) => member.user_id);
   const { data: attentionRows } = submissionIds.length
-    ? await service.from("attention_responses").select(
-      "submission_id,contributor_id,project_id,check_key,selected_value,correct,guess_probability,created_at",
-    ).in("submission_id", submissionIds).order("created_at", {
-      ascending: true,
-    })
+    ? await service
+        .from("attention_responses")
+        .select(
+          "submission_id,contributor_id,project_id,check_key,selected_value,correct,guess_probability,created_at",
+        )
+        .in("submission_id", submissionIds)
+        .order("created_at", {
+          ascending: true,
+        })
     : { data: [] };
   const { data: profiles } = memberIds.length
-    ? await service.from("contributor_profiles").select(
-      "user_id,consent_version,consent_granted_at,consent_revoked_at,quality_score,attention_score,attention_checks_total,attention_correct_total,attention_last_at",
-    ).in("user_id", memberIds)
+    ? await service
+        .from("contributor_profiles")
+        .select(
+          "user_id,consent_version,consent_granted_at,consent_revoked_at,quality_score,attention_score,attention_checks_total,attention_correct_total,attention_last_at",
+        )
+        .in("user_id", memberIds)
     : { data: [] };
-  const { data: invites } = await service.from("project_invites").select(
-    "email,invited_user_id,status",
-  ).eq("project_id", projectId);
+  const { data: invites } = await service
+    .from("project_invites")
+    .select("email,invited_user_id,status")
+    .eq("project_id", projectId);
 
   const contributorReadiness = readiness ?? [];
   const contributorRows = (members ?? []).map((member) => {
-    const invite = (invites ?? []).find((candidate) =>
-      candidate.invited_user_id === member.user_id
+    const invite = (invites ?? []).find(
+      (candidate) => candidate.invited_user_id === member.user_id,
     );
-    const status = contributorReadiness.find((candidate) =>
-      candidate.contributor_id === member.user_id
+    const status = contributorReadiness.find(
+      (candidate) => candidate.contributor_id === member.user_id,
     );
-    const profile = (profiles ?? []).find((candidate) =>
-      candidate.user_id === member.user_id
+    const profile = (profiles ?? []).find(
+      (candidate) => candidate.user_id === member.user_id,
     );
     return {
       contributor_id: member.user_id,
@@ -178,21 +200,23 @@ async function buildExport(
     };
   });
   const checkpointId = crypto.randomUUID();
-  const schemaVersions = ((schemas ?? []) as Record<string, unknown>[]).map((
-    schema,
-  ) => schema.version);
+  const schemaVersions = ((schemas ?? []) as Record<string, unknown>[]).map(
+    (schema) => schema.version,
+  );
 
-  const jsonl = submissionRows.map((submission) =>
-    JSON.stringify({
-      ...submission,
-      media: media.filter((item) => item.submission_id === submission.id).map((
-        item,
-      ) => ({
-        ...item,
-        export_path: `media/${submission.id}/${mediaExportName(item)}`,
-      })),
-    })
-  ).join("\n");
+  const jsonl = submissionRows
+    .map((submission) =>
+      JSON.stringify({
+        ...submission,
+        media: media
+          .filter((item) => item.submission_id === submission.id)
+          .map((item) => ({
+            ...item,
+            export_path: `media/${submission.id}/${mediaExportName(item)}`,
+          })),
+      }),
+    )
+    .join("\n");
   const submissionsCsv = [
     csvRow([
       "submission_id",
@@ -220,7 +244,7 @@ async function buildExport(
         submission.status,
         submission.attention_failed,
         submission.payload,
-      ])
+      ]),
     ),
   ].join("\n");
   const mediaCsv = [
@@ -246,7 +270,7 @@ async function buildExport(
         item.captured_at,
         item.status,
         `media/${item.submission_id}/${mediaExportName(item)}`,
-      ])
+      ]),
     ),
   ].join("\n");
   const contributorsCsv = [
@@ -288,7 +312,7 @@ async function buildExport(
         row.pending_submissions,
         row.pending_media,
         row.fieldwork_complete,
-      ])
+      ]),
     ),
   ].join("\n");
   const attentionCsv = [
@@ -312,13 +336,13 @@ async function buildExport(
         row.correct,
         row.guess_probability,
         row.created_at,
-      ])
+      ]),
     ),
   ].join("\n");
 
-  const features = submissionRows.map(locationFeature).filter((
-    feature,
-  ): feature is Record<string, unknown> => Boolean(feature));
+  const features = submissionRows
+    .map(locationFeature)
+    .filter((feature): feature is Record<string, unknown> => Boolean(feature));
   const geojson = JSON.stringify({ type: "FeatureCollection", features });
 
   // DataCite 4.4 metadata: machine-readable description of the dataset for
@@ -340,8 +364,8 @@ async function buildExport(
         required: Boolean(field.required),
         description: field.description ?? null,
         semantic_uri: field.semantic_uri ?? null,
-        unit: (field.config as Record<string, unknown> | undefined)?.unit ??
-          null,
+        unit:
+          (field.config as Record<string, unknown> | undefined)?.unit ?? null,
         options: Array.isArray(field.options) ? field.options : null,
       }));
     })
@@ -350,9 +374,9 @@ async function buildExport(
     schemaVersion: "http://datacite.org/schema/kernel-4.4",
     identifier: project?.dataset_identifier
       ? {
-        identifier: String(project.dataset_identifier),
-        identifierType: "DOI",
-      }
+          identifier: String(project.dataset_identifier),
+          identifierType: "DOI",
+        }
       : undefined,
     creators,
     titles: [{ title: `${projectName} — checkpoint dataset` }],
@@ -369,21 +393,23 @@ async function buildExport(
     license: project?.license ?? null,
     contributors: project?.contact_email
       ? [
-        {
-          name: "Dataset contact",
-          contributorType: "ContactPerson",
-          nameType: "Organizational",
-          contactEmail: String(project.contact_email),
-        },
-      ]
+          {
+            name: "Dataset contact",
+            contributorType: "ContactPerson",
+            nameType: "Organizational",
+            contactEmail: String(project.contact_email),
+          },
+        ]
       : [],
     dates: [{ date: nowIso, dateType: "Created" }],
     subjects: [{ subject: projectName }, { subject: "field data collection" }],
     alternateIdentifiers: project
-      ? [{
-        alternateIdentifier: String(project.id),
-        alternateIdentifierType: "collect-project",
-      }]
+      ? [
+          {
+            alternateIdentifier: String(project.id),
+            alternateIdentifierType: "collect-project",
+          },
+        ]
       : [],
   };
   const datasetReadme = [
@@ -438,8 +464,7 @@ async function buildExport(
       pending_media: row.pending_media,
       fieldwork_complete: row.fieldwork_complete,
     })),
-    note:
-      "A checkpoint contains only complete submissions received by the server at the cutoff timestamp. Offline devices may hold additional unseen data.",
+    note: "A checkpoint contains only complete submissions received by the server at the cutoff timestamp. Offline devices may hold additional unseen data.",
   };
 
   const entries: Record<string, Uint8Array> = {
@@ -462,13 +487,16 @@ async function buildExport(
     );
   }
   for (const item of media) {
-    const { data: file, error: downloadError } = await service.storage.from(
-      "collect-media",
-    ).download(String(item.object_path));
+    const { data: file, error: downloadError } = await service.storage
+      .from("collect-media")
+      .download(String(item.object_path));
     if (downloadError || !file) {
-      return json({
-        error: "A media object could not be included in the checkpoint",
-      }, { status: 500 });
+      return json(
+        {
+          error: "A media object could not be included in the checkpoint",
+        },
+        { status: 500 },
+      );
     }
     entries[`media/${item.submission_id}/${mediaExportName(item)}`] =
       new Uint8Array(await file.arrayBuffer());
@@ -476,15 +504,19 @@ async function buildExport(
 
   const archive = zipSync(entries, { level: 0 });
   const objectPath = `projects/${projectId}/checkpoints/${checkpointId}.zip`;
-  const { error: uploadError } = await service.storage.from("collect-exports")
+  const { error: uploadError } = await service.storage
+    .from("collect-exports")
     .upload(objectPath, new Blob([archive], { type: "application/zip" }), {
       contentType: "application/zip",
       upsert: true,
     });
   if (uploadError) {
-    return json({ error: "Checkpoint package could not be stored" }, {
-      status: 500,
-    });
+    return json(
+      { error: "Checkpoint package could not be stored" },
+      {
+        status: 500,
+      },
+    );
   }
   const { error: checkpointError } = await service.from("checkpoints").insert({
     id: checkpointId,
@@ -498,9 +530,10 @@ async function buildExport(
     export_object_path: objectPath,
   });
   if (checkpointError) {
-    await service.storage.from("collect-exports").remove([objectPath]).catch(
-      () => undefined,
-    );
+    await service.storage
+      .from("collect-exports")
+      .remove([objectPath])
+      .catch(() => undefined);
     return json({ error: "Checkpoint could not be created" }, { status: 500 });
   }
   await service.from("audit_events").insert({
@@ -514,7 +547,8 @@ async function buildExport(
       media_count: media.length,
     },
   });
-  const { data: signed } = await service.storage.from("collect-exports")
+  const { data: signed } = await service.storage
+    .from("collect-exports")
     .createSignedUrl(objectPath, 3600);
   return json({
     checkpoint_id: checkpointId,
@@ -527,14 +561,17 @@ async function buildExport(
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
-    return json({ error: "Method not allowed" }, {
-      status: 405,
-      headers: corsHeaders,
-    });
+    return json(
+      { error: "Method not allowed" },
+      {
+        status: 405,
+        headers: corsHeaders,
+      },
+    );
   }
   try {
     const { user, service } = await requireUser(request);
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     const projectId = String(body.project_id ?? "");
     if (!projectId) {
       return json({ error: "Project is required" }, { status: 400 });

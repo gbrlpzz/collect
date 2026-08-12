@@ -4,54 +4,27 @@ import type {
   Observation,
   SubmissionState,
 } from "../types";
+import {
+  ALL_STORES,
+  APP_STATE_STORE,
+  createRequest,
+  DEVICE_STATE_STORE,
+  DRAFTS_STORE,
+  MEDIA_STORE,
+  openDatabase,
+  openDatabaseByName,
+  OUTBOX_STORE,
+  PROJECTS_STORE,
+  RECEIPTS_STORE,
+  SETTINGS_STORE,
+  SUBMISSIONS_STORE,
+  waitForTransaction,
+} from "./localDatabase";
 
-const DB_NAME = "collect-local-v1";
-const DB_VERSION = 2;
-let activeLocalScope = "default";
+export { localDatabaseName, setLocalScope } from "./localDatabase";
 
-/**
- * Each authenticated account gets its own IndexedDB database. This prevents
- * cached projects, drafts, media, and outbox rows from being reused when a
- * different person signs in on the same browser/device. The default scope is
- * retained for the isolated unit-test database.
- */
-export function setLocalScope(scope: string): void {
-  const normalized = scope
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]/g, "_")
-    .slice(0, 120);
-  activeLocalScope = normalized || "default";
-}
-
-export function localDatabaseName(): string {
-  return activeLocalScope === "default"
-    ? DB_NAME
-    : `${DB_NAME}-${activeLocalScope}`;
-}
-const APP_STATE_STORE = "app-state";
-const SETTINGS_STORE = "settings";
-const PROJECTS_STORE = "projects";
-const DRAFTS_STORE = "drafts";
-const SUBMISSIONS_STORE = "submissions";
-const MEDIA_STORE = "media";
-const OUTBOX_STORE = "outbox";
-const RECEIPTS_STORE = "receipts";
-const DEVICE_STATE_STORE = "device-state";
 const STATE_KEY = "singleton";
 const EXPLICIT_SIGN_OUT_KEY = "explicit-sign-out";
-
-const ALL_STORES = [
-  APP_STATE_STORE,
-  SETTINGS_STORE,
-  PROJECTS_STORE,
-  DRAFTS_STORE,
-  SUBMISSIONS_STORE,
-  MEDIA_STORE,
-  OUTBOX_STORE,
-  RECEIPTS_STORE,
-  DEVICE_STATE_STORE,
-];
 
 export interface DurableSubmission {
   id: string;
@@ -176,142 +149,80 @@ export interface OutboxOperation {
     | "ACTION_REQUIRED";
 }
 
-function createRequest<T>(request: IDBRequest<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-function waitForTransaction(transaction: IDBTransaction): Promise<void> {
-  return new Promise((resolve, reject) => {
-    transaction.oncomplete = () => resolve();
-    transaction.onabort = () =>
-      reject(transaction.error ?? new Error("IndexedDB transaction aborted"));
-    transaction.onerror = () =>
-      reject(transaction.error ?? new Error("IndexedDB transaction failed"));
-  });
-}
-
-function openDatabase(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(localDatabaseName(), DB_VERSION);
-    request.onupgradeneeded = () => {
-      const database = request.result;
-      ALL_STORES.forEach((storeName) => {
-        if (!database.objectStoreNames.contains(storeName))
-          database.createObjectStore(storeName);
-      });
-    };
-    request.onsuccess = () => {
-      request.result.onversionchange = () => request.result.close();
-      resolve(request.result);
-    };
-    request.onerror = () =>
-      reject(request.error ?? new Error("Unable to open local database"));
-    request.onblocked = () =>
-      reject(
-        new Error(
-          "A previous collect database connection is blocking an update",
-        ),
-      );
-  });
-}
-
-function openDatabaseByName(name: string): Promise<IDBDatabase | null> {
-  return new Promise((resolve) => {
-    const request = indexedDB.open(name, DB_VERSION);
-    request.onupgradeneeded = () => {
-      const database = request.result;
-      ALL_STORES.forEach((storeName) => {
-        if (!database.objectStoreNames.contains(storeName))
-          database.createObjectStore(storeName);
-      });
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => resolve(null);
-    request.onblocked = () => resolve(null);
-  });
-}
-
 export async function loadAppState(): Promise<Partial<AppState> | null> {
   if (!("indexedDB" in window)) return null;
-  try {
-    const database = await openDatabase();
-    const transaction = database.transaction(
-      [APP_STATE_STORE, SUBMISSIONS_STORE, MEDIA_STORE],
-      "readonly",
+  const database = await openDatabase();
+  const transaction = database.transaction(
+    [APP_STATE_STORE, SUBMISSIONS_STORE, MEDIA_STORE],
+    "readonly",
+  );
+  const transactionComplete = waitForTransaction(transaction);
+  const savedRequest = createRequest(
+    transaction.objectStore(APP_STATE_STORE).get(STATE_KEY),
+  );
+  const submissionsRequest = createRequest(
+    transaction.objectStore(SUBMISSIONS_STORE).getAll(),
+  );
+  const [saved, submissionsResult] = await Promise.all([
+    savedRequest,
+    submissionsRequest,
+  ]);
+  const submissions = submissionsResult as Observation[];
+  const mediaRequest = transaction.objectStore(MEDIA_STORE).getAll();
+  const mediaRows = (await createRequest(mediaRequest)) as DurableMedia[];
+  await transactionComplete;
+  if (!saved && submissions.length === 0) return null;
+  // Media blobs are stored once in MEDIA_STORE; reattach them to the
+  // metadata-only observation rows so uploads work after a reload.
+  const mediaById = new Map(mediaRows.map((media) => [media.id, media]));
+  const hydrateAssets = (value: unknown): unknown => {
+    if (!Array.isArray(value)) return value;
+    const assets = value.filter(
+      (item): item is MediaAsset =>
+        typeof item === "object" &&
+        item !== null &&
+        "id" in item &&
+        "name" in item,
     );
-    const transactionComplete = waitForTransaction(transaction);
-    const savedRequest = createRequest(
-      transaction.objectStore(APP_STATE_STORE).get(STATE_KEY),
-    );
-    const submissionsRequest = createRequest(
-      transaction.objectStore(SUBMISSIONS_STORE).getAll(),
-    );
-    const [saved, submissionsResult] = await Promise.all([
-      savedRequest,
-      submissionsRequest,
-    ]);
-    const submissions = submissionsResult as Observation[];
-    const mediaRequest = transaction.objectStore(MEDIA_STORE).getAll();
-    const mediaRows = (await createRequest(mediaRequest)) as DurableMedia[];
-    await transactionComplete;
-    if (!saved && submissions.length === 0) return null;
-    // Media blobs are stored once in MEDIA_STORE; reattach them to the
-    // metadata-only observation rows so uploads work after a reload.
-    const mediaById = new Map(mediaRows.map((media) => [media.id, media]));
-    const hydrateAssets = (value: unknown): unknown => {
-      if (!Array.isArray(value)) return value;
-      const assets = value.filter(
-        (item): item is MediaAsset =>
-          typeof item === "object" &&
-          item !== null &&
-          "id" in item &&
-          "name" in item,
-      );
-      if (!assets.length) return value;
-      let changed = false;
-      const media = assets.map((asset) => {
-        const durable = mediaById.get(asset.id);
-        if (durable?.blob && !asset.blob) {
-          changed = true;
-          return { ...asset, blob: durable.blob };
-        }
-        return asset;
-      });
-      return changed ? media : value;
-    };
-    const hydrated = submissions.map((observation) => {
-      if (!observation.media?.length) return observation;
-      let changed = false;
-      const media = observation.media.map((asset) => {
-        const durable = mediaById.get(asset.id);
-        if (durable?.blob && !asset.blob) {
-          changed = true;
-          return { ...asset, blob: durable.blob };
-        }
-        return asset;
-      });
-      return changed ? { ...observation, media } : observation;
+    if (!assets.length) return value;
+    let changed = false;
+    const media = assets.map((asset) => {
+      const durable = mediaById.get(asset.id);
+      if (durable?.blob && !asset.blob) {
+        changed = true;
+        return { ...asset, blob: durable.blob };
+      }
+      return asset;
     });
-    const savedState = saved as Partial<AppState> | null;
-    const draft = savedState?.draft
-      ? Object.fromEntries(
-          Object.entries(savedState.draft).map(([key, value]) => [
-            key,
-            hydrateAssets(value),
-          ]),
-        )
-      : savedState?.draft;
-    return {
-      ...savedState,
-      ...(draft !== savedState?.draft ? { draft } : {}),
-      ...(hydrated.length ? { observations: hydrated } : {}),
-    };
-  } catch {
-    return null;
-  }
+    return changed ? media : value;
+  };
+  const hydrated = submissions.map((observation) => {
+    if (!observation.media?.length) return observation;
+    let changed = false;
+    const media = observation.media.map((asset) => {
+      const durable = mediaById.get(asset.id);
+      if (durable?.blob && !asset.blob) {
+        changed = true;
+        return { ...asset, blob: durable.blob };
+      }
+      return asset;
+    });
+    return changed ? { ...observation, media } : observation;
+  });
+  const savedState = saved as Partial<AppState> | null;
+  const draft = savedState?.draft
+    ? Object.fromEntries(
+        Object.entries(savedState.draft).map(([key, value]) => [
+          key,
+          hydrateAssets(value),
+        ]),
+      )
+    : savedState?.draft;
+  return {
+    ...savedState,
+    ...(draft !== savedState?.draft ? { draft } : {}),
+    ...(hydrated.length ? { observations: hydrated } : {}),
+  };
 }
 
 export interface StoredRecoveryData {
@@ -861,45 +772,29 @@ export async function migrateLegacyDatabase(scope: string): Promise<void> {
     const importedTo = await settingsRequest;
     if (typeof importedTo === "string" && importedTo !== scope) return;
 
-    const copyStore = async (
-      storeName: string,
-      target: IDBObjectStore,
-    ): Promise<void> => {
-      const rows = await createRequest(
-        legacy
-          .transaction(storeName, "readonly")
-          .objectStore(storeName)
-          .getAll(),
-      );
-      for (const row of rows as Array<{ id?: string }>) {
-        if (row && typeof row === "object" && "id" in row)
-          target.put(row, row.id);
-        else if (row && typeof row === "object") {
-          // Keyed stores without an id field keep their own keys; re-put with
-          // the original key by reading keys separately.
-          const keys = await createRequest(
-            legacy
-              .transaction(storeName, "readonly")
-              .objectStore(storeName)
-              .getAllKeys(),
-          );
-          const values = await createRequest(
-            legacy
-              .transaction(storeName, "readonly")
-              .objectStore(storeName)
-              .getAll(),
-          );
-          for (let i = 0; i < keys.length; i += 1)
-            target.put(values[i], keys[i]);
-          return;
-        }
-      }
-    };
+    // Finish every legacy read before opening the scoped write transaction.
+    // IndexedDB may auto-commit a write transaction whenever the event loop
+    // has no pending request for it, so awaiting source reads while it is open
+    // can otherwise strand part of the migration.
+    const readTx = legacy.transaction(ALL_STORES, "readonly");
+    const readComplete = waitForTransaction(readTx);
+    const snapshots = await Promise.all(
+      ALL_STORES.map(async (storeName) => {
+        const store = readTx.objectStore(storeName);
+        const [keys, values] = await Promise.all([
+          createRequest(store.getAllKeys()),
+          createRequest(store.getAll()),
+        ]);
+        return { storeName, keys, values };
+      }),
+    );
+    await readComplete;
 
     const writeTx = scoped.transaction(ALL_STORES, "readwrite");
     const writeComplete = waitForTransaction(writeTx);
-    for (const storeName of ALL_STORES) {
-      await copyStore(storeName, writeTx.objectStore(storeName));
+    for (const { storeName, keys, values } of snapshots) {
+      const target = writeTx.objectStore(storeName);
+      values.forEach((value, index) => target.put(value, keys[index]));
     }
     await writeComplete;
 

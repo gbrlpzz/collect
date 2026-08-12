@@ -12,11 +12,13 @@ const REFRESH_MS = 30_000;
  */
 export function useReadiness(projectId: string | null): {
   readiness: ContributorReadiness[] | null;
+  error: boolean;
   refresh: () => void;
 } {
   const [readiness, setReadiness] = useState<ContributorReadiness[] | null>(
     null,
   );
+  const [error, setError] = useState(false);
   const intervalRef = useRef<number | undefined>(undefined);
   const loadingRef = useRef(false);
 
@@ -24,9 +26,12 @@ export function useReadiness(projectId: string | null): {
     if (!projectId || !isSupabaseConfigured) return;
     if (loadingRef.current) return;
     loadingRef.current = true;
+    setError(false);
     void loadProjectReadiness(projectId)
       .then(setReadiness)
-      .catch(() => setReadiness([]))
+      // Keep the last known roster if a background refresh fails. An empty
+      // array means "no contributors", never "the network failed".
+      .catch(() => setError(true))
       .finally(() => {
         loadingRef.current = false;
       });
@@ -35,11 +40,15 @@ export function useReadiness(projectId: string | null): {
   useEffect(() => {
     if (!projectId || !isSupabaseConfigured) {
       setReadiness(null);
+      setError(false);
       return;
     }
     setReadiness(null);
+    setError(false);
     refresh();
-    intervalRef.current = window.setInterval(refresh, REFRESH_MS);
+    intervalRef.current = window.setInterval(() => {
+      if (document.visibilityState === "visible") refresh();
+    }, REFRESH_MS);
     const onVisible = () => {
       if (document.visibilityState === "visible") refresh();
     };
@@ -53,5 +62,5 @@ export function useReadiness(projectId: string | null): {
     };
   }, [projectId, refresh]);
 
-  return { readiness, refresh };
+  return { readiness, error, refresh };
 }

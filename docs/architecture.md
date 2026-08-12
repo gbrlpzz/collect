@@ -9,11 +9,15 @@ features were added:
   callbacks; it does not own persistence or sync protocol details.
 - `src/app/useAppController.ts` owns session, workspace, and UI orchestration.
   The local submission boundary, recovery export, storage persistence request,
-  and sync engine live in their own modules under `src/app/`.
+  transient feedback, confirmation flow, and sync engine live in their own
+  modules under `src/app/`.
 - `src/components/` contains feature surfaces. Shared controls and feedback
   primitives live under `src/components/ui/` and are exposed from its index.
 - `src/data/` contains demo fixtures; `src/lib/schema.ts` contains schema
   editing rules. Fixtures do not own editor behavior.
+- `src/lib/localDatabase.ts` owns IndexedDB names, stores, requests, and
+  transaction primitives. `localStore.ts` owns collect's durable records and
+  operations; features should not open stores directly.
 - `src/styles.css` is only the stylesheet entrypoint. The ordered layers in
   `src/styles/` are foundation, native interaction language, and final
   responsive geometry.
@@ -21,6 +25,10 @@ features were added:
 The boundary is intentional: new features should add a domain module or a
 feature component without growing the application shell or app-wide CSS
 override chain.
+
+Collector, project detail, sync, project creation, and administration are
+route-surface chunks. They load only when opened; contributor sign-in and the
+one-tap home action do not download administration code.
 
 ## Local receipt boundary
 
@@ -60,6 +68,16 @@ create_submission → confirm/upload each deterministic object path → finalize
 ```
 
 The client preflights media acknowledgement so an interruption after a completed TUS upload does not create a second object. Finalization verifies the expected media count and every media row before returning the durable receipt.
+
+Media SHA-256 values are computed in the background when selected and are
+guaranteed again at the local commit boundary. Background work is an
+optimization only; a fast select-and-submit race cannot create unhashed durable
+media.
+
+Project boot reads `project_overviews`, a `security_invoker` view that keeps
+base-table RLS in force while returning organization, latest published schema,
+and RLS-visible counts in one request. Do not replace it with per-project
+hydration requests.
 
 ## Web vs installed app storage (iOS)
 
@@ -108,6 +126,10 @@ container (browser, installed PWA, desktop):
    (`linkDeviceSession`) and the `link-session` Edge Function hands back a
    one-time magic-link token that the current container verifies itself.
    This bridges the iOS web/PWA storage split without email.
+
+Device-link codes are stored only as SHA-256 digests. Creation and atomic
+single-use consumption go through service-role-only security-definer RPCs;
+anonymous and authenticated Data API roles cannot execute those functions.
 
 ## Collection consent
 
@@ -163,6 +185,11 @@ so switching people on a shared device never mixes drafts, media, or the
 outbox. `migrateLegacyDatabase()` adopts pre-scoping data into the first
 account that boots after an upgrade. The device id is per install (per user
 per container) and the server maps it to the contributor.
+
+Legacy migration snapshots values and original keys from every source store
+before opening the scoped write transaction. Never await unrelated work while
+an IndexedDB write transaction is open: browsers may auto-commit it as soon as
+its request queue becomes empty.
 
 ## What the browser cannot promise
 

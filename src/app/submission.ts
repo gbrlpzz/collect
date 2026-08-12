@@ -1,6 +1,8 @@
 import type { MediaAsset, Observation, Project } from "../types";
 import { collectEnvironment } from "../lib/deviceInfo";
 import { extractAttentionResponse } from "../lib/attention";
+import { ensureMediaHashes } from "../lib/mediaIntegrity";
+import type { EnvironmentInfo } from "../lib/deviceInfo";
 import {
   commitLocalSubmission,
   getOrCreateDeviceId,
@@ -31,6 +33,7 @@ export async function commitLocalObservation({
   const id = crypto.randomUUID();
   const clientCreatedAt = new Date().toISOString();
   const deviceId = await getOrCreateDeviceId();
+  const durableMediaAssets = await ensureMediaHashes(mediaAssets);
 
   // The automatic attention check (injected by the collector as
   // "_attention" = "checkKey:selectedValue") is stripped from the research
@@ -48,7 +51,19 @@ export async function commitLocalObservation({
   const locationFields = project.fields.filter(
     (field) => field.type === "location",
   );
-  if (locationFields.length && "geolocation" in navigator) {
+  const hasFreshLocation = locationFields.every((field) => {
+    const value = cleanedValues[field.key];
+    if (!value || typeof value !== "object") return false;
+    const capturedAt = Date.parse(
+      String((value as { capturedAt?: unknown }).capturedAt ?? ""),
+    );
+    return Number.isFinite(capturedAt) && Date.now() - capturedAt < 30_000;
+  });
+  if (
+    locationFields.length &&
+    !hasFreshLocation &&
+    "geolocation" in navigator
+  ) {
     const freshLocation = await new Promise<Record<string, unknown> | null>(
       (resolve) => {
         navigator.geolocation.getCurrentPosition(
@@ -88,17 +103,17 @@ export async function commitLocalObservation({
     status: "SAVED_LOCAL",
     deviceId,
     values: submittedValues,
-    media: mediaAssets,
-    environment: environment as unknown as Record<string, unknown>,
+    media: durableMediaAssets,
+    environment: environment as EnvironmentInfo & Record<string, unknown>,
     attentionResponse,
   };
-  const media = mediaFromAssets(mediaAssets, id, "field-site-photos");
+  const media = mediaFromAssets(durableMediaAssets, id, "field-site-photos");
   const submission: DurableSubmission = {
     id,
     projectId: project.id,
     schemaVersionId: `${project.id}-v${project.schemaVersion}`,
     payload: submittedValues,
-    environment: environment as unknown as Record<string, unknown>,
+    environment: environment as EnvironmentInfo & Record<string, unknown>,
     attentionResponse,
     payloadHash: null,
     clientCreatedAt,

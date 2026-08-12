@@ -5,48 +5,67 @@ import { sendEmail } from "../_shared/mail.ts";
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
-    return json({ error: "Method not allowed" }, {
-      status: 405,
-      headers: corsHeaders,
-    });
+    return json(
+      { error: "Method not allowed" },
+      {
+        status: 405,
+        headers: corsHeaders,
+      },
+    );
   }
   try {
     const { user, service } = await requireUser(request);
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     const projectId = String(body.project_id ?? "");
     const contributorId = String(body.contributor_id ?? "");
     if (!projectId || !contributorId) {
-      return json({ error: "Project and contributor are required" }, {
-        status: 400,
-      });
+      return json(
+        { error: "Project and contributor are required" },
+        {
+          status: 400,
+        },
+      );
     }
     const access = await projectAccess(service, projectId, user.id);
     if (!access?.admin) {
-      return json({ error: "Administrator access is required" }, {
-        status: 403,
-      });
+      return json(
+        { error: "Administrator access is required" },
+        {
+          status: 403,
+        },
+      );
     }
 
-    const { data: membership } = await service.from("project_members").select(
-      "user_id",
-    ).eq("project_id", projectId).eq("user_id", contributorId).maybeSingle();
+    const { data: membership } = await service
+      .from("project_members")
+      .select("user_id")
+      .eq("project_id", projectId)
+      .eq("user_id", contributorId)
+      .maybeSingle();
     if (!membership) {
-      return json({ error: "Contributor is not assigned to this project" }, {
-        status: 404,
-      });
+      return json(
+        { error: "Contributor is not assigned to this project" },
+        {
+          status: 404,
+        },
+      );
     }
-    const { data: contributor, error: contributorError } = await service.auth
-      .admin.getUserById(contributorId);
+    const { data: contributor, error: contributorError } =
+      await service.auth.admin.getUserById(contributorId);
     const email = contributor?.user?.email?.trim();
     if (contributorError || !email) {
-      return json({ error: "Contributor email is unavailable" }, {
-        status: 409,
-      });
+      return json(
+        { error: "Contributor email is unavailable" },
+        {
+          status: 409,
+        },
+      );
     }
-    const { data: project } = await service.from("projects").select("name").eq(
-      "id",
-      projectId,
-    ).maybeSingle();
+    const { data: project } = await service
+      .from("projects")
+      .select("name")
+      .eq("id", projectId)
+      .maybeSingle();
     await sendEmail({
       to: email,
       subject: `${

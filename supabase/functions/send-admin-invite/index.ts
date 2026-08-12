@@ -4,19 +4,27 @@ import { errorMessage, isEmailAllowed, requireUser } from "../_shared/auth.ts";
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
-    return json({ error: "Method not allowed" }, {
-      status: 405,
-      headers: corsHeaders,
-    });
+    return json(
+      { error: "Method not allowed" },
+      {
+        status: 405,
+        headers: corsHeaders,
+      },
+    );
   }
   try {
     const { user, service } = await requireUser(request);
-    const body = await request.json() as Record<string, unknown>;
-    const email = String(body.email ?? "").trim().toLowerCase();
+    const body = (await request.json()) as Record<string, unknown>;
+    const email = String(body.email ?? "")
+      .trim()
+      .toLowerCase();
     if (!email || !email.includes("@") || email.length > 320) {
-      return json({ error: "An administrator email is required" }, {
-        status: 400,
-      });
+      return json(
+        { error: "An administrator email is required" },
+        {
+          status: 400,
+        },
+      );
     }
 
     // The inviter must already administer the workspace.
@@ -28,14 +36,20 @@ Deno.serve(async (request) => {
       .limit(1)
       .maybeSingle();
     if (!membership) {
-      return json({ error: "Administrator access is required" }, {
-        status: 403,
-      });
+      return json(
+        { error: "Administrator access is required" },
+        {
+          status: 403,
+        },
+      );
     }
     if (!(await isEmailAllowed(service, email))) {
-      return json({
-        error: "This address is not on the administrator allow-list",
-      }, { status: 403 });
+      return json(
+        {
+          error: "This address is not on the administrator allow-list",
+        },
+        { status: 403 },
+      );
     }
 
     // Create the account (invite email) or reuse an existing one.
@@ -46,15 +60,18 @@ Deno.serve(async (request) => {
       inviteResult.error &&
       !/already|registered|exists/i.test(inviteResult.error.message)
     ) {
-      return json({
-        error:
-          `The invitation could not be sent: ${inviteResult.error.message}`,
-      }, { status: 502 });
+      return json(
+        {
+          error: `The invitation could not be sent: ${inviteResult.error.message}`,
+        },
+        { status: 502 },
+      );
     }
     const invitedUserId = inviteResult.data?.user?.id ?? null;
 
     if (invitedUserId) {
-      const { error: memberError } = await service.from("organization_members")
+      const { error: memberError } = await service
+        .from("organization_members")
         .upsert(
           {
             organization_id: membership.organization_id,
@@ -64,9 +81,12 @@ Deno.serve(async (request) => {
           { onConflict: "organization_id,user_id" },
         );
       if (memberError) {
-        return json({
-          error: "The administrator membership could not be recorded",
-        }, { status: 500 });
+        return json(
+          {
+            error: "The administrator membership could not be recorded",
+          },
+          { status: 500 },
+        );
       }
     }
 

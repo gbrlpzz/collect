@@ -9,27 +9,36 @@ function configuredBootstrapEmail(): string | null {
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
-    return json({ error: "Method not allowed" }, {
-      status: 405,
-      headers: corsHeaders,
-    });
+    return json(
+      { error: "Method not allowed" },
+      {
+        status: 405,
+        headers: corsHeaders,
+      },
+    );
   }
 
   try {
     const { user, service } = await requireUser(request);
     const bootstrapEmail = configuredBootstrapEmail();
     if (bootstrapEmail && user.email?.trim().toLowerCase() !== bootstrapEmail) {
-      return json({
-        error: "This account is not configured as the first administrator",
-      }, { status: 403 });
+      return json(
+        {
+          error: "This account is not configured as the first administrator",
+        },
+        { status: 403 },
+      );
     }
 
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     const organizationName = String(body.organization_name ?? "").trim();
     if (!organizationName || organizationName.length > 160) {
-      return json({
-        error: "A workspace name between 1 and 160 characters is required",
-      }, { status: 400 });
+      return json(
+        {
+          error: "A workspace name between 1 and 160 characters is required",
+        },
+        { status: 400 },
+      );
     }
 
     const { data, error } = await service.rpc("bootstrap_organization", {
@@ -38,21 +47,30 @@ Deno.serve(async (request) => {
     });
     if (error) {
       if (/workspace already exists/i.test(error.message)) {
-        return json({
-          error:
-            "This deployment already has a workspace. Ask an existing administrator to grant this account admin access.",
-        }, { status: 409 });
+        return json(
+          {
+            error:
+              "This deployment already has a workspace. Ask an existing administrator to grant this account admin access.",
+          },
+          { status: 409 },
+        );
       }
-      return json({ error: "The first workspace could not be created" }, {
-        status: 500,
-      });
+      return json(
+        { error: "The first workspace could not be created" },
+        {
+          status: 500,
+        },
+      );
     }
 
     const row = Array.isArray(data) ? data[0] : data;
     if (!row?.organization_id) {
-      return json({ error: "The first workspace could not be created" }, {
-        status: 500,
-      });
+      return json(
+        { error: "The first workspace could not be created" },
+        {
+          status: 500,
+        },
+      );
     }
     return json({
       organization_id: row.organization_id,
