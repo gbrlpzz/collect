@@ -182,23 +182,27 @@ form — only answer the visible question and tap the obvious next action.
 
 ## Colour: the house neutral greys
 
-collect uses the **house monochrome palette** shared by
+collect uses the **house monochrome palette** rooted in
 [gbrlpzz/index](https://github.com/gbrlpzz/index) and
 [gbrlpzz/dispatch](https://github.com/gbrlpzz/dispatch) — no colour tint
-anywhere:
+anywhere. The two installable surfaces are locked to distinct appearances so
+the field surface is stable in sunlight and the operations console reads as a
+different tool:
 
-| Token                | Light                     | Dark                            |
-| -------------------- | ------------------------- | ------------------------------- |
-| Canvas               | `#f5f5f7`                 | `#000000`                       |
-| Paper                | `#ffffff`                 | `#1c1c1e`                       |
-| Ink (text)           | `rgba(0,0,0,.85)`         | `rgba(255,255,255,.88)`         |
-| Dim (secondary)      | `rgba(0,0,0,.55)`         | `rgba(255,255,255,.58)`         |
-| Tertiary             | `rgba(0,0,0,.35)`         | `rgba(255,255,255,.36)`         |
-| Separator            | `rgba(0,0,0,.14)`         | `rgba(255,255,255,.18)`         |
-| Fill / fill-strong   | `rgba(0,0,0,.07)` / `.14` | `rgba(255,255,255,.10)` / `.20` |
-| Chrome (nav/glass)   | `rgba(245,245,247,.85)`   | `rgba(0,0,0,.85)`               |
-| Accent / accent text | `#000` / `#fff`           | `#fff` / `#000`                 |
-| Destructive          | `#d70015`                 | `#ff6961`                       |
+| Token                | Contributor (light)          | Admin (dark)                    |
+| -------------------- | ---------------------------- | ------------------------------- |
+| Canvas               | `#f5f5f7`                    | `#000000`                       |
+| Paper                | `#ffffff`                    | `#1c1c1e`                       |
+| Ink (text)           | `#1d1d1f`                    | `#f5f5f7`                       |
+| Dim (secondary)      | `rgba(60,60,67,.60)`         | `rgba(235,235,245,.60)`         |
+| Tertiary             | `rgba(60,60,67,.42)`         | `rgba(235,235,245,.36)`         |
+| Separator / light    | `rgba(60,60,67,.29)` / `.18` | `rgba(235,235,245,.28)` / `.16` |
+| Fill / fill-strong   | `rgba(118,118,128,.12)` / `#e5e5ea` | `rgba(118,118,128,.28)` / `.46` |
+| Chrome (nav/glass)   | `rgba(245,245,247,.86)`      | `rgba(28,28,30,.86)`            |
+| Accent / accent text | `#000` / `#fff`              | `#fff` / `#000`                 |
+| Destructive          | `#d70015`                    | `#ff6961`                       |
 
-`prefers-contrast: more` strengthens dim/tertiary tokens to WCAG AA for
-accessibility settings; the default appearance keeps the house greys verbatim.
+The surface is fixed before first paint (`data-collect-surface` on `<html>`,
+theme-color and status-bar metadata included) so the installed PWA chrome
+never flashes a mismatched appearance. `prefers-contrast: more` strengthens
+dim/tertiary tokens on both surfaces for accessibility settings.
