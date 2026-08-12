@@ -122,7 +122,7 @@ replaces a separate paper form.
 
 Every observation includes one random attention check from a fixed bank of
 universally valid, four-option multiple-choice questions (25% blind-guess
-probability). The Collector injects it after the first two questions with the
+probability). The Collector injects it after at least the first two questions with the
 options shuffled per presentation; the answer rides in a synthetic field
 (`_attention`, encoded as `checkKey:value`) and is stripped from the research
 payload before the submission is committed. The server:

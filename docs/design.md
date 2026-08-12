@@ -120,9 +120,9 @@ screen and control follows the HIG defaults above.
 #### Full-screen observation task
 
 - **HIG rule:** [Tab bars](https://developer.apple.com/design/human-interface-guidelines/tab-bars) should remain visible while navigating between top-level sections; full-screen task presentations can temporarily cover navigation.
-- **Why this is better here:** An observation is a focused, field-site task. Keeping the tab bar out of the collection surface prevents accidental navigation and leaves the bottom reach zone for the one required completion action.
-- **Scope:** Contributor observation screen only; project and project-list navigation retain the tab bar.
-- **Risk check:** Back remains available in the navigation bar, the task has one labelled primary action, and the screen is not used to navigate between top-level areas.
+- **Why this is better here:** An observation is a focused, field-site task. Keeping the tab bar out of the collection surface prevents accidental navigation and leaves the bottom reach zone for the one required completion action. The contributor app went further: navigation between top-level areas was removed entirely (there are no top-level sections to navigate between), so the tab bar no longer exists anywhere in the contributor surface.
+- **Scope:** The whole contributor app. The capture-first home screen is the only top-level surface; project details are reached by secondary navigation and the observation screen has one primary action.
+- **Risk check:** Back remains available in the navigation bar, the task has one labelled primary action, and no screen navigates between top-level areas.
 
 #### Monochrome accent
 

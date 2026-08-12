@@ -28,7 +28,7 @@ is comparable across contributors and projects.
 collector opens
   └─ pick 1 random check from the bank (per observation)
        └─ options shuffled (memorized positions never help)
-            └─ injected as a normal single-choice question after question 2
+            └─ injected as a normal single-choice question somewhere after question 2
                  └─ contributor answers (auto-advances, like any choice)
                       └─ answer travels as values["_attention"] = "checkKey:value"
                            └─ submission.ts strips it from the research payload
@@ -63,7 +63,7 @@ never with knowledge, culture, or local conditions**.
 
 - One random check per **observation** (not per session), chosen with
   `pickAttentionCheck`, avoiding the previous check's key when possible.
-- Inserted after the first two questions of the guided flow, while attention
+- Inserted after at least the first two questions of the guided flow, while attention
   is freshest (the flow already orders high-effort questions first).
 - Options are shuffled per presentation, so a memorized screen position never
   helps.

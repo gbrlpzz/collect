@@ -4,9 +4,11 @@ This page is the case for the product, written for anyone deciding whether to
 use it — a research-group leader, an institution's IT person, a principal
 investigator, or a field coordinator. The short version is one sentence:
 
-> **collect is the only tool in its class where "saved" and "synced" mean
-> exactly what they say — so the dataset you export is the fieldwork you
-> actually did, not the fieldwork the network happened to receive.**
+> Unlike generic form builders, collect defines "saved" and "synced" by
+> mechanism, not copy: a local IndexedDB transaction is the only thing that
+> produces a save receipt, and a server finalization receipt is the only thing
+> that produces a sync receipt. The dataset you export is therefore the
+> fieldwork the server received, with every earlier state auditable.\*\*
 
 ---
 
@@ -67,7 +69,8 @@ and restarts mid-sync.
 - **Automatic attention QA on every observation** — a random, universally
   valid quick check, verified server-side, producing a guess-adjusted score
   per contributor. The signal is exported with the data and visible to the
-  coordinator, so "who to trust" becomes a number, not a feeling.
+  coordinator, so coordinators can rank contributors by an auditable, exported score
+  rather than by anecdote.
 - **Automatic readiness**: administrators watch device-reported status that
   aggregates every device a contributor uses, without anyone pressing a
   "I'm done" button.

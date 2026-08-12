@@ -52,6 +52,22 @@ project-name_checkpoint-YYYY-MM-DD.zip
     "submissions_jsonl_sha256": "hex",
     "media_csv_sha256": "hex"
   },
+  "dataset": {
+    "license": "CC-BY-4.0",
+    "contact_email": "dataset@lab.org",
+    "dataset_identifier": "10.5281/zenodo.0000000"
+  },
+  "contributor_readiness": [
+    {
+      "device_id": "device-uuid",
+      "contributor_id": "user-uuid",
+      "last_seen_at": "2026-08-09T08:00:00.000Z",
+      "last_sync_success_at": "2026-08-09T08:00:00.000Z",
+      "pending_submissions": 0,
+      "pending_media": 0,
+      "fieldwork_complete": true
+    }
+  ],
   "note": "A checkpoint contains only complete submissions received by the server at the cutoff timestamp. Offline devices may hold additional unseen data."
 }
 ```

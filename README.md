@@ -41,7 +41,7 @@ Most survey software is either a generic form builder or a fragile online tool. 
 
 ## What's inside
 
-**Automatic attention verification.** Every observation quietly includes one random multiple-choice check (a universally valid question, options shuffled, inserted after the first two questions). The question is never stored — only a binary pass/fail flag on the submission — and every contributor gets a guess-adjusted attention score (0 = indistinguishable from blind guessing, 100 = perfect). The score is shown to the contributor and to the administrator, and it rides along in every export.
+**Automatic attention verification.** Every observation quietly includes one random multiple-choice check (a universally valid question, options shuffled, inserted after at least the first two questions). The question text is never stored; the check key, the selected answer, and a binary pass/fail flag are recorded server-side, and every contributor gets a guess-adjusted attention score (0 = indistinguishable from blind guessing, 100 = perfect). The score is shown to the contributor and to the administrator, and it rides along in every export.
 
 **In-app collection consent.** On first sign-in, contributors accept a versioned consent statement that replaces a paper form. The server refuses submissions without it, and the consent record (version + timestamp) is part of the contributor profile and the exports.
 

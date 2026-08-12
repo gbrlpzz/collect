@@ -24,6 +24,35 @@ The complexity belongs in the infrastructure, not in the contributor interface.
 
 ---
 
+> **Implementation deltas (2026-08-12).** This document is the requirements
+> baseline. Where the shipped product intentionally deviates, the deviation is
+> listed here so the spec is never read as a description of current behavior:
+>
+> - **Manual "Finish fieldwork" (§33/spec §1129) → automatic completion.** A
+>   contributor no longer confirms completion by hand. `fieldwork_complete` is
+>   derived by the client heartbeat when the durable outbox is empty and no
+>   draft is in progress; admin readiness aggregates every device row.
+> - **Location as a guided step → background provenance.** Location fields are
+>   excluded from the question flow; capture happens when the observation
+>   opens and is refreshed at save. A required failure surfaces a retry at the
+>   save boundary.
+> - **Device-link code length.** The server alphabet is 8 characters
+>   (A–Z, 2–9, no 0/O/1/I); email one-time codes remain 6 digits.
+> - **Contributor home.** The contributor surface is capture-first ("New
+>   observation"), with the project as secondary context; there is no
+>   project-selection or tab-bar navigation layer for a single assignment.
+> - **Fixed-role surfaces.** The role is bound to the installed app / entry
+>   URL; the account menu no longer switches between contributor and admin.
+> - **Automatic offline readiness.** Projects are marked ready after their
+>   metadata is persisted; the explicit "download for offline" step from the
+>   spec is superseded by whole-app state persistence.
+> - **Additions beyond the MVP spec:** automatic attention QA, in-app consent
+>   enforcement, and FAIR dataset metadata (see `docs/attention-qa.md`,
+>   `docs/dataset-standards.md`).
+>
+> The remaining sections are the requirements baseline; `docs/PLAN.md` tracks
+> per-section implementation status.
+
 # 2. Core product promise
 
 The engineering invariant is:
