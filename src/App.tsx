@@ -1,6 +1,7 @@
 import { AdminDashboard, AdminProject } from "./components/AdminDashboard";
 import { AuthScreen } from "./components/AuthScreen";
 import { Collector } from "./components/Collector";
+import { ConsentScreen } from "./components/ConsentScreen";
 import { ContributorHome } from "./components/ContributorHome";
 import { ConfirmationDialog } from "./components/ui";
 import { Icon } from "./components/Icon";
@@ -19,7 +20,6 @@ export default function App() {
     authLoading,
     requiresAuthentication,
     session,
-    canAdmin,
     syncSheetOpen,
     isSyncing,
     syncProgress,
@@ -27,6 +27,9 @@ export default function App() {
     storageError,
     toast,
     collectorPreview,
+    consentState,
+    consentVersion,
+    requirePasswordSetup,
     selectedObservations,
     hasDraft,
     confirmation,
@@ -35,7 +38,6 @@ export default function App() {
       resolveConfirmation,
       navigate,
       selectProject,
-      changeMode,
       signOut,
       updateDraft,
       submitObservation,
@@ -46,8 +48,6 @@ export default function App() {
       publishProject,
       exportCheckpoint,
       toggleProjectStatus,
-      finishFieldwork,
-      makeProjectAvailableOffline,
       beginContributorPreview,
       completeContributorPreview,
       cancelContributorPreview,
@@ -55,6 +55,8 @@ export default function App() {
       unlockPreview,
       dismissStorageError,
       dismissToast,
+      recordConsent,
+      completePasswordSetup,
     },
   } = useAppController();
 
@@ -64,6 +66,19 @@ export default function App() {
         role={surface}
         configured={configured}
         onPreview={!configured ? unlockPreview : undefined}
+        requirePasswordSetup={requirePasswordSetup}
+        onPasswordSet={() => void completePasswordSetup("")}
+      />
+    );
+  }
+
+  if (session && consentState === "required" && consentVersion) {
+    return (
+      <ConsentScreen
+        text={consentVersion.text}
+        version={consentVersion.version}
+        onAccept={() => void recordConsent().catch(() => showToast("Consent could not be recorded yet"))}
+        onDecline={() => void signOut()}
       />
     );
   }
@@ -78,9 +93,7 @@ export default function App() {
       <TopBar
         mode={state.mode}
         view={state.view}
-        onModeChange={changeMode}
         onNavigate={navigate}
-        canAdmin={canAdmin}
         userEmail={session?.user.email}
         isPreview={!configured}
         onSignOut={() => void signOut()}
@@ -96,12 +109,15 @@ export default function App() {
                   ? []
                   : [state.project]
             }
+            activeProject={state.project}
             observations={state.observations}
             hasDraft={hasDraft}
-            offlineReady={state.offlineReady ?? {}}
-            onNavigate={navigate}
-            onSelectProject={(project) => selectProject(project)}
-            onMakeAvailableOffline={makeProjectAvailableOffline}
+            onStartObservation={(project) =>
+              selectProject(project, "collector")
+            }
+            onOpenProject={(project) => selectProject(project, "project")}
+            onChooseProject={(project) => selectProject(project, "home")}
+            onResumeObservation={() => navigate("collector")}
           />
         )}
 
@@ -111,7 +127,6 @@ export default function App() {
             observations={selectedObservations}
             onNavigate={navigate}
             onOpenSync={openSyncSheetAndSync}
-            onFinishFieldwork={() => void finishFieldwork()}
           />
         )}
 
@@ -166,27 +181,6 @@ export default function App() {
           />
         )}
       </div>
-
-      {state.mode === "contributor" && state.view !== "collector" && (
-        <nav className="mobile-tabbar" aria-label="Fieldwork navigation">
-          <button
-            className={state.view === "home" ? "mobile-tab-active" : ""}
-            aria-current={state.view === "home" ? "page" : undefined}
-            onClick={() => navigate("home")}
-          >
-            <Icon name="folder" size={19} filled={state.view === "home"} />
-            <span>Projects</span>
-          </button>
-          <button
-            className={state.view === "project" ? "mobile-tab-active" : ""}
-            aria-current={state.view === "project" ? "page" : undefined}
-            onClick={() => navigate("project")}
-          >
-            <Icon name="file" size={19} filled={state.view === "project"} />
-            <span>Project</span>
-          </button>
-        </nav>
-      )}
 
       {syncSheetOpen && (
         <SyncSheet

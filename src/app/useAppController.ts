@@ -4,9 +4,10 @@ import { isSubmissionPending } from "../types";
 import type { AppMode, AppState, SyncProgressEntry, View } from "../types";
 import type { MediaAsset } from "../types";
 import { emptyProject, initialState } from "../data/demoState";
+import { acceptConsent, getCurrentConsent, getMyProfile, isConsentGranted, type ConsentVersion } from "../lib/consent";
+import { setPassword, wasInviteCallback } from "../lib/supabaseClient";
 import {
   getExplicitSignOut,
-  getOrCreateDeviceId,
   getStoredBackendKey,
   loadAppState,
   migrateLegacyDatabase,
@@ -21,7 +22,7 @@ import {
   localBackendKey,
   supabase,
 } from "../lib/supabaseClient";
-import { claimInvites, reportDeviceStatus } from "../lib/remoteBackend";
+import { claimInvites } from "../lib/remoteBackend";
 import {
   bootstrapWorkspace,
   createCheckpoint,
@@ -47,6 +48,12 @@ const entryRole = (() => {
   return role === "admin" || role === "contributor" ? role : null;
 })();
 
+// The two installable apps have fixed entry roles. The contributor app is the
+// default; the admin manifest starts with ?role=admin. A persisted state can
+// restore data and drafts, but never changes which surface is allowed here.
+const launchMode: AppMode = entryRole === "admin" ? "admin" : "contributor";
+const launchView: View = launchMode === "admin" ? "admin" : "home";
+
 export type ConfirmationRequest = Pick<
   ConfirmationDialogProps,
   "title" | "message" | "confirmLabel" | "cancelLabel" | "destructive"
@@ -62,13 +69,10 @@ export function useAppController() {
           projects: [],
         }
       : initialState),
-    // A dedicated install (?role=admin or ?role=contributor) starts directly
-    // in its surface; the general URL keeps the previous behavior.
-    ...(entryRole === "admin"
-      ? { mode: "admin" as const, view: "admin" as const }
-      : entryRole === "contributor"
-        ? { mode: "contributor" as const }
-        : {}),
+    // The URL/installed app chooses the surface; local state cannot switch
+    // an admin installation into fieldwork or vice versa.
+    mode: launchMode,
+    view: launchView,
   }));
   const [hydrated, setHydrated] = useState(false);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
@@ -189,6 +193,13 @@ export function useAppController() {
             setState((current) => ({
               ...current,
               ...saved,
+              // Cached data is portable between the two installs, but their
+              // navigation surfaces are not interchangeable.
+              mode: launchMode,
+              view:
+                saved.mode === launchMode && saved.view
+                  ? saved.view
+                  : launchView,
               project: { ...current.project, ...(saved.project ?? {}) },
               projects:
                 saved.projects ??
@@ -245,8 +256,8 @@ export function useAppController() {
           setState((current) => ({
             ...current,
             projects: [],
-            mode: hasAdminAccess ? "admin" : current.mode,
-            view: hasAdminAccess ? "admin" : current.view,
+            mode: current.mode,
+            view: current.mode === "admin" ? "admin" : "home",
           }));
       })
       .catch(() => undefined);
@@ -367,16 +378,6 @@ export function useAppController() {
     view: View = "project",
   ) => setState((current) => ({ ...current, project, view }));
 
-  const changeMode = (mode: AppMode) => {
-    if (mode === "admin" && !canAdmin) return;
-    setState((current) => ({
-      ...current,
-      mode,
-      view: mode === "admin" ? "admin" : "home",
-    }));
-    setSyncSheetOpen(false);
-  };
-
   const signOut = async () => {
     if (supabase) await supabase.auth.signOut().catch(() => undefined);
     await setExplicitSignOut(true).catch(() => undefined);
@@ -422,7 +423,9 @@ export function useAppController() {
           hour: "2-digit",
           minute: "2-digit",
         }),
-        view: "project",
+        // Return to the capture-first surface so the next observation is one
+        // tap away; project details remain secondary.
+        view: "home",
       }));
       setStorageError(null);
       showToast("Observation saved on this device");
@@ -547,97 +550,56 @@ export function useAppController() {
     );
   };
 
-  const finishFieldwork = async () => {
-    if (hasDraft) {
-      const discardDraft = await requestConfirmation({
-        title: "Discard unfinished observation?",
-        message:
-          "This draft has not been submitted. Discarding it removes only the unfinished draft from this device.",
-        confirmLabel: "Discard draft",
-        cancelLabel: "Keep editing",
-        destructive: true,
-      });
-      if (!discardDraft) {
-        navigate("collector");
-        return;
-      }
-      setState((current) => ({
-        ...current,
-        draft: { observed_date: new Date().toISOString().slice(0, 10) },
-      }));
-    }
-    const currentProjectPending = selectedObservations.filter(
-      (item) => item.status !== "SYNCED",
-    ).length;
-    if (currentProjectPending) {
-      const synced = await syncNow();
-      if (!synced) {
-        setSyncSheetOpen(true);
-        return;
-      }
-    }
-    const saved = await loadAppState();
-    const remaining = (saved?.observations ?? state.observations).filter(
-      (item) =>
-        (item.projectId ?? state.project.id) === state.project.id &&
-        isSubmissionPending(item.status),
-    );
-    if (remaining.length) {
-      setSyncSheetOpen(true);
-      showToast("Fieldwork is still waiting for synchronization");
-      return;
-    }
-    if (isSupabaseConfigured) {
-      if (!session) {
-        showToast(
-          "Reconnect and sign in before confirming fieldwork completion",
-        );
-        return;
-      }
-      try {
-        const deviceId = await getOrCreateDeviceId();
-        await reportDeviceStatus({
-          device_id: deviceId,
-          project_id: state.project.id,
-          pending_submissions: 0,
-          pending_media: 0,
-          app_version: APP_VERSION,
-          schema_versions_cached: [state.project.schemaVersion],
-          fieldwork_complete: true,
-        });
-        setState((current) => ({
-          ...current,
-          fieldworkComplete: {
-            ...(current.fieldworkComplete ?? {}),
-            [current.project.id]: true,
-          },
-        }));
-      } catch {
-        showToast("The server could not confirm completion yet");
-        return;
-      }
-    }
-    showToast("All fieldwork synced");
-  };
-
   const requiresAuthentication = isSupabaseConfigured
-    ? !session && (!localCacheAvailable || explicitSignOut)
+    ? !session && (launchMode === "admin" || !localCacheAvailable || explicitSignOut)
     : !previewUnlocked;
 
-  const makeProjectAvailableOffline = async (project: AppState["project"]) => {
-    try {
-      await saveAppState(
-        { ...state, project, view: state.view, mode: state.mode },
-        localBackendKey,
-      );
-      setState((current) => ({
-        ...current,
-        offlineReady: { ...(current.offlineReady ?? {}), [project.id]: true },
-      }));
-      showToast("Ready to work offline");
-    } catch {
-      showToast("This device could not store the project yet");
+  // One-time collection consent: shown at first sign-in; the server refuses
+  // submissions without it. Recorded on the contributor profile.
+  const [consentState, setConsentState] = useState<"loading" | "required" | "granted">("loading");
+  const [consentVersion, setConsentVersion] = useState<ConsentVersion | null>(null);
+
+  // One-time password setup after a project invitation, so the contributor
+  // can sign in on any device/container with email + password.
+  const [requirePasswordSetup, setRequirePasswordSetup] = useState(false);
+  const inviteConsumedRef = useRef(false);
+  useEffect(() => {
+    if (!isSupabaseConfigured || !session || inviteConsumedRef.current) return;
+    if (wasInviteCallback()) {
+      inviteConsumedRef.current = true;
+      setRequirePasswordSetup(true);
     }
+  }, [session]);
+
+  const completePasswordSetup = async (password: string): Promise<void> => {
+    await setPassword(password);
+    setRequirePasswordSetup(false);
+  };
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !session) {
+      setConsentState("loading");
+      return;
+    }
+    let active = true;
+    void Promise.all([getMyProfile(), getCurrentConsent()]).then(([profile, consent]) => {
+      if (!active) return;
+      setConsentVersion(consent);
+      setConsentState(isConsentGranted(profile) ? "granted" : "required");
+    }).catch(() => {
+      if (active) {
+        // The profile is unreachable (offline). Do not block already-granted
+        // consent holders; a new user will be asked again when reachable.
+        setConsentState("granted");
+      }
+    });
+    return () => { active = false; };
+  }, [session]);
+
+  const recordConsent = async (): Promise<void> => {
+    if (!consentVersion) throw new Error("The consent statement is not available");
+    await acceptConsent(consentVersion.version);
+    setConsentState("granted");
   };
 
   const beginContributorPreview = () => {
@@ -705,6 +667,9 @@ export function useAppController() {
     dbError,
     toast,
     collectorPreview,
+    consentState,
+    consentVersion,
+    requirePasswordSetup,
     pendingCount,
     selectedObservations,
     hasDraft,
@@ -714,7 +679,6 @@ export function useAppController() {
       resolveConfirmation,
       navigate,
       selectProject,
-      changeMode,
       signOut,
       updateDraft,
       submitObservation,
@@ -725,8 +689,6 @@ export function useAppController() {
       publishProject,
       exportCheckpoint,
       toggleProjectStatus,
-      finishFieldwork,
-      makeProjectAvailableOffline,
       beginContributorPreview,
       completeContributorPreview,
       cancelContributorPreview,
@@ -734,6 +696,8 @@ export function useAppController() {
       unlockPreview,
       dismissStorageError,
       dismissToast,
+      recordConsent,
+      completePasswordSetup,
     },
     confirmation,
   };
