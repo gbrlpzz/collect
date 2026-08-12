@@ -33,19 +33,25 @@ const project: Project = {
 const validationFields: FieldDefinition[] = fields.filter((field) => field.key !== "site_photos");
 const validationProject: Project = { ...project, fields: validationFields };
 
-describe("Collector validation (§10 client-side enforcement)", () => {
-  it("blocks submit when a required field is empty and shows which field", () => {
+describe("Collector guided flow (§10 client-side enforcement)", () => {
+  const continueButton = () => screen.getByRole("button", { name: /^continue$/i });
+
+  it("keeps Continue disabled until a required first question is answered", () => {
     const onSubmit = vi.fn();
     render(<Collector project={project} draft={{ observed_date: "2026-08-10" }} lastSavedAt={null} onDraftChange={() => undefined} onSubmit={onSubmit} onBack={() => undefined} isSaving={false} />);
-    fireEvent.click(screen.getByRole("button", { name: /save observation/i }));
+    expect(screen.getByText("Site code")).toBeTruthy();
+    expect(screen.getByText("Required")).toBeTruthy();
+    expect(continueButton()).toHaveProperty("disabled", true);
+    fireEvent.click(continueButton());
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getAllByText(/complete this field/i).length).toBeGreaterThan(0);
   });
 
   it("enforces number min/max with a specific message", () => {
     const onSubmit = vi.fn();
     render(<Collector project={validationProject} draft={{ observed_date: "2026-08-10", site_code: "VA-001", people_count: { value: 99, unit: null } }} lastSavedAt={null} onDraftChange={() => undefined} onSubmit={onSubmit} onBack={() => undefined} isSaving={false} />);
-    fireEvent.click(screen.getByRole("button", { name: /save observation/i }));
+    fireEvent.click(continueButton());
+    expect(screen.getByText("People present")).toBeTruthy();
+    fireEvent.click(continueButton());
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByText(/maximum is 50/i)).toBeTruthy();
   });
@@ -53,7 +59,8 @@ describe("Collector validation (§10 client-side enforcement)", () => {
   it("rejects fractional values for integer fields", () => {
     const onSubmit = vi.fn();
     render(<Collector project={validationProject} draft={{ observed_date: "2026-08-10", site_code: "VA-001", people_count: { value: 1.5, unit: null } }} lastSavedAt={null} onDraftChange={() => undefined} onSubmit={onSubmit} onBack={() => undefined} isSaving={false} />);
-    fireEvent.click(screen.getByRole("button", { name: /save observation/i }));
+    fireEvent.click(continueButton());
+    fireEvent.click(continueButton());
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByText(/whole number/i)).toBeTruthy();
   });
@@ -61,33 +68,51 @@ describe("Collector validation (§10 client-side enforcement)", () => {
   it("enforces text minLength", () => {
     const onSubmit = vi.fn();
     render(<Collector project={validationProject} draft={{ observed_date: "2026-08-10", site_code: "VA" }} lastSavedAt={null} onDraftChange={() => undefined} onSubmit={onSubmit} onBack={() => undefined} isSaving={false} />);
-    fireEvent.click(screen.getByRole("button", { name: /save observation/i }));
+    fireEvent.click(continueButton());
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByText(/at least 3 characters/i)).toBeTruthy();
   });
 
-  it("accepts a complete observation", () => {
+  it("walks through every question and saves on the last step", () => {
     const onSubmit = vi.fn();
     const assets = [0, 1].map((index) => ({ id: `m${index}`, name: `p${index}.jpg`, mimeType: "image/jpeg", byteSize: 10, fieldId: "site_photos", captureSource: "picker", blob: new Blob(["x"]) }));
     const draft = { observed_date: "2026-08-10", site_code: "VA-001", people_count: { value: 3, unit: null } };
     render(<Collector project={project} draft={draft} lastSavedAt={null} onDraftChange={() => undefined} onSubmit={onSubmit} onBack={() => undefined} isSaving={false} />);
-    // Attach two photos through the hidden input.
+    fireEvent.click(continueButton());
+    expect(screen.getByText("People present")).toBeTruthy();
+    fireEvent.click(continueButton());
+    expect(screen.getByText("Site photos")).toBeTruthy();
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: assets.map((asset) => new File([new Blob(["x"])], asset.name, { type: "image/jpeg" })) } });
+    fireEvent.click(continueButton());
+    expect(screen.getByText("Field notes")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /save observation/i }));
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
-  it("lets contributors remove an attached photo before saving", () => {
+  it("lets contributors remove an attached photo before continuing", () => {
     const onSubmit = vi.fn();
     const draft = { observed_date: "2026-08-10", site_code: "VA-001" };
     render(<Collector project={project} draft={draft} lastSavedAt={null} onDraftChange={() => undefined} onSubmit={onSubmit} onBack={() => undefined} isSaving={false} />);
+    fireEvent.click(continueButton());
+    fireEvent.click(continueButton());
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [new File([new Blob(["x"])], "site.jpg", { type: "image/jpeg" })] } });
     fireEvent.click(screen.getByRole("button", { name: /remove photo 1/i }));
-    fireEvent.click(screen.getByRole("button", { name: /save observation/i }));
+    expect(continueButton()).toHaveProperty("disabled", true);
+    fireEvent.click(continueButton());
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getAllByText(/complete this field/i).length).toBeGreaterThan(0);
+  });
+
+  it("auto-advances after a single answer", async () => {
+    const onSubmit = vi.fn();
+    const autoFields: FieldDefinition[] = [
+      { id: "a1", key: "occupied", label: "Is it occupied?", type: "tri_state", required: true, semantic_uri: null },
+      { id: "a2", key: "kind", label: "Kind", type: "single_choice", required: false, semantic_uri: null, options: [{ id: "o1", value: "o1", label: "Option one" }] },
+    ];
+    render(<Collector project={{ ...project, fields: autoFields }} draft={{ observed_date: "2026-08-10" }} lastSavedAt={null} onDraftChange={() => undefined} onSubmit={onSubmit} onBack={() => undefined} isSaving={false} />);
+    fireEvent.click(screen.getByRole("button", { name: /^yes$/i }));
+    await waitFor(() => expect(screen.getByText("Kind")).toBeTruthy());
   });
 });
 

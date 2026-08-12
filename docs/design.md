@@ -118,3 +118,67 @@ screen and control follows the HIG defaults above.
 - **Why this is better here:** This is a source-available web PWA, not a signed UIKit/SwiftUI bundle. The implementation uses a small, consistent SVG symbol set and CSS material approximation while preserving the same semantic roles, sizing, and visual hierarchy.
 - **Scope:** `src/components/Icon.tsx` and browser CSS chrome only; no custom symbol treatment is used to replace text labels or accessibility names.
 - **Risk check:** Icons remain secondary to labels, use consistent stroke weight, and all interactive elements retain text or accessible labels and 44 pt hit regions.
+
+
+## Guided observation flow (one question at a time)
+
+The contributor collection surface is a **guided flow**, not a scrolling form:
+one question per screen, a page that never moves, and a single primary action
+at thumb reach. This is the pattern Apple uses for setup, onboarding, and
+checkout flows (see [Onboarding](https://developer.apple.com/design/human-interface-guidelines/onboarding),
+[Page controls](https://developer.apple.com/design/human-interface-guidelines/page-controls),
+[Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons)).
+
+### Why one question per screen
+
+Survey-methodology and form-design research consistently supports the pattern:
+
+- Reducing per-screen cognitive load improves response quality and completion
+  (Nielsen Norman Group, *4 Principles to Reduce Cognitive Load in Forms*).
+- "Ask one thing at a time" is a standard survey best practice (Qualtrics, *UX
+  Survey Best Practices*).
+- Concise, interactive questionnaires reduce survey fatigue and abandonment
+  (Maptionnaire, *12 Best Practices in Survey Design*).
+
+A field worker in sunlight, gloves, or stress should never have to *parse* a
+form — only answer the visible question and tap the obvious next action.
+
+### How the flow behaves
+
+- **Sequential steps.** Each field definition is one screen. Section headings
+  become brief full-screen section intros.
+- **No page movement.** The screen height is fixed; content is centered and the
+  page never scrolls (long text and repeatable rows scroll inside their step).
+- **Capsule geometry.** Answers and actions use fully rounded capsules
+  (56 pt), segmented controls for tri-state, native date pickers, a stepper
+  beside numeric fields, and large thumbnails for media.
+- **Auto-advance.** A single answer (choice or tri-state) advances
+  automatically after ~200 ms. Multi-select, text, number, date, location, and
+  media wait for an explicit **Continue**.
+- **One primary action.** The bottom bar holds **Back** (chevron) and a single
+  prominent capsule **Continue**; the final step becomes **Save observation**.
+- **Required clarity.** Required steps disable Continue until answered, with a
+  "Required" chip next to the title; errors appear inline with the control.
+- **Progress.** A thin determinate bar plus the step position ("Step 3 of 12")
+  keeps people oriented without the distraction of per-step dots.
+- **Keyboard-friendly.** Text steps autofocus; the return key continues; the
+  flow is a single `<form>`.
+- **Accessible.** Each control is labelled by its question, `aria-required` and
+  `aria-invalid` follow state, reduced motion disables the step transition,
+  and VoiceOver hears the question title before the control.
+
+### Admin reflection
+
+- The admin schema panel gains **Preview flow**, which opens the exact
+  contributor experience for the current schema without persisting anything.
+- Admin surfaces share the same primitives (capsule buttons, grouped lists,
+  sheets, dialogs) so the system stays one system.
+
+### Deviations (additions to the records above)
+
+- **Auto-advance on single answers** deviates from a strict "press Continue"
+  convention. It is better here because a field worker's dominant hand may be
+  occupied; a single tap should carry them forward, and Back is always one tap
+  away. Scope: single-choice and tri-state steps only.
+- **Capsule answers instead of list rows** keep the Apple geometry while giving
+  options a 56 pt target — larger than the 44 pt minimum — for glove use.

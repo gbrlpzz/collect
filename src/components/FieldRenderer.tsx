@@ -18,6 +18,7 @@ interface FieldRendererProps {
   required?: boolean;
   describedBy?: string;
   invalid?: boolean;
+  autoFocus?: boolean;
 }
 
 function MediaTile({
@@ -75,9 +76,11 @@ export function FieldRenderer({
   required = false,
   describedBy,
   invalid = false,
+  autoFocus = false,
 }: FieldRendererProps) {
   const stringValue = typeof value === "string" ? value : "";
   const accessibilityProps = {
+    "aria-label": field.label,
     "aria-describedby": describedBy || undefined,
     "aria-invalid": invalid || undefined,
     "aria-required": required || undefined,
@@ -98,6 +101,7 @@ export function FieldRenderer({
           autoComplete="off"
           autoCapitalize="sentences"
           enterKeyHint="next"
+          autoFocus={autoFocus}
         />
         {stringValue && <ClearButton label={`Clear ${field.label}`} onClick={() => onChange("")} />}
       </div>
@@ -119,6 +123,7 @@ export function FieldRenderer({
           rows={4}
           autoCapitalize="sentences"
           enterKeyHint="enter"
+          autoFocus={autoFocus}
         />
         {stringValue && <ClearButton label={`Clear ${field.label}`} onClick={() => onChange("")} />}
       </div>
@@ -127,8 +132,20 @@ export function FieldRenderer({
 
   if (field.type === "number") {
     const numberValue = value && typeof value === "object" && "value" in value ? (value as { value?: unknown }).value : value;
+    const numericValue = typeof numberValue === "number" && !Number.isNaN(numberValue) ? numberValue : null;
+    const min = field.config?.min === undefined ? undefined : Number(field.config.min);
+    const max = field.config?.max === undefined ? undefined : Number(field.config.max);
+    const showStepper = field.config?.integer === true;
+    const adjust = (delta: number) => {
+      const base = numericValue ?? 0;
+      let next = base + delta;
+      if (min !== undefined) next = Math.max(min, next);
+      if (max !== undefined) next = Math.min(max, next);
+      onChange({ value: next, unit: field.config?.unit ? String(field.config.unit) : null });
+    };
     return (
-      <div className="number-input-wrap">
+      <div className={showStepper ? "number-stepper" : "number-input-wrap"}>
+        {showStepper && <button type="button" className="stepper-button" aria-label={`Decrease ${field.label}`} onClick={() => adjust(-1)} disabled={numericValue !== null && min !== undefined && numericValue <= min}>−</button>}
         <input
           className="field-input"
           id={field.key}
@@ -141,13 +158,15 @@ export function FieldRenderer({
             const parsed = Number(raw);
             onChange(raw === "" ? "" : { value: Number.isFinite(parsed) ? parsed : raw, unit: field.config?.unit ? String(field.config.unit) : null });
           }}
-          min={field.config?.min === undefined ? undefined : Number(field.config.min)}
-          max={field.config?.max === undefined ? undefined : Number(field.config.max)}
+          min={min}
+          max={max}
           step={field.config?.integer ? 1 : "any"}
           inputMode={field.config?.integer ? "numeric" : "decimal"}
           enterKeyHint="next"
+          autoFocus={autoFocus}
         />
-        {field.config?.unit && <span>{String(field.config.unit)}</span>}
+        {showStepper && <button type="button" className="stepper-button" aria-label={`Increase ${field.label}`} onClick={() => adjust(1)} disabled={numericValue !== null && max !== undefined && numericValue >= max}>+</button>}
+        {!showStepper && field.config?.unit && <span>{String(field.config.unit)}</span>}
       </div>
     );
   }
@@ -158,7 +177,7 @@ export function FieldRenderer({
     const storedOtherText = value && typeof value === "object" && "otherText" in value ? String((value as { otherText?: unknown }).otherText ?? "") : "";
     const isOther = storedValue === "other" || (otherOption !== undefined && storedValue === otherOption.id);
     return (
-      <div className="choice-grid" role="group" aria-label={field.label} {...accessibilityProps}>
+      <div className="choice-grid" role="group" {...accessibilityProps}>
         {field.options?.map((option) => {
           const selected = option.id === storedValue || (option.value === "other" && isOther);
           return (
@@ -190,6 +209,7 @@ export function FieldRenderer({
                 autoComplete="off"
                 autoCapitalize="sentences"
                 enterKeyHint="done"
+                autoFocus={autoFocus}
                 onChange={(event) => onChange({ value: otherOption.id, otherText: event.target.value })}
               />
               {storedOtherText && <ClearButton label="Clear other value" onClick={() => onChange({ value: otherOption.id, otherText: "" })} />}
@@ -210,7 +230,7 @@ export function FieldRenderer({
   }
 
   if (field.type === "date") {
-    return <input id={field.key} className="field-input" type="date" required={required} {...accessibilityProps} value={stringValue} onChange={(event) => onChange(event.target.value)} autoComplete="off" />;
+    return <input id={field.key} className="field-input" type="date" required={required} {...accessibilityProps} value={stringValue} onChange={(event) => onChange(event.target.value)} autoComplete="off" autoFocus={autoFocus} />;
   }
 
   if (field.type === "datetime") {
@@ -222,13 +242,13 @@ export function FieldRenderer({
       const absoluteMinutes = Math.abs(offsetMinutes);
       const offset = `${sign}${String(Math.floor(absoluteMinutes / 60)).padStart(2, "0")}:${String(absoluteMinutes % 60).padStart(2, "0")}`;
       onChange({ localDatetime: event.target.value, timezoneOffset: offset, utcTimestamp: Number.isNaN(date.getTime()) ? null : date.toISOString() });
-    }} autoComplete="off" />;
+    }} autoComplete="off" autoFocus={autoFocus} />;
   }
 
   if (field.type === "multiple_choice") {
     const selected = Array.isArray(value) ? value.map(String) : [];
     return (
-      <div className="choice-grid" role="group" aria-label={field.label} {...accessibilityProps}>
+      <div className="choice-grid" role="group" {...accessibilityProps}>
         {field.options?.map((option) => {
           const isSelected = selected.includes(option.id);
           return <button type="button" key={option.id} className={`choice-button ${isSelected ? "choice-selected" : ""}`} aria-pressed={isSelected} onClick={() => onChange(isSelected ? selected.filter((item) => item !== option.id) : [...selected, option.id])}><span>{option.label}</span>{isSelected && <Icon name="check" size={18} />}</button>;
@@ -241,7 +261,7 @@ export function FieldRenderer({
     const location = value as LocationValue | undefined;
     return (
       <>
-        <div className={`capture-card ${location ? "capture-complete" : ""}`} role="group" aria-label={field.label} {...accessibilityProps}>
+        <div className={`capture-card ${location ? "capture-complete" : ""}`} role="group" {...accessibilityProps}>
           <div className="capture-icon"><Icon name="location" size={20} /></div>
           <div className="capture-copy">
             {location ? (
@@ -267,7 +287,7 @@ export function FieldRenderer({
     const assets = mediaAssets ?? photoNames.map((name, index) => ({ id: `${field.key}-${index}`, name, mimeType: field.type === "photo" ? "image/*" : "audio/*", byteSize: 0, fieldId: field.key }));
     const maxCount = Number(field.config?.maxCount ?? 5);
     return (
-      <div className="media-field" role="group" aria-label={field.label} {...accessibilityProps}>
+      <div className="media-field" role="group" {...accessibilityProps}>
         <div className="photo-strip">
           {assets.map((asset, index) => <MediaTile key={`${asset.id}-${index}`} asset={asset} index={index} type={field.type as "photo" | "audio"} fieldLabel={field.label} onRemove={onRemoveMedia ? () => onRemoveMedia(index) : undefined} />)}
           {assets.length < maxCount && <button type="button" className="add-media" onClick={onAddPhoto} aria-label={field.type === "audio" ? `Add audio for ${field.label}` : `Add a photo for ${field.label}`}>
@@ -286,7 +306,7 @@ export function FieldRenderer({
   if (field.type === "repeatable_group") {
     const rows = Array.isArray(value) ? value as Array<Record<string, unknown>> : [];
     return (
-      <div className="repeatable-group" role="group" aria-label={field.label} {...accessibilityProps}>
+      <div className="repeatable-group" role="group" {...accessibilityProps}>
         {rows.map((row, rowIndex) => (
           <div className="repeatable-row" key={rowIndex}>
             <div className="repeatable-row-heading"><strong>{field.label} {rowIndex + 1}</strong><button type="button" className="text-button" onClick={() => onChange(rows.filter((_, index) => index !== rowIndex))}>Remove</button></div>

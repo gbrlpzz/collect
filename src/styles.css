@@ -814,3 +814,89 @@ h1 { font-size: clamp(2.125rem, 5vw, 2.75rem); }
 .toast button { width: var(--control-height); height: var(--control-height); flex: 0 0 auto; display: grid; place-items: center; margin: -6px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; opacity: .8; }
 .toast button:hover { background: rgba(128,128,128,.25); }
 .toast button:active { opacity: .6; }
+
+
+/* -------------------------------------------------------------------------
+   Guided observation flow (one question per screen)
+
+   Pattern: Apple-style setup/checkout flow. The page never scrolls; each
+   question is one screen; the primary action is a capsule at thumb reach.
+   Geometry: capsules for answers and actions, large titles, page progress.
+   ------------------------------------------------------------------------- */
+.collector-flow { width: 100%; max-width: none; height: 100dvh; min-height: 100vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.collector-flow .collector-topbar { flex: 0 0 auto; margin: 0; padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); }
+.collector-flow .collector-title strong { font-size: 1rem; }
+.collector-flow .collector-title span { max-width: 220px; font-size: .75rem; }
+
+.flow-progress { flex: 0 0 auto; height: 3px; margin: 0 16px; overflow: hidden; border-radius: 99px; background: var(--grouped-strong); }
+.flow-progress span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .22s ease; }
+
+.flow-body { flex: 1 1 auto; min-height: 0; display: flex; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.flow-step { width: min(100%, 560px); margin: auto; display: flex; flex-direction: column; padding: 28px 20px 32px; animation: step-in .18s ease; }
+@keyframes step-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flow-step { animation: none; }
+  .flow-progress span { transition: none; }
+}
+
+.step-heading-screen { padding: 24px 0; }
+.step-kicker { display: block; margin-bottom: 10px; color: var(--secondary); font-size: .8125rem; font-weight: 650; letter-spacing: .03em; text-transform: uppercase; }
+.step-title { font-size: clamp(1.75rem, 6vw, 2.125rem); line-height: 1.12; font-weight: 700; letter-spacing: -.02em; }
+.step-label-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.step-required { flex: 0 0 auto; margin-top: 7px; padding: 4px 10px; border-radius: 999px; background: var(--grouped); color: var(--secondary); font-size: .75rem; font-weight: 600; }
+.step-optional { background: transparent; color: var(--tertiary); }
+.step-description { margin-top: 10px; color: var(--secondary); font-size: 1.0625rem; line-height: 1.5; }
+.step-heading-screen .step-description { margin-top: 14px; }
+.step-control { margin-top: 26px; }
+.step-control .field-help-error { margin-top: 12px; font-size: .9375rem; }
+
+/* Apple capsule geometry for the flow controls */
+.flow-step .field-input { min-height: 56px; border-radius: 999px; padding-right: 20px; padding-left: 20px; font-size: 1.0625rem; }
+.flow-step .field-textarea { min-height: 132px; border-radius: 20px; padding-top: 14px; padding-bottom: 14px; line-height: 1.5; }
+.flow-step .input-with-clear > .field-input { padding-right: 56px; }
+.flow-step .input-with-clear-textarea > .field-input { padding-right: 20px; }
+.flow-step .clear-button { right: 6px; }
+
+.flow-step .choice-grid { gap: 10px; overflow: visible; border: 0; border-radius: 0; background: transparent; }
+.flow-step .choice-button { min-height: 56px; padding: 0 22px; border: 1px solid var(--separator); border-radius: 999px; background: var(--paper); font-size: 1.0625rem; }
+.flow-step .choice-button:hover { background: var(--grouped); border-color: var(--separator); }
+.flow-step .choice-selected, .flow-step .choice-selected:hover { border-color: var(--accent); background: var(--accent); color: var(--accent-text); box-shadow: none; font-weight: 650; }
+.flow-step .choice-selected .icon-check { color: inherit; }
+
+.flow-step .tri-state, .flow-step .segmented-control { min-height: 52px; padding: 3px; border-radius: 999px; gap: 2px; }
+.flow-step .tri-state button, .flow-step .segmented-control button { min-height: 46px; border-radius: 999px; font-size: 1rem; }
+
+.flow-step .number-stepper { display: flex; align-items: center; gap: 10px; }
+.flow-step .number-stepper .field-input { flex: 1 1 auto; text-align: center; }
+.stepper-button { width: 56px; height: 56px; flex: 0 0 auto; display: grid; place-items: center; padding: 0; border: 1px solid var(--separator); border-radius: 999px; background: var(--paper); color: var(--text); font-size: 1.5rem; line-height: 1; }
+.stepper-button:hover { background: var(--grouped); }
+.stepper-button:active { opacity: .68; }
+.stepper-button:disabled { opacity: .35; }
+
+.flow-step .capture-card { min-height: 84px; gap: 14px; padding: 14px 16px; border-radius: 22px; }
+.flow-step .capture-card .button { min-height: 48px; border-radius: 999px; padding: 0 18px; font-size: .9375rem; }
+.flow-step .capture-icon { width: 40px; height: 40px; border-radius: 12px; }
+
+.flow-step .photo-strip { gap: 10px; justify-content: center; }
+.flow-step .media-tile, .flow-step .photo-placeholder { width: 84px; height: 84px; border-radius: 18px; }
+.flow-step .add-media { width: 100%; height: 56px; flex-direction: row; gap: 9px; border: 1px dashed var(--separator); border-radius: 999px; background: var(--paper); font-size: 1rem; }
+.flow-step .add-media span { font-size: .9375rem; }
+.flow-step .media-caption { justify-content: center; padding-top: 10px; font-size: .8125rem; }
+
+.flow-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; padding: 12px max(16px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); border-top: 1px solid var(--separator-light); background: var(--glass); -webkit-backdrop-filter: blur(22px) saturate(180%); backdrop-filter: blur(22px) saturate(180%); }
+.flow-back { min-width: 96px; min-height: 50px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; color: var(--text); font-size: 1rem; font-weight: 600; }
+.flow-back:hover { background: var(--grouped); }
+.flow-back:active { opacity: .68; }
+.flow-continue { min-height: 52px; flex: 1 1 auto; border-radius: 999px; font-size: 1.0625rem; }
+@media (max-width: 680px) {
+  .flow-back { min-width: 84px; }
+  .flow-step { padding-right: 16px; padding-left: 16px; }
+}
+
+.panel-actions { display: flex; align-items: center; gap: 10px; }
+@media (max-width: 680px) {
+  .panel-actions { flex-wrap: wrap; }
+}

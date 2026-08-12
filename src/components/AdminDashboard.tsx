@@ -72,9 +72,10 @@ interface AdminProjectProps {
   onExport: () => void;
   onSchemaPublished: (project: Project) => void;
   onToggleStatus: () => void;
+  onPreviewContributor?: () => void;
 }
 
-export function AdminProject({ project, observations, onBack, onToast, onExport, onSchemaPublished, onToggleStatus }: AdminProjectProps) {
+export function AdminProject({ project, observations, onBack, onToast, onExport, onSchemaPublished, onToggleStatus, onPreviewContributor }: AdminProjectProps) {
   const [tab, setTab] = useState<AdminTab>("setup");
   const [readiness, setReadiness] = useState<ContributorReadiness[] | null>(null);
   const receivedCount = project.completeSubmissions;
@@ -102,14 +103,14 @@ export function AdminProject({ project, observations, onBack, onToast, onExport,
           window.requestAnimationFrame(() => document.getElementById(`admin-tab-${next}`)?.focus());
         }}>{item === "setup" ? "Setup" : item === "contributors" ? "Contributors" : "Export"}</button>)}
       </div>
-      {tab === "setup" && <div id="admin-panel-setup" role="tabpanel" aria-labelledby="admin-tab-setup"><SchemaPanel project={project} onToast={onToast} onPublished={onSchemaPublished} /></div>}
+      {tab === "setup" && <div id="admin-panel-setup" role="tabpanel" aria-labelledby="admin-tab-setup"><SchemaPanel project={project} onToast={onToast} onPublished={onSchemaPublished} onPreview={onPreviewContributor} /></div>}
       {tab === "contributors" && <div id="admin-panel-contributors" role="tabpanel" aria-labelledby="admin-tab-contributors"><ContributorsPanel projectId={project.id} waitingCount={waitingCount} onToast={onToast} /></div>}
       {tab === "export" && <div id="admin-panel-export" role="tabpanel" aria-labelledby="admin-tab-export"><ExportPanel project={project} receivedCount={receivedCount} readiness={readiness} onExport={onExport} /></div>}
     </main>
   );
 }
 
-function SchemaPanel({ project, onToast, onPublished }: { project: Project; onToast: (message: string) => void; onPublished: (project: Project) => void }) {
+function SchemaPanel({ project, onToast, onPublished, onPreview }: { project: Project; onToast: (message: string) => void; onPublished: (project: Project) => void; onPreview?: () => void }) {
   const [draft, setDraft] = useState<SchemaDraft | null>(null);
   const [busy, setBusy] = useState(false);
   const dataFields = project.fields.filter((field) => field.type !== "heading");
@@ -126,7 +127,7 @@ function SchemaPanel({ project, onToast, onPublished }: { project: Project; onTo
   };
 
   if (draft) return <SchemaDraftEditor project={project} draft={draft} busy={busy} setBusy={setBusy} onCancel={() => setDraft(null)} onToast={onToast} onPublished={onPublished} />;
-  return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Published schema</Eyebrow><h2>Version {project.schemaVersion}</h2><p>Immutable for historical observations</p></div><Button variant="secondary" icon="file" onClick={() => void startDraft()} disabled={busy}>Edit as draft</Button></div><Divider /><div className="schema-list">{dataFields.map((field, index) => <div className="schema-field-row" key={field.id}><span className="schema-index">{String(index + 1).padStart(2, "0")}</span><div><strong>{field.label}</strong><span>{field.key}</span></div><span className="schema-type">{field.type.replaceAll("_", " ")}</span><span className="schema-required">{field.required ? "Required" : "Optional"}</span></div>)}</div></section>;
+  return <section className="admin-panel"><div className="panel-heading"><div><Eyebrow>Published schema</Eyebrow><h2>Version {project.schemaVersion}</h2><p>Immutable for historical observations</p></div><div className="panel-actions">{onPreview && <Button variant="secondary" icon="play" onClick={onPreview}>Preview flow</Button>}<Button variant="secondary" icon="file" onClick={() => void startDraft()} disabled={busy}>Edit as draft</Button></div></div><Divider /><div className="schema-list">{dataFields.map((field, index) => <div className="schema-field-row" key={field.id}><span className="schema-index">{String(index + 1).padStart(2, "0")}</span><div><strong>{field.label}</strong><span>{field.key}</span></div><span className="schema-type">{field.type.replaceAll("_", " ")}</span><span className="schema-required">{field.required ? "Required" : "Optional"}</span></div>)}</div></section>;
 }
 
 function SchemaDraftEditor({ project, draft, busy, setBusy, onCancel, onToast, onPublished }: { project: Project; draft: SchemaDraft; busy: boolean; setBusy: (value: boolean) => void; onCancel: () => void; onToast: (message: string) => void; onPublished: (project: Project) => void }) {

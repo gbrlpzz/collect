@@ -20,6 +20,7 @@ export type IconName =
   | "mic"
   | "menu"
   | "more"
+  | "play"
   | "plus"
   | "refresh"
   | "send"
@@ -90,6 +91,8 @@ export function Icon({ name, size = 20, strokeWidth = 1.8, filled = false, ...pr
       return <svg {...common}><path d="M4 7h16M4 12h16M4 17h16" /></svg>;
     case "more":
       return <svg {...common}><circle cx="5" cy="12" r="1" fill="currentColor" /><circle cx="12" cy="12" r="1" fill="currentColor" /><circle cx="19" cy="12" r="1" fill="currentColor" /></svg>;
+    case "play":
+      return <svg {...common}><path d="M8 5.5v13l11-6.5z" /></svg>;
     case "plus":
       return <svg {...common}><path d="M12 5v14M5 12h14" /></svg>;
     case "refresh":
