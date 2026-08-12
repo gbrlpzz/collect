@@ -48,6 +48,9 @@ export interface DurableSubmission {
   schemaVersionId: string;
   schemaVersion?: number;
   payload: Record<string, unknown>;
+  /** Everything recorded automatically with the observation (device, screen,
+   * connection, battery, timezone); never shown in the collection UI. */
+  environment?: Record<string, unknown>;
   payloadHash: string | null;
   clientCreatedAt: string;
   deviceId: string;
@@ -113,6 +116,21 @@ function openDatabase(): Promise<IDBDatabase> {
     };
     request.onerror = () => reject(request.error ?? new Error("Unable to open local database"));
     request.onblocked = () => reject(new Error("A previous collect database connection is blocking an update"));
+  });
+}
+
+function openDatabaseByName(name: string): Promise<IDBDatabase | null> {
+  return new Promise((resolve) => {
+    const request = indexedDB.open(name, DB_VERSION);
+    request.onupgradeneeded = () => {
+      const database = request.result;
+      ALL_STORES.forEach((storeName) => {
+        if (!database.objectStoreNames.contains(storeName)) database.createObjectStore(storeName);
+      });
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => resolve(null);
+    request.onblocked = () => resolve(null);
   });
 }
 
@@ -445,6 +463,62 @@ export async function getOrCreateDeviceId(): Promise<string> {
 interface SyncLease {
   owner: string;
   expiresAt: number;
+}
+
+const LEGACY_DB_NAME = "collect-local-v1";
+const LEGACY_IMPORTED_TO_KEY = "legacy-imported-to";
+
+/**
+ * One-time upgrade path: before local databases were scoped per account, all
+ * data lived in the shared "collect-local-v1" database. On first boot for an
+ * account whose scoped database is empty, import the legacy rows (submissions,
+ * media, outbox, drafts, projects, receipts, device state) so no cached
+ * fieldwork is stranded by the upgrade. Only the first account that boots
+ * after the upgrade adopts the legacy data; every other account starts clean.
+ */
+export async function migrateLegacyDatabase(scope: string): Promise<void> {
+  if (!("indexedDB" in window) || scope === "default") return;
+  try {
+    // Scoped database must exist with its stores before we can copy into it.
+    const scoped = await openDatabase();
+    const scopedCount = await createRequest(scoped.transaction(SUBMISSIONS_STORE, "readonly").objectStore(SUBMISSIONS_STORE).count());
+    if (scopedCount > 0) return;
+
+    const legacy = await openDatabaseByName(LEGACY_DB_NAME);
+    if (!legacy) return;
+
+    const settingsRequest = createRequest(legacy.transaction(SETTINGS_STORE, "readonly").objectStore(SETTINGS_STORE).get(LEGACY_IMPORTED_TO_KEY));
+    const importedTo = await settingsRequest;
+    if (typeof importedTo === "string" && importedTo !== scope) return;
+
+    const copyStore = async (storeName: string, target: IDBObjectStore): Promise<void> => {
+      const rows = await createRequest(legacy.transaction(storeName, "readonly").objectStore(storeName).getAll());
+      for (const row of rows as Array<{ id?: string }>) {
+        if (row && typeof row === "object" && "id" in row) target.put(row, row.id);
+        else if (row && typeof row === "object") {
+          // Keyed stores without an id field keep their own keys; re-put with
+          // the original key by reading keys separately.
+          const keys = await createRequest(legacy.transaction(storeName, "readonly").objectStore(storeName).getAllKeys());
+          const values = await createRequest(legacy.transaction(storeName, "readonly").objectStore(storeName).getAll());
+          for (let i = 0; i < keys.length; i += 1) target.put(values[i], keys[i]);
+          return;
+        }
+      }
+    };
+
+    const writeTx = scoped.transaction(ALL_STORES, "readwrite");
+    const writeComplete = waitForTransaction(writeTx);
+    for (const storeName of ALL_STORES) {
+      await copyStore(storeName, writeTx.objectStore(storeName));
+    }
+    await writeComplete;
+
+    const markTx = legacy.transaction(SETTINGS_STORE, "readwrite");
+    markTx.objectStore(SETTINGS_STORE).put(scope, LEGACY_IMPORTED_TO_KEY);
+    await waitForTransaction(markTx);
+  } catch {
+    // The upgrade is best-effort; collection must never be blocked by it.
+  }
 }
 
 /** A short durable lease prevents normal multi-tab contention. Server IDs and

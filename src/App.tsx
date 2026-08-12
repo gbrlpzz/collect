@@ -6,7 +6,7 @@ import { isSubmissionPending, isSubmissionRetryable } from "./types";
 import type { AppMode, AppState, View } from "./types";
 import type { MediaAsset } from "./types";
 import { emptyProject, initialState } from "./data";
-import { acquireSyncLease, commitLocalSubmission, estimateLocalStorage, getExplicitSignOut, getOrCreateDeviceId, getOutboxOperations, getStoredBackendKey, loadAppState, markLocalSubmissionsSynced, mediaFromAssets, probeLocalDatabase, readStoredRecoveryData, recordOutboxFailure, releaseSyncLease, saveAppState, setExplicitSignOut, setLocalScope } from "./lib/localStore";
+import { acquireSyncLease, commitLocalSubmission, estimateLocalStorage, getExplicitSignOut, getOrCreateDeviceId, getOutboxOperations, getStoredBackendKey, loadAppState, markLocalSubmissionsSynced, mediaFromAssets, migrateLegacyDatabase, probeLocalDatabase, readStoredRecoveryData, recordOutboxFailure, releaseSyncLease, saveAppState, setExplicitSignOut, setLocalScope } from "./lib/localStore";
 import { AdminDashboard, AdminProject } from "./components/AdminDashboard";
 import { AuthScreen } from "./components/AuthScreen";
 import { Collector } from "./components/Collector";
@@ -19,6 +19,7 @@ import { SyncSheet, type SyncProgressEntry } from "./components/SyncSheet";
 import { TopBar } from "./components/TopBar";
 import { authSession, isSupabaseConfigured, localBackendKey, supabase } from "./lib/supabaseClient";
 import { claimInvites, probeRemoteHealth, reportDeviceStatus, syncRemoteObservation } from "./lib/remoteBackend";
+import { collectEnvironment } from "./lib/deviceInfo";
 import { bootstrapWorkspace, createCheckpoint, createRemoteProject, defaultOrganizationName, loadAssignedProjects, loadUserAdminAccess, updateProjectStatus } from "./lib/adminBackend";
 
 const APP_VERSION = (import.meta.env.VITE_APP_VERSION as string | undefined) ?? "0.1.2";
@@ -56,6 +57,7 @@ export default function App() {
   const [storageError, setStorageError] = useState<string | null>(null);
   const [dbError, setDbError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [collectorPreview, setCollectorPreview] = useState(false);
   const [confirmation, setConfirmation] = useState<ConfirmationRequest | null>(null);
   const confirmationResolverRef = useRef<((confirmed: boolean) => void) | null>(null);
   const toastTimerRef = useRef<number | undefined>(undefined);
@@ -106,6 +108,11 @@ export default function App() {
   useEffect(() => {
     if (isSupabaseConfigured && authLoading) return;
     let active = true;
+    // One-time upgrade: adopt legacy single-user local data into this
+    // account's scoped database before anything reads local state.
+    if (isSupabaseConfigured && session?.user.id) {
+      void migrateLegacyDatabase(session.user.id).catch(() => undefined);
+    }
     void probeLocalDatabase().then((probe) => {
       if (!active) return;
       if (!probe.ok) {
@@ -138,7 +145,7 @@ export default function App() {
       }
     });
     return () => { active = false; };
-  }, [authLoading]);
+  }, [authLoading, session?.user.id]);
 
   useEffect(() => {
     if (!supabase || !session) return;
@@ -268,6 +275,29 @@ export default function App() {
     const createdAt = new Date().toISOString();
     try {
       const deviceId = await getOrCreateDeviceId();
+      // Location is recorded automatically whenever the device permits it:
+      // the scientist consented once; a fresh fix at submit is the provenance.
+      let submittedValues = values;
+      if ("geolocation" in navigator) {
+        const freshLocation = await new Promise<Record<string, unknown> | null>((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (position) => resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+              capturedAt: new Date().toISOString(),
+              altitude: position.coords.altitude,
+              altitudeAccuracy: position.coords.altitudeAccuracy,
+              heading: position.coords.heading,
+              autoCaptured: true,
+            }),
+            () => resolve(null),
+            { enableHighAccuracy: true, timeout: 5000 },
+          );
+        });
+        if (freshLocation) submittedValues = { ...values, location: freshLocation };
+      }
+      const environment = await collectEnvironment();
       const observation = {
         id,
         projectId: state.project.id,
@@ -276,7 +306,7 @@ export default function App() {
         schemaVersion: state.project.schemaVersion,
         status: "SAVED_LOCAL" as const,
         deviceId,
-        values,
+        values: submittedValues,
         media: mediaAssets,
       };
       const media = mediaFromAssets(mediaAssets, id, "field-site-photos");
@@ -287,7 +317,8 @@ export default function App() {
           id,
           projectId: state.project.id,
           schemaVersionId: `${state.project.id}-v${state.project.schemaVersion}`,
-          payload: values,
+          payload: submittedValues,
+          environment: environment as unknown as Record<string, unknown>,
           payloadHash: null,
           clientCreatedAt: createdAt,
           deviceId,
@@ -646,9 +677,9 @@ export default function App() {
       <div className="main-shell">
         {state.mode === "contributor" && state.view === "home" && <ContributorHome projects={state.projects?.length ? state.projects : state.project.id === "empty-project" ? [] : [state.project]} observations={state.observations} hasDraft={hasDraft} offlineReady={state.offlineReady ?? {}} onNavigate={navigate} onSelectProject={(project) => selectProject(project)} onMakeAvailableOffline={(project) => { void saveAppState({ ...state, project, view: state.view, mode: state.mode }, localBackendKey).then(() => { setState((current) => ({ ...current, offlineReady: { ...(current.offlineReady ?? {}), [project.id]: true } })); showToast("Ready to work offline"); }).catch(() => showToast("This device could not store the project yet")); }} />}
         {state.mode === "contributor" && state.view === "project" && <ProjectOverview project={state.project} observations={selectedObservations} onNavigate={navigate} onOpenSync={() => setSyncSheetOpen(true)} onFinishFieldwork={() => void finishFieldwork()} />}
-        {state.mode === "contributor" && state.view === "collector" && <Collector project={state.project} draft={state.draft} lastSavedAt={state.lastSavedAt} onDraftChange={updateDraft} onSubmit={submitObservation} onBack={() => navigate("project")} isSaving={isSaving} />}
+        {state.mode === "contributor" && state.view === "collector" && <Collector project={state.project} draft={state.draft} lastSavedAt={state.lastSavedAt} onDraftChange={updateDraft} onSubmit={collectorPreview ? () => { setCollectorPreview(false); setState((current) => ({ ...current, mode: "admin" as const, view: "admin-project" as const })); showToast("Preview complete"); } : submitObservation} onBack={() => { if (collectorPreview) { setCollectorPreview(false); setState((current) => ({ ...current, mode: "admin" as const, view: "admin-project" as const })); } else { navigate("project"); } }} isSaving={isSaving} preview={collectorPreview} />}
         {state.mode === "admin" && state.view === "admin" && <AdminDashboard project={state.project} projects={state.projects} observations={state.observations} onNavigate={navigate} onSelectProject={(project) => selectProject(project, "admin-project")} />}
-        {state.mode === "admin" && state.view === "admin-project" && <AdminProject project={state.project} observations={selectedObservations} onBack={() => navigate("admin")} onToast={showToast} onExport={() => void exportCheckpoint()} onSchemaPublished={(project) => setState((current) => ({ ...current, project, projects: (current.projects ?? []).map((candidate) => candidate.id === project.id ? project : candidate) }))} onToggleStatus={() => void toggleProjectStatus()} />}
+        {state.mode === "admin" && state.view === "admin-project" && <AdminProject project={state.project} observations={selectedObservations} onBack={() => navigate("admin")} onToast={showToast} onExport={() => void exportCheckpoint()} onSchemaPublished={(project) => setState((current) => ({ ...current, project, projects: (current.projects ?? []).map((candidate) => candidate.id === project.id ? project : candidate) }))} onToggleStatus={() => void toggleProjectStatus()} onPreviewContributor={() => { setCollectorPreview(true); setState((current) => ({ ...current, mode: "contributor" as const, view: "collector" as const })); }} />}
         {state.mode === "admin" && state.view === "new-project" && <NewProjectWizard onBack={() => navigate("admin")} onPublish={publishProject} />}
       </div>
 

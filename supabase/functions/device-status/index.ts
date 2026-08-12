@@ -46,6 +46,9 @@ Deno.serve(async (request) => {
         id: deviceId,
         contributor_id: user.id,
         app_version: String(body.app_version ?? ""),
+        device_model: String(body.device_model ?? "").slice(0, 120),
+        device_os: String(body.device_os ?? "").slice(0, 40),
+        browser: String(body.browser ?? "").slice(0, 40),
         last_seen_at: now,
       },
     );

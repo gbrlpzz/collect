@@ -117,6 +117,9 @@ export interface Observation {
   status: SubmissionState;
   values: Record<string, unknown>;
   media?: MediaAsset[];
+  /** Everything recorded automatically with the observation (device, screen,
+   * connection, battery, timezone); never shown in the collection UI. */
+  environment?: Record<string, unknown>;
   correctsSubmissionId?: string;
 }
 

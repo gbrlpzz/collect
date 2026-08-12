@@ -82,7 +82,7 @@ async function buildExport(
   const { data: submissions, error: submissionError } = await service
     .from("submissions")
     .select(
-      "id,project_id,schema_id,contributor_id,device_id,payload,client_created_at,client_timezone,server_received_at,status,finalized_at,app_version,collected_after_remote_close,corrects_submission_id",
+      "id,project_id,schema_id,contributor_id,device_id,payload,environment,client_created_at,client_timezone,server_received_at,status,finalized_at,app_version,device_model,device_os,browser,collected_after_remote_close,corrects_submission_id",
     )
     .eq("project_id", projectId)
     .eq("status", "COMPLETE")

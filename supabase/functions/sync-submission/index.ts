@@ -171,6 +171,10 @@ async function createSubmission(
   const projectId = String(body.project_id ?? "");
   const schemaVersion = Number(body.schema_version);
   const payload = body.payload;
+  const environment = body.environment && typeof body.environment === "object" && !Array.isArray(body.environment)
+    ? body.environment as Record<string, unknown>
+    : null;
+  if (environment && JSON.stringify(environment).length > 8192) return invalid("Environment metadata is too large", 400);
   const deviceId = String(body.device_id ?? "");
   const media = Array.isArray(body.media) ? body.media as MediaInput[] : [];
   if (
@@ -295,12 +299,16 @@ async function createSubmission(
     contributor_id: userId,
     device_id: deviceId,
     payload,
+    environment: environment ?? {},
     payload_hash: canonicalPayloadHash,
     client_created_at: String(
       body.client_created_at ?? new Date().toISOString(),
     ),
     client_timezone: String(body.client_timezone ?? ""),
     app_version: String(body.app_version ?? ""),
+    device_model: String(body.device_model ?? "").slice(0, 120),
+    device_os: String(body.device_os ?? "").slice(0, 40),
+    browser: String(body.browser ?? "").slice(0, 40),
     expected_media_count: media.length,
     collected_after_remote_close: collectedAfterRemoteClose,
     corrects_submission_id: correctsSubmissionId,

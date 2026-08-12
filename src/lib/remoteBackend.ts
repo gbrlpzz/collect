@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { MediaAsset, Observation, Project } from "../types";
 import { markOutboxOperation, setLocalSubmissionStatus } from "./localStore";
 import { buildMediaObjectPath } from "./syncProtocol";
+import { collectDeviceInfo } from "./deviceInfo";
 import { supabase } from "./supabaseClient";
 
 const receiptSchema = z.object({
@@ -50,6 +51,7 @@ export interface SyncProgressCallbacks {
 }
 
 export async function createRemoteSubmission({ observation, project, deviceId, appVersion }: RemoteSyncInput): Promise<void> {
+  const deviceInfo = collectDeviceInfo();
   await invoke("sync-submission", {
     action: "create_submission",
     submission_id: observation.id,
@@ -60,6 +62,9 @@ export async function createRemoteSubmission({ observation, project, deviceId, a
     client_created_at: observation.clientCreatedAt ?? new Date().toISOString(),
     client_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     device_id: deviceId,
+    device_model: deviceInfo.deviceModel,
+    device_os: deviceInfo.os,
+    browser: deviceInfo.browser,
     app_version: appVersion,
     expected_media_count: (observation.media ?? []).length,
     corrects_submission_id: observation.correctsSubmissionId ?? null,
