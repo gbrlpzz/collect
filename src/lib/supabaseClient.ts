@@ -170,6 +170,73 @@ export async function verifySignInCode(
   if (error) throw error;
 }
 
+/**
+ * Password sign-in: works identically in every container (Safari, installed
+ * PWA, desktop) with no email round-trip. This is the primary flow for
+ * installed apps; the password is set once after the first magic-link or
+ * invitation sign-in.
+ */
+export async function signInWithPassword(email: string, password: string): Promise<void> {
+  if (!supabase) throw new Error("Supabase is not configured");
+  const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+  if (error) throw error;
+}
+
+/** Set (or change) the account password from the signed-in session. */
+export async function setPassword(password: string): Promise<void> {
+  if (!supabase) throw new Error("Supabase is not configured");
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
+}
+
+/**
+ * Mint a one-time device-link code for the signed-in web session. The code is
+ * entered in another container (e.g. the installed PWA) to transfer the
+ * session without email.
+ */
+export async function requestDeviceLinkCode(): Promise<{ code: string; expiresInSeconds: number }> {
+  if (!supabase) throw new Error("Supabase is not configured");
+  const { data, error } = await supabase.functions.invoke("link-session", { body: { action: "create" } });
+  if (error) {
+    const context = error && typeof error === "object" ? (error as { context?: unknown }).context : null;
+    if (context && typeof context === "object" && "clone" in context && typeof (context as { clone?: unknown }).clone === "function") {
+      try {
+        const body = await (context as Response).clone().json() as { error?: unknown };
+        if (typeof body.error === "string" && body.error.trim()) throw new Error(body.error);
+      } catch (caught) {
+        if (caught instanceof Error) throw caught;
+      }
+    }
+    throw error;
+  }
+  return { code: String(data?.code ?? ""), expiresInSeconds: Number(data?.expires_in_seconds ?? 300) };
+}
+
+/**
+ * Exchange a device-link code (shown on a signed-in web app) for a session in
+ * the CURRENT container. The returned token_hash is single-use and short-lived.
+ */
+export async function linkDeviceSession(code: string): Promise<void> {
+  if (!supabase) throw new Error("Supabase is not configured");
+  const { data, error } = await supabase.functions.invoke("link-session", { body: { action: "exchange", code } });
+  if (error) {
+    const context = error && typeof error === "object" ? (error as { context?: unknown }).context : null;
+    if (context && typeof context === "object" && "clone" in context && typeof (context as { clone?: unknown }).clone === "function") {
+      try {
+        const body = await (context as Response).clone().json() as { error?: unknown };
+        if (typeof body.error === "string" && body.error.trim()) throw new Error(body.error);
+      } catch (caught) {
+        if (caught instanceof Error) throw caught;
+      }
+    }
+    throw error;
+  }
+  const tokenHash = String(data?.token_hash ?? "");
+  if (!tokenHash) throw new Error("The sign-in code could not be exchanged");
+  const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "magiclink" });
+  if (verifyError) throw verifyError;
+}
+
 export function pendingAuthEmail(): string {
   if (typeof window === "undefined") return "";
   try {
