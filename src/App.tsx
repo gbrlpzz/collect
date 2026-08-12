@@ -3,7 +3,7 @@ import { AuthScreen } from "./components/AuthScreen";
 import { Collector } from "./components/Collector";
 import { ConsentScreen } from "./components/ConsentScreen";
 import { ContributorHome } from "./components/ContributorHome";
-import { ConfirmationDialog } from "./components/ui";
+import { Button, ConfirmationDialog, Eyebrow } from "./components/ui";
 import { Icon } from "./components/Icon";
 import { NewProjectWizard } from "./components/NewProjectWizard";
 import { ProjectOverview } from "./components/ProjectOverview";
@@ -25,6 +25,7 @@ export default function App() {
     syncProgress,
     isSaving,
     storageError,
+    dbError,
     toast,
     collectorPreview,
     consentState,
@@ -60,7 +61,48 @@ export default function App() {
     },
   } = useAppController();
 
-  if (!hydrated || authLoading || requiresAuthentication) {
+  // Recovery mode: the local database cannot be opened normally. Never boot
+  // a blank state over it; the durable recovery export remains available.
+  // This must precede the auth gate so an offline device with an unreadable
+  // database can still export its unsynced records.
+  if (dbError) {
+    return (
+      <main className="page page-contributor">
+        <div className="page-heading page-heading-home">
+          <Eyebrow>Local data needs attention</Eyebrow>
+          <h1>Recovery mode</h1>
+          <p className="page-lede">
+            This device&rsquo;s local database could not be opened: {dbError}.
+            Nothing has been deleted.
+          </p>
+        </div>
+        <section className="collection-context">
+          <div className="collection-context-copy">
+            <Eyebrow>Recovery package</Eyebrow>
+            <h2>Keep your unsynced records</h2>
+            <p>
+              Export everything still readable on this device as a ZIP, then
+              hand it to your administrator.
+            </p>
+          </div>
+          <Button
+            variant="primary"
+            icon="download"
+            onClick={() => void exportRecoveryPackage()}
+          >
+            Export recovery package
+          </Button>
+        </section>
+      </main>
+    );
+  }
+
+  if (
+    !hydrated ||
+    authLoading ||
+    requiresAuthentication ||
+    requirePasswordSetup
+  ) {
     return (
       <AuthScreen
         role={surface}
@@ -77,7 +119,11 @@ export default function App() {
       <ConsentScreen
         text={consentVersion.text}
         version={consentVersion.version}
-        onAccept={() => void recordConsent().catch(() => showToast("Consent could not be recorded yet"))}
+        onAccept={() =>
+          void recordConsent().catch(() =>
+            showToast("Consent could not be recorded yet"),
+          )
+        }
         onDecline={() => void signOut()}
       />
     );

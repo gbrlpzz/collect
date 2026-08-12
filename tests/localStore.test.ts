@@ -4,9 +4,12 @@ import type { AppState, Observation } from "../src/types";
 import {
   commitLocalSubmission,
   getOutboxOperations,
+  getPendingOutboxCounts,
   loadAppState,
   markLocalSubmissionsSynced,
   recordOutboxFailure,
+  saveAppState,
+  saveDraftMedia,
 } from "../src/lib/localStore";
 
 Object.defineProperty(globalThis, "indexedDB", {
@@ -177,5 +180,116 @@ describe("durable local receipt boundary", () => {
     });
     expect((await loadAppState())?.observations?.[0].status).toBe("SYNCED");
     expect(await getOutboxOperations()).toEqual([]);
+  });
+});
+
+describe("automatic persistence hardening", () => {
+  beforeEach(async () => {
+    await deleteDatabase();
+  });
+
+  it("persists draft media blobs immediately and restores them on reload", async () => {
+    const asset = {
+      id: "draft-media-1",
+      name: "site.jpg",
+      mimeType: "image/jpeg",
+      byteSize: 4,
+      fieldId: "site_photos",
+      captureSource: "picker",
+      blob: new Blob([new Uint8Array([9, 8, 7, 6])]),
+    };
+    await saveDraftMedia([asset as never]);
+
+    await saveAppState(
+      {
+        ...state,
+        draft: {
+          observed_date: "2026-08-12",
+          site_photos: [
+            {
+              id: asset.id,
+              name: asset.name,
+              mimeType: asset.mimeType,
+              byteSize: asset.byteSize,
+              fieldId: asset.fieldId,
+              blob: undefined,
+            },
+          ],
+        },
+      },
+      "preview",
+    );
+    const loaded = await loadAppState();
+    const restored = (loaded?.draft?.site_photos as Array<{ blob?: Blob }>)[0];
+    expect(restored.blob).toBeDefined();
+    expect(new Uint8Array(await restored.blob!.arrayBuffer())).toEqual(
+      new Uint8Array([9, 8, 7, 6]),
+    );
+  });
+
+  it("counts pending submissions once per entity and media per row", async () => {
+    await commitLocalSubmission({
+      observation: {
+        ...observation,
+        id: "obs-a",
+        values: { site_code: "VA-001" },
+      },
+      media: [],
+      submission: {
+        id: "obs-a",
+        projectId: "project-test",
+        schemaVersionId: "schema-v1",
+        schemaVersion: 1,
+        payload: {},
+        payloadHash: null,
+        clientCreatedAt: "2026-08-12T08:00:00.000Z",
+        deviceId: "d1",
+        appVersion: "0.1.2",
+        status: "SAVED_LOCAL",
+      },
+    });
+    const counts = await getPendingOutboxCounts("project-test");
+    expect(counts.pendingSubmissions).toBe(1);
+    expect(counts.pendingMedia).toBe(0);
+  });
+
+  it("never downgrades a durable SYNCED row from a stale autosave", async () => {
+    await commitLocalSubmission({
+      observation: {
+        ...observation,
+        id: "obs-b",
+        values: { site_code: "VA-002" },
+      },
+      media: [],
+      submission: {
+        id: "obs-b",
+        projectId: "project-test",
+        schemaVersionId: "schema-v1",
+        schemaVersion: 1,
+        payload: {},
+        payloadHash: null,
+        clientCreatedAt: "2026-08-12T08:00:00.000Z",
+        deviceId: "d1",
+        appVersion: "0.1.2",
+        status: "SAVED_LOCAL",
+      },
+    });
+    await markLocalSubmissionsSynced(["obs-b"], {
+      receivedAt: "2026-08-12T09:00:00.000Z",
+      finalizedAt: "2026-08-12T09:00:01.000Z",
+      serverStatus: "COMPLETE",
+    });
+    // A stale autosave with an older pending status must not overwrite SYNCED.
+    await saveAppState(
+      {
+        ...state,
+        observations: [
+          { ...observation, id: "obs-b", status: "SAVED_LOCAL" as const },
+        ],
+      },
+      "preview",
+    );
+    const loaded = await loadAppState();
+    expect(loaded?.observations?.[0]?.status).toBe("SYNCED");
   });
 });

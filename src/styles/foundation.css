@@ -529,6 +529,13 @@ p {
   color: var(--secondary);
   font-size: 0.8125rem;
 }
+.background-status-error {
+  color: var(--error);
+}
+.background-status-action {
+  margin-left: 4px;
+  min-height: 32px;
+}
 
 /* Contributor home and project list */
 .project-list {

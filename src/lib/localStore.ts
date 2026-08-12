@@ -85,6 +85,79 @@ export interface DurableMedia {
   uploadState: "QUEUED" | "SYNCED";
 }
 
+/**
+ * Persist selected draft media blobs immediately (before any debounced
+ * autosave), so a force-kill cannot lose a photo/audio the contributor just
+ * picked. submissionId is empty until the observation is submitted.
+ */
+export async function saveDraftMedia(assets: MediaAsset[]): Promise<void> {
+  if (!("indexedDB" in window) || !assets.length) return;
+  const database = await openDatabase();
+  const transaction = database.transaction(MEDIA_STORE, "readwrite");
+  const store = transaction.objectStore(MEDIA_STORE);
+  for (const asset of assets) {
+    if (!asset.blob) continue;
+    // A late draft write must never clobber a row that already belongs to a
+    // submitted observation (rapid pick → submit race).
+    const existingRequest = store.get(asset.id);
+    const existing = await new Promise<DurableMedia | undefined>((resolve) => {
+      existingRequest.onsuccess = () => resolve(existingRequest.result);
+      existingRequest.onerror = () => resolve(undefined);
+    });
+    if (existing?.submissionId) continue;
+    store.put(
+      {
+        id: asset.id,
+        submissionId: "",
+        fieldId: asset.fieldId ?? "",
+        mimeType: asset.mimeType,
+        byteSize: asset.byteSize,
+        originalFilename: asset.name,
+        capturedAt: asset.capturedAt,
+        captureSource: asset.captureSource,
+        sha256: asset.sha256,
+        blob: asset.blob,
+        uploadState: "QUEUED",
+      } satisfies DurableMedia,
+      asset.id,
+    );
+  }
+  await waitForTransaction(transaction);
+}
+
+/** Drop draft media rows no longer referenced by the active draft. */
+export async function deleteDraftMedia(ids: string[]): Promise<void> {
+  if (!("indexedDB" in window) || !ids.length) return;
+  const database = await openDatabase();
+  const transaction = database.transaction(MEDIA_STORE, "readwrite");
+  const store = transaction.objectStore(MEDIA_STORE);
+  for (const id of ids) {
+    const request = store.get(id);
+    request.onsuccess = () => {
+      const row = request.result as DurableMedia | undefined;
+      // Only delete rows that are still draft-scoped (never submitted).
+      if (row && !row.submissionId) store.delete(id);
+    };
+  }
+  await waitForTransaction(transaction);
+}
+
+function stripBlobsFromMedia(value: unknown): unknown {
+  if (!Array.isArray(value)) return value;
+  const assets = value.filter(
+    (item): item is MediaAsset =>
+      typeof item === "object" &&
+      item !== null &&
+      "id" in item &&
+      "name" in item,
+  );
+  if (!assets.length) return value;
+  return assets.map(({ blob: _blob, ...metadata }) => ({
+    ...metadata,
+    blob: undefined,
+  }));
+}
+
 export interface OutboxOperation {
   id: string;
   operationType: "CREATE_SUBMISSION" | "UPLOAD_MEDIA" | "FINALIZE_SUBMISSION";
@@ -166,7 +239,7 @@ export async function loadAppState(): Promise<Partial<AppState> | null> {
   try {
     const database = await openDatabase();
     const transaction = database.transaction(
-      [APP_STATE_STORE, SUBMISSIONS_STORE],
+      [APP_STATE_STORE, SUBMISSIONS_STORE, MEDIA_STORE],
       "readonly",
     );
     const transactionComplete = waitForTransaction(transaction);
@@ -181,11 +254,60 @@ export async function loadAppState(): Promise<Partial<AppState> | null> {
       submissionsRequest,
     ]);
     const submissions = submissionsResult as Observation[];
+    const mediaRequest = transaction.objectStore(MEDIA_STORE).getAll();
+    const mediaRows = (await createRequest(mediaRequest)) as DurableMedia[];
     await transactionComplete;
     if (!saved && submissions.length === 0) return null;
+    // Media blobs are stored once in MEDIA_STORE; reattach them to the
+    // metadata-only observation rows so uploads work after a reload.
+    const mediaById = new Map(mediaRows.map((media) => [media.id, media]));
+    const hydrateAssets = (value: unknown): unknown => {
+      if (!Array.isArray(value)) return value;
+      const assets = value.filter(
+        (item): item is MediaAsset =>
+          typeof item === "object" &&
+          item !== null &&
+          "id" in item &&
+          "name" in item,
+      );
+      if (!assets.length) return value;
+      let changed = false;
+      const media = assets.map((asset) => {
+        const durable = mediaById.get(asset.id);
+        if (durable?.blob && !asset.blob) {
+          changed = true;
+          return { ...asset, blob: durable.blob };
+        }
+        return asset;
+      });
+      return changed ? media : value;
+    };
+    const hydrated = submissions.map((observation) => {
+      if (!observation.media?.length) return observation;
+      let changed = false;
+      const media = observation.media.map((asset) => {
+        const durable = mediaById.get(asset.id);
+        if (durable?.blob && !asset.blob) {
+          changed = true;
+          return { ...asset, blob: durable.blob };
+        }
+        return asset;
+      });
+      return changed ? { ...observation, media } : observation;
+    });
+    const savedState = saved as Partial<AppState> | null;
+    const draft = savedState?.draft
+      ? Object.fromEntries(
+          Object.entries(savedState.draft).map(([key, value]) => [
+            key,
+            hydrateAssets(value),
+          ]),
+        )
+      : savedState?.draft;
     return {
-      ...(saved as Partial<AppState> | null),
-      ...(submissions.length ? { observations: submissions } : {}),
+      ...savedState,
+      ...(draft !== savedState?.draft ? { draft } : {}),
+      ...(hydrated.length ? { observations: hydrated } : {}),
     };
   } catch {
     return null;
@@ -322,7 +444,29 @@ export async function saveAppState(
     "readwrite",
   );
   const transactionComplete = waitForTransaction(transaction);
-  transaction.objectStore(APP_STATE_STORE).put(state, STATE_KEY);
+  // The app-state singleton mirrors the same metadata-only shapes as the
+  // submission store: blobs are never duplicated outside MEDIA_STORE.
+  const stateWithoutBlobs: AppState = {
+    ...state,
+    draft: Object.fromEntries(
+      Object.entries(state.draft).map(([key, value]) => [
+        key,
+        stripBlobsFromMedia(value),
+      ]),
+    ),
+    observations: state.observations.map((observation) =>
+      observation.media?.some((asset) => asset.blob !== undefined)
+        ? {
+            ...observation,
+            media: observation.media.map(({ blob: _blob, ...metadata }) => ({
+              ...metadata,
+              blob: undefined,
+            })),
+          }
+        : observation,
+    ),
+  };
+  transaction.objectStore(APP_STATE_STORE).put(stateWithoutBlobs, STATE_KEY);
   transaction
     .objectStore(SETTINGS_STORE)
     .put({ mode: state.mode, view: state.view }, "session");
@@ -331,10 +475,44 @@ export async function saveAppState(
   state.projects?.forEach((project) =>
     transaction.objectStore(PROJECTS_STORE).put(project, project.id),
   );
-  transaction.objectStore(DRAFTS_STORE).put(state.draft, "active");
-  state.observations.forEach((observation) =>
-    transaction.objectStore(SUBMISSIONS_STORE).put(observation, observation.id),
+  const draftWithoutBlobs: Record<string, unknown> = Object.fromEntries(
+    Object.entries(state.draft).map(([key, value]) => [
+      key,
+      stripBlobsFromMedia(value),
+    ]),
   );
+  transaction.objectStore(DRAFTS_STORE).put(draftWithoutBlobs, "active");
+  // Media blobs live only in MEDIA_STORE (committed once at submit). The
+  // app-state and submissions mirrors persist metadata only, so a debounced
+  // autosave never re-serializes large media into quota repeatedly.
+  state.observations.forEach((observation) => {
+    const withoutBlobs: Observation = observation.media?.some(
+      (asset) => asset.blob !== undefined,
+    )
+      ? {
+          ...observation,
+          media: observation.media.map(({ blob: _blob, ...metadata }) => ({
+            ...metadata,
+            blob: undefined,
+          })),
+        }
+      : observation;
+    const store = transaction.objectStore(SUBMISSIONS_STORE);
+    // A stale autosave must never downgrade a durable SYNCED row back to a
+    // pending status after the receipt transaction already cleared the outbox.
+    const existingRequest = store.get(observation.id);
+    existingRequest.onsuccess = () => {
+      const existing = existingRequest.result as Observation | undefined;
+      if (existing?.status === "SYNCED" && withoutBlobs.status !== "SYNCED") {
+        store.put(
+          { ...existing, ...withoutBlobs, status: "SYNCED" },
+          observation.id,
+        );
+        return;
+      }
+      store.put(withoutBlobs, observation.id);
+    };
+  });
   await transactionComplete;
 }
 
@@ -570,6 +748,29 @@ export async function recordOutboxFailure(
     applyFailure();
   };
   await transactionComplete;
+}
+
+/**
+ * Durable pending counts per project, derived from the outbox instead of
+ * in-memory observation statuses. This is what device-status heartbeats
+ * should report: media rows that were already acknowledged do not count.
+ */
+export async function getPendingOutboxCounts(projectId?: string): Promise<{
+  pendingSubmissions: number;
+  pendingMedia: number;
+}> {
+  const operations = await getOutboxOperations();
+  const relevant = projectId
+    ? operations.filter((operation) => operation.projectId === projectId)
+    : operations;
+  const submissionIds = new Set<string>();
+  let pendingMedia = 0;
+  for (const operation of relevant) {
+    if (operation.state === "ACKNOWLEDGED") continue;
+    if (operation.operationType === "UPLOAD_MEDIA") pendingMedia += 1;
+    else submissionIds.add(operation.entityId);
+  }
+  return { pendingSubmissions: submissionIds.size, pendingMedia };
 }
 
 export async function getOutboxOperations(): Promise<OutboxOperation[]> {

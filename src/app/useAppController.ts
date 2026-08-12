@@ -4,15 +4,23 @@ import { isSubmissionPending } from "../types";
 import type { AppMode, AppState, SyncProgressEntry, View } from "../types";
 import type { MediaAsset } from "../types";
 import { emptyProject, initialState } from "../data/demoState";
-import { acceptConsent, getCurrentConsent, getMyProfile, isConsentGranted, type ConsentVersion } from "../lib/consent";
+import {
+  acceptConsent,
+  getCurrentConsent,
+  getMyProfile,
+  isConsentGranted,
+  type ConsentVersion,
+} from "../lib/consent";
 import { setPassword, wasInviteCallback } from "../lib/supabaseClient";
 import {
+  deleteDraftMedia,
   getExplicitSignOut,
   getStoredBackendKey,
   loadAppState,
   migrateLegacyDatabase,
   probeLocalDatabase,
   saveAppState,
+  saveDraftMedia,
   setExplicitSignOut,
   setLocalScope,
 } from "../lib/localStore";
@@ -164,57 +172,59 @@ export function useAppController() {
     if (isSupabaseConfigured && authLoading) return;
     let active = true;
     // One-time upgrade: adopt legacy single-user local data into this
-    // account's scoped database before anything reads local state.
-    if (isSupabaseConfigured && session?.user.id) {
-      void migrateLegacyDatabase(session.user.id).catch(() => undefined);
-    }
-    void probeLocalDatabase()
-      .then((probe) => {
+    // account's scoped database BEFORE anything reads local state, so the
+    // first boot can never hydrate a blank database and then overwrite the
+    // legacy rows with an autosave.
+    void (async () => {
+      if (isSupabaseConfigured && session?.user.id) {
+        await migrateLegacyDatabase(session.user.id).catch(() => undefined);
+      }
+      if (!active) return;
+      try {
+        const probe = await probeLocalDatabase();
         if (!active) return;
         if (!probe.ok) {
-          // Recovery mode: never boot a blank state over an unreadable database,
-          // and never let the autosave effect overwrite it (see autosave guard).
+          // Recovery mode: never boot a blank state over an unreadable
+          // database, and never let the autosave effect overwrite it.
           setDbError(probe.error);
           setHydrated(true);
           return;
         }
-        return Promise.all([
-          loadAppState(),
-          getStoredBackendKey(),
-          getExplicitSignOut(),
-        ]).then(([saved, storedBackendKey, storedExplicitSignOut]) => {
-          if (!active) return;
-          setExplicitSignOutState(storedExplicitSignOut);
-          const belongsToCurrentBackend =
-            !isSupabaseConfigured || storedBackendKey === localBackendKey;
-          setLocalCacheAvailable(Boolean(saved && belongsToCurrentBackend));
-          if (saved && belongsToCurrentBackend) {
-            setCanAdmin(!isSupabaseConfigured || saved.mode === "admin");
-            setState((current) => ({
-              ...current,
-              ...saved,
-              // Cached data is portable between the two installs, but their
-              // navigation surfaces are not interchangeable.
-              mode: launchMode,
-              view:
-                saved.mode === launchMode && saved.view
-                  ? saved.view
-                  : launchView,
-              project: { ...current.project, ...(saved.project ?? {}) },
-              projects:
-                saved.projects ??
-                (saved.project ? [saved.project] : current.projects),
-            }));
-          }
-          setHydrated(true);
-        });
-      })
-      .catch(() => {
+        const [saved, storedBackendKey, storedExplicitSignOut] =
+          await Promise.all([
+            loadAppState(),
+            getStoredBackendKey(),
+            getExplicitSignOut(),
+          ]);
+        if (!active) return;
+        setExplicitSignOutState(storedExplicitSignOut);
+        const belongsToCurrentBackend =
+          !isSupabaseConfigured || storedBackendKey === localBackendKey;
+        setLocalCacheAvailable(Boolean(saved && belongsToCurrentBackend));
+        if (saved && belongsToCurrentBackend) {
+          setCanAdmin(!isSupabaseConfigured || saved.mode === "admin");
+          setState((current) => ({
+            ...current,
+            ...saved,
+            // Cached data is portable between the two installs, but their
+            // navigation surfaces are not interchangeable.
+            mode: launchMode,
+            view:
+              saved.mode === launchMode && saved.view ? saved.view : launchView,
+            project: { ...current.project, ...(saved.project ?? {}) },
+            projects:
+              saved.projects ??
+              (saved.project ? [saved.project] : current.projects),
+          }));
+        }
+        setHydrated(true);
+      } catch {
         if (active) {
           setDbError("The local database could not be opened");
           setHydrated(true);
         }
-      });
+      }
+    })();
     return () => {
       active = false;
     };
@@ -388,6 +398,34 @@ export function useAppController() {
   };
 
   const updateDraft = (key: string, value: unknown) => {
+    // Photos/audio persist to MEDIA_STORE immediately (before any debounced
+    // autosave), so a force-kill cannot lose a selection. Removed assets are
+    // dropped from the draft store in the same step.
+    if (Array.isArray(value)) {
+      const assets = value.filter(
+        (item): item is MediaAsset =>
+          typeof item === "object" &&
+          item !== null &&
+          "id" in item &&
+          "name" in item,
+      );
+      const previous = state.draft[key];
+      const removedIds = Array.isArray(previous)
+        ? previous
+            .filter(
+              (item): item is MediaAsset =>
+                typeof item === "object" &&
+                item !== null &&
+                "id" in item &&
+                "name" in item,
+            )
+            .filter((asset) => !assets.some((next) => next.id === asset.id))
+            .map((asset) => asset.id)
+        : [];
+      void saveDraftMedia(assets).catch(() => undefined);
+      if (removedIds.length)
+        void deleteDraftMedia(removedIds).catch(() => undefined);
+    }
     setState((current) => ({
       ...current,
       draft: { ...current.draft, [key]: value },
@@ -398,11 +436,15 @@ export function useAppController() {
     }));
   };
 
+  const submitInFlightRef = useRef(false);
   const submitObservation = async (
     values: Record<string, unknown>,
     mediaAssets: MediaAsset[],
   ) => {
-    if (isSaving) return;
+    // Synchronous guard: two rapid taps before React re-renders must not
+    // commit two observations.
+    if (isSaving || submitInFlightRef.current) return;
+    submitInFlightRef.current = true;
     setIsSaving(true);
     try {
       const { observation } = await commitLocalObservation({
@@ -438,11 +480,12 @@ export function useAppController() {
       );
       showToast("Could not complete the local save");
     } finally {
+      submitInFlightRef.current = false;
       setIsSaving(false);
     }
   };
 
-  const syncNow = () =>
+  const syncNow = (options?: { silent?: boolean }) =>
     runSync({
       state,
       session,
@@ -455,6 +498,7 @@ export function useAppController() {
       setIsSyncing,
       setSyncProgress,
       showToast,
+      silent: options?.silent,
     });
 
   useSyncLifecycle({
@@ -473,7 +517,7 @@ export function useAppController() {
       project: state.project,
       observations: state.observations,
       onComplete: () => showToast("Recovery package downloaded"),
-    });
+    }).catch(() => showToast("The recovery package could not be created"));
 
   const publishProject = async (
     input: Parameters<typeof createRemoteProject>[0],
@@ -551,13 +595,18 @@ export function useAppController() {
   };
 
   const requiresAuthentication = isSupabaseConfigured
-    ? !session && (launchMode === "admin" || !localCacheAvailable || explicitSignOut)
+    ? !session &&
+      (launchMode === "admin" || !localCacheAvailable || explicitSignOut)
     : !previewUnlocked;
 
   // One-time collection consent: shown at first sign-in; the server refuses
   // submissions without it. Recorded on the contributor profile.
-  const [consentState, setConsentState] = useState<"loading" | "required" | "granted">("loading");
-  const [consentVersion, setConsentVersion] = useState<ConsentVersion | null>(null);
+  const [consentState, setConsentState] = useState<
+    "loading" | "required" | "granted"
+  >("loading");
+  const [consentVersion, setConsentVersion] = useState<ConsentVersion | null>(
+    null,
+  );
 
   // One-time password setup after a project invitation, so the contributor
   // can sign in on any device/container with email + password.
@@ -571,8 +620,10 @@ export function useAppController() {
     }
   }, [session]);
 
-  const completePasswordSetup = async (password: string): Promise<void> => {
-    await setPassword(password);
+  const completePasswordSetup = async (password?: string): Promise<void> => {
+    // The AuthScreen already performed the password update; this callback
+    // only clears the gate (and never overwrites with an empty password).
+    if (password) await setPassword(password);
     setRequirePasswordSetup(false);
   };
 
@@ -582,22 +633,27 @@ export function useAppController() {
       return;
     }
     let active = true;
-    void Promise.all([getMyProfile(), getCurrentConsent()]).then(([profile, consent]) => {
-      if (!active) return;
-      setConsentVersion(consent);
-      setConsentState(isConsentGranted(profile) ? "granted" : "required");
-    }).catch(() => {
-      if (active) {
-        // The profile is unreachable (offline). Do not block already-granted
-        // consent holders; a new user will be asked again when reachable.
-        setConsentState("granted");
-      }
-    });
-    return () => { active = false; };
+    void Promise.all([getMyProfile(), getCurrentConsent()])
+      .then(([profile, consent]) => {
+        if (!active) return;
+        setConsentVersion(consent);
+        setConsentState(isConsentGranted(profile) ? "granted" : "required");
+      })
+      .catch(() => {
+        if (active) {
+          // The profile is unreachable (offline). Do not block already-granted
+          // consent holders; a new user will be asked again when reachable.
+          setConsentState("granted");
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, [session]);
 
   const recordConsent = async (): Promise<void> => {
-    if (!consentVersion) throw new Error("The consent statement is not available");
+    if (!consentVersion)
+      throw new Error("The consent statement is not available");
     await acceptConsent(consentVersion.version);
     setConsentState("granted");
   };

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { AppMode, View } from "../types";
+import { getMyProfile, type ContributorProfile } from "../lib/consent";
+import { formatAttentionScore } from "../lib/attention";
 import { Icon } from "./Icon";
 
 interface TopBarProps {
@@ -22,8 +24,25 @@ export function TopBar({
   onSignOut,
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profile, setProfile] = useState<ContributorProfile | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const isAdmin = mode === "admin";
+
+  useEffect(() => {
+    if (!userEmail) {
+      setProfile(null);
+      return;
+    }
+    let active = true;
+    void getMyProfile()
+      .then((value) => {
+        if (active) setProfile(value);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [userEmail]);
   const accountLabel = isPreview ? "Preview" : (userEmail ?? "Account");
   const surfaceLabel = isAdmin ? "Admin" : "Fieldwork";
 
@@ -85,6 +104,19 @@ export function TopBar({
               <div className="account-menu-heading">
                 {isPreview ? "Interface preview" : (userEmail ?? "Signed in")}
               </div>
+              {profile && (
+                <div className="account-menu-profile">
+                  <strong>
+                    {formatAttentionScore(
+                      profile.attentionScore,
+                      profile.attentionChecksTotal,
+                    ) ?? "No attention checks yet"}
+                  </strong>
+                  <span>
+                    Adjusted for random guessing · 0 = blind-guessing level
+                  </span>
+                </div>
+              )}
               {onSignOut && (
                 <button
                   role="menuitem"

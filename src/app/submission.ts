@@ -41,10 +41,14 @@ export async function commitLocalObservation({
   // A fresh location fix is captured at submit time when the browser permits it.
   // Failure to obtain a fix never blocks the durable local receipt.
   let submittedValues = cleanedValues;
-  const hasLocationField = project.fields.some(
+  // The fresh fix is written to every declared location field key so a schema
+  // with a non-"location" key (e.g. "gps") still records coordinates. The
+  // merge stays on cleanedValues so stripped auxiliary keys (e.g. the
+  // attention answer) never re-enter the research payload.
+  const locationFields = project.fields.filter(
     (field) => field.type === "location",
   );
-  if (hasLocationField && "geolocation" in navigator) {
+  if (locationFields.length && "geolocation" in navigator) {
     const freshLocation = await new Promise<Record<string, unknown> | null>(
       (resolve) => {
         navigator.geolocation.getCurrentPosition(
@@ -64,7 +68,14 @@ export async function commitLocalObservation({
         );
       },
     );
-    if (freshLocation) submittedValues = { ...values, location: freshLocation };
+    if (freshLocation) {
+      submittedValues = {
+        ...submittedValues,
+        ...Object.fromEntries(
+          locationFields.map((field) => [field.key, freshLocation]),
+        ),
+      };
+    }
   }
 
   const environment = await collectEnvironment();
@@ -78,6 +89,7 @@ export async function commitLocalObservation({
     deviceId,
     values: submittedValues,
     media: mediaAssets,
+    environment: environment as unknown as Record<string, unknown>,
     attentionResponse,
   };
   const media = mediaFromAssets(mediaAssets, id, "field-site-photos");

@@ -11,6 +11,7 @@ import {
   StatusBadge,
 } from "./ui";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
+import { formatAttentionScore } from "../lib/attention";
 import {
   createSchemaDraft,
   loadProjectReadiness,
@@ -192,6 +193,14 @@ function ReadinessList({ rows }: { rows: ContributorReadiness[] }) {
           <div>
             <strong>{row.email}</strong>
             <span>{row.status}</span>
+            {row.attentionChecksTotal ? (
+              <span className="readiness-attention">
+                {formatAttentionScore(
+                  row.attentionScore,
+                  row.attentionChecksTotal,
+                )}
+              </span>
+            ) : null}
           </div>
           {row.ready ? (
             <Icon name="check" size={16} />

@@ -101,9 +101,13 @@ export function Collector({
         ),
     [project.fields],
   );
-  const attentionPlanRef = useRef<{ field: FieldDefinition; index: number } | null | undefined>(undefined);
+  const attentionPlanRef = useRef<
+    { field: FieldDefinition; index: number } | null | undefined
+  >(undefined);
   if (attentionPlanRef.current === undefined) {
-    const dataFields = baseSteps.filter((step) => step.kind === "field").map((step) => step.field);
+    const dataFields = baseSteps
+      .filter((step) => step.kind === "field")
+      .map((step) => step.field);
     if (attentionCheck && baseSteps.length >= 3 && dataFields.length >= 2) {
       const field = attentionFieldFor(
         pickAttentionCheck(dataFields.map((candidate) => candidate.key)),
@@ -490,6 +494,18 @@ export function Collector({
         {locationNotice && (
           <p className="background-status" role="status">
             <Icon name="location" size={15} /> {locationNotice}
+          </p>
+        )}
+        {locationError && locationFields[0] && (
+          <p className="background-status background-status-error" role="alert">
+            <Icon name="location" size={15} /> {locationError}
+            <button
+              type="button"
+              className="text-button background-status-action"
+              onClick={() => void captureLocation(locationFields[0].key)}
+            >
+              Try again
+            </button>
           </p>
         )}
         <form

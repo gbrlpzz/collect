@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ATTENTION_CHECKS } from "../src/data/attentionChecks";
-import { attentionFieldFor, attentionScore, extractAttentionResponse, pickAttentionCheck } from "../src/lib/attention";
+import { attentionFieldFor, attentionScore, extractAttentionResponse, formatAttentionScore, pickAttentionCheck } from "../src/lib/attention";
 
 describe("attention verification", () => {
   it("bank questions are universally valid multiple choice with a 25% guess probability", () => {
@@ -39,6 +39,14 @@ describe("attention verification", () => {
     expect(cleaned).toEqual({ site_code: "VA-001" });
     expect("_attention" in cleaned).toBe(false);
     expect(extractAttentionResponse({ site_code: "VA-001" }).response).toBeNull();
+  });
+
+  it("formats the attention score for the account menu and readiness list", () => {
+    expect(formatAttentionScore(92.4, 24)).toBe("92/100 · 24 checks");
+    expect(formatAttentionScore(0, 1)).toBe("0/100 · 1 checks");
+    expect(formatAttentionScore(null, 24)).toBeNull();
+    expect(formatAttentionScore(80, null)).toBeNull();
+    expect(formatAttentionScore(80, 0)).toBeNull();
   });
 
   it("scores blind guessing at zero and perfect attention at one", () => {

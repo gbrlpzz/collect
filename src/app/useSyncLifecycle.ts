@@ -1,7 +1,11 @@
 import { useEffect, useRef } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { AppState } from "../types";
-import { getOrCreateDeviceId, getOutboxOperations } from "../lib/localStore";
+import {
+  getOrCreateDeviceId,
+  getOutboxOperations,
+  getPendingOutboxCounts,
+} from "../lib/localStore";
 import { probeRemoteHealth, reportDeviceStatus } from "../lib/remoteBackend";
 
 interface SyncLifecycleInput {
@@ -12,8 +16,10 @@ interface SyncLifecycleInput {
   state: AppState;
   isSyncing: boolean;
   appVersion: string;
-  syncNow: () => Promise<boolean>;
+  syncNow: (options?: { silent?: boolean }) => Promise<boolean>;
 }
+
+const HEARTBEAT_DEBOUNCE_MS = 10_000;
 
 export function useSyncLifecycle({
   configured,
@@ -33,9 +39,11 @@ export function useSyncLifecycle({
   useEffect(() => {
     if (!configured || !session || !pendingCount) return;
 
+    const visible = () => document.visibilityState !== "hidden";
     const attempt = () => {
+      if (!visible()) return;
       void probeRemoteHealth().then((available) => {
-        if (available) void syncNowRef.current();
+        if (available) void syncNowRef.current({ silent: true });
       });
     };
 
@@ -64,7 +72,7 @@ export function useSyncLifecycle({
           );
           if (due) {
             void probeRemoteHealth().then((available) => {
-              if (available) void syncNowRef.current();
+              if (available) void syncNowRef.current({ silent: true });
             });
           }
         })
@@ -82,52 +90,59 @@ export function useSyncLifecycle({
     };
   }, [configured, hydrated, session]);
 
+  // Device status heartbeat. Coalesced so keystroke-level state churn cannot
+  // spam the network; derived from the durable outbox so acknowledged media
+  // and finalized submissions never reappear as pending.
   useEffect(() => {
     if (!configured || !session || !hydrated || !state.projects?.length) return;
     let active = true;
+    let timer: number | undefined;
 
     const report = async () => {
       const deviceId = await getOrCreateDeviceId().catch(() => null);
       if (!deviceId || !active) return;
 
+      const draftDirty = Object.entries(state.draft).some(
+        ([key, value]) =>
+          key !== "observed_date" && value !== "" && value !== undefined,
+      );
       await Promise.all(
-        state.projects!.map((project) => {
-          const projectObservations = state.observations.filter(
-            (observation) =>
-              (observation.projectId ?? state.project.id) === project.id,
-          );
+        state.projects!.map(async (project) => {
+          const counts = await getPendingOutboxCounts(project.id);
           return reportDeviceStatus({
             device_id: deviceId,
             project_id: project.id,
-            pending_submissions: projectObservations.filter(
-              (observation) => observation.status !== "SYNCED",
-            ).length,
-            pending_media: projectObservations
-              .filter((observation) => observation.status !== "SYNCED")
-              .reduce(
-                (total, observation) =>
-                  total + (observation.media?.length ?? 0),
-                0,
-              ),
+            pending_submissions: counts.pendingSubmissions,
+            pending_media: counts.pendingMedia,
             app_version: appVersion,
             schema_versions_cached: [project.schemaVersion],
-            fieldwork_complete: state.fieldworkComplete?.[project.id] ?? false,
+            fieldwork_complete:
+              counts.pendingSubmissions === 0 &&
+              counts.pendingMedia === 0 &&
+              !draftDirty,
           }).catch(() => undefined);
         }),
       );
     };
 
-    const attempt = () => {
-      void report();
+    const schedule = () => {
+      if (!active) return;
+      if (timer !== undefined) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = undefined;
+        void report();
+      }, HEARTBEAT_DEBOUNCE_MS);
     };
-    attempt();
-    window.addEventListener("online", attempt);
-    window.addEventListener("visibilitychange", attempt);
+
+    schedule();
+    window.addEventListener("online", schedule);
+    window.addEventListener("visibilitychange", schedule);
 
     return () => {
       active = false;
-      window.removeEventListener("online", attempt);
-      window.removeEventListener("visibilitychange", attempt);
+      if (timer !== undefined) window.clearTimeout(timer);
+      window.removeEventListener("online", schedule);
+      window.removeEventListener("visibilitychange", schedule);
     };
   }, [appVersion, configured, hydrated, pendingCount, session, state]);
 }

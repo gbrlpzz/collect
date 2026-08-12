@@ -18,6 +18,9 @@ export function ProjectOverview({
   const waitingCount = observations.filter(
     (item) => item.status !== "SYNCED",
   ).length;
+  const attentionCount = observations.filter(
+    (item) => item.status === "ACTION_REQUIRED",
+  ).length;
   const syncedCount = project.completeSubmissions;
 
   return (
@@ -59,14 +62,18 @@ export function ProjectOverview({
         >
           <span className="list-row-copy">
             <strong>
-              {waitingCount
-                ? `${waitingCount} waiting to send`
-                : "Up to date"}
+              {attentionCount
+                ? `${attentionCount} need attention`
+                : waitingCount
+                  ? `${waitingCount} waiting to send`
+                  : "Up to date"}
             </strong>
             <span>
-              {waitingCount
-                ? "Syncing automatically"
-                : `${syncedCount} observations synced`}
+              {attentionCount
+                ? "Open sync status to review"
+                : waitingCount
+                  ? "Syncing automatically"
+                  : `${syncedCount} observations synced`}
             </span>
           </span>
           <Icon name="chevron-right" size={17} />

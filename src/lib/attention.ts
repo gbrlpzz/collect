@@ -57,6 +57,18 @@ export function extractAttentionResponse(
 }
 
 /**
+ * Human-readable attention score line. The server stores the score on a
+ * 0-100 scale; a contributor with no checks yet has nothing to show.
+ */
+export function formatAttentionScore(
+  score: number | null,
+  total: number | null,
+): string | null {
+  if (score === null || total === null || total <= 0) return null;
+  return `${Math.round(score)}/100 · ${total} checks`;
+}
+
+/**
  * Guess-adjusted attention score over a set of responses:
  * score = (correct - expected_by_chance) / (total - expected_by_chance),
  * clamped to [0,1]. 0 = indistinguishable from blind guessing.

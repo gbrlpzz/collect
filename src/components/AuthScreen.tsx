@@ -154,7 +154,9 @@ export function AuthScreen({
           "We couldn’t reach the sign-in service. Check your connection and try again.",
         );
       } else {
-        setError("Sign-in could not be completed. Check your details and try again.");
+        setError(
+          "Sign-in could not be completed. Check your details and try again.",
+        );
       }
     } finally {
       setBusy(false);
@@ -178,9 +180,13 @@ export function AuthScreen({
         message.includes("invalid") ||
         message.includes("token")
       ) {
-        setCodeError("That code is invalid or expired. Check the newest email for the current code.");
+        setCodeError(
+          "That code is invalid or expired. Check the newest email for the current code.",
+        );
       } else {
-        setCodeError("That code could not be verified. Check the email and try again.");
+        setCodeError(
+          "That code could not be verified. Check the email and try again.",
+        );
       }
       setCodeError((current) =>
         `${current ?? ""}${current ? " " : ""}If the email has no 6-digit code, its template needs the sign-in code added — the link in that email still works.`.trim(),
@@ -191,8 +197,8 @@ export function AuthScreen({
   };
 
   const submitDeviceLink = async (token?: string) => {
-    const nextToken = (token ?? code).trim();
-    if (nextToken.length !== 6) return;
+    const nextToken = (token ?? code).trim().toUpperCase();
+    if (nextToken.length !== 8) return;
     setCodeBusy(true);
     setCodeError(null);
     try {
@@ -207,15 +213,21 @@ export function AuthScreen({
         message.includes("code") ||
         message.includes("not found")
       ) {
-        setCodeError("That code is invalid or expired. Open collect on the signed-in device and request a fresh code.");
+        setCodeError(
+          "That code is invalid or expired. Open collect on the signed-in device and request a fresh code.",
+        );
       } else if (
         message.includes("network") ||
         message.includes("fetch") ||
         message.includes("failed to")
       ) {
-        setCodeError("We couldn’t reach the sign-in service. Check your connection and try again.");
+        setCodeError(
+          "We couldn’t reach the sign-in service. Check your connection and try again.",
+        );
       } else {
-        setCodeError("That code could not be used. Request a fresh code on the other device and try again.");
+        setCodeError(
+          "That code could not be used. Request a fresh code on the other device and try again.",
+        );
       }
     } finally {
       setCodeBusy(false);
@@ -239,14 +251,22 @@ export function AuthScreen({
     } catch (caught) {
       const message =
         caught instanceof Error ? caught.message.toLowerCase() : "";
-      if (message.includes("weak") || message.includes("short") || message.includes("6")) {
-        setPasswordSetupError("Choose a stronger password (at least 6 characters).");
+      if (
+        message.includes("weak") ||
+        message.includes("short") ||
+        message.includes("6")
+      ) {
+        setPasswordSetupError(
+          "Choose a stronger password (at least 6 characters).",
+        );
       } else if (
         message.includes("network") ||
         message.includes("fetch") ||
         message.includes("failed to")
       ) {
-        setPasswordSetupError("We couldn’t reach the sign-in service. Check your connection and try again.");
+        setPasswordSetupError(
+          "We couldn’t reach the sign-in service. Check your connection and try again.",
+        );
       } else {
         setPasswordSetupError("The password could not be saved. Try again.");
       }
@@ -464,28 +484,31 @@ export function AuthScreen({
                     }}
                   >
                     <label className="auth-label" htmlFor="auth-device-code">
-                      6-digit code from the signed-in device
+                      8-character code from the signed-in device
                       <input
                         ref={deviceCodeInputRef}
                         id="auth-device-code"
                         className="field-input"
                         type="text"
                         required
-                        inputMode="numeric"
+                        autoCapitalize="characters"
+                        autoCorrect="off"
+                        spellCheck={false}
                         autoComplete="one-time-code"
-                        pattern="[0-9]{6}"
-                        maxLength={6}
+                        pattern="[A-Z0-9]{8}"
+                        maxLength={8}
                         value={code}
                         onChange={(event) => {
                           const nextCode = event.target.value
-                            .replace(/\D/g, "")
-                            .slice(0, 6);
+                            .toUpperCase()
+                            .replace(/[^A-Z0-9]/g, "")
+                            .slice(0, 8);
                           setCode(nextCode);
                           setCodeError(null);
-                          if (nextCode.length === 6 && !codeBusy)
+                          if (nextCode.length === 8 && !codeBusy)
                             void submitDeviceLink(nextCode);
                         }}
-                        placeholder="000000"
+                        placeholder="AB2D9KQX"
                         autoFocus
                         disabled={codeBusy}
                       />
@@ -506,7 +529,7 @@ export function AuthScreen({
                       type="submit"
                       variant="primary"
                       fullWidth
-                      disabled={codeBusy || code.length !== 6}
+                      disabled={codeBusy || code.length !== 8}
                       busy={codeBusy}
                     >
                       {codeBusy ? "Linking…" : "Link this device"}
@@ -520,8 +543,7 @@ export function AuthScreen({
                         setCodeError(null);
                       }}
                     >
-                      Back to sign-in{" "}
-                      <Icon name="arrow-right" size={15} />
+                      Back to sign-in <Icon name="arrow-right" size={15} />
                     </button>
                   </form>
                 </div>
@@ -566,8 +588,8 @@ export function AuthScreen({
                     <p className="auth-config-note">
                       <Icon name="info" size={16} />
                       <span>
-                        Local preview: sign-in links return to the deployed
-                        app. Open the deployed address on your phone.
+                        Local preview: sign-in links return to the deployed app.
+                        Open the deployed address on your phone.
                       </span>
                     </p>
                   )}
@@ -718,8 +740,7 @@ export function AuthScreen({
                     setCodeError(null);
                   }}
                 >
-                  Back to the sign-in link{" "}
-                  <Icon name="arrow-right" size={15} />
+                  Back to the sign-in link <Icon name="arrow-right" size={15} />
                 </button>
               </div>
             ) : (
@@ -771,7 +792,9 @@ export function AuthScreen({
               <Icon name="plus" size={16} /> Add collect to Home Screen
             </summary>
             <div className="auth-install-content">
-              <p>For reliable offline fieldwork, install collect from Safari.</p>
+              <p>
+                For reliable offline fieldwork, install collect from Safari.
+              </p>
               <ol>
                 <li>
                   Tap <strong>Share</strong>.

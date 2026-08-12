@@ -11,6 +11,14 @@ import { TopBar } from "../src/components/TopBar";
 import { EmailPrompt } from "../src/components/ui";
 import type { FieldDefinition, Project } from "../src/types";
 
+const consentMocks = vi.hoisted(() => ({
+  getMyProfile: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock("../src/lib/consent", () => ({
+  getMyProfile: consentMocks.getMyProfile,
+}));
+
 const authMocks = vi.hoisted(() => ({
   sendMagicLink: vi.fn().mockResolvedValue(undefined),
   verifySignInCode: vi.fn().mockResolvedValue(undefined),
@@ -19,7 +27,7 @@ const authMocks = vi.hoisted(() => ({
   linkDeviceSession: vi.fn().mockResolvedValue(undefined),
   requestDeviceLinkCode: vi
     .fn()
-    .mockResolvedValue({ code: "123456", expiresInSeconds: 120 }),
+    .mockResolvedValue({ code: "AB2D9KQX", expiresInSeconds: 120 }),
 }));
 
 vi.mock("../src/lib/supabaseClient", () => ({
@@ -133,12 +141,12 @@ describe("low-friction primary actions", () => {
       }),
     );
     const codeInput = screen.getByLabelText(
-      /6-digit code from the signed-in device/i,
+      /8-character code from the signed-in device/i,
     );
-    fireEvent.change(codeInput, { target: { value: "123456" } });
+    fireEvent.change(codeInput, { target: { value: "ab2d9kqx" } });
 
     await waitFor(() =>
-      expect(authMocks.linkDeviceSession).toHaveBeenCalledWith("123456"),
+      expect(authMocks.linkDeviceSession).toHaveBeenCalledWith("AB2D9KQX"),
     );
   });
 
@@ -148,7 +156,7 @@ describe("low-friction primary actions", () => {
     await waitFor(() =>
       expect(authMocks.requestDeviceLinkCode).toHaveBeenCalledTimes(1),
     );
-    expect(screen.getByLabelText(/code 123456/i)).toBeTruthy();
+    expect(screen.getByLabelText(/code AB2D9KQX/i)).toBeTruthy();
     expect(screen.getByText(/expires in/i)).toBeTruthy();
   });
 
@@ -199,6 +207,34 @@ describe("low-friction primary actions", () => {
     expect(screen.queryByRole("menuitem", { name: /admin/i })).toBeNull();
   });
 
+  it("shows the attention score in the account menu for a signed-in contributor", async () => {
+    consentMocks.getMyProfile.mockResolvedValueOnce({
+      userId: "u1",
+      consentVersion: 1,
+      consentGrantedAt: "2026-08-12T00:00:00Z",
+      consentRevokedAt: null,
+      qualityScore: null,
+      attentionScore: 92.4,
+      attentionChecksTotal: 24,
+      attentionCorrectTotal: 22,
+      attentionLastAt: null,
+    });
+    render(
+      <TopBar
+        mode="contributor"
+        view="home"
+        userEmail="field@example.com"
+        onNavigate={() => undefined}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "field@example.com" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("92/100 · 24 checks")).toBeTruthy(),
+    );
+    expect(screen.getByText(/adjusted for random guessing/i)).toBeTruthy();
+  });
+
   it("opens sync status and starts synchronization from the project row", () => {
     const onOpenSync = vi.fn();
     render(
@@ -218,9 +254,7 @@ describe("low-friction primary actions", () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /view sync status/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /view sync status/i }));
 
     expect(onOpenSync).toHaveBeenCalledTimes(1);
   });

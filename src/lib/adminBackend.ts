@@ -24,6 +24,10 @@ export interface ContributorReadiness {
   pending: number;
   lastSeen: string | null;
   received: number;
+  attentionScore: number | null;
+  attentionChecksTotal: number | null;
+  attentionCorrectTotal: number | null;
+  consentGranted: boolean;
 }
 
 function requireClient() {
@@ -495,45 +499,78 @@ export async function loadProjectReadiness(
         .eq("project_id", projectId)
         .order("last_seen_at", { ascending: false }),
     ]);
-  const memberIds = (members ?? []).map((member: { user_id: string }) => member.user_id);
+  const memberIds = (members ?? []).map(
+    (member: { user_id: string }) => member.user_id,
+  );
   const { data: profiles } = memberIds.length
-    ? await client.from("contributor_profiles").select("user_id,attention_score,attention_checks_total,attention_correct_total,consent_granted_at,consent_revoked_at").in("user_id", memberIds)
+    ? await client
+        .from("contributor_profiles")
+        .select(
+          "user_id,attention_score,attention_checks_total,attention_correct_total,consent_granted_at,consent_revoked_at",
+        )
+        .in("user_id", memberIds)
     : { data: [] };
   return (members ?? []).map((member: { user_id: string }) => {
     const invite = (invites ?? []).find(
       (candidate: { invited_user_id: string | null }) =>
         candidate.invited_user_id === member.user_id,
     );
-    const device = (statuses ?? []).find(
-      (candidate: { contributor_id: string }) =>
-        candidate.contributor_id === member.user_id,
-    );
     const profile = (profiles ?? []).find(
       (candidate: { user_id: string }) => candidate.user_id === member.user_id,
     );
-    const pending =
-      Number(device?.pending_submissions ?? 0) +
-      Number(device?.pending_media ?? 0);
-    // Readiness is a server-observed fact: all durable operations have
-    // arrived. Contributors should never have to press a separate “finished
-    // syncing” control just to make an already-empty queue visible to admins.
-    const ready = Boolean(device?.last_seen_at && pending === 0);
+    // A contributor can run the web app and an installed PWA on the same
+    // phone, each with its own device row. Readiness must hold across every
+    // device: one empty device must not mask pending work on another.
+    const devices = (statuses ?? []).filter(
+      (candidate: { contributor_id: string }) =>
+        candidate.contributor_id === member.user_id,
+    );
+    const pending = devices.reduce(
+      (total, device) =>
+        total +
+        Number(device.pending_submissions ?? 0) +
+        Number(device.pending_media ?? 0),
+      0,
+    );
+    const lastSeen = devices.length
+      ? devices.reduce(
+          (latest, device) =>
+            device.last_seen_at && (!latest || device.last_seen_at > latest)
+              ? device.last_seen_at
+              : latest,
+          null as string | null,
+        )
+      : null;
+    // Readiness is automatic: every known device must have reported a clean
+    // state (durable outbox empty, fieldwork marked complete by the client
+    // heartbeat). Contributors never press a separate “finished syncing”
+    // control just to make an already-empty queue visible to admins.
+    const ready =
+      devices.length > 0 &&
+      devices.every(
+        (device) =>
+          Boolean(device.fieldwork_complete) &&
+          Number(device.pending_submissions ?? 0) === 0 &&
+          Number(device.pending_media ?? 0) === 0,
+      );
     return {
       id: member.user_id,
       email: invite?.email ?? `Contributor ${member.user_id.slice(0, 6)}`,
       status: ready
         ? "Ready"
-        : device?.last_seen_at
-          ? `${pending} pending · last seen ${new Date(device.last_seen_at).toLocaleString()}`
+        : lastSeen
+          ? `${pending} pending · last seen ${new Date(lastSeen).toLocaleString()}`
           : "No status reported",
       ready,
       pending,
-      lastSeen: device?.last_seen_at ?? null,
+      lastSeen,
       received: 0,
       attentionScore: profile?.attention_score ?? null,
       attentionChecksTotal: profile?.attention_checks_total ?? null,
       attentionCorrectTotal: profile?.attention_correct_total ?? null,
-      consentGranted: profile?.consent_granted_at ? !profile.consent_revoked_at : false,
+      consentGranted: profile?.consent_granted_at
+        ? !profile.consent_revoked_at
+        : false,
     };
   });
 }

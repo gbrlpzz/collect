@@ -40,6 +40,9 @@ export function ContributorHome({
   const waitingCount = projectObservations.filter(
     (item) => item.status !== "SYNCED",
   ).length;
+  const attentionCount = projectObservations.filter(
+    (item) => item.status === "ACTION_REQUIRED",
+  ).length;
   const recent = projectObservations.slice(-3).reverse();
   const isClosed = project?.status === "closed";
 
@@ -125,9 +128,11 @@ export function ContributorHome({
               <div>
                 <Eyebrow>Recent</Eyebrow>
                 <h2>
-                  {waitingCount
-                    ? `${waitingCount} waiting to send`
-                    : "All saved"}
+                  {attentionCount
+                    ? `${attentionCount} need attention`
+                    : waitingCount
+                      ? `${waitingCount} waiting to send`
+                      : "All saved"}
                 </h2>
               </div>
               <span className="collection-status-count">
