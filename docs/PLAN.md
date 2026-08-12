@@ -181,6 +181,17 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 | Edge: idempotency                       | ✅     | schema_id added to same-ID conflict comparison                                               |
 | Export manifest                         | ✅     | contributor readiness snapshot at cutoff included                                            |
 
+## Efficiency + refactoring pass (2026-08-12)
+
+| Item                             | Status | Notes                                                                                                    |
+| -------------------------------- | ------ | -------------------------------------------------------------------------------------------------------- |
+| Shared function invocation       | ✅     | functionError.ts: readFunctionErrorBody + invokeFunction; 5 duplicate unwrap blocks removed (~100 lines) |
+| Snapshot write cost              | ✅     | media blobs stripped from app-state snapshots (MEDIA_STORE is the single blob home); reattached on load  |
+| Dead code / TODOs / console logs | ✅     | none found                                                                                               |
+| Types                            | ✅     | strict mode; zod schemas on function responses                                                           |
+| Bundle                           | ✅     | 462 KB JS / ~121 KB gzip, offline-first (must be cached anyway)                                          |
+| Concurrency                      | ✅     | bounded media parallelism + health timeout landed with the media-uploads unit                            |
+
 ## Gap work queue
 
 _(filled from audits)_
