@@ -48,7 +48,7 @@ export function ProjectOverview({ project, observations, onNavigate, onOpenSync,
       <details className="privacy-disclosure">
         <summary><Icon name="lock" size={15} /> What collect records on this device</summary>
         <ul>
-          <li><strong>Location</strong> is captured only when you tap <em>Capture location</em> — never in the background. Latitude, longitude, accuracy, and capture time are stored with that observation.</li>
+          <li><strong>Location</strong> is captured when you save an observation, never in the background. If it is unavailable, you can retry with <em>Capture location</em>. Latitude, longitude, accuracy, and capture time are stored with that observation.</li>
           <li><strong>Time</strong>: each observation stores the moment you saved it and your device timezone, so field evidence stays interpretable later.</li>
           <li><strong>Device identifier</strong>: a random, per-install ID (not a hardware fingerprint) labels observations so the server can show your sync status.</li>
           <li><strong>Media</strong>: photos and audio you add are kept as original files on this device.</li>

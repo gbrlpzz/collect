@@ -24,26 +24,7 @@
   --radius-large: 22px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --canvas: #000;
-    --paper: #1c1c1e;
-    --text: rgba(255, 255, 255, .92);
-    --secondary: rgba(255, 255, 255, .62);
-    --tertiary: rgba(255, 255, 255, .44);
-    --separator: rgba(255, 255, 255, .2);
-    --separator-light: rgba(255, 255, 255, .1);
-    --grouped: rgba(120, 120, 128, .24);
-    --grouped-strong: rgba(120, 120, 128, .4);
-    --focus: rgba(255, 255, 255, .55);
-    --error: rgba(255, 255, 255, .78);
-    --glass: rgba(22, 22, 24, .8);
-    --accent: rgba(255, 255, 255, .94);
-    --accent-hover: #fff;
-    --accent-text: #000;
-    --selection-bg: rgba(255, 255, 255, .9);
-  }
-}
+
 
 /* Text sizes scale with the system font setting (rem), while touch targets
    stay fixed (px) so the interface remains comfortable at any text size. */
@@ -494,27 +475,7 @@ p { line-height: 1.45; }
   --control-height: 44px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --canvas: #000000;
-    --paper: #1c1c1e;
-    --text: rgba(255, 255, 255, .88);
-    --secondary: rgba(255, 255, 255, .58);
-    --tertiary: rgba(255, 255, 255, .36);
-    --separator: rgba(255, 255, 255, .18);
-    --separator-light: rgba(255, 255, 255, .10);
-    --grouped: rgba(255, 255, 255, .10);
-    --grouped-strong: rgba(255, 255, 255, .20);
-    --focus: rgba(255, 255, 255, .9);
-    --focus-ring: rgba(255, 255, 255, .22);
-    --error: rgba(255, 255, 255, .9);
-    --glass: rgba(0, 0, 0, .85);
-    --accent: #ffffff;
-    --accent-hover: #f2f2f7;
-    --accent-text: #000000;
-    --selection-bg: rgba(255, 255, 255, .9);
-  }
-}
+
 html { background: var(--canvas); }
 body { background: var(--canvas); }
 button, a, input, textarea, select, label { touch-action: manipulation; }
@@ -694,13 +655,7 @@ button { -webkit-user-select: none; user-select: none; }
   --destructive: #d70015;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --secondary: rgba(255, 255, 255, .58);
-    --tertiary: rgba(255, 255, 255, .36);
-    --destructive: #ff6961;
-  }
-}
+
 
 @media (prefers-contrast: more) {
   :root {
@@ -714,17 +669,7 @@ button { -webkit-user-select: none; user-select: none; }
   }
 }
 
-@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
-  :root {
-    --text: #fff;
-    --secondary: #f2f2f7;
-    --tertiary: #d1d1d6;
-    --separator: rgba(255, 255, 255, .68);
-    --separator-light: rgba(255, 255, 255, .42);
-    --grouped: rgba(118, 118, 128, .34);
-    --focus-ring: rgba(255, 255, 255, .42);
-  }
-}
+
 
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { font-size: 1.0625rem; }
@@ -899,4 +844,179 @@ h1 { font-size: clamp(2.125rem, 5vw, 2.75rem); }
 .panel-actions { display: flex; align-items: center; gap: 10px; }
 @media (max-width: 680px) {
   .panel-actions { flex-wrap: wrap; }
+}
+
+
+/* -------------------------------------------------------------------------
+   Fixed surface identity
+
+   Contributor fieldwork is always light. Admin operations is always dark.
+   The role is explicit in the DOM and is set before first paint by index.html,
+   so the device's appearance setting never changes the working surface.
+   ------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+  --canvas: #f5f5f7;
+  --paper: #ffffff;
+  --text: #1d1d1f;
+  --secondary: rgba(60, 60, 67, .6);
+  --tertiary: rgba(60, 60, 67, .42);
+  --separator: rgba(60, 60, 67, .29);
+  --separator-light: rgba(60, 60, 67, .18);
+  --grouped: rgba(118, 118, 128, .12);
+  --grouped-strong: #e5e5ea;
+  --focus: #1d1d1f;
+  --focus-ring: rgba(0, 0, 0, .16);
+  --error: #d70015;
+  --destructive: #d70015;
+  --glass: rgba(245, 245, 247, .86);
+  --accent: #000000;
+  --accent-hover: #1c1c1e;
+  --accent-text: #ffffff;
+  --selection-bg: rgba(0, 0, 0, .9);
+  --radius: 12px;
+  --radius-large: 16px;
+  --control-height: 44px;
+}
+
+:root[data-collect-surface="admin"] {
+  color-scheme: dark;
+  --canvas: #000000;
+  --paper: #1c1c1e;
+  --text: #f5f5f7;
+  --secondary: rgba(235, 235, 245, .6);
+  --tertiary: rgba(235, 235, 245, .36);
+  --separator: rgba(235, 235, 245, .28);
+  --separator-light: rgba(235, 235, 245, .16);
+  --grouped: rgba(118, 118, 128, .28);
+  --grouped-strong: rgba(118, 118, 128, .46);
+  --focus: #ffffff;
+  --focus-ring: rgba(255, 255, 255, .28);
+  --error: #ff6961;
+  --destructive: #ff453a;
+  --glass: rgba(28, 28, 30, .86);
+  --accent: #ffffff;
+  --accent-hover: #f2f2f7;
+  --accent-text: #000000;
+  --selection-bg: rgba(255, 255, 255, .9);
+}
+
+.app-shell[data-mode="admin"], .auth-page[data-role="admin"] { color-scheme: dark; }
+.app-shell[data-mode="contributor"], .auth-page[data-role="contributor"] { color-scheme: light; }
+
+html, body { min-height: 100%; background: var(--canvas); }
+html { color-scheme: light; }
+html[data-collect-surface="admin"] { color-scheme: dark; }
+body { min-height: 100dvh; overflow-x: hidden; }
+.app-shell { min-height: 100dvh; background: var(--canvas); }
+.main-shell { min-height: calc(100dvh - 52px - env(safe-area-inset-top)); }
+
+.topbar-inner { width: min(100%, 1040px); }
+.topbar-brand { min-width: 0; display: flex; align-items: center; gap: 9px; }
+.wordmark { min-height: var(--control-height); display: inline-flex; align-items: center; }
+.surface-label { color: var(--secondary); font-size: .75rem; font-weight: 600; letter-spacing: -.01em; }
+.topbar-admin .surface-label { color: var(--text); }
+.account-button { color: var(--secondary); }
+.account-button:hover, .account-button-open { color: var(--text); }
+
+.page { width: min(100%, 720px); padding: 32px 16px calc(72px + env(safe-area-inset-bottom)); }
+.page-admin, .page-admin-project { width: min(100%, 960px); }
+.page-heading { margin-bottom: 24px; }
+.page-heading h1 { margin-top: 3px; }
+.back-row { margin-bottom: 24px; }
+.project-list, .admin-project-list, .readiness-list, .schema-list, .contributor-list {
+  border-radius: 16px;
+  border-color: var(--separator-light);
+  box-shadow: none;
+}
+.project-row, .list-row { min-height: 68px; padding: 12px 16px; transition: background-color .16s ease; }
+.project-row-copy span, .list-row-copy span, .resume-copy span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+}
+.project-row-meta span { max-width: 130px; line-height: 1.25; text-align: right; white-space: normal; }
+.project-row:active, .list-row:active, .admin-project-card:active { background: var(--grouped-strong); opacity: 1; }
+.download-offline-button { margin: 0 16px 12px; border-radius: 10px; }
+
+.admin-project-card { min-height: 72px; padding: 12px 16px; border-bottom-color: var(--separator-light); }
+.admin-tabs { overflow-x: auto; scrollbar-width: none; }
+.admin-tabs::-webkit-scrollbar { display: none; }
+.admin-metrics { overflow-x: auto; scrollbar-width: none; }
+.admin-metrics::-webkit-scrollbar { display: none; }
+
+.button { min-height: var(--control-height); border-radius: 11px; }
+.field-input, .builder-inline-input, .builder-key-input, .builder-select { min-height: var(--control-height); }
+.field-input, .builder-inline-input, .builder-key-input, .builder-select { background: var(--paper); color: var(--text); }
+.button-primary { background: var(--accent); color: var(--accent-text); }
+.button-secondary { background: var(--grouped); color: var(--text); }
+.button-secondary:hover { background: var(--grouped-strong); }
+
+.auth-page {
+  min-height: 100dvh;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: max(64px, calc(64px + env(safe-area-inset-top))) max(16px, env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+.auth-brand, .auth-card, .auth-footnote { width: min(100%, 420px); margin-right: auto; margin-left: auto; }
+.auth-brand { display: flex; align-items: baseline; justify-content: space-between; }
+.auth-mark { display: flex; align-items: baseline; gap: 8px; margin-bottom: 26px; font-size: 1.5625rem; }
+.auth-mark-dot { color: var(--tertiary) !important; }
+.auth-mark-suffix { color: var(--secondary) !important; font-size: .9375rem; font-weight: 650; letter-spacing: -.02em; }
+.auth-card { padding: 0; border: 0; background: transparent; box-shadow: none; }
+.auth-card h1 { margin-top: 3px; font-size: clamp(2rem, 8vw, 2.375rem); }
+.auth-card > p, .auth-sent > p { max-width: 390px; font-size: 1rem; }
+.auth-steps { margin-top: 22px; }
+.auth-label { margin-top: 22px; }
+.auth-footnote { justify-content: flex-start; }
+
+.collector-page { width: min(100%, 760px); padding-right: 16px; padding-left: 16px; }
+.collector-topbar, .collector-action-bar, .flow-actions, .mobile-tabbar {
+  background: var(--glass);
+  border-color: var(--separator-light);
+}
+.collector-action-bar { padding-right: max(16px, env(safe-area-inset-right)); padding-left: max(16px, env(safe-area-inset-left)); }
+.collector-flow { min-height: 100dvh; }
+.flow-step { padding-right: 20px; padding-left: 20px; }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+
+@media (max-width: 680px) {
+  .topbar-inner { padding-right: max(16px, env(safe-area-inset-right)); padding-left: max(16px, env(safe-area-inset-left)); }
+  .page { padding-top: 28px; padding-right: 16px; padding-left: 16px; }
+  .page-contributor, .page-project { padding-bottom: calc(106px + env(safe-area-inset-bottom)); }
+  .project-row, .list-row { padding-right: 12px; padding-left: 12px; }
+  .project-row-copy span { max-width: none; }
+  .project-row-meta span { max-width: 92px; }
+  .mobile-tabbar {
+    min-height: calc(52px + env(safe-area-inset-bottom));
+    padding: 3px max(8px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(8px, env(safe-area-inset-left));
+  }
+  .mobile-tabbar button { min-height: 49px; font-size: .6875rem; }
+  .admin-project-card { padding-right: 12px; padding-left: 12px; }
+  .admin-project-header { gap: 16px; }
+  .admin-tabs { gap: 18px; }
+  .flow-step { padding-right: 16px; padding-left: 16px; }
+}
+
+@media (prefers-contrast: more) {
+  :root:not([data-collect-surface="admin"]) {
+    --text: #000000;
+    --secondary: #303038;
+    --tertiary: #50505a;
+    --separator: rgba(0, 0, 0, .52);
+    --separator-light: rgba(0, 0, 0, .34);
+    --grouped: rgba(118, 118, 128, .2);
+    --focus-ring: rgba(0, 0, 0, .38);
+  }
+  :root[data-collect-surface="admin"] {
+    --text: #ffffff;
+    --secondary: #f2f2f7;
+    --tertiary: #d1d1d6;
+    --separator: rgba(255, 255, 255, .68);
+    --separator-light: rgba(255, 255, 255, .42);
+    --grouped: rgba(118, 118, 128, .34);
+    --focus-ring: rgba(255, 255, 255, .42);
+  }
 }
