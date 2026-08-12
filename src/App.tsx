@@ -679,7 +679,7 @@ export default function App() {
 
   return (
     (!hydrated || authLoading || requiresAuthentication) ? <AuthScreen role={surface} configured={isSupabaseConfigured} onPreview={!isSupabaseConfigured ? () => setPreviewUnlocked(true) : undefined} /> :
-    <div className="app-shell" data-mode={surface} data-surface={surface}>
+    <div className="app-shell" data-mode={surface} data-surface={surface} data-view={state.view}>
       <TopBar mode={state.mode} view={state.view} onModeChange={changeMode} onNavigate={navigate} canAdmin={canAdmin} userEmail={session?.user.email} isPreview={!isSupabaseConfigured} onSignOut={() => void signOut()} />
       <div className="main-shell">
         {state.mode === "contributor" && state.view === "home" && <ContributorHome projects={state.projects?.length ? state.projects : state.project.id === "empty-project" ? [] : [state.project]} observations={state.observations} hasDraft={hasDraft} offlineReady={state.offlineReady ?? {}} onNavigate={navigate} onSelectProject={(project) => selectProject(project)} onMakeAvailableOffline={(project) => { void saveAppState({ ...state, project, view: state.view, mode: state.mode }, localBackendKey).then(() => { setState((current) => ({ ...current, offlineReady: { ...(current.offlineReady ?? {}), [project.id]: true } })); showToast("Ready to work offline"); }).catch(() => showToast("This device could not store the project yet")); }} />}
