@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { FieldDefinition, Project } from "../types";
 import { supabase } from "./supabaseClient";
 
@@ -41,27 +42,8 @@ async function readableFunctionError(
   error: unknown,
   fallback: string,
 ): Promise<Error> {
-  const context =
-    error && typeof error === "object"
-      ? (error as { context?: unknown }).context
-      : null;
-  if (
-    context &&
-    typeof context === "object" &&
-    "clone" in context &&
-    typeof (context as { clone?: unknown }).clone === "function"
-  ) {
-    try {
-      const body = (await (context as Response).clone().json()) as {
-        error?: unknown;
-      };
-      if (typeof body.error === "string" && body.error.trim())
-        return new Error(body.error);
-    } catch {
-      // Use the safe, user-facing fallback below when the response is not JSON.
-    }
-  }
-  return new Error(fallback);
+  const message = await readFunctionErrorBody(error);
+  return new Error(message ?? fallback);
 }
 
 export async function bootstrapWorkspace(
@@ -301,14 +283,21 @@ export async function createRemoteProject(
   );
 }
 
+const checkpointResultSchema = z.object({
+  checkpoint_id: z.string(),
+  download_url: z.string().nullable().optional(),
+});
+
 export async function createCheckpoint(
   projectId: string,
 ): Promise<{ checkpointId: string; downloadUrl: string | null }> {
   const client = requireClient();
-  const { data, error } = await client.functions.invoke("export-checkpoint", {
-    body: { project_id: projectId },
-  });
-  if (error) throw error;
+  const data = await invokeFunction(
+    client,
+    "export-checkpoint",
+    { project_id: projectId },
+    checkpointResultSchema,
+  );
   return {
     checkpointId: data.checkpoint_id,
     downloadUrl: data.download_url ?? null,
@@ -425,10 +414,11 @@ export async function sendProjectInvite(
   role: "contributor" | "admin" = "contributor",
 ): Promise<void> {
   const client = requireClient();
-  const { error } = await client.functions.invoke("send-project-invite", {
-    body: { project_id: projectId, email, role },
+  await invokeFunction(client, "send-project-invite", {
+    project_id: projectId,
+    email,
+    role,
   });
-  if (error) throw error;
 }
 
 export async function sendProjectPing(
@@ -436,10 +426,10 @@ export async function sendProjectPing(
   contributorId: string,
 ): Promise<void> {
   const client = requireClient();
-  const { error } = await client.functions.invoke("send-project-ping", {
-    body: { project_id: projectId, contributor_id: contributorId },
+  await invokeFunction(client, "send-project-ping", {
+    project_id: projectId,
+    contributor_id: contributorId,
   });
-  if (error) throw error;
 }
 
 export async function updateProjectStatus(

@@ -4,6 +4,8 @@ import {
   type Session,
   type SupabaseClient,
 } from "@supabase/supabase-js";
+import { z } from "zod";
+import { invokeFunction } from "./functionError";
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const publishableKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
@@ -15,6 +17,7 @@ const configuredAppUrl = (
 export const isSupabaseConfigured = Boolean(url && publishableKey);
 export const localBackendKey = url ? `supabase:${url}` : "preview";
 const pendingAuthEmailKey = `${localBackendKey}:pending-auth-email`;
+let pendingInviteCallback = false;
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(url!, publishableKey!, {
       auth: {
@@ -205,32 +208,12 @@ export async function requestDeviceLinkCode(): Promise<{
   expiresInSeconds: number;
 }> {
   if (!supabase) throw new Error("Supabase is not configured");
-  const { data, error } = await supabase.functions.invoke("link-session", {
-    body: { action: "create" },
-  });
-  if (error) {
-    const context =
-      error && typeof error === "object"
-        ? (error as { context?: unknown }).context
-        : null;
-    if (
-      context &&
-      typeof context === "object" &&
-      "clone" in context &&
-      typeof (context as { clone?: unknown }).clone === "function"
-    ) {
-      try {
-        const body = (await (context as Response).clone().json()) as {
-          error?: unknown;
-        };
-        if (typeof body.error === "string" && body.error.trim())
-          throw new Error(body.error);
-      } catch (caught) {
-        if (caught instanceof Error) throw caught;
-      }
-    }
-    throw error;
-  }
+  const data = await invokeFunction(
+    supabase,
+    "link-session",
+    { action: "create" },
+    z.object({ code: z.string(), expires_in_seconds: z.number().optional() }),
+  );
   return {
     code: String(data?.code ?? ""),
     expiresInSeconds: Number(data?.expires_in_seconds ?? 300),
@@ -243,32 +226,12 @@ export async function requestDeviceLinkCode(): Promise<{
  */
 export async function linkDeviceSession(code: string): Promise<void> {
   if (!supabase) throw new Error("Supabase is not configured");
-  const { data, error } = await supabase.functions.invoke("link-session", {
-    body: { action: "exchange", code },
-  });
-  if (error) {
-    const context =
-      error && typeof error === "object"
-        ? (error as { context?: unknown }).context
-        : null;
-    if (
-      context &&
-      typeof context === "object" &&
-      "clone" in context &&
-      typeof (context as { clone?: unknown }).clone === "function"
-    ) {
-      try {
-        const body = (await (context as Response).clone().json()) as {
-          error?: unknown;
-        };
-        if (typeof body.error === "string" && body.error.trim())
-          throw new Error(body.error);
-      } catch (caught) {
-        if (caught instanceof Error) throw caught;
-      }
-    }
-    throw error;
-  }
+  const data = await invokeFunction(
+    supabase,
+    "link-session",
+    { action: "exchange", code },
+    z.object({ token_hash: z.string() }),
+  );
   const tokenHash = String(data?.token_hash ?? "");
   if (!tokenHash) throw new Error("The sign-in code could not be exchanged");
   const { error: verifyError } = await supabase.auth.verifyOtp({
@@ -278,23 +241,13 @@ export async function linkDeviceSession(code: string): Promise<void> {
   if (verifyError) throw verifyError;
 }
 
-// The invite flag must survive authSession()'s URL cleanup. It is captured
-// from the callback URL before Supabase clears it, then consumed once by the
-// controller to show the one-time password setup.
-let pendingInviteCallback = false;
-
-function captureInviteCallback(): boolean {
+/** True when the current callback was a project invitation (type=invite). */
+export function wasInviteCallback(): boolean {
+  if (pendingInviteCallback) return true;
   if (typeof window === "undefined") return false;
   const params = new URLSearchParams(window.location.search);
   const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
   return params.get("type") === "invite" || hash.get("type") === "invite";
-}
-
-/** True when this boot came from a project invitation (type=invite). */
-export function wasInviteCallback(): boolean {
-  const captured = pendingInviteCallback;
-  pendingInviteCallback = false;
-  return captured || captureInviteCallback();
 }
 
 export function pendingAuthEmail(): string {
