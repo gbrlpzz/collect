@@ -55,6 +55,7 @@ export function Collector({
   preview = false,
   attentionCheck = true,
 }: CollectorProps) {
+  const collectorRef = useRef<HTMLElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [capturingLocation, setCapturingLocation] = useState(false);
@@ -83,6 +84,39 @@ export function Collector({
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
   const locationAttemptedFieldRef = useRef<string | null>(null);
+
+  // iOS keeps the layout viewport at full screen height when its software
+  // keyboard opens. Follow the smaller visual viewport so the action bar stays
+  // directly above the keyboard instead of being covered by it.
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const syncViewport = () => {
+      const root = collectorRef.current;
+      if (!root) return;
+      root.style.setProperty(
+        "--collector-viewport-height",
+        `${Math.round(viewport.height)}px`,
+      );
+      root.style.setProperty(
+        "--collector-viewport-top",
+        `${Math.round(viewport.offsetTop)}px`,
+      );
+      root.classList.toggle(
+        "collector-keyboard-open",
+        viewport.height < window.innerHeight - 120,
+      );
+    };
+    syncViewport();
+    viewport.addEventListener("resize", syncViewport);
+    viewport.addEventListener("scroll", syncViewport);
+    window.addEventListener("orientationchange", syncViewport);
+    return () => {
+      viewport.removeEventListener("resize", syncViewport);
+      viewport.removeEventListener("scroll", syncViewport);
+      window.removeEventListener("orientationchange", syncViewport);
+    };
+  }, []);
 
   // Collection order follows requirement #6: the key identifier comes first,
   // then the highest-effort questions (photos/audio, location, long text)
@@ -461,7 +495,7 @@ export function Collector({
 
   if (!current) {
     return (
-      <main className="collector-page collector-flow">
+      <main ref={collectorRef} className="collector-page collector-flow">
         <div className="collector-topbar">
           <button className="back-button" onClick={onBack} aria-label="Back">
             <Icon name="chevron-left" size={17} /> Project
@@ -485,7 +519,7 @@ export function Collector({
   }
 
   return (
-    <main className="collector-page collector-flow">
+    <main ref={collectorRef} className="collector-page collector-flow">
       <div className="collector-topbar">
         <button className="back-button" onClick={goBack} aria-label="Back">
           <Icon name="chevron-left" size={17} />{" "}

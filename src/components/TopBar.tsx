@@ -10,6 +10,7 @@ interface TopBarProps {
   onNavigate: (view: View) => void;
   userEmail?: string | null;
   isPreview?: boolean;
+  onLinkDevice?: () => void;
   onSignOut?: () => void;
 }
 
@@ -21,6 +22,7 @@ export function TopBar({
   onNavigate,
   userEmail,
   isPreview = false,
+  onLinkDevice,
   onSignOut,
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -153,6 +155,20 @@ export function TopBar({
                     </span>
                   </div>
                 </div>
+              )}
+              {onLinkDevice && (
+                <button
+                  type="button"
+                  className="account-menu-device-link"
+                  onClick={() => {
+                    onLinkDevice();
+                    setMenuOpen(false);
+                  }}
+                >
+                  <Icon name="users" size={17} />
+                  <span>Sign in another device</span>
+                  <Icon name="chevron-right" size={15} />
+                </button>
               )}
               {onSignOut && (
                 <button
