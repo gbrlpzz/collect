@@ -76,11 +76,22 @@ function matchesAllowedPattern(pattern: string, email: string): boolean {
  * patterns are configured anywhere, any address may become an administrator
  * (the default for self-hosted deployments).
  */
-export async function isEmailAllowed(service: SupabaseClient, email: string): Promise<boolean> {
+export async function isEmailAllowed(
+  service: SupabaseClient,
+  email: string,
+): Promise<boolean> {
   const raw = Deno.env.get("ALLOWED_EMAIL_PATTERNS")?.trim();
-  if (raw) return raw.split(",").map((entry) => entry.trim()).filter(Boolean).some((pattern) => matchesAllowedPattern(pattern, email));
-  const { data } = await service.from("allowed_admin_patterns").select("pattern");
-  const patterns = (data ?? []).map((row) => String((row as { pattern?: unknown }).pattern ?? "")).filter(Boolean);
+  if (raw) {
+    return raw.split(",").map((entry) => entry.trim()).filter(Boolean).some((
+      pattern,
+    ) => matchesAllowedPattern(pattern, email));
+  }
+  const { data } = await service.from("allowed_admin_patterns").select(
+    "pattern",
+  );
+  const patterns = (data ?? []).map((row) =>
+    String((row as { pattern?: unknown }).pattern ?? "")
+  ).filter(Boolean);
   if (!patterns.length) return true;
   return patterns.some((pattern) => matchesAllowedPattern(pattern, email));
 }
