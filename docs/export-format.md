@@ -20,6 +20,10 @@ project-name_checkpoint-YYYY-MM-DD.zip
 │   ├── contributors.csv        # roster, invites, consent, attention, readiness
 │   ├── attention.csv           # per-submission attention-check results
 │   └── submissions.geojson     # point features from top-level `location` fields
+├── dataset/
+│   ├── datacite.json           # DataCite 4.4 kernel metadata (DOI-ready)
+│   ├── data-dictionary.json    # every published field: type, options, unit, semantic_uri
+│   └── README.md               # license, contact, identifier, FAIR notes
 └── media/
     └── {submission_id}/
         └── {media_id}{ext}     # original files, never recompressed
@@ -147,3 +151,23 @@ administrator-set `quality_score`.
 - The checkpoint row in the database records `cutoff_server_timestamp`,
   `submission_count`, `media_count`, `schema_versions`, and the contributor
   readiness snapshot for provenance.
+
+## FAIR data standards
+
+Checkpoints carry the metadata needed to make the dataset findable, accessible,
+interoperable, and reusable without extra tooling:
+
+| FAIR principle    | Where it lives in the package                                                                                                                                                                       |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Findable**      | `dataset/datacite.json` (DataCite 4.4 kernel metadata for DOI registration/repository ingestion), `dataset/README.md`, project identity in `manifest.json`                                          |
+| **Accessible**    | self-contained ZIP with no external references; optional persistent identifier on the project (`dataset_identifier`) is carried into DataCite `identifier` and the README                           |
+| **Interoperable** | JSONL/CSV/GeoJSON data, immutable schema history (`schema/`), `dataset/data-dictionary.json` with per-field `semantic_uri` mapping hooks, units, and option code lists                              |
+| **Reusable**      | license and dataset contact travel with every checkpoint (`manifest.json`, DataCite, README); historical observations keep their schema version; attention/consent/readiness provenance is included |
+
+Project administrators set **license**, **dataset contact email**, and an optional
+**dataset identifier (DOI/URL)** when creating a project; they are embedded in
+every export. Licenses are stored as SPDX identifiers where possible
+(`CC0-1.0`, `CC-BY-4.0`, `CC-BY-SA-4.0`, `ODbL-1.0`, or a custom value).
+
+Checkpoints remain immutable snapshots: the same data exported twice yields two
+packages, each with its own DataCite metadata and cutoff timestamp.

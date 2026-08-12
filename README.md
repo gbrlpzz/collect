@@ -19,7 +19,7 @@ Most survey software is either a generic form builder or a fragile online tool. 
 - **Synced means synced.** Only a durable server finalization receipt moves a record to synced. Metadata, media, finalization: three phases, each resumable, none skippable.
 - **Kill the app, drop the connection, wait a week.** The queue, drafts, media, and receipts all survive. Nothing is discarded until the server acknowledges it.
 - **Evidence stays honest.** Published schemas are immutable; finalized observations are immutable; conflicts are explicit, never silently overwritten; every record carries full provenance (who, what schema, which device, when, where, which app version).
-- **The dataset is yours.** Checkpoint exports produce a plain ZIP — JSONL, CSV, GeoJSON, schema history, media, manifest — readable without this application.
+- **The dataset is yours.** Checkpoint exports produce a plain ZIP — JSONL, CSV, GeoJSON, schema history, media, manifest — readable without this application. Each package also carries **FAIR dataset metadata**: DataCite 4.4 (`dataset/datacite.json`), a data dictionary with semantic mapping hooks, license, dataset contact, and optional DOI — set once on the project, embedded in every export.
 
 ## What's inside
 

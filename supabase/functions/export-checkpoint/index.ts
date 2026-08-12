@@ -74,7 +74,7 @@ async function buildExport(
   const cutoff = new Date().toISOString();
 
   const { data: project } = await service.from("projects").select(
-    "id,organization_id,name,description,instructions,status",
+    "id,organization_id,name,description,instructions,status,license,contact_email,dataset_identifier",
   ).eq("id", projectId).maybeSingle();
   const { data: organization } = await service.from("organizations").select(
     "id,name,logo_path",
@@ -320,6 +320,93 @@ async function buildExport(
     feature,
   ): feature is Record<string, unknown> => Boolean(feature));
   const geojson = JSON.stringify({ type: "FeatureCollection", features });
+
+  // DataCite 4.4 metadata: machine-readable description of the dataset for
+  // DOI registration and repository ingestion (Zenodo, OSF, Dataverse).
+  const projectName = String(project?.name ?? "Untitled field project");
+  const organizationName = String(organization?.name ?? "Field organization");
+  const nowIso = new Date().toISOString();
+  const creators = [{ name: organizationName, nameType: "Organizational" }];
+  const dataDictionaryFields = (schemas ?? [])
+    .map((schema) => {
+      const fields = (schema.schema_json?.fields ?? []) as Array<
+        Record<string, unknown>
+      >;
+      return fields.map((field) => ({
+        schema_version: schema.version,
+        key: field.key ?? null,
+        label: field.label ?? null,
+        type: field.type ?? null,
+        required: Boolean(field.required),
+        description: field.description ?? null,
+        semantic_uri: field.semantic_uri ?? null,
+        unit: (field.config as Record<string, unknown> | undefined)?.unit ??
+          null,
+        options: Array.isArray(field.options) ? field.options : null,
+      }));
+    })
+    .flat();
+  const datacite = {
+    schemaVersion: "http://datacite.org/schema/kernel-4.4",
+    identifier: project?.dataset_identifier
+      ? {
+        identifier: String(project.dataset_identifier),
+        identifierType: "DOI",
+      }
+      : undefined,
+    creators,
+    titles: [{ title: `${projectName} — checkpoint dataset` }],
+    publisher: organizationName,
+    publicationYear: String(new Date().getUTCFullYear()),
+    resourceType: { resourceTypeGeneral: "Dataset" },
+    version: `checkpoint-${checkpointId}`,
+    descriptions: [
+      {
+        description: String(project?.description ?? ""),
+        descriptionType: "Abstract",
+      },
+    ],
+    license: project?.license ?? null,
+    contributors: project?.contact_email
+      ? [
+        {
+          name: "Dataset contact",
+          contributorType: "ContactPerson",
+          nameType: "Organizational",
+          contactEmail: String(project.contact_email),
+        },
+      ]
+      : [],
+    dates: [{ date: nowIso, dateType: "Created" }],
+    subjects: [{ subject: projectName }, { subject: "field data collection" }],
+    alternateIdentifiers: project
+      ? [{
+        alternateIdentifier: String(project.id),
+        alternateIdentifierType: "collect-project",
+      }]
+      : [],
+  };
+  const datasetReadme = [
+    `# ${projectName}`,
+    "",
+    String(project?.description ?? ""),
+    "",
+    "## Dataset metadata",
+    `- License: ${project?.license ?? "not specified"}`,
+    `- Contact: ${project?.contact_email ?? "not specified"}`,
+    `- Identifier: ${project?.dataset_identifier ?? "not specified"}`,
+    `- Publisher: ${organizationName}`,
+    `- Checkpoint: ${checkpointId} (cutoff ${cutoff})`,
+    "",
+    "## FAIR notes",
+    "- **Findable**: machine-readable DataCite metadata (`dataset/datacite.json`) and this README.",
+    "- **Accessible**: single self-contained ZIP; a persistent identifier can be attached via the project's dataset identifier.",
+    "- **Interoperable**: JSONL, CSV, GeoJSON, schema history, and a data dictionary with semantic mapping hooks (`semantic_uri` per field).",
+    "- **Reusable**: license and contact travel with the data; every schema version is retained and immutable.",
+    "",
+    "Formats are documented in docs/export-format.md of the collect repository.",
+  ].join("\n");
+
   const manifest = {
     export_format_version: "1",
     software_version: Deno.env.get("APP_VERSION") ?? "0.1.2",
@@ -334,6 +421,11 @@ async function buildExport(
     hashes: {
       submissions_jsonl_sha256: await sha256(jsonl),
       media_csv_sha256: await sha256(mediaCsv),
+    },
+    dataset: {
+      license: project?.license ?? null,
+      contact_email: project?.contact_email ?? null,
+      dataset_identifier: project?.dataset_identifier ?? null,
     },
     // Device-reported readiness frozen at the export cutoff: what each
     // contributor's device had pending and whether fieldwork was complete.
@@ -358,6 +450,11 @@ async function buildExport(
     "data/contributors.csv": strToU8(contributorsCsv),
     "data/attention.csv": strToU8(attentionCsv),
     "data/submissions.geojson": strToU8(geojson),
+    "dataset/datacite.json": strToU8(JSON.stringify(datacite, null, 2)),
+    "dataset/data-dictionary.json": strToU8(
+      JSON.stringify(dataDictionaryFields, null, 2),
+    ),
+    "dataset/README.md": strToU8(datasetReadme),
   };
   for (const schema of (schemas ?? []) as Record<string, unknown>[]) {
     entries[`schema/schema-v${schema.version}.json`] = strToU8(

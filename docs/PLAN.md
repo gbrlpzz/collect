@@ -192,6 +192,18 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 | Bundle                           | ✅     | 462 KB JS / ~121 KB gzip, offline-first (must be cached anyway)                                          |
 | Concurrency                      | ✅     | bounded media parallelism + health timeout landed with the media-uploads unit                            |
 
+## FAIR dataset standards (2026-08-12)
+
+| Item                         | Status | Notes                                                                                                     |
+| ---------------------------- | ------ | --------------------------------------------------------------------------------------------------------- |
+| Dataset metadata on projects | ✅     | license (SPDX), contact_email, dataset_identifier (DOI/URL) via migration 20260812180000                  |
+| Wizard collects metadata     | ✅     | license presets + custom, contact email, identifier in step 1                                             |
+| DataCite 4.4 metadata        | ✅     | dataset/datacite.json in every checkpoint (DOI-ready)                                                     |
+| Data dictionary              | ✅     | dataset/data-dictionary.json: type, required, description, semantic_uri, unit, options per schema version |
+| Dataset README               | ✅     | dataset/README.md with license/contact/identifier + FAIR notes                                            |
+| Manifest carries metadata    | ✅     | manifest.dataset { license, contact_email, dataset_identifier }                                           |
+| Docs                         | ✅     | docs/export-format.md FAIR mapping table; README summary                                                  |
+
 ## Gap work queue
 
 _(filled from audits)_

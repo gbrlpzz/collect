@@ -2223,6 +2223,28 @@ p {
   background: var(--grouped-strong);
 }
 
+/* Project wizard: dataset metadata (FAIR) */
+.dataset-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--separator);
+}
+.dataset-metadata h3 {
+  font-size: 1rem;
+  font-weight: 650;
+}
+.dataset-metadata p {
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.dataset-metadata select.field-input {
+  min-height: 44px;
+}
+
 /* Schema builder: per-field configuration controls */
 .builder-config {
   display: flex;

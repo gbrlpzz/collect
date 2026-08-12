@@ -15,6 +15,9 @@ export interface NewProjectInput {
   instructions: string;
   fields: FieldDefinition[];
   emails: string[];
+  license?: string;
+  contactEmail?: string;
+  datasetIdentifier?: string;
 }
 
 export interface ContributorReadiness {
@@ -88,6 +91,9 @@ function projectFromRemote(
     description: row.description ?? "",
     instructions: row.instructions ?? "",
     status: row.status === "closed" ? "closed" : "active",
+    license: row.license ?? null,
+    contactEmail: row.contact_email ?? null,
+    datasetIdentifier: row.dataset_identifier ?? null,
     schemaVersion: Number(schema?.version ?? 1),
     schemaId: schema?.id,
     contributors: contributorCount,
@@ -234,12 +240,17 @@ export async function createRemoteProject(
     name: input.name.trim() || "Untitled field project",
     description: input.description,
     instructions: input.instructions,
+    license: input.license?.trim() || null,
+    contact_email: input.contactEmail?.trim() || null,
+    dataset_identifier: input.datasetIdentifier?.trim() || null,
     created_by: userData.user.id,
   });
   if (projectError) throw new Error("Project could not be created");
   const { data: project, error: projectReadError } = await client
     .from("projects")
-    .select("id,name,description,instructions,status,organization_id")
+    .select(
+      "id,name,description,instructions,status,organization_id,license,contact_email,dataset_identifier",
+    )
     .eq("id", projectId)
     .maybeSingle();
   if (projectReadError || !project)

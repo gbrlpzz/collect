@@ -20,8 +20,19 @@ interface NewProjectWizardProps {
     instructions: string;
     fields: FieldDefinition[];
     emails: string[];
+    license?: string;
+    contactEmail?: string;
+    datasetIdentifier?: string;
   }) => void | Promise<void>;
 }
+
+const LICENSE_OPTIONS = [
+  "CC0-1.0",
+  "CC-BY-4.0",
+  "CC-BY-SA-4.0",
+  "ODbL-1.0",
+  "Proprietary",
+];
 
 const wizardSteps = ["Identity", "Schema", "Contributors"];
 export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
@@ -33,6 +44,10 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
   const [description, setDescription] = useState("");
   const [instructions, setInstructions] = useState("");
   const [emails, setEmails] = useState("");
+  const [license, setLicense] = useState("CC-BY-4.0");
+  const [customLicense, setCustomLicense] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [datasetIdentifier, setDatasetIdentifier] = useState("");
   const [fields, setFields] = useState<FieldDefinition[]>(() =>
     cloneFieldDefinitions(projectFields),
   );
@@ -57,6 +72,10 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
           .split(/[\n,]+/)
           .map((email) => email.trim())
           .filter(Boolean),
+        license:
+          license === "Other" ? customLicense.trim() || undefined : license,
+        contactEmail: contactEmail.trim() || undefined,
+        datasetIdentifier: datasetIdentifier.trim() || undefined,
       });
     } catch (publishError) {
       setError(
@@ -170,13 +189,60 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
                 rows={4}
               />
             </label>
-            <div className="schema-builder-note">
-              <Icon name="shield" size={17} />
-              <span>
-                On a new deployment, the first signed-in administrator creates
-                this workspace. Additional administrators are granted access
-                during setup.
-              </span>
+            <div className="dataset-metadata">
+              <Eyebrow>Dataset metadata</Eyebrow>
+              <h3>Make the dataset reusable.</h3>
+              <p>
+                These values travel into every checkpoint (DataCite metadata,
+                manifest, README) so the dataset stays findable and reusable.
+              </p>
+              <label>
+                License{" "}
+                <span className="optional-label">Recommended: CC-BY-4.0</span>
+                <select
+                  className="field-input"
+                  value={license}
+                  onChange={(event) => setLicense(event.target.value)}
+                >
+                  {[...LICENSE_OPTIONS, "Other"].map((option) => (
+                    <option value={option} key={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {license === "Other" && (
+                <label>
+                  License name / SPDX identifier
+                  <input
+                    className="field-input"
+                    value={customLicense}
+                    onChange={(event) => setCustomLicense(event.target.value)}
+                    placeholder="e.g. CC-BY-NC-4.0"
+                  />
+                </label>
+              )}
+              <label>
+                Dataset contact email{" "}
+                <span className="optional-label">Optional</span>
+                <input
+                  className="field-input"
+                  type="email"
+                  value={contactEmail}
+                  onChange={(event) => setContactEmail(event.target.value)}
+                  placeholder="dataset@organization.org"
+                />
+              </label>
+              <label>
+                Dataset identifier{" "}
+                <span className="optional-label">DOI or URL</span>
+                <input
+                  className="field-input"
+                  value={datasetIdentifier}
+                  onChange={(event) => setDatasetIdentifier(event.target.value)}
+                  placeholder="10.5281/zenodo.0000000"
+                />
+              </label>
             </div>
           </div>
         )}

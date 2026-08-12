@@ -83,6 +83,12 @@ export interface Project {
   status: "active" | "closed";
   schemaVersion: number;
   schemaId?: string;
+  /** SPDX license identifier for the collected dataset (FAIR reuse). */
+  license?: string | null;
+  /** Dataset contact for reuse questions (FAIR access/reuse). */
+  contactEmail?: string | null;
+  /** Optional persistent identifier (DOI or landing-page URL). */
+  datasetIdentifier?: string | null;
   contributors: number;
   completeSubmissions: number;
   lastReceived: string;
