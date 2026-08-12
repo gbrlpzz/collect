@@ -135,6 +135,7 @@ export function EmailPrompt({
                 id="email-prompt-input"
                 className="field-input"
                 type="email"
+                required
                 autoComplete="email"
                 inputMode="email"
                 autoCapitalize="none"

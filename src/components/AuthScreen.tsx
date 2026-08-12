@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import {
   authCallbackError,
   isStandalonePwa,
@@ -63,10 +63,11 @@ export function AuthScreen({
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState<string | null>(null);
   const [codeBusy, setCodeBusy] = useState(false);
+  const codeInputRef = useRef<HTMLInputElement>(null);
 
   const submit = async () => {
     const address = email.trim();
-    if (!address) return;
+    if (!address || busy) return;
     setBusy(true);
     setError(null);
     setCallbackIssue(null);
@@ -106,7 +107,7 @@ export function AuthScreen({
   const verifyCode = async (candidate = code) => {
     const address = email.trim();
     const token = candidate.trim();
-    if (!address || token.length !== 6) return;
+    if (!address || token.length !== 6 || codeBusy) return;
     setCodeBusy(true);
     setCodeError(null);
     try {
@@ -131,6 +132,7 @@ export function AuthScreen({
       setCodeError((current) =>
         `${current ?? ""}${current ? " " : ""}If the email has no 6-digit code, its template needs the sign-in code added — the link in that email still works.`.trim(),
       );
+      window.setTimeout(() => codeInputRef.current?.focus(), 0);
     } finally {
       setCodeBusy(false);
     }
@@ -212,6 +214,7 @@ export function AuthScreen({
                       id={emailInputId}
                       className="field-input"
                       type="email"
+                      required
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                       placeholder="you@example.com"
@@ -307,9 +310,11 @@ export function AuthScreen({
                   <label className="auth-label" htmlFor="auth-code-input">
                     6-digit code from the email
                     <input
+                      ref={codeInputRef}
                       id="auth-code-input"
                       className="field-input"
                       type="text"
+                      required
                       inputMode="numeric"
                       autoComplete="one-time-code"
                       pattern="[0-9]{6}"

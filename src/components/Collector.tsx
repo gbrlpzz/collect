@@ -178,6 +178,7 @@ export function Collector({
   };
 
   const goNext = () => {
+    if (isSaving) return;
     if (current.kind === "field") {
       const error = stepError(current.field);
       if (error) {
@@ -350,7 +351,9 @@ export function Collector({
           );
         else captureLocation(activeField.key);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (active) captureLocation(activeField.key);
+      });
     return () => {
       active = false;
     };
@@ -496,8 +499,12 @@ export function Collector({
                     "short_text",
                     "long_text",
                     "number",
+                    "single_choice",
+                    "tri_state",
+                    "multiple_choice",
                     "date",
                     "datetime",
+                    "repeatable_group",
                   ].includes(current.field.type)}
                 />
               </div>

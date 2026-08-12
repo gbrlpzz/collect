@@ -40,8 +40,10 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const continueStep = () => setStep((current) => Math.min(current + 1, 3));
+  const continueStep = () =>
+    setStep((current) => Math.min(current + 1, wizardSteps.length));
   const publish = async () => {
+    if (publishing) return;
     setPublishing(true);
     setError(null);
     try {
@@ -100,6 +102,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
         {wizardSteps.map((label, index) => (
           <div
             className={`wizard-step ${step === index + 1 ? "wizard-step-active" : ""} ${step > index + 1 ? "wizard-step-done" : ""}`}
+            aria-current={step === index + 1 ? "step" : undefined}
             key={label}
           >
             <span>
@@ -110,11 +113,21 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
         ))}
       </div>
 
-      <section className="wizard-panel">
+      <form
+        className="wizard-panel"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (step < wizardSteps.length) {
+            continueStep();
+          } else {
+            void publish();
+          }
+        }}
+      >
         {step === 1 && (
           <div className="wizard-form">
             <div>
-              <Eyebrow>Step 1 of 4</Eyebrow>
+              <Eyebrow>Step 1 of {wizardSteps.length}</Eyebrow>
               <h2>Give the project an identity.</h2>
               <p>Contributors will see this before they begin collecting.</p>
             </div>
@@ -170,7 +183,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
         {step === 2 && (
           <div className="wizard-form">
             <div>
-              <Eyebrow>Step 2 of 4</Eyebrow>
+              <Eyebrow>Step 2 of {wizardSteps.length}</Eyebrow>
               <h2>Define what gets observed.</h2>
               <p>
                 Start with a small set of predictable, strongly typed fields.
@@ -253,7 +266,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
                   </div>
                 ))}
             </div>
-            <button className="add-field-row" onClick={addField}>
+            <button type="button" className="add-field-row" onClick={addField}>
               <Icon name="plus" size={17} /> Add field
             </button>
             <div className="schema-builder-note">
@@ -352,6 +365,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
         )}
         <div className="wizard-actions">
           <Button
+            type="button"
             variant="secondary"
             onClick={() =>
               step === 1 ? onBack() : setStep((current) => current - 1)
@@ -360,19 +374,15 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
           >
             {step === 1 ? "Cancel" : "Back"}
           </Button>
-          {step < 3 ? (
-            <Button
-              variant="primary"
-              iconAfter="arrow-right"
-              onClick={continueStep}
-            >
+          {step < wizardSteps.length ? (
+            <Button type="submit" variant="primary" iconAfter="arrow-right">
               Continue
             </Button>
           ) : (
             <Button
+              type="submit"
               variant="primary"
               icon="check"
-              onClick={publish}
               disabled={publishing}
               busy={publishing}
             >
@@ -380,7 +390,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
             </Button>
           )}
         </div>
-      </section>
+      </form>
     </main>
   );
 }

@@ -163,6 +163,35 @@ describe("low-friction primary actions", () => {
     await waitFor(() => expect(screen.getByText("Notes")).toBeTruthy());
   });
 
+  it("focuses the first choice control when a guided choice opens", () => {
+    const fields: FieldDefinition[] = [
+      {
+        id: "condition",
+        key: "condition",
+        label: "Condition",
+        type: "tri_state",
+        required: true,
+        semantic_uri: null,
+      },
+    ];
+
+    render(
+      <Collector
+        project={{ ...project, fields }}
+        draft={{}}
+        lastSavedAt={null}
+        onDraftChange={() => undefined}
+        onSubmit={() => undefined}
+        onBack={() => undefined}
+        isSaving={false}
+      />,
+    );
+
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Yes" }),
+    );
+  });
+
   it("captures location automatically when the location step opens", async () => {
     const getCurrentPosition = vi.fn((success: PositionCallback): void => {
       success({
@@ -228,7 +257,7 @@ describe("low-friction primary actions", () => {
 
     expect(document.activeElement).toBe(screen.getByLabelText("Project name"));
 
-    fireEvent.click(screen.getByRole("button", { name: /^continue$/i }));
+    fireEvent.submit(screen.getByLabelText("Project name").closest("form")!);
     fireEvent.click(screen.getByRole("button", { name: /add field/i }));
     const fieldInputs = screen.getAllByRole("textbox", {
       name: /field \d+ label/i,
