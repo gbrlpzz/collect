@@ -4,6 +4,7 @@ import type { FieldDefinition, MediaAsset, Project } from "../types";
 import { Icon } from "./Icon";
 import { Button } from "./ui";
 import { FieldRenderer } from "./FieldRenderer";
+import { attentionFieldFor, pickAttentionCheck } from "../lib/attention";
 import { orderFieldsForCollection } from "../lib/fieldOrdering";
 
 interface CollectorProps {
@@ -19,6 +20,8 @@ interface CollectorProps {
   isSaving: boolean;
   /** Admin preview: the flow is fully interactive but nothing is persisted. */
   preview?: boolean;
+  /** Test seam: disable the automatic attention check step. */
+  attentionCheck?: boolean;
 }
 
 type Step =
@@ -49,6 +52,7 @@ export function Collector({
   onBack,
   isSaving,
   preview = false,
+  attentionCheck = true,
 }: CollectorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stepIndex, setStepIndex] = useState(0);
@@ -82,7 +86,11 @@ export function Collector({
   // then the highest-effort questions (photos/audio, location, long text)
   // while attention is fresh. Location stays background provenance: it never
   // becomes a step, only a silent capture at the save boundary.
-  const steps = useMemo<Step[]>(
+  // Attention verification: one random check rides quietly in the flow after
+  // the first two questions. It is provenance, not a schema field — the
+  // answer travels in values._attention and submission.ts strips it from the
+  // research payload while the server computes correctness from its own bank.
+  const baseSteps = useMemo<Step[]>(
     () =>
       orderFieldsForCollection(project.fields)
         .filter((field) => field.type !== "location")
@@ -93,6 +101,29 @@ export function Collector({
         ),
     [project.fields],
   );
+  const attentionPlanRef = useRef<{ field: FieldDefinition; index: number } | null | undefined>(undefined);
+  if (attentionPlanRef.current === undefined) {
+    const dataFields = baseSteps.filter((step) => step.kind === "field").map((step) => step.field);
+    if (attentionCheck && baseSteps.length >= 3 && dataFields.length >= 2) {
+      const field = attentionFieldFor(
+        pickAttentionCheck(dataFields.map((candidate) => candidate.key)),
+      );
+      const index = Math.min(
+        baseSteps.length - 1,
+        Math.floor(2 + Math.random() * (baseSteps.length - 1)),
+      );
+      attentionPlanRef.current = { field, index };
+    } else {
+      attentionPlanRef.current = null;
+    }
+  }
+  const steps = useMemo<Step[]>(() => {
+    const plan = attentionPlanRef.current;
+    if (!plan) return baseSteps;
+    const copy = [...baseSteps];
+    copy.splice(plan.index, 0, { kind: "field", field: plan.field });
+    return copy;
+  }, [baseSteps]);
   const locationFields = useMemo(
     () => project.fields.filter((field) => field.type === "location"),
     [project.fields],

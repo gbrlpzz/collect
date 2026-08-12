@@ -6,6 +6,7 @@ import { Collector } from "../src/components/Collector";
 import { FieldRenderer } from "../src/components/FieldRenderer";
 import { SyncSheet } from "../src/components/SyncSheet";
 import { ClearButton, ConfirmationDialog } from "../src/components/ui";
+import { ATTENTION_FIELD_KEY } from "../src/data/attentionChecks";
 import type { FieldDefinition, Project } from "../src/types";
 
 const fields: FieldDefinition[] = [
@@ -79,6 +80,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         onSubmit={onSubmit}
         onBack={() => undefined}
         isSaving={false}
+        attentionCheck={false}
       />,
     );
     expect(screen.getByText("Site code")).toBeTruthy();
@@ -103,6 +105,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         onSubmit={onSubmit}
         onBack={() => undefined}
         isSaving={false}
+        attentionCheck={false}
       />,
     );
     fireEvent.click(continueButton());
@@ -129,6 +132,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         onSubmit={onSubmit}
         onBack={() => undefined}
         isSaving={false}
+        attentionCheck={false}
       />,
     );
     fireEvent.click(continueButton());
@@ -149,6 +153,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         onSubmit={onSubmit}
         onBack={() => undefined}
         isSaving={false}
+        attentionCheck={false}
       />,
     );
     fireEvent.click(continueButton());
@@ -181,6 +186,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         onSubmit={onSubmit}
         onBack={() => undefined}
         isSaving={false}
+        attentionCheck={false}
       />,
     );
     fireEvent.click(continueButton());
@@ -216,6 +222,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         onSubmit={onSubmit}
         onBack={() => undefined}
         isSaving={false}
+        attentionCheck={false}
       />,
     );
     fireEvent.click(continueButton());
@@ -234,6 +241,98 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
     expect(continueButton()).toHaveProperty("disabled", true);
     fireEvent.click(continueButton());
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("injects a quick check after the first two questions and saves its self-describing answer", async () => {
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.5);
+    const onSubmitted = vi.fn();
+    const initialDraft = {
+      observed_date: "2026-08-10",
+      site_code: "VA-001",
+      people_count: { value: 3, unit: null },
+    };
+    function StatefulHarness() {
+      const [draft, setDraft] = React.useState<Record<string, unknown>>(initialDraft);
+      return (
+        <Collector
+          project={project}
+          draft={draft}
+          lastSavedAt={null}
+          onDraftChange={(key, value) =>
+            setDraft((current) => ({ ...current, [key]: value }))
+          }
+          onSubmit={(values) => onSubmitted(values)}
+          onBack={() => undefined}
+          isSaving={false}
+        />
+      );
+    }
+    render(<StatefulHarness />);
+    try {
+      // site_code → site_photos → field notes → quick check → people present
+      fireEvent.click(continueButton());
+      const input = document.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
+      fireEvent.change(input, {
+        target: {
+          files: [0, 1].map(
+            (index) =>
+              new File([new Blob(["x"])], `p${index}.jpg`, {
+                type: "image/jpeg",
+              }),
+          ),
+        },
+      });
+      fireEvent.click(continueButton());
+      fireEvent.click(continueButton());
+      expect(screen.getByText("Quick check")).toBeTruthy();
+      const option = screen
+        .getAllByRole("button")
+        .find(
+          (button) =>
+            button.textContent &&
+            !/continue|back/i.test(button.textContent),
+        );
+      expect(option).toBeTruthy();
+      fireEvent.click(option!);
+      await waitFor(() =>
+        expect(screen.getByText("People present")).toBeTruthy(),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /save observation/i }),
+      );
+      expect(onSubmitted).toHaveBeenCalledTimes(1);
+      const submittedValues = onSubmitted.mock.calls[0][0] as Record<
+        string,
+        unknown
+      >;
+      expect(typeof submittedValues[ATTENTION_FIELD_KEY]).toBe("string");
+      expect(String(submittedValues[ATTENTION_FIELD_KEY])).toMatch(
+        /^[^:]+:.+$/,
+      );
+    } finally {
+      randomSpy.mockRestore();
+    }
+  });
+
+  it("skips the quick check for very short forms", () => {
+    const shortFields: FieldDefinition[] = [
+      { id: "s1", key: "site_code", label: "Site code", type: "short_text", required: true, semantic_uri: null },
+      { id: "n1", key: "notes", label: "Notes", type: "long_text", semantic_uri: null },
+    ];
+    render(
+      <Collector
+        project={{ ...project, fields: shortFields }}
+        draft={{ observed_date: "2026-08-10" }}
+        lastSavedAt={null}
+        onDraftChange={() => undefined}
+        onSubmit={() => undefined}
+        onBack={() => undefined}
+        isSaving={false}
+      />,
+    );
+    expect(screen.queryByText("Quick check")).toBeNull();
   });
 
   it("auto-advances after a single answer", async () => {
@@ -266,6 +365,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         onSubmit={onSubmit}
         onBack={() => undefined}
         isSaving={false}
+        attentionCheck={false}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /^yes$/i }));
@@ -328,6 +428,7 @@ describe("native input primitives (§HIG)", () => {
         onSubmit={() => undefined}
         onBack={() => undefined}
         isSaving={false}
+        attentionCheck={false}
       />,
     );
     const input = screen.getByRole("textbox", {

@@ -25,9 +25,10 @@ describe("attention verification", () => {
     expect(field.type).toBe("single_choice");
     expect(field.config?.attentionCheckKey).toBe(check.key);
     expect(field.options).toHaveLength(4);
-    // option ids embed "checkKey:value" so the answer is self-describing
-    expect(field.options!.map((option) => option.id)).toEqual(
-      check.options.map((option) => `${check.key}:${option.value}`),
+    // option ids embed "checkKey:value" so the answer is self-describing;
+    // the presentation order is shuffled, so compare as sets.
+    expect(field.options!.map((option) => option.id).sort()).toEqual(
+      check.options.map((option) => `${check.key}:${option.value}`).sort(),
     );
   });
 
