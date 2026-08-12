@@ -1,6 +1,6 @@
 # Agent guidance for collect
 
-`collect` is infrastructure for trustworthy field evidence, not a generic form builder. It belongs to a well-designed, source-available science stack: the interface should be calm and legible, and the data path should remain dependable when the network, browser lifecycle, or device storage is hostile.
+`collect` is infrastructure for trustworthy field evidence, not a generic form builder. The interface should be calm and legible, and the data path should remain dependable when the network, browser lifecycle, or device storage is hostile. Contributors are consented professionals: the app records everything that can be recorded automatically, shows almost nothing of it, and surfaces a problem only when one exists.
 
 ## Product principles
 
@@ -11,7 +11,8 @@
 - Treat `SYNCED` as a server fact, never a request-started or upload-completed guess.
 - Never use `navigator.onLine` as proof of reachability.
 - Never silently overwrite conflicts, finalized observations, media originals, or unsynced local records.
-- Keep the contributor surface almost boring: few controls, clear text states, strong touch targets, native browser semantics.
+- Keep the contributor surface almost boring: few controls, clear text states, strong touch targets, native browser semantics. Provenance (location, device info, attention checks) is invisible by default and surfaced only as a problem notice.
+- On iOS, an installed PWA is a separate storage container from Safari: sessions and local data never cross containers. The server is the shared source of truth; passwords and device-link codes bridge sign-in.
 
 ## Required invariants when changing code
 
@@ -22,6 +23,11 @@
 5. Service-role credentials stay inside Edge Functions.
 6. Recovery export must remain available for unsynced data.
 7. Local migrations must be forward-compatible and must never initialize a blank database over existing data.
+8. Accounts are invite-only: the generic sign-in screen must never create accounts, and administrator invitations honor the allow-list (env secret or `private.allowed_admin_patterns`).
+9. Collection consent is enforced server-side: `sync-submission` rejects submissions from profiles without a granted (and not revoked) consent.
+10. The attention check is provenance, not research data: its question never enters the payload or the database (only a stable check key, the selected value, and the binary `attention_failed` flag), and its answer must be stripped from submitted values before commit.
+11. Every account reads and writes its own IndexedDB database (`collect-local-v1-<userId>`); set the local scope before any local read and never let cached data leak across accounts.
+12. Location and environment provenance are captured automatically whenever the platform allows; a failed optional capture must never block the durable local receipt.
 
 ## UI baseline
 
@@ -30,10 +36,10 @@ Follow `docs/design.md` and the official Apple Human Interface Guidelines links 
 ## Safe workflow
 
 - Read `README.md`, `docs/architecture.md`, and the relevant code before editing.
-- Preserve unrelated user changes.
-- For database changes, add an ordered migration and apply/test it against a Supabase project; do not patch production with ad hoc SQL only.
-- For Edge Functions, authenticate with the shared helper and return explicit, non-sensitive errors.
+- Preserve unrelated user changes and coordinate on shared files (`src/App.tsx`, `src/app/useAppController.ts`, `src/lib/localStore.ts`) when other agents work in the same tree.
+- For database changes, add an ordered migration (a new file with a new timestamp) and apply/test it against a Supabase project; never re-apply an edited migration under the same name (it is skipped and the live DB silently drifts). Do not patch production with ad hoc SQL only.
+- For Edge Functions, authenticate with the shared helper and return explicit, non-sensitive errors. Use try/catch around `service.from(...)` chains — `.catch()` is not available on the filter builder.
 - Do not log research payloads, free text, coordinates, media URLs, or credentials.
-- Run `npm test`, `npm run build`, and `git diff --check` before publishing.
+- Run `npm run check` (format + tests + typecheck + build) and `git diff --check` before publishing.
 - Verify the deployed app from the login gate through the affected flow. A green build is not proof that sync or authorization works.
 - Keep deployment notes honest: distinguish local receipts, server receipts, and what an offline device has not yet reported.

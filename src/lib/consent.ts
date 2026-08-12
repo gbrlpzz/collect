@@ -42,7 +42,9 @@ export async function getMyProfile(): Promise<ContributorProfile | null> {
   if (userError || !userData.user) return null;
   const { data } = await client
     .from("contributor_profiles")
-    .select("user_id,consent_version,consent_granted_at,consent_revoked_at,quality_score,attention_score,attention_checks_total,attention_correct_total,attention_last_at")
+    .select(
+      "user_id,consent_version,consent_granted_at,consent_revoked_at,quality_score,attention_score,attention_checks_total,attention_correct_total,attention_last_at",
+    )
     .eq("user_id", userData.user.id)
     .maybeSingle();
   if (!data) return null;
@@ -63,7 +65,8 @@ export async function getMyProfile(): Promise<ContributorProfile | null> {
 export async function acceptConsent(version: number): Promise<void> {
   const client = requireClient();
   const { data: userData, error: userError } = await client.auth.getUser();
-  if (userError || !userData.user) throw new Error("Authentication is required to record consent");
+  if (userError || !userData.user)
+    throw new Error("Authentication is required to record consent");
   const now = new Date().toISOString();
   const { error } = await client.from("contributor_profiles").upsert(
     {

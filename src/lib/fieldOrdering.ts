@@ -24,7 +24,10 @@ const REFERENCE_KEY_PATTERN = /(^|_)(ref|reference|code|site_code|id)(_|$)/i;
 
 /** A field the administrator marked as the key identifier. */
 export function isKeyIdentifier(field: FieldDefinition): boolean {
-  return field.config?.keyIdentifier === true || REFERENCE_KEY_PATTERN.test(field.key);
+  return (
+    field.config?.keyIdentifier === true ||
+    REFERENCE_KEY_PATTERN.test(field.key)
+  );
 }
 
 /**
@@ -35,19 +38,25 @@ export function isKeyIdentifier(field: FieldDefinition): boolean {
  * 2. Remaining fields are ordered by effort, highest first, with the schema
  *    order preserved within equal effort.
  */
-export function orderFieldsForCollection(fields: FieldDefinition[]): FieldDefinition[] {
+export function orderFieldsForCollection(
+  fields: FieldDefinition[],
+): FieldDefinition[] {
   const dataFields = fields.filter((field) => field.type !== "heading");
   const identifier = dataFields.find((field) => isKeyIdentifier(field));
   const mediaLead = identifier
     ? null
-    : dataFields.find((field) => field.type === "photo" || field.type === "audio") ?? null;
+    : (dataFields.find(
+        (field) => field.type === "photo" || field.type === "audio",
+      ) ?? null);
   const lead = identifier ?? mediaLead;
 
-  const rest = dataFields.filter((field) => field !== lead).sort((a, b) => {
-    const rankA = EFFORT_RANK[a.type] ?? 99;
-    const rankB = EFFORT_RANK[b.type] ?? 99;
-    return rankA - rankB;
-  });
+  const rest = dataFields
+    .filter((field) => field !== lead)
+    .sort((a, b) => {
+      const rankA = EFFORT_RANK[a.type] ?? 99;
+      const rankB = EFFORT_RANK[b.type] ?? 99;
+      return rankA - rankB;
+    });
 
   const ordered = lead ? [lead, ...rest] : rest;
   const position = new Map(ordered.map((field, index) => [field.id, index]));
@@ -56,12 +65,19 @@ export function orderFieldsForCollection(fields: FieldDefinition[]): FieldDefini
   const headings: Array<{ field: FieldDefinition; anchor: number }> = [];
   for (const field of fields) {
     if (field.type !== "heading") continue;
-    const following = fields.slice(fields.indexOf(field) + 1).find((candidate) => candidate.type !== "heading");
-    const anchor = following && position.has(following.id) ? position.get(following.id)! : ordered.length;
+    const following = fields
+      .slice(fields.indexOf(field) + 1)
+      .find((candidate) => candidate.type !== "heading");
+    const anchor =
+      following && position.has(following.id)
+        ? position.get(following.id)!
+        : ordered.length;
     headings.push({ field, anchor });
   }
   const result: FieldDefinition[] = [...ordered];
-  for (const { field, anchor } of headings.sort((a, b) => b.anchor - a.anchor)) {
+  for (const { field, anchor } of headings.sort(
+    (a, b) => b.anchor - a.anchor,
+  )) {
     result.splice(anchor, 0, field);
   }
   return result;

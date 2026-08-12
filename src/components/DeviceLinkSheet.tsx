@@ -38,9 +38,13 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
         message.includes("fetch") ||
         message.includes("failed to")
       ) {
-        setError("We couldn’t reach the sign-in service. Check your connection and try again.");
+        setError(
+          "We couldn’t reach the sign-in service. Check your connection and try again.",
+        );
       } else {
-        setError("A code could not be created right now. Try again in a moment.");
+        setError(
+          "A code could not be created right now. Try again in a moment.",
+        );
       }
     } finally {
       setBusy(false);
@@ -128,9 +132,8 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
           <IconButton label="Close" icon="x" autoFocus onClick={onClose} />
         </div>
         <p className="sheet-copy">
-          On the device you want to sign in on, open collect and choose
-          “Enter the code shown there”. This code is single-use and expires
-          quickly.
+          On the device you want to sign in on, open collect and choose “Enter
+          the code shown there”. This code is single-use and expires quickly.
         </p>
         {error ? (
           <p className="field-help-error" role="alert">
@@ -140,7 +143,11 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
           <p className="sheet-copy">Creating a code…</p>
         ) : code ? (
           <>
-            <div className="device-code" aria-label={`Code ${code}`} aria-live="polite">
+            <div
+              className="device-code"
+              aria-label={`Code ${code}`}
+              aria-live="polite"
+            >
               {code.split("").map((digit, index) => (
                 <span key={index}>{digit}</span>
               ))}

@@ -1,6 +1,36 @@
 /* Device-link code display (web side of the password bridge). */
-.device-link-sheet .sheet-copy { max-width: 440px; }
-.device-code { display: flex; justify-content: center; gap: 8px; margin: 18px 0 10px; }
-.device-code span { width: 44px; height: 56px; display: grid; place-items: center; border: 1px solid var(--separator); border-radius: 12px; background: var(--paper); color: var(--text); font-size: 1.75rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.device-code-expiry { margin-bottom: 16px; color: var(--secondary); font-size: .8125rem; text-align: center; font-variant-numeric: tabular-nums; }
-.auth-set-password { display: flex; flex-direction: column; gap: 14px; margin-top: 22px; }
+.device-link-sheet .sheet-copy {
+  max-width: 440px;
+}
+.device-code {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 18px 0 10px;
+}
+.device-code span {
+  width: 44px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--separator);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--text);
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.device-code-expiry {
+  margin-bottom: 16px;
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.auth-set-password {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 22px;
+}

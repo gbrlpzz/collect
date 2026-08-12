@@ -1041,7 +1041,25 @@ h3 {
 }
 
 /* Attention score visibility. */
-.account-menu-profile { padding: 9px 12px 11px; border-bottom: 1px solid var(--separator-light); margin-bottom: 5px; display: flex; flex-direction: column; gap: 3px; }
-.account-menu-profile strong { color: var(--text); font-size: .8125rem; font-weight: 650; }
-.account-menu-profile span { color: var(--secondary); font-size: .75rem; line-height: 1.4; }
-.readiness-attention { color: var(--secondary); font-size: .75rem; }
+.account-menu-profile {
+  padding: 9px 12px 11px;
+  border-bottom: 1px solid var(--separator-light);
+  margin-bottom: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.account-menu-profile strong {
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+.account-menu-profile span {
+  color: var(--secondary);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+.readiness-attention {
+  color: var(--secondary);
+  font-size: 0.75rem;
+}

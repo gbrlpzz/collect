@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { ATTENTION_CHECKS } from "../src/data/attentionChecks";
-import { attentionFieldFor, attentionScore, extractAttentionResponse, formatAttentionScore, pickAttentionCheck } from "../src/lib/attention";
+import {
+  attentionFieldFor,
+  attentionScore,
+  extractAttentionResponse,
+  formatAttentionScore,
+  pickAttentionCheck,
+} from "../src/lib/attention";
 
 describe("attention verification", () => {
   it("bank questions are universally valid multiple choice with a 25% guess probability", () => {
@@ -8,7 +14,9 @@ describe("attention verification", () => {
     for (const check of ATTENTION_CHECKS) {
       expect(check.options.length).toBe(4);
       expect(check.guessProbability).toBe(0.25);
-      expect(check.options.some((option) => option.value === check.correctValue)).toBe(true);
+      expect(
+        check.options.some((option) => option.value === check.correctValue),
+      ).toBe(true);
     }
   });
 
@@ -16,7 +24,9 @@ describe("attention verification", () => {
     const first = pickAttentionCheck();
     const second = pickAttentionCheck([first.key]);
     expect(first.key).not.toBe(second.key);
-    expect(ATTENTION_CHECKS.some((check) => check.key === first.key)).toBe(true);
+    expect(ATTENTION_CHECKS.some((check) => check.key === first.key)).toBe(
+      true,
+    );
   });
 
   it("builds a single-choice field with shuffled options and embeds the check key", () => {
@@ -38,7 +48,9 @@ describe("attention verification", () => {
     expect(response).toEqual({ checkKey: "sky_color", selectedValue: "blue" });
     expect(cleaned).toEqual({ site_code: "VA-001" });
     expect("_attention" in cleaned).toBe(false);
-    expect(extractAttentionResponse({ site_code: "VA-001" }).response).toBeNull();
+    expect(
+      extractAttentionResponse({ site_code: "VA-001" }).response,
+    ).toBeNull();
   });
 
   it("formats the attention score for the account menu and readiness list", () => {
@@ -50,15 +62,24 @@ describe("attention verification", () => {
   });
 
   it("scores blind guessing at zero and perfect attention at one", () => {
-    const guess = Array.from({ length: 8 }, () => ({ correct: false, guessProbability: 0.25 }));
+    const guess = Array.from({ length: 8 }, () => ({
+      correct: false,
+      guessProbability: 0.25,
+    }));
     expect(attentionScore(guess)).toBe(0);
-    const perfect = Array.from({ length: 8 }, () => ({ correct: true, guessProbability: 0.25 }));
+    const perfect = Array.from({ length: 8 }, () => ({
+      correct: true,
+      guessProbability: 0.25,
+    }));
     expect(attentionScore(perfect)).toBe(1);
     // 2 of 8 correct = indistinguishable from chance
     const chance = [
       { correct: true, guessProbability: 0.25 },
       { correct: true, guessProbability: 0.25 },
-      ...Array.from({ length: 6 }, () => ({ correct: false, guessProbability: 0.25 })),
+      ...Array.from({ length: 6 }, () => ({
+        correct: false,
+        guessProbability: 0.25,
+      })),
     ];
     expect(attentionScore(chance)).toBeCloseTo(0, 5);
     expect(attentionScore([])).toBeNull();

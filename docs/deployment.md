@@ -184,7 +184,7 @@ app but the email cannot yet carry a code on the free tier.
 ### 4b. Administrator allow-list
 
 By default any address can be invited as a workspace administrator. To
-restrict who may *become* an admin (contributor invitations stay open to any
+restrict who may _become_ an admin (contributor invitations stay open to any
 address), configure allow-list patterns — exact emails and/or `@domain`
 suffixes. Two equivalent sources, checked in order:
 

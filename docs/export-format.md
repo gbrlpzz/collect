@@ -30,7 +30,12 @@ project-name_checkpoint-YYYY-MM-DD.zip
 {
   "export_format_version": "1",
   "software_version": "0.1.2",
-  "project": { "id": "...", "organization_id": "...", "name": "...", "status": "active" },
+  "project": {
+    "id": "...",
+    "organization_id": "...",
+    "name": "...",
+    "status": "active"
+  },
   "organization": { "id": "...", "name": "...", "logo_path": null },
   "checkpoint_id": "uuid",
   "created_at": "2026-08-10T09:00:00.000Z",
@@ -60,7 +65,10 @@ One JSON object per line, ordered by `server_received_at`:
   "schema_id": "schema-uuid",
   "contributor_id": "user-uuid",
   "device_id": "device-uuid",
-  "payload": { "site_code": "VA-023", "location": { "latitude": 41.65, "longitude": -4.72, "accuracy": 8 } },
+  "payload": {
+    "site_code": "VA-023",
+    "location": { "latitude": 41.65, "longitude": -4.72, "accuracy": 8 }
+  },
   "client_created_at": "2026-08-09T07:42:11Z",
   "client_timezone": "Europe/Madrid",
   "server_received_at": "2026-08-09T07:45:02Z",

@@ -2,8 +2,19 @@ import { describe, it, expect } from "vitest";
 import { orderFieldsForCollection } from "../src/lib/fieldOrdering";
 import type { FieldDefinition } from "../src/types";
 
-const f = (id: string, key: string, type: FieldDefinition["type"], extra: Partial<FieldDefinition> = {}): FieldDefinition => ({
-  id, key, label: key, type, semantic_uri: null, config: {}, ...extra,
+const f = (
+  id: string,
+  key: string,
+  type: FieldDefinition["type"],
+  extra: Partial<FieldDefinition> = {},
+): FieldDefinition => ({
+  id,
+  key,
+  label: key,
+  type,
+  semantic_uri: null,
+  config: {},
+  ...extra,
 });
 
 describe("collection field ordering", () => {
@@ -15,7 +26,12 @@ describe("collection field ordering", () => {
       f("l1", "notes", "long_text"),
     ];
     const ordered = orderFieldsForCollection(fields);
-    expect(ordered.map((x) => x.key)).toEqual(["site_code", "site_photos", "notes", "people_count"]);
+    expect(ordered.map((x) => x.key)).toEqual([
+      "site_code",
+      "site_photos",
+      "notes",
+      "people_count",
+    ]);
   });
 
   it("leads with media in open datasets (no explicit identifier)", () => {
@@ -25,7 +41,11 @@ describe("collection field ordering", () => {
       f("l1", "notes", "long_text"),
     ];
     const ordered = orderFieldsForCollection(fields);
-    expect(ordered.map((x) => x.key)).toEqual(["audio_clip", "notes", "people_count"]);
+    expect(ordered.map((x) => x.key)).toEqual([
+      "audio_clip",
+      "notes",
+      "people_count",
+    ]);
   });
 
   it("leads with the reference code when a reference layer exists", () => {
@@ -47,11 +67,8 @@ describe("collection field ordering", () => {
     ];
     const ordered = orderFieldsForCollection(fields);
     // Headings lead their section; the identifier stays the first data field.
-    expect(ordered.map((x) => x.type === "heading" ? `H:${x.key}` : x.key)).toEqual([
-      "H:site_section",
-      "site_code",
-      "H:notes_section",
-      "notes",
-    ]);
+    expect(
+      ordered.map((x) => (x.type === "heading" ? `H:${x.key}` : x.key)),
+    ).toEqual(["H:site_section", "site_code", "H:notes_section", "notes"]);
   });
 });

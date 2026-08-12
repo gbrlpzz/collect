@@ -32,15 +32,15 @@ The engineering invariant is:
 
 This includes:
 
-* structured field values
-* photos
-* audio
-* location
-* timestamps
-* provenance metadata
-* schema version
-* contributor identity
-* device identity
+- structured field values
+- photos
+- audio
+- location
+- timestamps
+- provenance metadata
+- schema version
+- contributor identity
+- device identity
 
 The application must never treat network request initiation as successful synchronization.
 
@@ -82,20 +82,20 @@ An administrator creates and manages projects.
 
 They can:
 
-* create a workspace/organization
-* set organization name and logo
-* create projects
-* define project instructions
-* create the collection schema/form
-* publish schema versions
-* invite contributors by email
-* assign contributors to projects
-* see collection and synchronization status
-* ping contributors who have not completed synchronization
-* close/reopen collection
-* export dataset checkpoints
-* download the final dataset
-* inspect project metadata
+- create a workspace/organization
+- set organization name and logo
+- create projects
+- define project instructions
+- create the collection schema/form
+- publish schema versions
+- invite contributors by email
+- assign contributors to projects
+- see collection and synchronization status
+- ping contributors who have not completed synchronization
+- close/reopen collection
+- export dataset checkpoints
+- download the final dataset
+- inspect project metadata
 
 An administrator does not need a spreadsheet/database management interface in MVP.
 
@@ -107,28 +107,28 @@ A contributor collects observations.
 
 They can:
 
-* log in
-* see projects assigned to them
-* download a project for offline use
-* read project instructions
-* start an observation
-* fill fields
-* attach media
-* capture location
-* submit
-* immediately begin another observation
-* see whether their data is saved locally, syncing, or synced
-* manually trigger synchronization
-* confirm when their fieldwork is complete
-* recover their unsynced data if synchronization catastrophically fails
+- log in
+- see projects assigned to them
+- download a project for offline use
+- read project instructions
+- start an observation
+- fill fields
+- attach media
+- capture location
+- submit
+- immediately begin another observation
+- see whether their data is saved locally, syncing, or synced
+- manually trigger synchronization
+- confirm when their fieldwork is complete
+- recover their unsynced data if synchronization catastrophically fails
 
 They cannot:
 
-* edit project schemas
-* see other contributors
-* access the project database
-* export the whole project
-* inspect administrative settings
+- edit project schemas
+- see other contributors
+- access the project database
+- export the whole project
+- inspect administrative settings
 
 The contributor interface should be radically simple.
 
@@ -180,12 +180,12 @@ Authentication state should persist locally so that a contributor who authentica
 
 If authentication expires while the contributor is offline:
 
-* do not block collection
-* do not delete anything
-* allow access to previously cached assigned projects
-* queue submissions normally
-* attempt token refresh when connectivity returns
-* only then attempt synchronization
+- do not block collection
+- do not delete anything
+- allow access to previously cached assigned projects
+- queue submissions normally
+- attempt token refresh when connectivity returns
+- only then attempt synchronization
 
 Authentication failure must never invalidate locally saved fieldwork.
 
@@ -273,13 +273,13 @@ Do not attempt to reproduce arbitrary web-form builders.
 
 The schema must remain predictable enough that collected datasets can later feed:
 
-* statistical analysis
-* GIS
-* computer vision
-* machine learning
-* ontology mapping
-* labeling systems
-* agentic pipelines
+- statistical analysis
+- GIS
+- computer vision
+- machine learning
+- ontology mapping
+- labeling systems
+- agentic pipelines
 
 Every field has a permanent machine identifier independent of its visible label.
 
@@ -772,16 +772,16 @@ Outbox record:
 
 ```ts
 {
-  id,
-  operationType,
-  entityId,
-  projectId,
-  attempts,
-  createdAt,
-  nextAttemptAt,
-  lastAttemptAt,
-  lastError,
-  state
+  (id,
+    operationType,
+    entityId,
+    projectId,
+    attempts,
+    createdAt,
+    nextAttemptAt,
+    lastAttemptAt,
+    lastError,
+    state);
 }
 ```
 

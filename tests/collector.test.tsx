@@ -252,7 +252,8 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
       people_count: { value: 3, unit: null },
     };
     function StatefulHarness() {
-      const [draft, setDraft] = React.useState<Record<string, unknown>>(initialDraft);
+      const [draft, setDraft] =
+        React.useState<Record<string, unknown>>(initialDraft);
       return (
         <Collector
           project={project}
@@ -291,8 +292,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         .getAllByRole("button")
         .find(
           (button) =>
-            button.textContent &&
-            !/continue|back/i.test(button.textContent),
+            button.textContent && !/continue|back/i.test(button.textContent),
         );
       expect(option).toBeTruthy();
       fireEvent.click(option!);
@@ -318,8 +318,21 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
 
   it("skips the quick check for very short forms", () => {
     const shortFields: FieldDefinition[] = [
-      { id: "s1", key: "site_code", label: "Site code", type: "short_text", required: true, semantic_uri: null },
-      { id: "n1", key: "notes", label: "Notes", type: "long_text", semantic_uri: null },
+      {
+        id: "s1",
+        key: "site_code",
+        label: "Site code",
+        type: "short_text",
+        required: true,
+        semantic_uri: null,
+      },
+      {
+        id: "n1",
+        key: "notes",
+        label: "Notes",
+        type: "long_text",
+        semantic_uri: null,
+      },
     ];
     render(
       <Collector
