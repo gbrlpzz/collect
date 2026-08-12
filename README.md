@@ -1,6 +1,6 @@
 # collect
 
-**Field data collection that never loses an observation.**
+**Offline-first field data collection for scientific fieldwork.**
 
 `collect` is a mobile-first, offline-first field data collector for scientific research, ecological monitoring, territorial work, surveys, inventories, and structured observation — built for places where connectivity is unreliable.
 
