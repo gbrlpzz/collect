@@ -106,6 +106,7 @@ export function SegmentedControl({
   describedBy,
   required = false,
   invalid = false,
+  autoFocus = false,
 }: {
   options: SegmentOption[];
   value: string | undefined;
@@ -115,6 +116,7 @@ export function SegmentedControl({
   describedBy?: string;
   required?: boolean;
   invalid?: boolean;
+  autoFocus?: boolean;
 }) {
   return (
     <div
@@ -125,7 +127,7 @@ export function SegmentedControl({
       aria-required={required || undefined}
       aria-invalid={invalid || undefined}
     >
-      {options.map((option) => {
+      {options.map((option, index) => {
         const selected = value === option.value;
         return (
           <button
@@ -133,6 +135,7 @@ export function SegmentedControl({
             key={option.value}
             className={selected ? "segmented-control-selected" : ""}
             aria-pressed={selected}
+            autoFocus={autoFocus && index === 0}
             onClick={() => onChange(option.value)}
           >
             {option.label}

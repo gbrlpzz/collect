@@ -19,6 +19,7 @@ Reference the official guidance when making UI decisions:
 - Keep the active collection surface focused on the observation, not queue internals or admin metrics.
 - Make local-save, waiting, syncing, and synced states visible in words.
 - Make the primary path one gesture wherever the action is unambiguous: surface switching is direct, a sync-status tap also starts sync, and completed date/location inputs advance without a redundant Continue.
+- Focus the first meaningful editable control when a screen, step, or dialog opens; prefilled context fields do not steal focus from the first field the user needs to enter.
 - Respect system font scaling, light/dark appearance, reduced motion, keyboard navigation, and focus visibility.
 - Avoid animation that delays data entry or obscures whether a write completed.
 - Treat offline and error states as normal product states with factual copy, not alarming decoration.

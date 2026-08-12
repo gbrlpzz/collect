@@ -1,11 +1,27 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { AuthScreen } from "../src/components/AuthScreen";
 import { Collector } from "../src/components/Collector";
 import { NewProjectWizard } from "../src/components/NewProjectWizard";
 import { ProjectOverview } from "../src/components/ProjectOverview";
 import { TopBar } from "../src/components/TopBar";
+import { EmailPrompt } from "../src/components/ui";
 import type { FieldDefinition, Project } from "../src/types";
+
+const authMocks = vi.hoisted(() => ({
+  sendMagicLink: vi.fn().mockResolvedValue(undefined),
+  verifySignInCode: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../src/lib/supabaseClient", () => ({
+  authCallbackError: () => null,
+  isStandalonePwa: () => false,
+  pendingAuthEmail: () => "",
+  rememberAuthEmail: () => undefined,
+  sendMagicLink: authMocks.sendMagicLink,
+  verifySignInCode: authMocks.verifySignInCode,
+}));
 
 const project: Project = {
   id: "shortcut-project",
@@ -23,6 +39,46 @@ const project: Project = {
 };
 
 describe("low-friction primary actions", () => {
+  it("focuses the login email field as soon as the screen opens", () => {
+    render(<AuthScreen configured role="contributor" />);
+
+    expect(document.activeElement).toBe(screen.getByLabelText("Email address"));
+  });
+
+  it("submits login from the focused email field and auto-verifies a complete code", async () => {
+    render(<AuthScreen configured role="contributor" />);
+    const emailInput = screen.getByLabelText("Email address");
+    fireEvent.change(emailInput, { target: { value: "field@example.com" } });
+    fireEvent.submit(emailInput.closest("form")!);
+
+    await waitFor(() =>
+      expect(authMocks.sendMagicLink).toHaveBeenCalledWith("field@example.com"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /enter the code/i }));
+    fireEvent.change(screen.getByLabelText(/6-digit code/i), {
+      target: { value: "123456" },
+    });
+
+    await waitFor(() =>
+      expect(authMocks.verifySignInCode).toHaveBeenCalledWith(
+        "field@example.com",
+        "123456",
+      ),
+    );
+  });
+
+  it("focuses a modal email field without a second tap", () => {
+    render(
+      <EmailPrompt
+        title="Add contributor"
+        onSubmit={() => undefined}
+        onCancel={() => undefined}
+      />,
+    );
+
+    expect(document.activeElement).toBe(screen.getByLabelText("Email address"));
+  });
+
   it("switches from contributor to admin in one top-bar tap", () => {
     const onModeChange = vi.fn();
     render(
@@ -98,7 +154,9 @@ describe("low-friction primary actions", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Observation date"), {
+    const dateInput = screen.getByLabelText("Observation date");
+    expect(document.activeElement).toBe(dateInput);
+    fireEvent.change(dateInput, {
       target: { value: "2026-08-12" },
     });
 
@@ -168,7 +226,14 @@ describe("low-friction primary actions", () => {
     const onPublish = vi.fn();
     render(<NewProjectWizard onBack={() => undefined} onPublish={onPublish} />);
 
+    expect(document.activeElement).toBe(screen.getByLabelText("Project name"));
+
     fireEvent.click(screen.getByRole("button", { name: /^continue$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /add field/i }));
+    const fieldInputs = screen.getAllByRole("textbox", {
+      name: /field \d+ label/i,
+    });
+    expect(document.activeElement).toBe(fieldInputs[fieldInputs.length - 1]);
     fireEvent.click(screen.getByRole("button", { name: /^continue$/i }));
 
     expect(screen.getByText("Step 3 of 3")).toBeTruthy();

@@ -36,6 +36,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
   const [fields, setFields] = useState<FieldDefinition[]>(() =>
     cloneFieldDefinitions(projectFields),
   );
+  const [focusFieldId, setFocusFieldId] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,11 +75,11 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
     );
   const removeField = (id: string) =>
     setFields((current) => current.filter((field) => field.id !== id));
-  const addField = () =>
-    setFields((current) => [
-      ...current,
-      createFieldForType("short_text", current.length + 1),
-    ]);
+  const addField = () => {
+    const field = createFieldForType("short_text", fields.length + 1);
+    setFocusFieldId(field.id);
+    setFields((current) => [...current, field]);
+  };
 
   return (
     <main className="page page-wizard">
@@ -133,6 +134,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
                 value={projectName}
                 onChange={(event) => setProjectName(event.target.value)}
                 placeholder="e.g. Valladolid Rural Houses"
+                autoFocus={step === 1}
               />
             </label>
             <label>
@@ -187,6 +189,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
                         className="builder-inline-input"
                         value={field.label}
                         aria-label={`Field ${index + 1} label`}
+                        autoFocus={index === 0 || field.id === focusFieldId}
                         onChange={(event) =>
                           updateField(field.id, { label: event.target.value })
                         }
@@ -276,6 +279,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
                 value={emails}
                 onChange={(event) => setEmails(event.target.value)}
                 rows={5}
+                autoFocus
               />
             </label>
             <div className="invite-preview">

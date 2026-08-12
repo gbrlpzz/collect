@@ -473,6 +473,7 @@ function SchemaDraftEditor({
   onPublished: (project: Project) => void;
 }) {
   const [fields, setFields] = useState<FieldDefinition[]>(draft.fields);
+  const [focusFieldId, setFocusFieldId] = useState<string | null>(null);
   const updateField = (id: string, patch: Partial<FieldDefinition>) =>
     setFields((current) =>
       current.map((field) =>
@@ -481,6 +482,11 @@ function SchemaDraftEditor({
     );
   const removeField = (id: string) =>
     setFields((current) => current.filter((field) => field.id !== id));
+  const addField = () => {
+    const field = createFieldForType("short_text", fields.length + 1);
+    setFocusFieldId(field.id);
+    setFields((current) => [...current, field]);
+  };
   const publish = async () => {
     if (!fields.some((field) => field.type !== "heading")) {
       onToast("Add at least one data field before publishing");
@@ -525,6 +531,7 @@ function SchemaDraftEditor({
                 className="builder-inline-input"
                 value={field.label}
                 aria-label={`Draft field ${index + 1} label`}
+                autoFocus={index === 0 || field.id === focusFieldId}
                 onChange={(event) =>
                   updateField(field.id, { label: event.target.value })
                 }
@@ -583,15 +590,7 @@ function SchemaDraftEditor({
           </div>
         ))}
       </div>
-      <button
-        className="add-field-row"
-        onClick={() =>
-          setFields((current) => [
-            ...current,
-            createFieldForType("short_text", current.length + 1),
-          ])
-        }
-      >
+      <button className="add-field-row" onClick={addField}>
         <Icon name="plus" size={17} /> Add field
       </button>
       <div className="schema-builder-note">
