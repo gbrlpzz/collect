@@ -7,7 +7,6 @@ interface ProjectOverviewProps {
   observations: Observation[];
   onNavigate: (view: View) => void;
   onOpenSync: () => void;
-  onFinishFieldwork: () => void;
 }
 
 export function ProjectOverview({
@@ -15,7 +14,6 @@ export function ProjectOverview({
   observations,
   onNavigate,
   onOpenSync,
-  onFinishFieldwork,
 }: ProjectOverviewProps) {
   const waitingCount = observations.filter(
     (item) => item.status !== "SYNCED",
@@ -57,28 +55,19 @@ export function ProjectOverview({
         <button
           className="list-row"
           onClick={onOpenSync}
-          aria-label={
-            waitingCount ? "Sync saved observations now" : "Open sync status"
-          }
+          aria-label="View sync status"
         >
           <span className="list-row-copy">
             <strong>
               {waitingCount
-                ? `Sync ${waitingCount} waiting observation${waitingCount === 1 ? "" : "s"}`
+                ? `${waitingCount} waiting to send`
                 : "Up to date"}
             </strong>
             <span>
               {waitingCount
-                ? "Tap to sync now"
+                ? "Syncing automatically"
                 : `${syncedCount} observations synced`}
             </span>
-          </span>
-          <Icon name="chevron-right" size={17} />
-        </button>
-        <button className="list-row" onClick={onFinishFieldwork}>
-          <span className="list-row-copy">
-            <strong>Finish fieldwork</strong>
-            <span>Confirm that all saved observations have synced</span>
           </span>
           <Icon name="chevron-right" size={17} />
         </button>
@@ -90,10 +79,10 @@ export function ProjectOverview({
         </summary>
         <ul>
           <li>
-            <strong>Location</strong> is captured when you save an observation,
-            never in the background. If it is unavailable, you can retry with{" "}
-            <em>Capture location</em>. Latitude, longitude, accuracy, and
-            capture time are stored with that observation.
+            <strong>Location</strong> is captured automatically when an
+            observation starts and refreshed when it is saved. Latitude,
+            longitude, accuracy, and capture time are stored with that
+            observation.
           </li>
           <li>
             <strong>Time</strong>: each observation stores the moment you saved

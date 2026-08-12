@@ -181,26 +181,6 @@ h3 {
 .topbar-admin .surface-label {
   color: var(--text);
 }
-.surface-switch {
-  min-height: var(--control-height);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0 6px;
-  border-radius: 8px;
-  color: var(--secondary);
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1;
-}
-.surface-switch:hover,
-.surface-switch:focus-visible {
-  color: var(--text);
-  background: var(--grouped);
-}
-.surface-switch .surface-label {
-  color: inherit;
-}
 .account-button {
   min-height: var(--control-height);
   max-width: min(260px, 45vw);
@@ -1038,6 +1018,21 @@ h3 {
     background: rgba(0, 0, 0, 0.48);
   }
 }
+@media (max-width: 680px) {
+  .collection-context {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .project-picker-label select {
+    width: 100%;
+    max-width: none;
+  }
+  .collection-details-button {
+    align-self: flex-start;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .button,
   .project-row,

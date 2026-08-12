@@ -5,20 +5,18 @@ import { Icon } from "./Icon";
 interface TopBarProps {
   mode: AppMode;
   view: View;
-  onModeChange: (mode: AppMode) => void;
   onNavigate: (view: View) => void;
-  canAdmin?: boolean;
   userEmail?: string | null;
   isPreview?: boolean;
   onSignOut?: () => void;
 }
 
+/** Admin and fieldwork are separate app surfaces, selected by the installed
+ * app / entry URL rather than a workspace switcher in the collection UI. */
 export function TopBar({
   mode,
   view,
-  onModeChange,
   onNavigate,
-  canAdmin = true,
   userEmail,
   isPreview = false,
   onSignOut,
@@ -28,8 +26,6 @@ export function TopBar({
   const isAdmin = mode === "admin";
   const accountLabel = isPreview ? "Preview" : (userEmail ?? "Account");
   const surfaceLabel = isAdmin ? "Admin" : "Fieldwork";
-  const alternateMode = isAdmin ? "contributor" : "admin";
-  const alternateSurfaceLabel = isAdmin ? "Fieldwork" : "Admin";
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -51,11 +47,6 @@ export function TopBar({
     };
   }, [menuOpen]);
 
-  const chooseMode = (nextMode: AppMode) => {
-    onModeChange(nextMode);
-    setMenuOpen(false);
-  };
-
   return (
     <header
       className={`topbar topbar-${view} topbar-${mode}`}
@@ -70,19 +61,7 @@ export function TopBar({
           >
             collect<span className="wordmark-dot">.</span>
           </button>
-          {canAdmin ? (
-            <button
-              type="button"
-              className="surface-switch"
-              onClick={() => chooseMode(alternateMode)}
-              aria-label={`Switch to ${alternateSurfaceLabel}`}
-            >
-              <span className="surface-label">{surfaceLabel}</span>
-              <Icon name="arrow-right" size={14} />
-            </button>
-          ) : (
-            <span className="surface-label">{surfaceLabel}</span>
-          )}
+          <span className="surface-label">{surfaceLabel}</span>
         </div>
 
         <div className="topbar-actions" ref={menuRef}>
@@ -101,7 +80,7 @@ export function TopBar({
               className="account-menu"
               id="account-menu"
               role="menu"
-              aria-label="Account and workspace"
+              aria-label="Account"
             >
               <div className="account-menu-heading">
                 {isPreview ? "Interface preview" : (userEmail ?? "Signed in")}

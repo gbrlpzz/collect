@@ -34,7 +34,10 @@ export async function commitLocalObservation({
   // A fresh location fix is captured at submit time when the browser permits it.
   // Failure to obtain a fix never blocks the durable local receipt.
   let submittedValues = values;
-  if ("geolocation" in navigator) {
+  const hasLocationField = project.fields.some(
+    (field) => field.type === "location",
+  );
+  if (hasLocationField && "geolocation" in navigator) {
     const freshLocation = await new Promise<Record<string, unknown> | null>(
       (resolve) => {
         navigator.geolocation.getCurrentPosition(

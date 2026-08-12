@@ -463,13 +463,13 @@ export function FieldRenderer({
             </>
           )}
         </div>
-        {!location && (
+        {!location && problem && (
           <Button
             variant="secondary"
-            aria-label={`Capture ${field.label}`}
+            aria-label={`Retry ${field.label}`}
             onClick={onCaptureLocation}
           >
-            Capture now
+            Try again
           </Button>
         )}
         {location && <Icon name="check" size={20} />}

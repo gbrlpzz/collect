@@ -23,7 +23,7 @@ Most survey software is either a generic form builder or a fragile online tool. 
 
 ## What it feels like
 
-**Contributors** sign in with a magic link, open their assigned project, and collect. Photos and location work fully offline. The sync sheet says, in plain words: _saved on this device_, _waiting_, _syncing_, _synced_. Finish Fieldwork confirms zero pending operations before the administrator sees them as ready.
+**Contributors** sign in with a magic link and see **New observation** first. The assigned project is quiet context (and only becomes a picker when there is more than one), so recording what they observed is always the shortest path. Photos and location work fully offline; location is captured automatically in the background. The outbox syncs in the background and the sync sheet is available only for status, retry, and recovery. Server readiness follows durable receipts automatically — contributors do not announce that syncing is complete.
 
 **Administrators** create a workspace, define the form from a deliberately small set of strongly typed fields (text, number, single/multiple choice, yes/no/unknown, date, datetime, location, photo, audio, repeatable groups), publish immutable schema versions, invite contributors by email, watch device-reported readiness, ping stragglers, and export reproducible checkpoints — or a final dataset once every contributor is confirmed.
 

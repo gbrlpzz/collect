@@ -18,11 +18,30 @@ Reference the official guidance when making UI decisions:
 - Use sheets, concise secondary actions, and progressive disclosure for supporting detail.
 - Keep the active collection surface focused on the observation, not queue internals or admin metrics.
 - Make local-save, waiting, syncing, and synced states visible in words.
-- Make the primary path one gesture wherever the action is unambiguous: surface switching is direct, a sync-status tap also starts sync, and completed date/location inputs advance without a redundant Continue.
+- Put the frequent, consequential action first: the contributor opens on **New observation**, while project context and sync details remain secondary. A sync-status tap may start a retry, but normal synchronization is automatic.
 - Focus the first meaningful editable control when a screen, step, or dialog opens; prefilled context fields do not steal focus from the first field the user needs to enter.
 - Respect system font scaling, light/dark appearance, reduced motion, keyboard navigation, and focus visibility.
 - Avoid animation that delays data entry or obscures whether a write completed.
 - Treat offline and error states as normal product states with factual copy, not alarming decoration.
+
+## Product hierarchy
+
+The two installable identities are separate surfaces:
+
+- **collect** is the contributor app. Its launch surface is capture-first: start
+  or resume an observation, with project context below it.
+- **collect Admin** is the operations app. Its launch surface is project and
+  readiness management.
+
+The role is fixed by the app entry URL (`?role=admin` for the admin manifest) and
+is not a control in the account menu. An administrator can preview a contributor
+form from the schema editor, but that temporary preview is not a workspace
+switch. Local state may travel between the installs for recovery; it cannot
+change the active surface.
+
+Synchronization is an implementation detail. The contributor sees factual status
+near the project and can open a secondary sheet for details or recovery, while
+health probes, retries, and server readiness happen automatically.
 
 ## Native iOS interaction contract
 
@@ -144,8 +163,10 @@ form — only answer the visible question and tap the obvious next action.
 
 ### How the flow behaves
 
-- **Sequential steps.** Each field definition is one screen. Section headings
-  become brief full-screen section intros.
+- **Sequential steps.** Each visible data question is one screen. Section headings
+  become brief full-screen section intros. Location fields are excluded from the
+  sequence: they are provenance captured automatically when an observation opens
+  and refreshed at save.
 - **No page movement.** The screen height is fixed; content is centered and the
   page never scrolls (long text and repeatable rows scroll inside their step).
 - **Capsule geometry.** Answers and actions use fully rounded capsules
@@ -153,9 +174,9 @@ form — only answer the visible question and tap the obvious next action.
   beside numeric fields, and large thumbnails for media.
 - **Auto-advance.** A single answer (choice, tri-state, date, or datetime)
   advances automatically after ~200 ms. Multi-select, text, number, and media
-  wait for an explicit **Continue**. Location requests its permission and
-  captures automatically when its step opens; the visible action is a retry
-  path only when the browser cannot provide it.
+  wait for an explicit **Continue**. Location never becomes a contributor step;
+  the browser permission request and capture stay in the background. A problem
+  is surfaced only at the save boundary when the schema requires coordinates.
 - **One primary action.** The bottom bar holds **Back** (chevron) and a single
   prominent capsule **Continue**; the final step becomes **Save observation**.
 - **Required clarity.** Required steps disable Continue until answered, with a
@@ -183,6 +204,13 @@ form — only answer the visible question and tap the obvious next action.
   one tap away. Scope: single-choice, tri-state, date, and datetime steps.
 - **Capsule answers instead of list rows** keep the Apple geometry while giving
   options a 56 pt target — larger than the 44 pt minimum — for glove use.
+- **Invisible provenance instead of a location step** deviates from treating every
+  schema field as an interactive page. This is better for fieldwork because
+  coordinates are device context, not an observation the contributor should
+  manually navigate to. Scope: contributor collection only; required failures
+  remain actionable at save and optional failures do not interrupt capture. Risk
+  check: the app records the capture timestamp and accuracy, and never hides a
+  required failure behind a successful local receipt.
 
 ## Colour: the house neutral greys
 
@@ -193,18 +221,18 @@ anywhere. The two installable surfaces are locked to distinct appearances so
 the field surface is stable in sunlight and the operations console reads as a
 different tool:
 
-| Token                | Contributor (light)          | Admin (dark)                    |
-| -------------------- | ---------------------------- | ------------------------------- |
-| Canvas               | `#f5f5f7`                    | `#000000`                       |
-| Paper                | `#ffffff`                    | `#1c1c1e`                       |
-| Ink (text)           | `#1d1d1f`                    | `#f5f5f7`                       |
-| Dim (secondary)      | `rgba(60,60,67,.60)`         | `rgba(235,235,245,.60)`         |
-| Tertiary             | `rgba(60,60,67,.42)`         | `rgba(235,235,245,.36)`         |
-| Separator / light    | `rgba(60,60,67,.29)` / `.18` | `rgba(235,235,245,.28)` / `.16` |
+| Token                | Contributor (light)                 | Admin (dark)                    |
+| -------------------- | ----------------------------------- | ------------------------------- |
+| Canvas               | `#f5f5f7`                           | `#000000`                       |
+| Paper                | `#ffffff`                           | `#1c1c1e`                       |
+| Ink (text)           | `#1d1d1f`                           | `#f5f5f7`                       |
+| Dim (secondary)      | `rgba(60,60,67,.60)`                | `rgba(235,235,245,.60)`         |
+| Tertiary             | `rgba(60,60,67,.42)`                | `rgba(235,235,245,.36)`         |
+| Separator / light    | `rgba(60,60,67,.29)` / `.18`        | `rgba(235,235,245,.28)` / `.16` |
 | Fill / fill-strong   | `rgba(118,118,128,.12)` / `#e5e5ea` | `rgba(118,118,128,.28)` / `.46` |
-| Chrome (nav/glass)   | `rgba(245,245,247,.86)`      | `rgba(28,28,30,.86)`            |
-| Accent / accent text | `#000` / `#fff`              | `#fff` / `#000`                 |
-| Destructive          | `#d70015`                    | `#ff6961`                       |
+| Chrome (nav/glass)   | `rgba(245,245,247,.86)`             | `rgba(28,28,30,.86)`            |
+| Accent / accent text | `#000` / `#fff`                     | `#fff` / `#000`                 |
+| Destructive          | `#d70015`                           | `#ff6961`                       |
 
 The surface is fixed before first paint (`data-collect-surface` on `<html>`,
 theme-color and status-bar metadata included) so the installed PWA chrome

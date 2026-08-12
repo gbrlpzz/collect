@@ -507,7 +507,10 @@ export async function loadProjectReadiness(
     const pending =
       Number(device?.pending_submissions ?? 0) +
       Number(device?.pending_media ?? 0);
-    const ready = Boolean(device?.fieldwork_complete && pending === 0);
+    // Readiness is a server-observed fact: all durable operations have
+    // arrived. Contributors should never have to press a separate “finished
+    // syncing” control just to make an already-empty queue visible to admins.
+    const ready = Boolean(device?.last_seen_at && pending === 0);
     return {
       id: member.user_id,
       email: invite?.email ?? `Contributor ${member.user_id.slice(0, 6)}`,
