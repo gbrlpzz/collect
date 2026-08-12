@@ -160,6 +160,27 @@ magic-link option is off by default and must be deliberately selected to send
 an email. Keep database migrations and function deployments in the deployment
 checklist; a frontend-only deploy must not be treated as a backend migration.
 
+### 4a. Email delivery limits and customization
+
+Supabase's **free tier** locks email configuration: custom SMTP, custom email
+templates, and rate-limit changes are silently ignored (HTTP 200 but not
+applied). Concretely the free tier caps `rate_limit_email_sent` at **2 emails
+per hour** project-wide and always uses the stock magic-link template (link
+only, **no 6-digit code**).
+
+Unlocking codes + sane limits requires either:
+
+- **Upgrade to Pro** (custom SMTP/templates/limits become available), then
+  apply `docs/magic-link-email-template.html` (token-hash link + code) via
+  the dashboard or `PATCH /config/auth`, and raise the rate limit; or
+- **Custom SMTP on Pro** (e.g. Resend — set `smtp_host=smtp.resend.com`,
+  `smtp_port=465`, user/pass = the Resend API key, and a verified sender
+  domain).
+
+Until then the magic-link (fragment-flow) sign-in works and is correctly
+redirected to the deployed origin; the email-code path is implemented in the
+app but the email cannot yet carry a code on the free tier.
+
 ### 4b. Administrator allow-list
 
 By default any address can be invited as a workspace administrator. To
