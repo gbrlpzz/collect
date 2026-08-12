@@ -1,7 +1,100 @@
-import { useState } from "react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import { Icon } from "../Icon";
 import { Button, ClearButton } from "./controls";
+
+const FOCUSABLE_SELECTOR =
+  "button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex='-1'])";
+
+export function ModalSurface({
+  children,
+  onClose,
+  labelledBy,
+  describedBy,
+  className = "",
+  kind = "sheet",
+  role = "dialog",
+}: {
+  children: ReactNode;
+  onClose: () => void;
+  labelledBy: string;
+  describedBy?: string;
+  className?: string;
+  kind?: "sheet" | "dialog";
+  role?: "dialog" | "alertdialog";
+}) {
+  const surfaceRef = useRef<HTMLElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const previousFocusRef = useRef<HTMLElement | null>(
+    typeof document !== "undefined" &&
+      document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null,
+  );
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const surface = surfaceRef.current;
+      const preferred = surface?.querySelector<HTMLElement>(
+        "[data-modal-autofocus]",
+      );
+      (
+        preferred ?? surface?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
+      )?.focus();
+    });
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") onCloseRef.current();
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", closeOnEscape);
+      if (previousFocusRef.current?.isConnected)
+        previousFocusRef.current.focus();
+    };
+  }, []);
+
+  const keepFocusInside = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key !== "Tab") return;
+    const focusable = Array.from(
+      surfaceRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ??
+        [],
+    );
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
+  return (
+    <div
+      className={kind === "sheet" ? "sheet-backdrop" : "dialog-backdrop"}
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        ref={surfaceRef}
+        className={`${kind === "sheet" ? "bottom-sheet" : "confirmation-dialog"} ${className}`.trim()}
+        role={role}
+        aria-modal="true"
+        aria-labelledby={labelledBy}
+        aria-describedby={describedBy}
+        onKeyDown={keepFocusInside}
+      >
+        {children}
+      </section>
+    </div>
+  );
+}
 
 export function StatusDot({
   tone = "neutral",
@@ -49,37 +142,29 @@ export function ConfirmationDialog({
   onCancel,
 }: ConfirmationDialogProps) {
   return (
-    <div
-      className="dialog-backdrop"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onCancel();
-      }}
+    <ModalSurface
+      kind="dialog"
+      role="alertdialog"
+      onClose={onCancel}
+      labelledBy="confirmation-dialog-title"
+      describedBy="confirmation-dialog-message"
     >
-      <section
-        className="confirmation-dialog"
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="confirmation-dialog-title"
-        aria-describedby="confirmation-dialog-message"
-      >
-        <div className="dialog-copy">
-          <h2 id="confirmation-dialog-title">{title}</h2>
-          <p id="confirmation-dialog-message">{message}</p>
-        </div>
-        <div className="dialog-actions">
-          <Button
-            variant={destructive ? "destructive" : "primary"}
-            onClick={onConfirm}
-          >
-            {confirmLabel}
-          </Button>
-          <Button variant="secondary" autoFocus onClick={onCancel}>
-            {cancelLabel}
-          </Button>
-        </div>
-      </section>
-    </div>
+      <div className="dialog-copy">
+        <h2 id="confirmation-dialog-title">{title}</h2>
+        <p id="confirmation-dialog-message">{message}</p>
+      </div>
+      <div className="dialog-actions">
+        <Button
+          variant={destructive ? "destructive" : "primary"}
+          onClick={onConfirm}
+        >
+          {confirmLabel}
+        </Button>
+        <Button variant="secondary" data-modal-autofocus onClick={onCancel}>
+          {cancelLabel}
+        </Button>
+      </div>
+    </ModalSurface>
   );
 }
 
@@ -104,66 +189,58 @@ export function EmailPrompt({
   const [email, setEmail] = useState("");
 
   return (
-    <div
-      className="dialog-backdrop"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onCancel();
-      }}
+    <ModalSurface
+      kind="dialog"
+      onClose={onCancel}
+      labelledBy="email-prompt-title"
     >
-      <section
-        className="confirmation-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="email-prompt-title"
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          const address = email.trim();
+          if (address) onSubmit(address);
+        }}
       >
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            const address = email.trim();
-            if (address) onSubmit(address);
-          }}
-        >
-          <div className="dialog-copy">
-            <h2 id="email-prompt-title">{title}</h2>
-            {message && <p>{message}</p>}
-            <label className="auth-label" htmlFor="email-prompt-input">
-              Email address
-            </label>
-            <div className="input-with-clear">
-              <input
-                id="email-prompt-input"
-                className="field-input"
-                type="email"
-                required
-                autoComplete="email"
-                inputMode="email"
-                autoCapitalize="none"
-                spellCheck={false}
-                autoFocus
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
+        <div className="dialog-copy">
+          <h2 id="email-prompt-title">{title}</h2>
+          {message && <p>{message}</p>}
+          <label className="auth-label" htmlFor="email-prompt-input">
+            Email address
+          </label>
+          <div className="input-with-clear">
+            <input
+              id="email-prompt-input"
+              className="field-input"
+              type="email"
+              required
+              autoComplete="email"
+              inputMode="email"
+              autoCapitalize="none"
+              spellCheck={false}
+              autoFocus
+              data-modal-autofocus
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+            />
+            {email && (
+              <ClearButton
+                label="Clear email address"
+                onClick={() => setEmail("")}
               />
-              {email && (
-                <ClearButton
-                  label="Clear email address"
-                  onClick={() => setEmail("")}
-                />
-              )}
-            </div>
+            )}
           </div>
-          <div className="dialog-actions">
-            <Button type="submit" variant="primary" disabled={!email.trim()}>
-              {confirmLabel}
-            </Button>
-            <Button variant="secondary" onClick={onCancel}>
-              {cancelLabel}
-            </Button>
-          </div>
-        </form>
-      </section>
-    </div>
+        </div>
+        <div className="dialog-actions">
+          <Button type="submit" variant="primary" disabled={!email.trim()}>
+            {confirmLabel}
+          </Button>
+          <Button variant="secondary" onClick={onCancel}>
+            {cancelLabel}
+          </Button>
+        </div>
+      </form>
+    </ModalSurface>
   );
 }
 

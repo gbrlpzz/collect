@@ -113,19 +113,20 @@ through two Edge Functions:
   allow-list (`ALLOWED_EMAIL_PATTERNS` secret or the
   `private.allowed_admin_patterns` table).
 
-Sign-in itself has three interchangeable paths, all of which work in any
-container (browser, installed PWA, desktop):
+Sign-in has three interchangeable paths. The browser leads with the email link
+and the installed iOS app leads with the device-link code so the default always
+matches the current container:
 
-1. **Password** (primary) — set once after the first magic-link/invitation
-   sign-in; then `email + password` works everywhere with no email round-trip.
-2. **Magic link** — the deployed origin is the only allowed redirect
+1. **Magic link** (browser default) — the deployed origin is the only allowed redirect
    (`site_url` + `uri_allow_list`); the client refuses to send links that
    would return to localhost.
-3. **Device-link code** — a signed-in web session mints a short-lived,
+2. **Device-link code** (installed iOS default) — a signed-in web session mints a short-lived,
    single-use code (`requestDeviceLinkCode`); the installed app enters it
    (`linkDeviceSession`) and the `link-session` Edge Function hands back a
    one-time magic-link token that the current container verifies itself.
    This bridges the iOS web/PWA storage split without email.
+3. **Password** (secondary) — set once after the first magic-link/invitation
+   sign-in; then `email + password` works everywhere without an email round-trip.
 
 Device-link codes are stored only as SHA-256 digests. Creation and atomic
 single-use consumption go through service-role-only security-definer RPCs;

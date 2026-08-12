@@ -49,7 +49,7 @@ Most survey software is either a generic form builder or a fragile online tool. 
 
 **Everything recorded automatically.** Location is captured with every observation after one permission grant (no tapping, no consent prompts per survey). Device model (down to the iPhone/iPad generation), operating system, browser, screen, connection, battery, timezone, and language are recorded silently with every record as provenance. No collection capability ever blocks the save.
 
-**Sign-in that works everywhere.** Password sign-in is the primary flow and works identically in a browser or an installed app. Magic links and one-time email codes remain available, and a device-link code transfers an already-signed-in web session to the installed app without email. Accounts are invite-only: only administrators can invite administrators (optionally restricted to an allow-list), and administrators invite contributors freely.
+**Sign-in that works everywhere.** Browser sign-in starts with a passwordless email link, while the installed iOS app starts with a device-link code because Safari and Home Screen apps keep separate sessions. Password sign-in remains available as a secondary option. Accounts are invite-only: only administrators can invite administrators (optionally restricted to an allow-list), and administrators invite contributors freely.
 
 **Two installable apps, one codebase.** The white-tile **collect** app is the contributor surface. The black-tile **collect Admin** app opens straight into the operations console. Both install from Safari on iPhone.
 

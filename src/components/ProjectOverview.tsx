@@ -93,7 +93,7 @@ export function ProjectOverview({
           <Icon name="lock" size={17} />
           <span className="privacy-summary-copy">
             <strong>Data and privacy</strong>
-            <span>What is recorded and when it leaves this device</span>
+            <span>What is recorded, why, and who can access it</span>
           </span>
           <Icon name="chevron-down" size={16} />
         </summary>
@@ -113,12 +113,19 @@ export function ProjectOverview({
             <dt>Device</dt>
             <dd>
               A random install ID plus device, operating system, browser,
-              screen, connection, battery, and language information.
+              screen, connection, battery, and language information used for
+              provenance and recovery.
             </dd>
           </div>
           <div>
             <dt>Media</dt>
             <dd>Original photos and audio you choose to add.</dd>
+          </div>
+          <div>
+            <dt>Access</dt>
+            <dd>
+              Only the assigned project and its authorized administrators.
+            </dd>
           </div>
           <div>
             <dt>Transfer</dt>

@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import type { KeyboardEvent } from "react";
+import { useEffect, useState } from "react";
 import { requestDeviceLinkCode } from "../lib/supabaseClient";
 import { Icon } from "./Icon";
-import { Button, IconButton } from "./ui";
+import { Button, IconButton, ModalSurface } from "./ui";
 
 interface DeviceLinkSheetProps {
   onClose: () => void;
@@ -14,8 +13,6 @@ interface DeviceLinkSheetProps {
  * email. The code is single-use and time-boxed.
  */
 export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
-  const sheetRef = useRef<HTMLElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
   const [code, setCode] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -69,50 +66,12 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
     void requestCode();
   }, []);
 
-  useEffect(() => {
-    previousFocusRef.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    return () => {
-      if (previousFocusRef.current?.isConnected)
-        previousFocusRef.current.focus();
-    };
-  }, []);
-
   // Refresh the remaining time once a second while the code is on screen.
   useEffect(() => {
     if (!code) return;
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, [code]);
-
-  useEffect(() => {
-    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [onClose]);
-
-  const keepFocusInside = (event: KeyboardEvent<HTMLElement>) => {
-    if (event.key !== "Tab") return;
-    const focusable = Array.from(
-      sheetRef.current?.querySelectorAll<HTMLElement>(
-        "button:not(:disabled), [href], input:not(:disabled), [tabindex]:not([tabindex='-1'])",
-      ) ?? [],
-    );
-    if (!focusable.length) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  };
 
   const remaining = expiresAt
     ? Math.max(0, Math.ceil((expiresAt - now) / 1000))
@@ -122,83 +81,77 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
   const expired = remaining <= 0;
 
   return (
-    <div
-      className="sheet-backdrop"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
+    <ModalSurface
+      onClose={onClose}
+      labelledBy="device-link-title"
+      className="device-link-sheet"
     >
-      <section
-        ref={sheetRef}
-        className="bottom-sheet device-link-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="device-link-title"
-        onKeyDown={keepFocusInside}
-      >
-        <div className="sheet-handle" />
-        <div className="sheet-heading">
-          <div>
-            <span className="sheet-kicker">Another device</span>
-            <h2 id="device-link-title">Sign in on another device</h2>
-          </div>
-          <IconButton label="Close" icon="x" autoFocus onClick={onClose} />
+      <div className="sheet-handle" />
+      <div className="sheet-heading">
+        <div>
+          <span className="sheet-kicker">Another device</span>
+          <h2 id="device-link-title">Sign in on another device</h2>
         </div>
-        <p className="sheet-copy">
-          In the installed collect app, paste this one-time code. It signs in
-          the app without a password or another email.
+        <IconButton
+          label="Close"
+          icon="x"
+          data-modal-autofocus
+          onClick={onClose}
+        />
+      </div>
+      <p className="sheet-copy">
+        In the installed collect app, paste this one-time code. It signs in the
+        app without a password or another email.
+      </p>
+      {error && (
+        <p className="field-help-error" role="alert">
+          {error}
         </p>
-        {error && (
-          <p className="field-help-error" role="alert">
-            {error}
+      )}
+      {busy && !code ? (
+        <p className="sheet-copy">Creating a code…</p>
+      ) : code ? (
+        <>
+          <div
+            className="device-code"
+            aria-label={`Code ${code}`}
+            aria-live="polite"
+          >
+            {code.split("").map((digit, index) => (
+              <span key={index}>{digit}</span>
+            ))}
+          </div>
+          <p className="device-code-expiry" aria-live="polite">
+            {expired
+              ? "This code has expired. Request a new one."
+              : `Expires in ${minutes}:${String(seconds).padStart(2, "0")}`}
           </p>
-        )}
-        {busy && !code ? (
-          <p className="sheet-copy">Creating a code…</p>
-        ) : code ? (
-          <>
-            <div
-              className="device-code"
-              aria-label={`Code ${code}`}
-              aria-live="polite"
+          <div className="device-link-actions">
+            <Button
+              variant="primary"
+              icon="file"
+              fullWidth
+              onClick={() => void copyCode()}
+              disabled={expired}
             >
-              {code.split("").map((digit, index) => (
-                <span key={index}>{digit}</span>
-              ))}
-            </div>
-            <p className="device-code-expiry" aria-live="polite">
-              {expired
-                ? "This code has expired. Request a new one."
-                : `Expires in ${minutes}:${String(seconds).padStart(2, "0")}`}
-            </p>
-            <div className="device-link-actions">
-              <Button
-                variant="primary"
-                icon="file"
-                fullWidth
-                onClick={() => void copyCode()}
-                disabled={expired}
-              >
-                {copied ? "Code copied" : "Copy code"}
-              </Button>
-              <Button
-                variant="quiet"
-                icon="refresh"
-                fullWidth
-                onClick={() => void requestCode()}
-                disabled={busy}
-                busy={busy}
-              >
-                {busy ? "Creating…" : "New code"}
-              </Button>
-            </div>
-          </>
-        ) : null}
-        <p className="sheet-footnote">
-          The code works once and expires after five minutes.
-        </p>
-      </section>
-    </div>
+              {copied ? "Code copied" : "Copy code"}
+            </Button>
+            <Button
+              variant="quiet"
+              icon="refresh"
+              fullWidth
+              onClick={() => void requestCode()}
+              disabled={busy}
+              busy={busy}
+            >
+              {busy ? "Creating…" : "New code"}
+            </Button>
+          </div>
+        </>
+      ) : null}
+      <p className="sheet-footnote">
+        The code works once and expires after five minutes.
+      </p>
+    </ModalSurface>
   );
 }

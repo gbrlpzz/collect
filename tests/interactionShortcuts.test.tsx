@@ -197,6 +197,27 @@ describe("low-friction primary actions", () => {
     expect(document.activeElement).toBe(screen.getByLabelText("Email address"));
   });
 
+  it("dismisses shared modals with Escape and returns focus", () => {
+    const trigger = document.createElement("button");
+    trigger.textContent = "Open";
+    document.body.append(trigger);
+    trigger.focus();
+    const onCancel = vi.fn();
+    const { unmount } = render(
+      <EmailPrompt
+        title="Add contributor"
+        onSubmit={() => undefined}
+        onCancel={onCancel}
+      />,
+    );
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    unmount();
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
+  });
+
   it("puts starting an observation before project routing", () => {
     const onStartObservation = vi.fn();
     render(
@@ -306,7 +327,7 @@ describe("low-friction primary actions", () => {
       ).toBeTruthy(),
     );
     expect(screen.getByText("14")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: /attention/i }));
+    fireEvent.click(screen.getByText("Attention"));
     expect(screen.getByText(/adjusts for random guessing/i)).toBeTruthy();
   });
 
@@ -326,8 +347,10 @@ describe("low-friction primary actions", () => {
       />,
     );
 
+    expect(screen.getByText("What is recorded")).toBeTruthy();
+    fireEvent.click(screen.getByText("Read the full consent statement"));
     expect(
-      screen.getByRole("heading", { name: "What you agree to" }),
+      screen.getByRole("heading", { name: "Full statement" }),
     ).toBeTruthy();
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
     const accept = screen.getByRole("button", { name: /agree and continue/i });

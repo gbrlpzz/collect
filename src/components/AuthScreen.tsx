@@ -11,6 +11,7 @@ import {
 } from "../lib/supabaseClient";
 import { Icon } from "./Icon";
 import { Button, ClearButton, Eyebrow } from "./ui";
+import { isAppleMobileBrowser, isStandaloneApp } from "../lib/platform";
 
 interface AuthScreenProps {
   configured: boolean;
@@ -19,24 +20,6 @@ interface AuthScreenProps {
   /** After an invite/link sign-in, the account has no password yet. */
   requirePasswordSetup?: boolean;
   onPasswordSet?: () => void;
-}
-
-function isAppleMobileBrowser(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const userAgent = navigator.userAgent;
-  const iPadDesktopMode =
-    navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
-  return /iPhone|iPad|iPod/.test(userAgent) || iPadDesktopMode;
-}
-
-function isStandaloneApp(): boolean {
-  if (typeof window === "undefined" || typeof navigator === "undefined")
-    return false;
-  const standaloneNavigator = navigator as Navigator & { standalone?: boolean };
-  return Boolean(
-    window.matchMedia?.("(display-mode: standalone)").matches ||
-      standaloneNavigator.standalone,
-  );
 }
 
 function isLocalDevelopmentOrigin(): boolean {

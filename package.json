@@ -12,6 +12,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" \"supabase/functions/**/*.ts\" vite.config.ts index.html \"docs/*.md\" README.md package.json",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" \"supabase/functions/**/*.ts\" vite.config.ts index.html \"docs/*.md\" README.md package.json",
     "test": "vitest run",
+    "test:a11y": "vitest run tests/accessibility.test.tsx",
     "check": "npm run format:check && npm test && npm run build",
     "provision": "node scripts/provision.mjs"
   },
@@ -30,6 +31,7 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "6.0.5",
+    "axe-core": "^4.13.0",
     "fake-indexeddb": "6.2.5",
     "jsdom": "^30.0.1",
     "prettier": "3.6.2",

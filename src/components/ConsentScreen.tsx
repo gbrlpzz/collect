@@ -56,27 +56,52 @@ export function ConsentScreen({
         <span className="sheet-kicker">Consent statement v{version}</span>
         <h1 id="consent-title">Review data collection</h1>
         <p className="consent-lede">
-          To contribute, agree to how this project records and uses your data.
+          Before contributing, review the small amount of data collect needs to
+          preserve and verify your fieldwork.
         </p>
-        <section
-          className="consent-statement"
-          aria-labelledby="agreement-title"
-        >
-          <h2 id="agreement-title">What you agree to</h2>
-          {introduction.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
-          ))}
-          {items.length > 0 && (
-            <ol>
-              {items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ol>
-          )}
-          {conclusion.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
-          ))}
-        </section>
+        <dl className="consent-summary" aria-label="Privacy summary">
+          <div>
+            <dt>What is recorded</dt>
+            <dd>Your answers, chosen media, time, and collection context.</dd>
+          </div>
+          <div>
+            <dt>Why it is recorded</dt>
+            <dd>To preserve, verify, and recover the assigned fieldwork.</dd>
+          </div>
+          <div>
+            <dt>Who can access it</dt>
+            <dd>The project and its authorized administrators.</dd>
+          </div>
+          <div>
+            <dt>When it is sent</dt>
+            <dd>After it has first been saved safely on this device.</dd>
+          </div>
+        </dl>
+        <details className="consent-full-statement">
+          <summary>
+            <span>Read the full consent statement</span>
+            <Icon name="chevron-down" size={16} />
+          </summary>
+          <section
+            className="consent-statement"
+            aria-labelledby="agreement-title"
+          >
+            <h2 id="agreement-title">Full statement</h2>
+            {introduction.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+            {items.length > 0 && (
+              <ol>
+                {items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ol>
+            )}
+            {conclusion.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </section>
+        </details>
         <div className="consent-record-note">
           <Icon name="shield" size={17} />
           <span>

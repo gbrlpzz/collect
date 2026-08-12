@@ -16,11 +16,16 @@ Reference the official guidance when making UI decisions:
 - Keep the visual language monochrome: neutral grays only, with state communicated through words, weight, position, and shape.
 - Establish hierarchy with typography, spacing, and alignment before adding containers or decoration.
 - Use sheets, concise secondary actions, and progressive disclosure for supporting detail.
+- Use the shared modal surface for every sheet and dialog so Escape dismissal,
+  focus containment, and focus return remain consistent.
 - Keep the active collection surface focused on the observation, not queue internals or admin metrics.
 - Make local-save, waiting, syncing, and synced states visible in words.
 - Put the frequent, consequential action first: the contributor opens on **New observation**, while project context and sync details remain secondary. A sync-status tap may start a retry, but normal synchronization is automatic.
 - Focus the first meaningful editable control when a screen, step, or dialog opens; prefilled context fields do not steal focus from the first field the user needs to enter.
 - Respect system font scaling, light/dark appearance, reduced motion, keyboard navigation, and focus visibility.
+- Treat the software keyboard as part of the mobile viewport: sheets, dialogs,
+  authentication, and persistent task actions follow `visualViewport`, and an
+  optional input never summons the keyboard before the contributor chooses it.
 - Avoid animation that delays data entry or obscures whether a write completed.
 - Treat offline and error states as normal product states with factual copy, not alarming decoration.
 
@@ -42,6 +47,11 @@ change the active surface.
 Synchronization is an implementation detail. The contributor sees factual status
 near the project and can open a secondary sheet for details or recovery, while
 health probes, retries, and server readiness happen automatically.
+
+The account control opens one profile sheet. Contributor statistics, the
+numeric attention ring, consent status, installation guidance, device transfer,
+privacy, and local export live there. Technical sync and recovery detail remains
+collapsed unless a person asks for it or a record needs attention.
 
 ## Native iOS interaction contract
 

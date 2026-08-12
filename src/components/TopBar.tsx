@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import type { AppMode, View } from "../types";
+import { useEffect, useState } from "react";
+import type { AppMode, Observation, View } from "../types";
 import { getMyProfile, type ContributorProfile } from "../lib/consent";
 import { Icon } from "./Icon";
-import { AttentionScoreRing } from "./ui";
+import { ProfileSheet } from "./ProfileSheet";
 
 interface TopBarProps {
   mode: AppMode;
@@ -10,7 +10,10 @@ interface TopBarProps {
   onNavigate: (view: View) => void;
   userEmail?: string | null;
   isPreview?: boolean;
+  observations?: Observation[];
+  lastSyncAt?: string | null;
   onLinkDevice?: () => void;
+  onRecoveryExport?: () => void;
   onSignOut?: () => void;
 }
 
@@ -22,13 +25,14 @@ export function TopBar({
   onNavigate,
   userEmail,
   isPreview = false,
+  observations = [],
+  lastSyncAt = null,
   onLinkDevice,
+  onRecoveryExport,
   onSignOut,
 }: TopBarProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [profileInfoOpen, setProfileInfoOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [profile, setProfile] = useState<ContributorProfile | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const isAdmin = mode === "admin";
 
   useEffect(() => {
@@ -49,142 +53,51 @@ export function TopBar({
   const accountLabel = isPreview ? "Preview" : (userEmail ?? "Account");
   const surfaceLabel = isAdmin ? "Admin" : "Fieldwork";
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
-    };
-    const closeOnOutsidePress = (event: PointerEvent) => {
-      if (
-        event.target instanceof Node &&
-        !menuRef.current?.contains(event.target)
-      )
-        setMenuOpen(false);
-    };
-    document.addEventListener("keydown", closeOnEscape);
-    document.addEventListener("pointerdown", closeOnOutsidePress);
-    return () => {
-      document.removeEventListener("keydown", closeOnEscape);
-      document.removeEventListener("pointerdown", closeOnOutsidePress);
-    };
-  }, [menuOpen]);
-
   return (
-    <header
-      className={`topbar topbar-${view} topbar-${mode}`}
-      data-surface={mode}
-    >
-      <div className="topbar-inner">
-        <div className="topbar-brand">
-          <button
-            className="wordmark"
-            onClick={() => onNavigate(isAdmin ? "admin" : "home")}
-            aria-label={`collect ${surfaceLabel.toLowerCase()} home`}
-          >
-            collect<span className="wordmark-dot">.</span>
-          </button>
-          <span className="surface-label">{surfaceLabel}</span>
-        </div>
-
-        <div className="topbar-actions" ref={menuRef}>
-          <button
-            className={`account-button ${menuOpen ? "account-button-open" : ""}`}
-            aria-expanded={menuOpen}
-            aria-haspopup="dialog"
-            aria-controls="account-menu"
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            <span>{accountLabel}</span>
-            <Icon name="chevron-down" size={14} />
-          </button>
-          {menuOpen && (
-            <div
-              className="account-menu"
-              id="account-menu"
-              role="dialog"
-              aria-label="Account profile"
+    <>
+      <header
+        className={`topbar topbar-${view} topbar-${mode}`}
+        data-surface={mode}
+      >
+        <div className="topbar-inner">
+          <div className="topbar-brand">
+            <button
+              className="wordmark"
+              onClick={() => onNavigate(isAdmin ? "admin" : "home")}
+              aria-label={`collect ${surfaceLabel.toLowerCase()} home`}
             >
-              <div className="account-menu-heading">
-                {isPreview ? "Interface preview" : (userEmail ?? "Signed in")}
-              </div>
-              {profile && (
-                <div className="account-profile" aria-label="Your profile">
-                  <div className="account-profile-metrics">
-                    <div className="account-metric">
-                      <strong>{profile.contributionCount}</strong>
-                      <span>Contributions</span>
-                    </div>
-                    <button
-                      type="button"
-                      className="account-metric account-metric-score"
-                      aria-expanded={profileInfoOpen}
-                      onClick={() => setProfileInfoOpen((open) => !open)}
-                    >
-                      <AttentionScoreRing
-                        score={profile.attentionScore}
-                        total={profile.attentionChecksTotal}
-                      />
-                      <span>
-                        <strong>Attention</strong>
-                        <span>
-                          {profile.attentionChecksTotal
-                            ? `${profile.attentionChecksTotal} checks`
-                            : "No checks yet"}
-                        </span>
-                      </span>
-                      <Icon name="info" size={16} />
-                    </button>
-                  </div>
-                  {profileInfoOpen && (
-                    <div className="account-score-explainer" role="status">
-                      <strong>About this score</strong>
-                      <p>
-                        It summarizes the quick verification questions in your
-                        observations and adjusts for random guessing. It never
-                        changes or removes a contribution.
-                      </p>
-                    </div>
-                  )}
-                  <div className="account-consent-status">
-                    <Icon name="shield" size={15} />
-                    <span>
-                      Data consent recorded
-                      {profile.consentGrantedAt
-                        ? ` · ${new Date(profile.consentGrantedAt).toLocaleDateString()}`
-                        : ""}
-                    </span>
-                  </div>
-                </div>
-              )}
-              {onLinkDevice && (
-                <button
-                  type="button"
-                  className="account-menu-device-link"
-                  onClick={() => {
-                    onLinkDevice();
-                    setMenuOpen(false);
-                  }}
-                >
-                  <Icon name="users" size={17} />
-                  <span>Sign in another device</span>
-                  <Icon name="chevron-right" size={15} />
-                </button>
-              )}
-              {onSignOut && (
-                <button
-                  className="account-menu-signout"
-                  onClick={() => {
-                    onSignOut();
-                    setMenuOpen(false);
-                  }}
-                >
-                  {isPreview ? "Exit preview" : "Sign out"}
-                </button>
-              )}
-            </div>
-          )}
+              collect<span className="wordmark-dot">.</span>
+            </button>
+            <span className="surface-label">{surfaceLabel}</span>
+          </div>
+
+          <div className="topbar-actions">
+            <button
+              className={`account-button ${profileOpen ? "account-button-open" : ""}`}
+              aria-expanded={profileOpen}
+              aria-haspopup="dialog"
+              onClick={() => setProfileOpen(true)}
+            >
+              <span>{accountLabel}</span>
+              <Icon name="chevron-down" size={14} />
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+      {profileOpen && (
+        <ProfileSheet
+          userEmail={userEmail}
+          profile={profile}
+          observations={observations}
+          lastSyncAt={lastSyncAt}
+          isAdmin={isAdmin}
+          isPreview={isPreview}
+          onClose={() => setProfileOpen(false)}
+          onLinkDevice={onLinkDevice}
+          onRecoveryExport={onRecoveryExport}
+          onSignOut={onSignOut}
+        />
+      )}
+    </>
   );
 }

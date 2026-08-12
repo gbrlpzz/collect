@@ -1,4 +1,5 @@
 import type { Observation, Project } from "../types";
+import { formatExactTime, formatRelativeTime } from "../lib/formatTime";
 import { Icon } from "./Icon";
 import { Button } from "./ui";
 
@@ -143,7 +144,9 @@ export function ContributorHome({
                             observation.values.site_code ?? "Observation",
                           )}
                         </strong>
-                        <span>{observation.createdAt}</span>
+                        <span title={formatExactTime(observation.createdAt)}>
+                          {formatRelativeTime(observation.createdAt)}
+                        </span>
                       </span>
                       <span>{waiting ? "Saved here" : "Sent"}</span>
                     </div>

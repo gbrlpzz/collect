@@ -17,6 +17,7 @@ import {
   StatusBadge,
 } from "./ui";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
+import { formatExactTime, formatRelativeTime } from "../lib/formatTime";
 import { useReadiness } from "../lib/useReadiness";
 import {
   createSchemaDraft,
@@ -207,7 +208,9 @@ export function AdminProject({
         </div>
         <div>
           <span>Last received</span>
-          <strong>{project.lastReceived}</strong>
+          <strong title={formatExactTime(project.lastReceived)}>
+            {formatRelativeTime(project.lastReceived)}
+          </strong>
         </div>
       </div>
       <div
