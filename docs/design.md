@@ -18,6 +18,8 @@ Reference the official guidance when making UI decisions:
 - Use sheets, concise secondary actions, and progressive disclosure for supporting detail.
 - Keep the active collection surface focused on the observation, not queue internals or admin metrics.
 - Make local-save, waiting, syncing, and synced states visible in words.
+- Make the primary path one gesture wherever the action is unambiguous: surface switching is direct, a sync-status tap also starts sync, and completed date/location inputs advance without a redundant Continue.
+- Focus the first meaningful editable control when a screen, step, or dialog opens; prefilled context fields do not steal focus from the first field the user needs to enter.
 - Respect system font scaling, light/dark appearance, reduced motion, keyboard navigation, and focus visibility.
 - Avoid animation that delays data entry or obscures whether a write completed.
 - Treat offline and error states as normal product states with factual copy, not alarming decoration.
@@ -149,9 +151,11 @@ form — only answer the visible question and tap the obvious next action.
 - **Capsule geometry.** Answers and actions use fully rounded capsules
   (56 pt), segmented controls for tri-state, native date pickers, a stepper
   beside numeric fields, and large thumbnails for media.
-- **Auto-advance.** A single answer (choice or tri-state) advances
-  automatically after ~200 ms. Multi-select, text, number, date, location, and
-  media wait for an explicit **Continue**.
+- **Auto-advance.** A single answer (choice, tri-state, date, or datetime)
+  advances automatically after ~200 ms. Multi-select, text, number, and media
+  wait for an explicit **Continue**. Location requests its permission and
+  captures automatically when its step opens; the visible action is a retry
+  path only when the browser cannot provide it.
 - **One primary action.** The bottom bar holds **Back** (chevron) and a single
   prominent capsule **Continue**; the final step becomes **Save observation**.
 - **Required clarity.** Required steps disable Continue until answered, with a
@@ -173,10 +177,10 @@ form — only answer the visible question and tap the obvious next action.
 
 ### Deviations (additions to the records above)
 
-- **Auto-advance on single answers** deviates from a strict "press Continue"
+- **Auto-advance on complete answers** deviates from a strict "press Continue"
   convention. It is better here because a field worker's dominant hand may be
-  occupied; a single tap should carry them forward, and Back is always one tap
-  away. Scope: single-choice and tri-state steps only.
+  occupied; a completed answer should carry them forward, and Back is always
+  one tap away. Scope: single-choice, tri-state, date, and datetime steps.
 - **Capsule answers instead of list rows** keep the Apple geometry while giving
   options a 56 pt target — larger than the 44 pt minimum — for glove use.
 

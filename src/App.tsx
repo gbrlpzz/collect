@@ -39,7 +39,7 @@ export default function App() {
       signOut,
       updateDraft,
       submitObservation,
-      openSyncSheet,
+      openSyncSheetAndSync,
       closeSyncSheet,
       syncNow,
       exportRecoveryPackage,
@@ -110,7 +110,7 @@ export default function App() {
             project={state.project}
             observations={selectedObservations}
             onNavigate={navigate}
-            onOpenSync={openSyncSheet}
+            onOpenSync={openSyncSheetAndSync}
             onFinishFieldwork={() => void finishFieldwork()}
           />
         )}

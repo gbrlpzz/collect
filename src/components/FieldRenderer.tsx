@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import type { FieldDefinition, LocationValue, MediaAsset } from "../types";
 import { Icon } from "./Icon";
@@ -91,6 +91,7 @@ export function FieldRenderer({
   invalid = false,
   autoFocus = false,
 }: FieldRendererProps) {
+  const repeatableFocusRowRef = useRef<number | null>(null);
   const stringValue = typeof value === "string" ? value : "";
   const accessibilityProps = {
     "aria-label": field.label,
@@ -261,7 +262,7 @@ export function FieldRenderer({
       (otherOption !== undefined && storedValue === otherOption.id);
     return (
       <div className="choice-grid" role="group" {...accessibilityProps}>
-        {field.options?.map((option) => {
+        {field.options?.map((option, index) => {
           const selected =
             option.id === storedValue || (option.value === "other" && isOther);
           return (
@@ -270,6 +271,7 @@ export function FieldRenderer({
               key={option.id}
               className={`choice-button ${selected ? "choice-selected" : ""}`}
               aria-pressed={selected}
+              autoFocus={autoFocus && index === 0}
               onClick={() =>
                 onChange(
                   option.value === "other" && otherOption
@@ -340,6 +342,7 @@ export function FieldRenderer({
         describedBy={describedBy}
         required={required}
         invalid={invalid}
+        autoFocus={autoFocus}
       />
     );
   }
@@ -397,7 +400,7 @@ export function FieldRenderer({
     const selected = Array.isArray(value) ? value.map(String) : [];
     return (
       <div className="choice-grid" role="group" {...accessibilityProps}>
-        {field.options?.map((option) => {
+        {field.options?.map((option, index) => {
           const isSelected = selected.includes(option.id);
           return (
             <button
@@ -405,6 +408,7 @@ export function FieldRenderer({
               key={option.id}
               className={`choice-button ${isSelected ? "choice-selected" : ""}`}
               aria-pressed={isSelected}
+              autoFocus={autoFocus && index === 0}
               onClick={() =>
                 onChange(
                   isSelected
@@ -554,7 +558,7 @@ export function FieldRenderer({
                 Remove
               </button>
             </div>
-            {field.children?.map((child) => (
+            {field.children?.map((child, childIndex) => (
               <div className="repeatable-child" key={child.id}>
                 <label htmlFor={`${field.key}-${rowIndex}-${child.key}`}>
                   {child.label}
@@ -580,6 +584,13 @@ export function FieldRenderer({
                   mediaAssets={[]}
                   locationError={locationError}
                   required={child.required}
+                  autoFocus={
+                    autoFocus &&
+                    childIndex === 0 &&
+                    (repeatableFocusRowRef.current === null
+                      ? rowIndex === 0
+                      : rowIndex === repeatableFocusRowRef.current)
+                  }
                 />
               </div>
             ))}
@@ -588,7 +599,10 @@ export function FieldRenderer({
         <Button
           variant="secondary"
           icon="plus"
-          onClick={() => onChange([...rows, {}])}
+          onClick={() => {
+            repeatableFocusRowRef.current = rows.length;
+            onChange([...rows, {}]);
+          }}
         >
           Add {field.label.toLowerCase()}
         </Button>

@@ -117,47 +117,50 @@ export function EmailPrompt({
         aria-modal="true"
         aria-labelledby="email-prompt-title"
       >
-        <div className="dialog-copy">
-          <h2 id="email-prompt-title">{title}</h2>
-          {message && <p>{message}</p>}
-          <label className="auth-label" htmlFor="email-prompt-input">
-            Email address
-          </label>
-          <div className="input-with-clear">
-            <input
-              id="email-prompt-input"
-              className="field-input"
-              type="email"
-              autoComplete="email"
-              inputMode="email"
-              autoCapitalize="none"
-              spellCheck={false}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@example.com"
-            />
-            {email && (
-              <ClearButton
-                label="Clear email address"
-                onClick={() => setEmail("")}
-              />
-            )}
-          </div>
-        </div>
         <form
-          className="dialog-actions"
           onSubmit={(event) => {
             event.preventDefault();
             const address = email.trim();
             if (address) onSubmit(address);
           }}
         >
-          <Button type="submit" variant="primary" disabled={!email.trim()}>
-            {confirmLabel}
-          </Button>
-          <Button variant="secondary" onClick={onCancel}>
-            {cancelLabel}
-          </Button>
+          <div className="dialog-copy">
+            <h2 id="email-prompt-title">{title}</h2>
+            {message && <p>{message}</p>}
+            <label className="auth-label" htmlFor="email-prompt-input">
+              Email address
+            </label>
+            <div className="input-with-clear">
+              <input
+                id="email-prompt-input"
+                className="field-input"
+                type="email"
+                required
+                autoComplete="email"
+                inputMode="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                autoFocus
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@example.com"
+              />
+              {email && (
+                <ClearButton
+                  label="Clear email address"
+                  onClick={() => setEmail("")}
+                />
+              )}
+            </div>
+          </div>
+          <div className="dialog-actions">
+            <Button type="submit" variant="primary" disabled={!email.trim()}>
+              {confirmLabel}
+            </Button>
+            <Button variant="secondary" onClick={onCancel}>
+              {cancelLabel}
+            </Button>
+          </div>
         </form>
       </section>
     </div>

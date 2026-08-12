@@ -681,7 +681,10 @@ export function useAppController() {
   const unlockPreview = () => setPreviewUnlocked(true);
   const dismissStorageError = () => setStorageError(null);
   const dismissToast = () => setToast(null);
-  const openSyncSheet = () => setSyncSheetOpen(true);
+  const openSyncSheetAndSync = () => {
+    setSyncSheetOpen(true);
+    void syncNow();
+  };
   const closeSyncSheet = () => setSyncSheetOpen(false);
 
   return {
@@ -715,7 +718,7 @@ export function useAppController() {
       signOut,
       updateDraft,
       submitObservation,
-      openSyncSheet,
+      openSyncSheetAndSync,
       closeSyncSheet,
       syncNow,
       exportRecoveryPackage,

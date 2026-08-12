@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import {
   authCallbackError,
   isStandalonePwa,
@@ -63,10 +63,11 @@ export function AuthScreen({
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState<string | null>(null);
   const [codeBusy, setCodeBusy] = useState(false);
+  const codeInputRef = useRef<HTMLInputElement>(null);
 
   const submit = async () => {
     const address = email.trim();
-    if (!address) return;
+    if (!address || busy) return;
     setBusy(true);
     setError(null);
     setCallbackIssue(null);
@@ -103,10 +104,10 @@ export function AuthScreen({
     }
   };
 
-  const verifyCode = async () => {
+  const verifyCode = async (candidate = code) => {
     const address = email.trim();
-    const token = code.trim();
-    if (!address || token.length !== 6) return;
+    const token = candidate.trim();
+    if (!address || token.length !== 6 || codeBusy) return;
     setCodeBusy(true);
     setCodeError(null);
     try {
@@ -131,6 +132,7 @@ export function AuthScreen({
       setCodeError((current) =>
         `${current ?? ""}${current ? " " : ""}If the email has no 6-digit code, its template needs the sign-in code added — the link in that email still works.`.trim(),
       );
+      window.setTimeout(() => codeInputRef.current?.focus(), 0);
     } finally {
       setCodeBusy(false);
     }
@@ -198,44 +200,6 @@ export function AuthScreen({
                 </li>
               </ol>
             )}
-            <div className="auth-label">
-              <label htmlFor={emailInputId}>Email address</label>
-              <div className="input-with-clear">
-                <input
-                  id={emailInputId}
-                  className="field-input"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  inputMode="email"
-                  autoCapitalize="none"
-                  spellCheck={false}
-                  disabled={!configured}
-                />
-                {email && configured && (
-                  <ClearButton
-                    label="Clear email address"
-                    onClick={() => setEmail("")}
-                  />
-                )}
-              </div>
-            </div>
-            {(callbackIssue || error) && (
-              <p className="auth-error" role="alert">
-                {callbackIssue ?? error}
-              </p>
-            )}
-            {showLocalRedirectHint && (
-              <p className="auth-config-note">
-                <Icon name="info" size={16} />
-                <span>
-                  Local preview: sign-in links return to the deployed app. Open
-                  the deployed address on your phone.
-                </span>
-              </p>
-            )}
             {configured ? (
               <form
                 onSubmit={(event) => {
@@ -243,6 +207,45 @@ export function AuthScreen({
                   void submit();
                 }}
               >
+                <div className="auth-label">
+                  <label htmlFor={emailInputId}>Email address</label>
+                  <div className="input-with-clear">
+                    <input
+                      id={emailInputId}
+                      className="field-input"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      inputMode="email"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      autoFocus
+                    />
+                    {email && (
+                      <ClearButton
+                        label="Clear email address"
+                        onClick={() => setEmail("")}
+                      />
+                    )}
+                  </div>
+                </div>
+                {(callbackIssue || error) && (
+                  <p className="auth-error" role="alert">
+                    {callbackIssue ?? error}
+                  </p>
+                )}
+                {showLocalRedirectHint && (
+                  <p className="auth-config-note">
+                    <Icon name="info" size={16} />
+                    <span>
+                      Local preview: sign-in links return to the deployed app.
+                      Open the deployed address on your phone.
+                    </span>
+                  </p>
+                )}
                 <Button
                   type="submit"
                   variant="primary"
@@ -255,13 +258,27 @@ export function AuthScreen({
                 </Button>
               </form>
             ) : (
-              <div className="auth-config-note">
-                <Icon name="info" size={16} />
-                <span>
-                  Sign-in will be available when the project’s Supabase
-                  connection is configured.
-                </span>
-              </div>
+              <>
+                <div className="auth-label">
+                  <label htmlFor={emailInputId}>Email address</label>
+                  <input
+                    id={emailInputId}
+                    className="field-input"
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="you@example.com"
+                    disabled
+                  />
+                </div>
+                <div className="auth-config-note">
+                  <Icon name="info" size={16} />
+                  <span>
+                    Sign-in will be available when the project’s Supabase
+                    connection is configured.
+                  </span>
+                </div>
+              </>
             )}
           </>
         ) : (
@@ -284,42 +301,60 @@ export function AuthScreen({
             )}
             {codeMode ? (
               <div className="auth-code">
-                <label className="auth-label" htmlFor="auth-code-input">
-                  6-digit code from the email
-                  <input
-                    id="auth-code-input"
-                    className="field-input"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    pattern="[0-9]{6}"
-                    maxLength={6}
-                    value={code}
-                    onChange={(event) => {
-                      setCode(
-                        event.target.value.replace(/\D/g, "").slice(0, 6),
-                      );
-                      setCodeError(null);
-                    }}
-                    placeholder="000000"
-                    disabled={codeBusy}
-                  />
-                </label>
-                {codeError && (
-                  <p className="auth-error" role="alert">
-                    {codeError}
-                  </p>
-                )}
-                <Button
-                  variant="primary"
-                  fullWidth
-                  onClick={() => void verifyCode()}
-                  disabled={codeBusy || code.length !== 6}
-                  busy={codeBusy}
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void verifyCode();
+                  }}
                 >
-                  {codeBusy ? "Verifying…" : "Verify code"}
-                </Button>
+                  <label className="auth-label" htmlFor="auth-code-input">
+                    6-digit code from the email
+                    <input
+                      ref={codeInputRef}
+                      id="auth-code-input"
+                      className="field-input"
+                      type="text"
+                      required
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      pattern="[0-9]{6}"
+                      maxLength={6}
+                      value={code}
+                      onChange={(event) => {
+                        const nextCode = event.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 6);
+                        setCode(nextCode);
+                        setCodeError(null);
+                        if (nextCode.length === 6 && !codeBusy)
+                          void verifyCode(nextCode);
+                      }}
+                      placeholder="000000"
+                      autoFocus
+                      disabled={codeBusy}
+                    />
+                  </label>
+                  {codeError && (
+                    <p className="auth-error" role="alert">
+                      {codeError}
+                    </p>
+                  )}
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    fullWidth
+                    disabled={codeBusy || code.length !== 6}
+                    busy={codeBusy}
+                  >
+                    {codeBusy
+                      ? "Verifying…"
+                      : code.length === 6
+                        ? "Verify again"
+                        : "Verify code"}
+                  </Button>
+                </form>
                 <button
+                  type="button"
                   className="text-button"
                   onClick={() => {
                     setCodeMode(false);
