@@ -12,6 +12,7 @@ import {
 } from "./ui";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
 import { formatAttentionScore } from "../lib/attention";
+import { useReadiness } from "../lib/useReadiness";
 import {
   createSchemaDraft,
   loadProjectReadiness,
@@ -50,17 +51,7 @@ export function AdminDashboard({
     (item) => item.status !== "SYNCED",
   ).length;
   const receivedCount = project.completeSubmissions;
-  const [readiness, setReadiness] = useState<ContributorReadiness[] | null>(
-    null,
-  );
-
-  useEffect(() => {
-    if (!isSupabaseConfigured || !hasProject) return;
-    setReadiness(null);
-    void loadProjectReadiness(project.id)
-      .then(setReadiness)
-      .catch(() => setReadiness([]));
-  }, [hasProject, project.id]);
+  const { readiness } = useReadiness(hasProject ? project.id : null);
 
   const reportedWaiting =
     readiness?.reduce((total, row) => total + row.pending, 0) ?? null;
@@ -237,21 +228,11 @@ export function AdminProject({
   onPreviewContributor,
 }: AdminProjectProps) {
   const [tab, setTab] = useState<AdminTab>("setup");
-  const [readiness, setReadiness] = useState<ContributorReadiness[] | null>(
-    null,
-  );
   const receivedCount = project.completeSubmissions;
   const waitingCount = observations.filter(
     (item) => item.status !== "SYNCED",
   ).length;
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) return;
-    setReadiness(null);
-    void loadProjectReadiness(project.id)
-      .then(setReadiness)
-      .catch(() => setReadiness([]));
-  }, [project.id]);
+  const { readiness } = useReadiness(project.id);
 
   return (
     <main className="page page-admin-project">
@@ -654,6 +635,22 @@ function ContributorsPanel({
     void loadProjectReadiness(projectId)
       .then(setRemoteRows)
       .catch(() => setRemoteRows([]));
+    const timer = window.setInterval(() => {
+      void loadProjectReadiness(projectId)
+        .then(setRemoteRows)
+        .catch(() => setRemoteRows([]));
+    }, 30_000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible")
+        void loadProjectReadiness(projectId)
+          .then(setRemoteRows)
+          .catch(() => setRemoteRows([]));
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [projectId]);
 
   const [inviteOpen, setInviteOpen] = useState(false);
