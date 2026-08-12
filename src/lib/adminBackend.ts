@@ -30,6 +30,8 @@ export interface ContributorReadiness {
   consentGranted: boolean;
 }
 
+import { invokeFunction, readFunctionErrorBody } from "./functionError";
+
 function requireClient() {
   if (!supabase) throw new Error("Supabase is not configured");
   return supabase;
@@ -414,32 +416,7 @@ export async function publishSchemaDraft(draft: SchemaDraft): Promise<void> {
  */
 export async function inviteAdministrator(email: string): Promise<void> {
   const client = requireClient();
-  const { error } = await client.functions.invoke("send-admin-invite", {
-    body: { email },
-  });
-  if (error) {
-    const context =
-      error && typeof error === "object"
-        ? (error as { context?: unknown }).context
-        : null;
-    if (
-      context &&
-      typeof context === "object" &&
-      "clone" in context &&
-      typeof (context as { clone?: unknown }).clone === "function"
-    ) {
-      try {
-        const body = (await (context as Response).clone().json()) as {
-          error?: unknown;
-        };
-        if (typeof body.error === "string" && body.error.trim())
-          throw new Error(body.error);
-      } catch (caught) {
-        if (caught instanceof Error) throw caught;
-      }
-    }
-    throw error;
-  }
+  await invokeFunction(client, "send-admin-invite", { email });
 }
 
 export async function sendProjectInvite(

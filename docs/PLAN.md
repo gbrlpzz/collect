@@ -150,6 +150,37 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 | Visibility                     | ✅     | profile (contributor + admin), readiness data, exports (data/attention.csv + contributors.csv)        |
 | Environment payload regression | ✅     | re-added observation.environment to sync payload                                                      |
 
+## Background automation pass (2026-08-12)
+
+| Item                                    | Status | Notes                                                                                        |
+| --------------------------------------- | ------ | -------------------------------------------------------------------------------------------- |
+| Sync: no artificial delay               | ✅     | 1.2s sleep removed; single-flight prevents duplicate runs                                    |
+| Sync: silent background runs            | ✅     | lifecycle syncs are toast-free; manual taps keep feedback                                    |
+| Sync: per-item isolation                | ✅     | one failed observation never blocks the rest; partial-sync copy                              |
+| Sync: ACTION_REQUIRED classification    | ✅     | media integrity/checksum/revoked/closed errors stop retrying                                 |
+| Heartbeat: durable outbox counts        | ✅     | unique submission IDs + per-media rows; acknowledged media excluded                          |
+| Heartbeat: coalesced + visibility-gated | ✅     | 10s debounce; hidden tabs skip; contributor surface only                                     |
+| Fieldwork completion: automatic         | ✅     | outbox empty AND no in-progress draft → fieldwork_complete                                   |
+| Readiness: multi-device aggregation     | ✅     | every device row must be clean + complete; admin auto-polls 30s                              |
+| Draft/media: immediate blob persistence | ✅     | MEDIA_STORE write on pick; deletes on remove; no blob duplication in app-state               |
+| Stale autosave protection               | ✅     | SYNCED rows never downgraded; draft write can't clobber submitted rows                       |
+| Media integrity                         | ✅     | client computes SHA-256 in background; server stores it; size verified at confirm            |
+| TUS resilience                          | ✅     | server-first confirm, fresh retry on stale upload, bounded 2-way parallelism, health timeout |
+| Receipt binding                         | ✅     | receipt.submission_id validated before local clear; server timestamps persisted              |
+| Idempotent completion counts            | ✅     | durable receipt check prevents double-counting after crash-retry                             |
+| Background Sync                         | ✅     | sw.js sync event wakes the app; pending work registers the tag                               |
+| Service worker precache                 | ✅     | Vite emits precache-manifest.json; hashed shell precached for offline first load             |
+| Recovery: durable stores                | ✅     | export includes outbox/receipts/drafts/projects/media; async zip off main thread             |
+| Recovery UI                             | ✅     | reachable before auth gate; corrupt blobs tolerated; deferred URL revoke                     |
+| Invite password setup                   | ✅     | flag survives URL cleanup (token-hash + PKCE); gate fixed; no double set                     |
+| Device-link codes                       | ✅     | 8-character alphanumeric input matching the server alphabet                                  |
+| Location provenance                     | ✅     | captured on open + refreshed at save; written to actual field keys; retry affordance         |
+| Admin preview isolation                 | ✅     | preview never writes drafts/media; revoked users lose cached project                         |
+| Schema builder config                   | ✅     | options/other, number min/max/unit/integer, text length/placeholder, media counts/multiple   |
+| Edge: finalize race                     | ✅     | atomic update ... returning; concurrent finalize returns stored receipt                      |
+| Edge: idempotency                       | ✅     | schema_id added to same-ID conflict comparison                                               |
+| Export manifest                         | ✅     | contributor readiness snapshot at cutoff included                                            |
+
 ## Gap work queue
 
 _(filled from audits)_
