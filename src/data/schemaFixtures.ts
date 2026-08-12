@@ -21,7 +21,7 @@ export const projectFields: FieldDefinition[] = [
     type: "short_text",
     description: "Use the code printed on the site sheet.",
     required: true,
-    config: { placeholder: "e.g. VA-023", maxLength: 32 },
+    config: { placeholder: "e.g. VA-023", maxLength: 32, keyIdentifier: true },
   },
   {
     id: "field-building-type",

@@ -192,6 +192,12 @@ async function createSubmission(
   const access = await projectAccess(service, projectId, userId);
   if (!access) return invalid("Project assignment is not active", 403);
 
+  // In-app collection consent is a prerequisite for every submission.
+  const { data: profile } = await service.from("contributor_profiles").select("consent_granted_at,consent_revoked_at").eq("user_id", userId).maybeSingle();
+  if (!profile?.consent_granted_at || profile.consent_revoked_at) {
+    return invalid("Collection consent is required before submitting observations", 403);
+  }
+
   const { data: schema, error: schemaError } = await service
     .from("project_schemas")
     .select("id,version,schema_json")

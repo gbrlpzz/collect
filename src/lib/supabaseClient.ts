@@ -237,6 +237,14 @@ export async function linkDeviceSession(code: string): Promise<void> {
   if (verifyError) throw verifyError;
 }
 
+/** True when the current callback URL is a project invitation (type=invite). */
+export function wasInviteCallback(): boolean {
+  if (typeof window === "undefined") return false;
+  const params = new URLSearchParams(window.location.search);
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  return params.get("type") === "invite" || hash.get("type") === "invite";
+}
+
 export function pendingAuthEmail(): string {
   if (typeof window === "undefined") return "";
   try {

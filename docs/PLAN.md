@@ -118,6 +118,16 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 | Media upload assurance | ✅ | missing blob -> ACTION_REQUIRED; TUS resume; size verification at confirm |
 | Minimal UI contract | ✅ | handed to UI agent: invisible provenance, problem-only prompts, location-off notice |
 
+## Auth architecture: password + device-link (2026-08-12)
+
+| Item | Status | Notes |
+|---|---|---|
+| Password sign-in (every container) | ✅ | signInWithPassword; setPassword; solves iOS PWA/Safari double-login at the root |
+| Device-link bridge | ✅ | requestDeviceLinkCode / linkDeviceSession; link-session function + private.session_link_codes migration live |
+| Invite → set-password flow | 🟡 | App-side contract handed to UI agent (pendingPasswordRequired) |
+| AuthScreen password tab + device-link panels | 🟡 | UI agent in progress (contract delivered) |
+| Email codes | ⚠️ | implemented; emails cannot carry {{ .Token }} on free tier (Pro/SMTP needed) |
+
 ## Gap work queue
 
 _(filled from audits)_

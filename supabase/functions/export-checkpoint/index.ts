@@ -129,6 +129,10 @@ async function buildExport(
   const { data: members } = await service.from("project_members").select(
     "user_id,role",
   ).eq("project_id", projectId).order("assigned_at", { ascending: true });
+  const memberIds = (members ?? []).map((member) => member.user_id);
+  const { data: profiles } = memberIds.length
+    ? await service.from("contributor_profiles").select("user_id,consent_version,consent_granted_at,consent_revoked_at,quality_score").in("user_id", memberIds)
+    : { data: [] };
   const { data: invites } = await service.from("project_invites").select(
     "email,invited_user_id,status",
   ).eq("project_id", projectId);
@@ -141,11 +145,18 @@ async function buildExport(
     const status = contributorReadiness.find((candidate) =>
       candidate.contributor_id === member.user_id
     );
+    const profile = (profiles ?? []).find((candidate) =>
+      candidate.user_id === member.user_id
+    );
     return {
       contributor_id: member.user_id,
       email: invite?.email ?? "",
       role: member.role,
       invite_status: invite?.status ?? "",
+      consent_version: profile?.consent_version ?? null,
+      consent_granted_at: profile?.consent_granted_at ?? null,
+      consent_revoked_at: profile?.consent_revoked_at ?? null,
+      quality_score: profile?.quality_score ?? null,
       last_seen_at: status?.last_seen_at ?? null,
       last_sync_success_at: status?.last_sync_success_at ?? null,
       pending_submissions: status?.pending_submissions ?? null,
@@ -229,6 +240,10 @@ async function buildExport(
       "email",
       "role",
       "invite_status",
+      "consent_version",
+      "consent_granted_at",
+      "consent_revoked_at",
+      "quality_score",
       "last_seen_at",
       "last_sync_success_at",
       "pending_submissions",
@@ -241,6 +256,10 @@ async function buildExport(
         row.email,
         row.role,
         row.invite_status,
+        row.consent_version,
+        row.consent_granted_at,
+        row.consent_revoked_at,
+        row.quality_score,
         row.last_seen_at,
         row.last_sync_success_at,
         row.pending_submissions,
