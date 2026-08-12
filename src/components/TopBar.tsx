@@ -13,11 +13,20 @@ interface TopBarProps {
   onSignOut?: () => void;
 }
 
-export function TopBar({ mode, view, onModeChange, onNavigate, canAdmin = true, userEmail, isPreview = false, onSignOut }: TopBarProps) {
+export function TopBar({
+  mode,
+  view,
+  onModeChange,
+  onNavigate,
+  canAdmin = true,
+  userEmail,
+  isPreview = false,
+  onSignOut,
+}: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const isAdmin = mode === "admin";
-  const accountLabel = isPreview ? "Preview" : userEmail ?? "Account";
+  const accountLabel = isPreview ? "Preview" : (userEmail ?? "Account");
   const surfaceLabel = isAdmin ? "Admin" : "Fieldwork";
 
   useEffect(() => {
@@ -26,7 +35,11 @@ export function TopBar({ mode, view, onModeChange, onNavigate, canAdmin = true, 
       if (event.key === "Escape") setMenuOpen(false);
     };
     const closeOnOutsidePress = (event: PointerEvent) => {
-      if (event.target instanceof Node && !menuRef.current?.contains(event.target)) setMenuOpen(false);
+      if (
+        event.target instanceof Node &&
+        !menuRef.current?.contains(event.target)
+      )
+        setMenuOpen(false);
     };
     document.addEventListener("keydown", closeOnEscape);
     document.addEventListener("pointerdown", closeOnOutsidePress);
@@ -42,10 +55,17 @@ export function TopBar({ mode, view, onModeChange, onNavigate, canAdmin = true, 
   };
 
   return (
-    <header className={`topbar topbar-${view} topbar-${mode}`} data-surface={mode}>
+    <header
+      className={`topbar topbar-${view} topbar-${mode}`}
+      data-surface={mode}
+    >
       <div className="topbar-inner">
         <div className="topbar-brand">
-          <button className="wordmark" onClick={() => onNavigate(isAdmin ? "admin" : "home")} aria-label={`collect ${surfaceLabel.toLowerCase()} home`}>
+          <button
+            className="wordmark"
+            onClick={() => onNavigate(isAdmin ? "admin" : "home")}
+            aria-label={`collect ${surfaceLabel.toLowerCase()} home`}
+          >
             collect<span className="wordmark-dot">.</span>
           </button>
           <span className="surface-label">{surfaceLabel}</span>
@@ -63,11 +83,45 @@ export function TopBar({ mode, view, onModeChange, onNavigate, canAdmin = true, 
             <Icon name="chevron-down" size={14} />
           </button>
           {menuOpen && (
-            <div className="account-menu" id="account-menu" role="menu" aria-label="Account and workspace">
-              <div className="account-menu-heading">{isPreview ? "Interface preview" : userEmail ?? "Signed in"}</div>
-              <button role="menuitem" aria-current={!isAdmin ? "page" : undefined} className={!isAdmin ? "account-menu-selected" : ""} onClick={() => chooseMode("contributor")}>Fieldwork</button>
-              {canAdmin && <button role="menuitem" aria-current={isAdmin ? "page" : undefined} className={isAdmin ? "account-menu-selected" : ""} onClick={() => chooseMode("admin")}>Admin</button>}
-              {onSignOut && <button role="menuitem" className="account-menu-signout" onClick={() => { onSignOut(); setMenuOpen(false); }}>{isPreview ? "Exit preview" : "Sign out"}</button>}
+            <div
+              className="account-menu"
+              id="account-menu"
+              role="menu"
+              aria-label="Account and workspace"
+            >
+              <div className="account-menu-heading">
+                {isPreview ? "Interface preview" : (userEmail ?? "Signed in")}
+              </div>
+              <button
+                role="menuitem"
+                aria-current={!isAdmin ? "page" : undefined}
+                className={!isAdmin ? "account-menu-selected" : ""}
+                onClick={() => chooseMode("contributor")}
+              >
+                Fieldwork
+              </button>
+              {canAdmin && (
+                <button
+                  role="menuitem"
+                  aria-current={isAdmin ? "page" : undefined}
+                  className={isAdmin ? "account-menu-selected" : ""}
+                  onClick={() => chooseMode("admin")}
+                >
+                  Admin
+                </button>
+              )}
+              {onSignOut && (
+                <button
+                  role="menuitem"
+                  className="account-menu-signout"
+                  onClick={() => {
+                    onSignOut();
+                    setMenuOpen(false);
+                  }}
+                >
+                  {isPreview ? "Exit preview" : "Sign out"}
+                </button>
+              )}
             </div>
           )}
         </div>

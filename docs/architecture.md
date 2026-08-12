@@ -1,5 +1,27 @@
 # collect architecture notes
 
+## Code boundaries
+
+The client is organized by responsibility rather than by the order in which
+features were added:
+
+- `src/App.tsx` is the composition shell. It renders surfaces and wires their
+  callbacks; it does not own persistence or sync protocol details.
+- `src/app/useAppController.ts` owns session, workspace, and UI orchestration.
+  The local submission boundary, recovery export, storage persistence request,
+  and sync engine live in their own modules under `src/app/`.
+- `src/components/` contains feature surfaces. Shared controls and feedback
+  primitives live under `src/components/ui/` and are exposed from its index.
+- `src/data/` contains demo fixtures; `src/lib/schema.ts` contains schema
+  editing rules. Fixtures do not own editor behavior.
+- `src/styles.css` is only the stylesheet entrypoint. The ordered layers in
+  `src/styles/` are foundation, native interaction language, and final
+  responsive geometry.
+
+The boundary is intentional: new features should add a domain module or a
+feature component without growing the application shell or app-wide CSS
+override chain.
+
 ## Local receipt boundary
 
 The contributor-facing promise is implemented around one boundary:

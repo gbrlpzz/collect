@@ -1,4 +1,9 @@
-import type { AppState, MediaAsset, Observation, SubmissionState } from "../types";
+import type {
+  AppState,
+  MediaAsset,
+  Observation,
+  SubmissionState,
+} from "../types";
 
 const DB_NAME = "collect-local-v1";
 const DB_VERSION = 2;
@@ -11,12 +16,18 @@ let activeLocalScope = "default";
  * retained for the isolated unit-test database.
  */
 export function setLocalScope(scope: string): void {
-  const normalized = scope.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "_").slice(0, 120);
+  const normalized = scope
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]/g, "_")
+    .slice(0, 120);
   activeLocalScope = normalized || "default";
 }
 
 export function localDatabaseName(): string {
-  return activeLocalScope === "default" ? DB_NAME : `${DB_NAME}-${activeLocalScope}`;
+  return activeLocalScope === "default"
+    ? DB_NAME
+    : `${DB_NAME}-${activeLocalScope}`;
 }
 const APP_STATE_STORE = "app-state";
 const SETTINGS_STORE = "settings";
@@ -83,7 +94,12 @@ export interface OutboxOperation {
   nextAttemptAt: string;
   lastAttemptAt: string | null;
   lastError: string | null;
-  state: "QUEUED" | "IN_PROGRESS" | "ACKNOWLEDGED" | "RETRYABLE_ERROR" | "ACTION_REQUIRED";
+  state:
+    | "QUEUED"
+    | "IN_PROGRESS"
+    | "ACKNOWLEDGED"
+    | "RETRYABLE_ERROR"
+    | "ACTION_REQUIRED";
 }
 
 function createRequest<T>(request: IDBRequest<T>): Promise<T> {
@@ -96,8 +112,10 @@ function createRequest<T>(request: IDBRequest<T>): Promise<T> {
 function waitForTransaction(transaction: IDBTransaction): Promise<void> {
   return new Promise((resolve, reject) => {
     transaction.oncomplete = () => resolve();
-    transaction.onabort = () => reject(transaction.error ?? new Error("IndexedDB transaction aborted"));
-    transaction.onerror = () => reject(transaction.error ?? new Error("IndexedDB transaction failed"));
+    transaction.onabort = () =>
+      reject(transaction.error ?? new Error("IndexedDB transaction aborted"));
+    transaction.onerror = () =>
+      reject(transaction.error ?? new Error("IndexedDB transaction failed"));
   });
 }
 
@@ -107,15 +125,22 @@ function openDatabase(): Promise<IDBDatabase> {
     request.onupgradeneeded = () => {
       const database = request.result;
       ALL_STORES.forEach((storeName) => {
-        if (!database.objectStoreNames.contains(storeName)) database.createObjectStore(storeName);
+        if (!database.objectStoreNames.contains(storeName))
+          database.createObjectStore(storeName);
       });
     };
     request.onsuccess = () => {
       request.result.onversionchange = () => request.result.close();
       resolve(request.result);
     };
-    request.onerror = () => reject(request.error ?? new Error("Unable to open local database"));
-    request.onblocked = () => reject(new Error("A previous collect database connection is blocking an update"));
+    request.onerror = () =>
+      reject(request.error ?? new Error("Unable to open local database"));
+    request.onblocked = () =>
+      reject(
+        new Error(
+          "A previous collect database connection is blocking an update",
+        ),
+      );
   });
 }
 
@@ -125,7 +150,8 @@ function openDatabaseByName(name: string): Promise<IDBDatabase | null> {
     request.onupgradeneeded = () => {
       const database = request.result;
       ALL_STORES.forEach((storeName) => {
-        if (!database.objectStoreNames.contains(storeName)) database.createObjectStore(storeName);
+        if (!database.objectStoreNames.contains(storeName))
+          database.createObjectStore(storeName);
       });
     };
     request.onsuccess = () => resolve(request.result);
@@ -138,11 +164,21 @@ export async function loadAppState(): Promise<Partial<AppState> | null> {
   if (!("indexedDB" in window)) return null;
   try {
     const database = await openDatabase();
-    const transaction = database.transaction([APP_STATE_STORE, SUBMISSIONS_STORE], "readonly");
+    const transaction = database.transaction(
+      [APP_STATE_STORE, SUBMISSIONS_STORE],
+      "readonly",
+    );
     const transactionComplete = waitForTransaction(transaction);
-    const savedRequest = createRequest(transaction.objectStore(APP_STATE_STORE).get(STATE_KEY));
-    const submissionsRequest = createRequest(transaction.objectStore(SUBMISSIONS_STORE).getAll());
-    const [saved, submissionsResult] = await Promise.all([savedRequest, submissionsRequest]);
+    const savedRequest = createRequest(
+      transaction.objectStore(APP_STATE_STORE).get(STATE_KEY),
+    );
+    const submissionsRequest = createRequest(
+      transaction.objectStore(SUBMISSIONS_STORE).getAll(),
+    );
+    const [saved, submissionsResult] = await Promise.all([
+      savedRequest,
+      submissionsRequest,
+    ]);
     const submissions = submissionsResult as Observation[];
     await transactionComplete;
     if (!saved && submissions.length === 0) return null;
@@ -174,15 +210,16 @@ export async function readStoredRecoveryData(): Promise<StoredRecoveryData> {
   const database = await openDatabase();
   const transaction = database.transaction(ALL_STORES, "readonly");
   const transactionComplete = waitForTransaction(transaction);
-  const [submissions, media, outbox, drafts, projects, appState, receipts] = await Promise.all([
-    createRequest(transaction.objectStore(SUBMISSIONS_STORE).getAll()),
-    createRequest(transaction.objectStore(MEDIA_STORE).getAll()),
-    createRequest(transaction.objectStore(OUTBOX_STORE).getAll()),
-    createRequest(transaction.objectStore(DRAFTS_STORE).get("active")),
-    createRequest(transaction.objectStore(PROJECTS_STORE).getAll()),
-    createRequest(transaction.objectStore(APP_STATE_STORE).get(STATE_KEY)),
-    createRequest(transaction.objectStore(RECEIPTS_STORE).getAll()),
-  ]);
+  const [submissions, media, outbox, drafts, projects, appState, receipts] =
+    await Promise.all([
+      createRequest(transaction.objectStore(SUBMISSIONS_STORE).getAll()),
+      createRequest(transaction.objectStore(MEDIA_STORE).getAll()),
+      createRequest(transaction.objectStore(OUTBOX_STORE).getAll()),
+      createRequest(transaction.objectStore(DRAFTS_STORE).get("active")),
+      createRequest(transaction.objectStore(PROJECTS_STORE).getAll()),
+      createRequest(transaction.objectStore(APP_STATE_STORE).get(STATE_KEY)),
+      createRequest(transaction.objectStore(RECEIPTS_STORE).getAll()),
+    ]);
   await transactionComplete;
   return {
     submissions: submissions as Observation[],
@@ -197,11 +234,18 @@ export async function readStoredRecoveryData(): Promise<StoredRecoveryData> {
 
 /** A lightweight boot probe so the app can distinguish "empty database" from
  * "database needs attention" instead of silently booting blank. */
-export async function probeLocalDatabase(): Promise<{ ok: boolean; error: string | null }> {
-  if (!("indexedDB" in window)) return { ok: false, error: "IndexedDB is not available in this browser" };
+export async function probeLocalDatabase(): Promise<{
+  ok: boolean;
+  error: string | null;
+}> {
+  if (!("indexedDB" in window))
+    return { ok: false, error: "IndexedDB is not available in this browser" };
   try {
     const database = await openDatabase();
-    const transaction = database.transaction([APP_STATE_STORE, SUBMISSIONS_STORE], "readonly");
+    const transaction = database.transaction(
+      [APP_STATE_STORE, SUBMISSIONS_STORE],
+      "readonly",
+    );
     await Promise.all([
       createRequest(transaction.objectStore(APP_STATE_STORE).get(STATE_KEY)),
       createRequest(transaction.objectStore(SUBMISSIONS_STORE).getAll()),
@@ -209,7 +253,13 @@ export async function probeLocalDatabase(): Promise<{ ok: boolean; error: string
     ]);
     return { ok: true, error: null };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : "The local database could not be opened" };
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "The local database could not be opened",
+    };
   }
 }
 
@@ -219,7 +269,9 @@ export async function getStoredBackendKey(): Promise<string | null> {
     const database = await openDatabase();
     const transaction = database.transaction(SETTINGS_STORE, "readonly");
     const transactionComplete = waitForTransaction(transaction);
-    const resultRequest = createRequest(transaction.objectStore(SETTINGS_STORE).get("backend"));
+    const resultRequest = createRequest(
+      transaction.objectStore(SETTINGS_STORE).get("backend"),
+    );
     const [result] = await Promise.all([resultRequest, transactionComplete]);
     return typeof result === "string" ? result : null;
   } catch {
@@ -233,7 +285,9 @@ export async function getExplicitSignOut(): Promise<boolean> {
     const database = await openDatabase();
     const transaction = database.transaction(SETTINGS_STORE, "readonly");
     const transactionComplete = waitForTransaction(transaction);
-    const resultRequest = createRequest(transaction.objectStore(SETTINGS_STORE).get(EXPLICIT_SIGN_OUT_KEY));
+    const resultRequest = createRequest(
+      transaction.objectStore(SETTINGS_STORE).get(EXPLICIT_SIGN_OUT_KEY),
+    );
     const [result] = await Promise.all([resultRequest, transactionComplete]);
     return result === true;
   } catch {
@@ -249,18 +303,37 @@ export async function setExplicitSignOut(value: boolean): Promise<void> {
   await waitForTransaction(transaction);
 }
 
-export async function saveAppState(state: AppState, backendKey = "preview"): Promise<void> {
-  if (!("indexedDB" in window)) throw new Error("IndexedDB is unavailable in this browser");
+export async function saveAppState(
+  state: AppState,
+  backendKey = "preview",
+): Promise<void> {
+  if (!("indexedDB" in window))
+    throw new Error("IndexedDB is unavailable in this browser");
   const database = await openDatabase();
-  const transaction = database.transaction([APP_STATE_STORE, SETTINGS_STORE, PROJECTS_STORE, DRAFTS_STORE, SUBMISSIONS_STORE], "readwrite");
+  const transaction = database.transaction(
+    [
+      APP_STATE_STORE,
+      SETTINGS_STORE,
+      PROJECTS_STORE,
+      DRAFTS_STORE,
+      SUBMISSIONS_STORE,
+    ],
+    "readwrite",
+  );
   const transactionComplete = waitForTransaction(transaction);
   transaction.objectStore(APP_STATE_STORE).put(state, STATE_KEY);
-  transaction.objectStore(SETTINGS_STORE).put({ mode: state.mode, view: state.view }, "session");
+  transaction
+    .objectStore(SETTINGS_STORE)
+    .put({ mode: state.mode, view: state.view }, "session");
   transaction.objectStore(SETTINGS_STORE).put(backendKey, "backend");
   transaction.objectStore(PROJECTS_STORE).put(state.project, state.project.id);
-  state.projects?.forEach((project) => transaction.objectStore(PROJECTS_STORE).put(project, project.id));
+  state.projects?.forEach((project) =>
+    transaction.objectStore(PROJECTS_STORE).put(project, project.id),
+  );
   transaction.objectStore(DRAFTS_STORE).put(state.draft, "active");
-  state.observations.forEach((observation) => transaction.objectStore(SUBMISSIONS_STORE).put(observation, observation.id));
+  state.observations.forEach((observation) =>
+    transaction.objectStore(SUBMISSIONS_STORE).put(observation, observation.id),
+  );
   await transactionComplete;
 }
 
@@ -273,48 +346,67 @@ export async function commitLocalSubmission(input: {
   media: DurableMedia[];
   observation: Observation;
 }): Promise<void> {
-  if (!("indexedDB" in window)) throw new Error("IndexedDB is unavailable in this browser");
+  if (!("indexedDB" in window))
+    throw new Error("IndexedDB is unavailable in this browser");
   const database = await openDatabase();
-  const transaction = database.transaction([SUBMISSIONS_STORE, MEDIA_STORE, OUTBOX_STORE], "readwrite");
+  const transaction = database.transaction(
+    [SUBMISSIONS_STORE, MEDIA_STORE, OUTBOX_STORE],
+    "readwrite",
+  );
   const transactionComplete = waitForTransaction(transaction);
-  transaction.objectStore(SUBMISSIONS_STORE).put(input.observation, input.submission.id);
-  input.media.forEach((media) => transaction.objectStore(MEDIA_STORE).put(media, media.id));
-  transaction.objectStore(OUTBOX_STORE).put({
-    id: `submission:${input.submission.id}`,
-    operationType: "CREATE_SUBMISSION",
-    entityId: input.submission.id,
-    projectId: input.submission.projectId,
-    attempts: 0,
-    createdAt: input.submission.clientCreatedAt,
-    nextAttemptAt: input.submission.clientCreatedAt,
-    lastAttemptAt: null,
-    lastError: null,
-    state: "QUEUED",
-  } satisfies OutboxOperation, `submission:${input.submission.id}`);
-  input.media.forEach((media) => transaction.objectStore(OUTBOX_STORE).put({
-    id: `media:${media.id}`,
-    operationType: "UPLOAD_MEDIA",
-    entityId: media.id,
-    projectId: input.submission.projectId,
-    attempts: 0,
-    createdAt: input.submission.clientCreatedAt,
-    nextAttemptAt: input.submission.clientCreatedAt,
-    lastAttemptAt: null,
-    lastError: null,
-    state: "QUEUED",
-  } satisfies OutboxOperation, `media:${media.id}`));
-  transaction.objectStore(OUTBOX_STORE).put({
-    id: `finalize:${input.submission.id}`,
-    operationType: "FINALIZE_SUBMISSION",
-    entityId: input.submission.id,
-    projectId: input.submission.projectId,
-    attempts: 0,
-    createdAt: input.submission.clientCreatedAt,
-    nextAttemptAt: input.submission.clientCreatedAt,
-    lastAttemptAt: null,
-    lastError: null,
-    state: "QUEUED",
-  } satisfies OutboxOperation, `finalize:${input.submission.id}`);
+  transaction
+    .objectStore(SUBMISSIONS_STORE)
+    .put(input.observation, input.submission.id);
+  input.media.forEach((media) =>
+    transaction.objectStore(MEDIA_STORE).put(media, media.id),
+  );
+  transaction.objectStore(OUTBOX_STORE).put(
+    {
+      id: `submission:${input.submission.id}`,
+      operationType: "CREATE_SUBMISSION",
+      entityId: input.submission.id,
+      projectId: input.submission.projectId,
+      attempts: 0,
+      createdAt: input.submission.clientCreatedAt,
+      nextAttemptAt: input.submission.clientCreatedAt,
+      lastAttemptAt: null,
+      lastError: null,
+      state: "QUEUED",
+    } satisfies OutboxOperation,
+    `submission:${input.submission.id}`,
+  );
+  input.media.forEach((media) =>
+    transaction.objectStore(OUTBOX_STORE).put(
+      {
+        id: `media:${media.id}`,
+        operationType: "UPLOAD_MEDIA",
+        entityId: media.id,
+        projectId: input.submission.projectId,
+        attempts: 0,
+        createdAt: input.submission.clientCreatedAt,
+        nextAttemptAt: input.submission.clientCreatedAt,
+        lastAttemptAt: null,
+        lastError: null,
+        state: "QUEUED",
+      } satisfies OutboxOperation,
+      `media:${media.id}`,
+    ),
+  );
+  transaction.objectStore(OUTBOX_STORE).put(
+    {
+      id: `finalize:${input.submission.id}`,
+      operationType: "FINALIZE_SUBMISSION",
+      entityId: input.submission.id,
+      projectId: input.submission.projectId,
+      attempts: 0,
+      createdAt: input.submission.clientCreatedAt,
+      nextAttemptAt: input.submission.clientCreatedAt,
+      lastAttemptAt: null,
+      lastError: null,
+      state: "QUEUED",
+    } satisfies OutboxOperation,
+    `finalize:${input.submission.id}`,
+  );
   await transactionComplete;
 }
 
@@ -331,10 +423,16 @@ export interface LocalReceipt {
  * outbox. It is called only after a complete server receipt (or the explicit
  * local demo adapter) has been obtained.
  */
-export async function markLocalSubmissionsSynced(ids: string[], receiptOverrides: Partial<LocalReceipt> = {}): Promise<void> {
+export async function markLocalSubmissionsSynced(
+  ids: string[],
+  receiptOverrides: Partial<LocalReceipt> = {},
+): Promise<void> {
   if (!("indexedDB" in window) || !ids.length) return;
   const database = await openDatabase();
-  const transaction = database.transaction([SUBMISSIONS_STORE, MEDIA_STORE, OUTBOX_STORE, RECEIPTS_STORE], "readwrite");
+  const transaction = database.transaction(
+    [SUBMISSIONS_STORE, MEDIA_STORE, OUTBOX_STORE, RECEIPTS_STORE],
+    "readwrite",
+  );
   const transactionComplete = waitForTransaction(transaction);
   const submissions = transaction.objectStore(SUBMISSIONS_STORE);
   const outbox = transaction.objectStore(OUTBOX_STORE);
@@ -349,17 +447,23 @@ export async function markLocalSubmissionsSynced(ids: string[], receiptOverrides
         const mediaRequest = transaction.objectStore(MEDIA_STORE).get(asset.id);
         mediaRequest.onsuccess = () => {
           const media = mediaRequest.result as DurableMedia | undefined;
-          if (media) transaction.objectStore(MEDIA_STORE).put({ ...media, uploadState: "SYNCED" }, asset.id);
+          if (media)
+            transaction
+              .objectStore(MEDIA_STORE)
+              .put({ ...media, uploadState: "SYNCED" }, asset.id);
         };
         outbox.delete(`media:${asset.id}`);
       });
-      receipts.put({
-        submissionId: id,
-        receivedAt: receiptOverrides.receivedAt ?? new Date().toISOString(),
-        finalizedAt: receiptOverrides.finalizedAt ?? null,
-        serverStatus: receiptOverrides.serverStatus ?? "COMPLETE",
-        demo: receiptOverrides.demo ?? false,
-      }, id);
+      receipts.put(
+        {
+          submissionId: id,
+          receivedAt: receiptOverrides.receivedAt ?? new Date().toISOString(),
+          finalizedAt: receiptOverrides.finalizedAt ?? null,
+          serverStatus: receiptOverrides.serverStatus ?? "COMPLETE",
+          demo: receiptOverrides.demo ?? false,
+        },
+        id,
+      );
     };
     outbox.delete(`submission:${id}`);
     outbox.delete(`finalize:${id}`);
@@ -367,7 +471,10 @@ export async function markLocalSubmissionsSynced(ids: string[], receiptOverrides
   await transactionComplete;
 }
 
-export async function setLocalSubmissionStatus(id: string, status: SubmissionState): Promise<void> {
+export async function setLocalSubmissionStatus(
+  id: string,
+  status: SubmissionState,
+): Promise<void> {
   if (!("indexedDB" in window)) return;
   const database = await openDatabase();
   const transaction = database.transaction(SUBMISSIONS_STORE, "readwrite");
@@ -381,7 +488,10 @@ export async function setLocalSubmissionStatus(id: string, status: SubmissionSta
   await transactionComplete;
 }
 
-export async function markOutboxOperation(operationId: string, state: OutboxOperation["state"]): Promise<void> {
+export async function markOutboxOperation(
+  operationId: string,
+  state: OutboxOperation["state"],
+): Promise<void> {
   if (!("indexedDB" in window)) return;
   const database = await openDatabase();
   const transaction = database.transaction(OUTBOX_STORE, "readwrite");
@@ -395,10 +505,17 @@ export async function markOutboxOperation(operationId: string, state: OutboxOper
   await transactionComplete;
 }
 
-export async function recordOutboxFailure(id: string, message: string, actionRequired = false): Promise<void> {
+export async function recordOutboxFailure(
+  id: string,
+  message: string,
+  actionRequired = false,
+): Promise<void> {
   if (!("indexedDB" in window)) return;
   const database = await openDatabase();
-  const transaction = database.transaction([SUBMISSIONS_STORE, OUTBOX_STORE], "readwrite");
+  const transaction = database.transaction(
+    [SUBMISSIONS_STORE, OUTBOX_STORE],
+    "readwrite",
+  );
   const transactionComplete = waitForTransaction(transaction);
   const submissions = transaction.objectStore(SUBMISSIONS_STORE);
   const outbox = transaction.objectStore(OUTBOX_STORE);
@@ -407,26 +524,43 @@ export async function recordOutboxFailure(id: string, message: string, actionReq
   let operations: OutboxOperation[] | undefined;
   const applyFailure = () => {
     if (!observation || !operations) return;
-    const mediaIds = new Set((observation.media ?? []).map((asset) => asset.id));
+    const mediaIds = new Set(
+      (observation.media ?? []).map((asset) => asset.id),
+    );
     const now = Date.now();
     operations
-      .filter((operation) => operation.entityId === id || mediaIds.has(operation.entityId))
+      .filter(
+        (operation) =>
+          operation.entityId === id || mediaIds.has(operation.entityId),
+      )
       .forEach((operation) => {
         const attempts = operation.attempts + 1;
-        const delay = Math.min(30 * 60 * 1000, 1000 * (2 ** Math.min(attempts, 10))) + Math.floor(Math.random() * 1000);
-        outbox.put({
-          ...operation,
-          attempts,
-          lastError: message,
-          lastAttemptAt: new Date(now).toISOString(),
-          nextAttemptAt: new Date(now + delay).toISOString(),
-          state: actionRequired ? "ACTION_REQUIRED" : "RETRYABLE_ERROR",
-        }, operation.id);
+        const delay =
+          Math.min(30 * 60 * 1000, 1000 * 2 ** Math.min(attempts, 10)) +
+          Math.floor(Math.random() * 1000);
+        outbox.put(
+          {
+            ...operation,
+            attempts,
+            lastError: message,
+            lastAttemptAt: new Date(now).toISOString(),
+            nextAttemptAt: new Date(now + delay).toISOString(),
+            state: actionRequired ? "ACTION_REQUIRED" : "RETRYABLE_ERROR",
+          },
+          operation.id,
+        );
       });
   };
   submissionRequest.onsuccess = () => {
     observation = submissionRequest.result as Observation | undefined;
-    if (observation) submissions.put({ ...observation, status: actionRequired ? "ACTION_REQUIRED" : "RETRYABLE_ERROR" }, id);
+    if (observation)
+      submissions.put(
+        {
+          ...observation,
+          status: actionRequired ? "ACTION_REQUIRED" : "RETRYABLE_ERROR",
+        },
+        id,
+      );
     applyFailure();
   };
   const outboxRequest = outbox.getAll();
@@ -442,7 +576,9 @@ export async function getOutboxOperations(): Promise<OutboxOperation[]> {
   const database = await openDatabase();
   const transaction = database.transaction(OUTBOX_STORE, "readonly");
   const transactionComplete = waitForTransaction(transaction);
-  const rows = await createRequest(transaction.objectStore(OUTBOX_STORE).getAll()) as OutboxOperation[];
+  const rows = (await createRequest(
+    transaction.objectStore(OUTBOX_STORE).getAll(),
+  )) as OutboxOperation[];
   await transactionComplete;
   return rows;
 }
@@ -451,10 +587,15 @@ export async function getOrCreateDeviceId(): Promise<string> {
   if (!("indexedDB" in window)) return crypto.randomUUID();
   const database = await openDatabase();
   const readTransaction = database.transaction(DEVICE_STATE_STORE, "readonly");
-  const existing = await createRequest(readTransaction.objectStore(DEVICE_STATE_STORE).get("device_id"));
+  const existing = await createRequest(
+    readTransaction.objectStore(DEVICE_STATE_STORE).get("device_id"),
+  );
   if (typeof existing === "string") return existing;
   const deviceId = crypto.randomUUID();
-  const writeTransaction = database.transaction(DEVICE_STATE_STORE, "readwrite");
+  const writeTransaction = database.transaction(
+    DEVICE_STATE_STORE,
+    "readwrite",
+  );
   writeTransaction.objectStore(DEVICE_STATE_STORE).put(deviceId, "device_id");
   await waitForTransaction(writeTransaction);
   return deviceId;
@@ -481,26 +622,56 @@ export async function migrateLegacyDatabase(scope: string): Promise<void> {
   try {
     // Scoped database must exist with its stores before we can copy into it.
     const scoped = await openDatabase();
-    const scopedCount = await createRequest(scoped.transaction(SUBMISSIONS_STORE, "readonly").objectStore(SUBMISSIONS_STORE).count());
+    const scopedCount = await createRequest(
+      scoped
+        .transaction(SUBMISSIONS_STORE, "readonly")
+        .objectStore(SUBMISSIONS_STORE)
+        .count(),
+    );
     if (scopedCount > 0) return;
 
     const legacy = await openDatabaseByName(LEGACY_DB_NAME);
     if (!legacy) return;
 
-    const settingsRequest = createRequest(legacy.transaction(SETTINGS_STORE, "readonly").objectStore(SETTINGS_STORE).get(LEGACY_IMPORTED_TO_KEY));
+    const settingsRequest = createRequest(
+      legacy
+        .transaction(SETTINGS_STORE, "readonly")
+        .objectStore(SETTINGS_STORE)
+        .get(LEGACY_IMPORTED_TO_KEY),
+    );
     const importedTo = await settingsRequest;
     if (typeof importedTo === "string" && importedTo !== scope) return;
 
-    const copyStore = async (storeName: string, target: IDBObjectStore): Promise<void> => {
-      const rows = await createRequest(legacy.transaction(storeName, "readonly").objectStore(storeName).getAll());
+    const copyStore = async (
+      storeName: string,
+      target: IDBObjectStore,
+    ): Promise<void> => {
+      const rows = await createRequest(
+        legacy
+          .transaction(storeName, "readonly")
+          .objectStore(storeName)
+          .getAll(),
+      );
       for (const row of rows as Array<{ id?: string }>) {
-        if (row && typeof row === "object" && "id" in row) target.put(row, row.id);
+        if (row && typeof row === "object" && "id" in row)
+          target.put(row, row.id);
         else if (row && typeof row === "object") {
           // Keyed stores without an id field keep their own keys; re-put with
           // the original key by reading keys separately.
-          const keys = await createRequest(legacy.transaction(storeName, "readonly").objectStore(storeName).getAllKeys());
-          const values = await createRequest(legacy.transaction(storeName, "readonly").objectStore(storeName).getAll());
-          for (let i = 0; i < keys.length; i += 1) target.put(values[i], keys[i]);
+          const keys = await createRequest(
+            legacy
+              .transaction(storeName, "readonly")
+              .objectStore(storeName)
+              .getAllKeys(),
+          );
+          const values = await createRequest(
+            legacy
+              .transaction(storeName, "readonly")
+              .objectStore(storeName)
+              .getAll(),
+          );
+          for (let i = 0; i < keys.length; i += 1)
+            target.put(values[i], keys[i]);
           return;
         }
       }
@@ -523,7 +694,10 @@ export async function migrateLegacyDatabase(scope: string): Promise<void> {
 
 /** A short durable lease prevents normal multi-tab contention. Server IDs and
  * unique constraints remain the correctness backstop if two tabs race. */
-export async function acquireSyncLease(owner: string, ttlMs = 30_000): Promise<boolean> {
+export async function acquireSyncLease(
+  owner: string,
+  ttlMs = 30_000,
+): Promise<boolean> {
   if (!("indexedDB" in window)) return false;
   const database = await openDatabase();
   const transaction = database.transaction(DEVICE_STATE_STORE, "readwrite");
@@ -533,8 +707,15 @@ export async function acquireSyncLease(owner: string, ttlMs = 30_000): Promise<b
   const request = store.get("sync_lease");
   request.onsuccess = () => {
     const current = request.result as SyncLease | undefined;
-    if (!current || current.expiresAt <= Date.now() || current.owner === owner) {
-      store.put({ owner, expiresAt: Date.now() + ttlMs } satisfies SyncLease, "sync_lease");
+    if (
+      !current ||
+      current.expiresAt <= Date.now() ||
+      current.owner === owner
+    ) {
+      store.put(
+        { owner, expiresAt: Date.now() + ttlMs } satisfies SyncLease,
+        "sync_lease",
+      );
       acquired = true;
     }
   };
@@ -556,14 +737,30 @@ export async function releaseSyncLease(owner: string): Promise<void> {
   await transactionComplete;
 }
 
-export async function estimateLocalStorage(): Promise<{ usage: number | null; quota: number | null; persisted: boolean | null }> {
-  if (!("storage" in navigator)) return { usage: null, quota: null, persisted: null };
+export async function estimateLocalStorage(): Promise<{
+  usage: number | null;
+  quota: number | null;
+  persisted: boolean | null;
+}> {
+  if (!("storage" in navigator))
+    return { usage: null, quota: null, persisted: null };
   const estimate = await navigator.storage.estimate();
-  const persisted = "persisted" in navigator.storage ? await navigator.storage.persisted() : null;
-  return { usage: estimate.usage ?? null, quota: estimate.quota ?? null, persisted };
+  const persisted =
+    "persisted" in navigator.storage
+      ? await navigator.storage.persisted()
+      : null;
+  return {
+    usage: estimate.usage ?? null,
+    quota: estimate.quota ?? null,
+    persisted,
+  };
 }
 
-export function mediaFromAssets(assets: MediaAsset[], submissionId: string, fieldId = "unknown"): DurableMedia[] {
+export function mediaFromAssets(
+  assets: MediaAsset[],
+  submissionId: string,
+  fieldId = "unknown",
+): DurableMedia[] {
   return assets.map((asset) => ({
     id: asset.id,
     submissionId,

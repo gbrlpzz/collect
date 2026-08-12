@@ -22,7 +22,6 @@ Reference the official guidance when making UI decisions:
 - Avoid animation that delays data entry or obscures whether a write completed.
 - Treat offline and error states as normal product states with factual copy, not alarming decoration.
 
-
 ## Native iOS interaction contract
 
 The default is Apple's Human Interface Guidelines. We deviate only when the
@@ -44,16 +43,16 @@ These are the official references used for the current interface system:
 
 ### How the contract appears in collect
 
-| HIG principle | collect implementation |
-| --- | --- |
-| One clear hierarchy | A navigation bar identifies the current surface; the observation screen has one primary action: **Save observation**. |
-| Comfortable touch interaction | Interactive controls use a 44 px minimum target, with larger rows for repeated field choices. |
-| Native input behavior | Semantic HTML inputs (`date`, `datetime-local`, numeric input, file picker), system keyboard hints, visible labels, and browser focus are preferred over custom widgets. |
-| Group related content | Field definitions are rendered as inset grouped sections and list rows, not a generic form-builder canvas. |
-| Progressive disclosure | Sync details, privacy detail, and recovery actions live in sheets or disclosures instead of competing with collection. |
-| Accessible state | Words, checkmarks, selection shape, focus, and live status text communicate state; colour is never the only signal. |
-| Respect system settings | System font stacks, rem-based type, light/dark appearance, safe-area insets, keyboard navigation, and reduced motion are supported. |
-| Preserve the task | Offline receipts are explicit and factual. The interface never turns a request start or upload completion into a server receipt. |
+| HIG principle                 | collect implementation                                                                                                                                                   |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| One clear hierarchy           | A navigation bar identifies the current surface; the observation screen has one primary action: **Save observation**.                                                    |
+| Comfortable touch interaction | Interactive controls use a 44 px minimum target, with larger rows for repeated field choices.                                                                            |
+| Native input behavior         | Semantic HTML inputs (`date`, `datetime-local`, numeric input, file picker), system keyboard hints, visible labels, and browser focus are preferred over custom widgets. |
+| Group related content         | Field definitions are rendered as inset grouped sections and list rows, not a generic form-builder canvas.                                                               |
+| Progressive disclosure        | Sync details, privacy detail, and recovery actions live in sheets or disclosures instead of competing with collection.                                                   |
+| Accessible state              | Words, checkmarks, selection shape, focus, and live status text communicate state; colour is never the only signal.                                                      |
+| Respect system settings       | System font stacks, rem-based type, light/dark appearance, safe-area insets, keyboard navigation, and reduced motion are supported.                                      |
+| Preserve the task             | Offline receipts are explicit and factual. The interface never turns a request start or upload completion into a server receipt.                                         |
 
 ### Deliberate deviations
 
@@ -66,7 +65,6 @@ These are the official references used for the current interface system:
 - A saved local draft is visible while typing. This is more prominent than a
   typical native form because the local receipt boundary is a product promise,
   not decorative status.
-
 
 ## HIG audit — 2026-08-11
 
@@ -119,7 +117,6 @@ screen and control follows the HIG defaults above.
 - **Scope:** `src/components/Icon.tsx` and browser CSS chrome only; no custom symbol treatment is used to replace text labels or accessibility names.
 - **Risk check:** Icons remain secondary to labels, use consistent stroke weight, and all interactive elements retain text or accessible labels and 44 pt hit regions.
 
-
 ## Guided observation flow (one question at a time)
 
 The contributor collection surface is a **guided flow**, not a scrolling form:
@@ -134,13 +131,13 @@ checkout flows (see [Onboarding](https://developer.apple.com/design/human-interf
 Survey-methodology and form-design research consistently supports the pattern:
 
 - Reducing per-screen cognitive load improves response quality and completion
-  (Nielsen Norman Group, *4 Principles to Reduce Cognitive Load in Forms*).
-- "Ask one thing at a time" is a standard survey best practice (Qualtrics, *UX
-  Survey Best Practices*).
+  (Nielsen Norman Group, _4 Principles to Reduce Cognitive Load in Forms_).
+- "Ask one thing at a time" is a standard survey best practice (Qualtrics, _UX
+  Survey Best Practices_).
 - Concise, interactive questionnaires reduce survey fatigue and abandonment
-  (Maptionnaire, *12 Best Practices in Survey Design*).
+  (Maptionnaire, _12 Best Practices in Survey Design_).
 
-A field worker in sunlight, gloves, or stress should never have to *parse* a
+A field worker in sunlight, gloves, or stress should never have to _parse_ a
 form — only answer the visible question and tap the obvious next action.
 
 ### How the flow behaves
@@ -183,7 +180,6 @@ form — only answer the visible question and tap the obvious next action.
 - **Capsule answers instead of list rows** keep the Apple geometry while giving
   options a 56 pt target — larger than the 44 pt minimum — for glove use.
 
-
 ## Colour: the house neutral greys
 
 collect uses the **house monochrome palette** shared by
@@ -191,18 +187,18 @@ collect uses the **house monochrome palette** shared by
 [gbrlpzz/dispatch](https://github.com/gbrlpzz/dispatch) — no colour tint
 anywhere:
 
-| Token | Light | Dark |
-| --- | --- | --- |
-| Canvas | `#f5f5f7` | `#000000` |
-| Paper | `#ffffff` | `#1c1c1e` |
-| Ink (text) | `rgba(0,0,0,.85)` | `rgba(255,255,255,.88)` |
-| Dim (secondary) | `rgba(0,0,0,.55)` | `rgba(255,255,255,.58)` |
-| Tertiary | `rgba(0,0,0,.35)` | `rgba(255,255,255,.36)` |
-| Separator | `rgba(0,0,0,.14)` | `rgba(255,255,255,.18)` |
-| Fill / fill-strong | `rgba(0,0,0,.07)` / `.14` | `rgba(255,255,255,.10)` / `.20` |
-| Chrome (nav/glass) | `rgba(245,245,247,.85)` | `rgba(0,0,0,.85)` |
-| Accent / accent text | `#000` / `#fff` | `#fff` / `#000` |
-| Destructive | `#d70015` | `#ff6961` |
+| Token                | Light                     | Dark                            |
+| -------------------- | ------------------------- | ------------------------------- |
+| Canvas               | `#f5f5f7`                 | `#000000`                       |
+| Paper                | `#ffffff`                 | `#1c1c1e`                       |
+| Ink (text)           | `rgba(0,0,0,.85)`         | `rgba(255,255,255,.88)`         |
+| Dim (secondary)      | `rgba(0,0,0,.55)`         | `rgba(255,255,255,.58)`         |
+| Tertiary             | `rgba(0,0,0,.35)`         | `rgba(255,255,255,.36)`         |
+| Separator            | `rgba(0,0,0,.14)`         | `rgba(255,255,255,.18)`         |
+| Fill / fill-strong   | `rgba(0,0,0,.07)` / `.14` | `rgba(255,255,255,.10)` / `.20` |
+| Chrome (nav/glass)   | `rgba(245,245,247,.85)`   | `rgba(0,0,0,.85)`               |
+| Accent / accent text | `#000` / `#fff`           | `#fff` / `#000`                 |
+| Destructive          | `#d70015`                 | `#ff6961`                       |
 
 `prefers-contrast: more` strengthens dim/tertiary tokens to WCAG AA for
 accessibility settings; the default appearance keeps the house greys verbatim.

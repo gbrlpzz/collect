@@ -13,7 +13,8 @@ export interface DeviceInfo {
  */
 export function collectDeviceInfo(): DeviceInfo {
   const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-  const platform = typeof navigator !== "undefined" ? navigator.platform ?? "" : "";
+  const platform =
+    typeof navigator !== "undefined" ? (navigator.platform ?? "") : "";
   let os = "unknown";
   if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
   else if (/Android/i.test(ua)) os = "Android";
@@ -32,12 +33,22 @@ export function collectDeviceInfo(): DeviceInfo {
   else if (/Edg/i.test(ua)) browser = "Edge";
 
   let deviceModel = "unknown";
-  const isIos = /iPhone|iPad|iPod/i.test(ua) || (platform === "MacIntel" && typeof navigator !== "undefined" && navigator.maxTouchPoints > 1);
-  const isIpad = /iPad/i.test(ua) || (platform === "MacIntel" && typeof navigator !== "undefined" && navigator.maxTouchPoints > 1);
+  const isIos =
+    /iPhone|iPad|iPod/i.test(ua) ||
+    (platform === "MacIntel" &&
+      typeof navigator !== "undefined" &&
+      navigator.maxTouchPoints > 1);
+  const isIpad =
+    /iPad/i.test(ua) ||
+    (platform === "MacIntel" &&
+      typeof navigator !== "undefined" &&
+      navigator.maxTouchPoints > 1);
   if (isIos) {
     deviceModel = iosModelFromScreen();
   } else {
-    const android = ua.match(/; (SM-[A-Z0-9]+|Pixel \d+|[A-Za-z]+_?[A-Za-z0-9]+) Build\//);
+    const android = ua.match(
+      /; (SM-[A-Z0-9]+|Pixel \d+|[A-Za-z]+_?[A-Za-z0-9]+) Build\//,
+    );
     if (android) deviceModel = android[1].replace(/_/g, " ");
   }
 
@@ -46,7 +57,8 @@ export function collectDeviceInfo(): DeviceInfo {
     os,
     browser,
     deviceModel,
-    language: typeof navigator !== "undefined" ? navigator.language ?? "" : "",
+    language:
+      typeof navigator !== "undefined" ? (navigator.language ?? "") : "",
   };
 }
 
@@ -63,7 +75,12 @@ export interface EnvironmentInfo {
   pixelRatio: number;
   hardwareConcurrency: number | null;
   deviceMemory: number | null;
-  connection: { type: string | null; downlink: number | null; rtt: number | null; saveData: boolean | null } | null;
+  connection: {
+    type: string | null;
+    downlink: number | null;
+    rtt: number | null;
+    saveData: boolean | null;
+  } | null;
   battery: { level: number | null; charging: boolean | null } | null;
   online: boolean;
 }
@@ -93,8 +110,18 @@ export async function collectEnvironment(): Promise<EnvironmentInfo> {
   let connection: EnvironmentInfo["connection"] = null;
   try {
     concurrency = navigator.hardwareConcurrency ?? null;
-    memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? null;
-    const net = (navigator as Navigator & { connection?: { effectiveType?: string; downlink?: number; rtt?: number; saveData?: boolean } }).connection;
+    memory =
+      (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? null;
+    const net = (
+      navigator as Navigator & {
+        connection?: {
+          effectiveType?: string;
+          downlink?: number;
+          rtt?: number;
+          saveData?: boolean;
+        };
+      }
+    ).connection;
     if (net) {
       connection = {
         type: net.effectiveType ?? null,
@@ -108,7 +135,11 @@ export async function collectEnvironment(): Promise<EnvironmentInfo> {
   }
   let battery: EnvironmentInfo["battery"] = null;
   try {
-    const bat = await (navigator as Navigator & { getBattery?: () => Promise<{ level: number; charging: boolean }> }).getBattery?.();
+    const bat = await (
+      navigator as Navigator & {
+        getBattery?: () => Promise<{ level: number; charging: boolean }>;
+      }
+    ).getBattery?.();
     if (bat) battery = { level: bat.level, charging: bat.charging };
   } catch {
     // Battery API is Chromium-only and optional.
@@ -148,9 +179,15 @@ function iosModelFromScreen(): string {
 
   const iphoneTable: Record<string, [string, number?][]> = {
     "640x1136": [["iPhone SE (1st gen) / 5s", 12]],
-    "750x1334": [["iPhone SE (2nd/3rd gen)", 14], ["iPhone 6/6s/7/8", 13]],
+    "750x1334": [
+      ["iPhone SE (2nd/3rd gen)", 14],
+      ["iPhone 6/6s/7/8", 13],
+    ],
     "1242x2208": [["iPhone 6 Plus/7 Plus/8 Plus"]],
-    "1125x2436": [["iPhone 13 mini", 17], ["iPhone 12 mini / X / XS / 11 Pro", 16]],
+    "1125x2436": [
+      ["iPhone 13 mini", 17],
+      ["iPhone 12 mini / X / XS / 11 Pro", 16],
+    ],
     "828x1792": [["iPhone 11 / XR"]],
     "1170x2532": [["iPhone 12 / 13 / 14 / 15 / 16 (6.1-inch)"]],
     "1284x2778": [["iPhone 12 Pro Max / 13 Pro Max / 14 Plus"]],
@@ -172,7 +209,8 @@ function iosModelFromScreen(): string {
   const candidates = iphoneTable[key];
   if (candidates) {
     const [family, cutoff] = candidates[0];
-    if (cutoff === undefined || iosVersion === 0 || iosVersion >= cutoff) return family;
+    if (cutoff === undefined || iosVersion === 0 || iosVersion >= cutoff)
+      return family;
     return family;
   }
   if (ipadTable[key]) return ipadTable[key][0];

@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <script>
       // Two installable identities share this shell. The role is fixed before
       // React paints so the PWA chrome never follows the device appearance.
@@ -15,7 +18,9 @@
 
         var manifest = document.createElement("link");
         manifest.rel = "manifest";
-        manifest.href = admin ? "/manifest-admin.webmanifest" : "/manifest.webmanifest";
+        manifest.href = admin
+          ? "/manifest-admin.webmanifest"
+          : "/manifest.webmanifest";
         document.head.appendChild(manifest);
 
         var theme = document.createElement("meta");
@@ -30,18 +35,25 @@
 
         var touch = document.createElement("link");
         touch.rel = "apple-touch-icon";
-        touch.href = admin ? "/apple-touch-icon-admin.png" : "/apple-touch-icon.png";
+        touch.href = admin
+          ? "/apple-touch-icon-admin.png"
+          : "/apple-touch-icon.png";
         document.head.appendChild(touch);
 
         var title = document.createElement("meta");
         title.name = "apple-mobile-web-app-title";
         title.content = admin ? "collect Admin" : "collect";
         document.head.appendChild(title);
-        document.title = admin ? "collect Admin — field operations" : "collect — fieldwork, ready offline";
+        document.title = admin
+          ? "collect Admin — field operations"
+          : "collect — fieldwork, ready offline";
       })();
     </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="description" content="Collect structured field observations, even when the network disappears." />
+    <meta
+      name="description"
+      content="Collect structured field observations, even when the network disappears."
+    />
     <title>collect — fieldwork, ready offline</title>
   </head>
   <body>
