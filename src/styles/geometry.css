@@ -793,10 +793,6 @@ h3 {
     padding-right: var(--page-gutter);
     padding-left: var(--page-gutter);
   }
-  .page-contributor,
-  .page-project {
-    padding-bottom: calc(84px + env(safe-area-inset-bottom));
-  }
   .page-wizard {
     width: 100%;
   }

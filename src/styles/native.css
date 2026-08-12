@@ -604,10 +604,6 @@ button {
     padding-right: 16px;
     padding-left: 16px;
   }
-  .page-contributor,
-  .page-project {
-    padding-bottom: calc(106px + env(safe-area-inset-bottom));
-  }
   .mobile-tabbar {
     position: fixed;
     right: 0;
