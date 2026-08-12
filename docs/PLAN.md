@@ -128,6 +128,19 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 | AuthScreen password tab + device-link panels | 🟡 | UI agent in progress (contract delivered) |
 | Email codes | ⚠️ | implemented; emails cannot carry {{ .Token }} on free tier (Pro/SMTP needed) |
 
+## Attention verification (2026-08-12)
+
+| Item | Status | Notes |
+|---|---|---|
+| Attention-check bank | ✅ | 10 universally valid 4-option checks; client copy for offline; server validates |
+| Random injection | ✅ | Collector injects one check after the first two questions (f0d34c6); options shuffle per presentation |
+| Binary filter flag | ✅ | submissions.attention_failed; question text never stored (only check key + answer) |
+| Score visibility | ✅ | contributor (getMyProfile) + admin (readiness + exports) |
+| Guess-adjusted score | ✅ | (correct − expected)/(total − expected), clamped; per-contributor on profile |
+| Server recording | ✅ | attention_responses (idempotent per submission) + recompute_attention_score |
+| Visibility | ✅ | profile (contributor + admin), readiness data, exports (data/attention.csv + contributors.csv) |
+| Environment payload regression | ✅ | re-added observation.environment to sync payload |
+
 ## Gap work queue
 
 _(filled from audits)_
