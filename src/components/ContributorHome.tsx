@@ -120,26 +120,26 @@ export function ContributorHome({
             )}
           </section>
 
-          <section
-            className="collection-status"
-            aria-label="Observation status"
-          >
-            <div className="section-heading-row">
-              <div>
-                <Eyebrow>Recent</Eyebrow>
-                <h2>
-                  {attentionCount
-                    ? `${attentionCount} need attention`
-                    : waitingCount
-                      ? `${waitingCount} waiting to send`
-                      : "All saved"}
-                </h2>
+          {recent.length > 0 && (
+            <section
+              className="collection-status"
+              aria-label="Observation status"
+            >
+              <div className="section-heading-row">
+                <div>
+                  <Eyebrow>Recent</Eyebrow>
+                  <h2>
+                    {attentionCount
+                      ? `${attentionCount} need attention`
+                      : waitingCount
+                        ? `${waitingCount} waiting to send`
+                        : "All saved"}
+                  </h2>
+                </div>
+                <span className="collection-status-count">
+                  {projectObservations.length} total
+                </span>
               </div>
-              <span className="collection-status-count">
-                {projectObservations.length} total
-              </span>
-            </div>
-            {recent.length ? (
               <div className="recent-observation-list">
                 {recent.map((observation) => {
                   const waiting = observation.status !== "SYNCED";
@@ -161,12 +161,8 @@ export function ContributorHome({
                   );
                 })}
               </div>
-            ) : (
-              <p className="empty-list-state">
-                Your saved observations will appear here.
-              </p>
-            )}
-          </section>
+            </section>
+          )}
         </>
       ) : (
         <div className="empty-list-state">

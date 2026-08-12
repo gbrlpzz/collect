@@ -40,12 +40,13 @@ import {
   loadUserAdminAccess,
   updateProjectStatus,
 } from "../lib/adminBackend";
-import type { ConfirmationDialogProps } from "../components/ui";
 import { syncNow as runSync } from "./syncController";
 import { exportRecoveryPackage as downloadRecoveryPackage } from "./recovery";
 import { requestStoragePersistence } from "./storage";
 import { commitLocalObservation } from "./submission";
 import { useSyncLifecycle } from "./useSyncLifecycle";
+import { useTransientMessage } from "./useTransientMessage";
+import { useConfirmation } from "./useConfirmation";
 
 const APP_VERSION =
   (import.meta.env.VITE_APP_VERSION as string | undefined) ?? "0.1.2";
@@ -61,11 +62,7 @@ const entryRole = (() => {
 // restore data and drafts, but never changes which surface is allowed here.
 const launchMode: AppMode = entryRole === "admin" ? "admin" : "contributor";
 const launchView: View = launchMode === "admin" ? "admin" : "home";
-
-export type ConfirmationRequest = Pick<
-  ConfirmationDialogProps,
-  "title" | "message" | "confirmLabel" | "cancelLabel" | "destructive"
->;
+type AdminAccessState = "checking" | "allowed" | "denied" | "unavailable";
 
 export function useAppController() {
   const [state, setState] = useState<AppState>(() => ({
@@ -85,7 +82,9 @@ export function useAppController() {
   const [hydrated, setHydrated] = useState(false);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
   const [session, setSession] = useState<Session | null>(null);
-  const [canAdmin, setCanAdmin] = useState(!isSupabaseConfigured);
+  const [adminAccess, setAdminAccess] = useState<AdminAccessState>(
+    isSupabaseConfigured ? "checking" : "allowed",
+  );
   const [previewUnlocked, setPreviewUnlocked] = useState(false);
   const [localCacheAvailable, setLocalCacheAvailable] = useState(false);
   const [explicitSignOut, setExplicitSignOutState] = useState(false);
@@ -97,15 +96,17 @@ export function useAppController() {
   const [isSaving, setIsSaving] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const [dbError, setDbError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
   const [collectorPreview, setCollectorPreview] = useState(false);
-  const [confirmation, setConfirmation] = useState<ConfirmationRequest | null>(
-    null,
-  );
-  const confirmationResolverRef = useRef<((confirmed: boolean) => void) | null>(
-    null,
-  );
-  const toastTimerRef = useRef<number | undefined>(undefined);
+  const {
+    message: toast,
+    show: showToast,
+    dismiss: dismissToast,
+  } = useTransientMessage();
+  const {
+    confirmation,
+    request: requestConfirmation,
+    resolve: resolveConfirmation,
+  } = useConfirmation();
   const syncOwnerRef = useRef(`sync-worker-${crypto.randomUUID()}`);
   const syncNowRef = useRef<
     (options?: { silent?: boolean }) => Promise<boolean>
@@ -205,7 +206,9 @@ export function useAppController() {
           !isSupabaseConfigured || storedBackendKey === localBackendKey;
         setLocalCacheAvailable(Boolean(saved && belongsToCurrentBackend));
         if (saved && belongsToCurrentBackend) {
-          setCanAdmin(!isSupabaseConfigured || saved.mode === "admin");
+          if (!isSupabaseConfigured || saved.mode === "admin") {
+            setAdminAccess("allowed");
+          }
           setState((current) => ({
             ...current,
             ...saved,
@@ -255,7 +258,7 @@ export function useAppController() {
           }
         }
         if (!active) return;
-        setCanAdmin(hasAdminAccess);
+        setAdminAccess(hasAdminAccess ? "allowed" : "denied");
         if (remoteProjects.length)
           setState((current) => ({
             ...current,
@@ -277,7 +280,11 @@ export function useAppController() {
             view: current.mode === "admin" ? "admin" : "home",
           }));
       })
-      .catch(() => undefined);
+      .catch(() => {
+        setAdminAccess((current) =>
+          current === "allowed" ? current : "unavailable",
+        );
+      });
     return () => {
       active = false;
     };
@@ -393,26 +400,6 @@ export function useAppController() {
       ),
     [state.draft],
   );
-
-  const showToast = (message: string) => {
-    setToast(message);
-    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-    // Time-boxing is a heuristic fallback only: the message is visible long
-    // enough to be read, and an explicit dismiss button remains available.
-    toastTimerRef.current = window.setTimeout(() => setToast(null), 3600);
-  };
-
-  const requestConfirmation = (request: ConfirmationRequest) =>
-    new Promise<boolean>((resolve) => {
-      confirmationResolverRef.current = resolve;
-      setConfirmation(request);
-    });
-
-  const resolveConfirmation = (confirmed: boolean) => {
-    confirmationResolverRef.current?.(confirmed);
-    confirmationResolverRef.current = null;
-    setConfirmation(null);
-  };
 
   const navigate = (view: View) =>
     setState((current) => ({ ...current, view }));
@@ -739,7 +726,6 @@ export function useAppController() {
 
   const unlockPreview = () => setPreviewUnlocked(true);
   const dismissStorageError = () => setStorageError(null);
-  const dismissToast = () => setToast(null);
   const openSyncSheetAndSync = () => {
     setSyncSheetOpen(true);
     void syncNow();
@@ -754,7 +740,8 @@ export function useAppController() {
     authLoading,
     requiresAuthentication,
     session,
-    canAdmin,
+    canAdmin: adminAccess === "allowed",
+    adminAccess,
     previewUnlocked,
     syncSheetOpen,
     isSyncing,

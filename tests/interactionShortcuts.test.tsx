@@ -135,9 +135,10 @@ describe("low-friction primary actions", () => {
 
   it("links this device with the code shown on the signed-in device", async () => {
     render(<AuthScreen configured role="contributor" />);
+    fireEvent.click(screen.getByText("Other sign-in options"));
     fireEvent.click(
       screen.getByRole("button", {
-        name: /signed in on the web\? enter the code shown there/i,
+        name: /use a code from a signed-in device/i,
       }),
     );
     const codeInput = screen.getByLabelText(

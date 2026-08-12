@@ -1,9 +1,11 @@
 // Provider-abstracted email delivery. Email is never part of synchronization
 // correctness: every call site treats failures as advisory. A future provider
 // plugs in here without touching callers.
-export async function sendEmail(
-  input: { to: string; subject: string; text: string },
-): Promise<void> {
+export async function sendEmail(input: {
+  to: string;
+  subject: string;
+  text: string;
+}): Promise<void> {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   const from = Deno.env.get("MAIL_FROM");
   if (!apiKey || !from) {

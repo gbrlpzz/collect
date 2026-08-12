@@ -1916,12 +1916,14 @@ p {
 .auth-sent .text-button {
   margin-top: 20px;
 }
-.auth-install-help {
+.auth-install-help,
+.auth-alternatives {
   margin-top: 22px;
   border-top: 1px solid var(--separator-light);
   color: var(--secondary);
 }
-.auth-install-help summary {
+.auth-install-help summary,
+.auth-alternatives summary {
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -1932,18 +1934,24 @@ p {
   font-weight: 600;
   list-style: none;
 }
-.auth-install-help summary::-webkit-details-marker {
+.auth-install-help summary::-webkit-details-marker,
+.auth-alternatives summary::-webkit-details-marker {
   display: none;
 }
-.auth-install-help summary::after {
+.auth-install-help summary::after,
+.auth-alternatives summary::after {
   margin-left: auto;
   color: var(--tertiary);
   content: "+";
   font-size: 1.125rem;
   font-weight: 400;
 }
-.auth-install-help[open] summary::after {
+.auth-install-help[open] summary::after,
+.auth-alternatives[open] summary::after {
   content: "−";
+}
+.auth-alternatives .text-button {
+  margin: 0 0 4px;
 }
 .auth-install-content {
   padding: 2px 0 4px;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type {
   FieldDefinition,
   FieldOption,
@@ -21,7 +21,6 @@ import { formatAttentionScore } from "../lib/attention";
 import { useReadiness } from "../lib/useReadiness";
 import {
   createSchemaDraft,
-  loadProjectReadiness,
   publishSchemaDraft,
   sendProjectInvite,
   sendProjectPing,
@@ -57,7 +56,9 @@ export function AdminDashboard({
     (item) => item.status !== "SYNCED",
   ).length;
   const receivedCount = project.completeSubmissions;
-  const { readiness } = useReadiness(hasProject ? project.id : null);
+  const { readiness, error: readinessError } = useReadiness(
+    hasProject ? project.id : null,
+  );
 
   const reportedWaiting =
     readiness?.reduce((total, row) => total + row.pending, 0) ?? null;
@@ -156,6 +157,13 @@ export function AdminDashboard({
             <div className="empty-list-state">
               <span>
                 Preview data is not connected to a live contributor roster.
+              </span>
+            </div>
+          ) : readinessError && readiness === null ? (
+            <div className="empty-list-state" role="status">
+              <strong>Status temporarily unavailable</strong>
+              <span>
+                It will refresh automatically when the connection returns.
               </span>
             </div>
           ) : readiness === null ? (
@@ -822,41 +830,11 @@ function ContributorsPanel({
   waitingCount: number;
   onToast: (message: string) => void;
 }) {
-  const [remoteRows, setRemoteRows] = useState<ContributorReadiness[] | null>(
-    null,
-  );
-
-  const refresh = () => {
-    if (!isSupabaseConfigured) return;
-    setRemoteRows(null);
-    void loadProjectReadiness(projectId)
-      .then(setRemoteRows)
-      .catch(() => setRemoteRows([]));
-  };
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) return;
-    setRemoteRows(null);
-    void loadProjectReadiness(projectId)
-      .then(setRemoteRows)
-      .catch(() => setRemoteRows([]));
-    const timer = window.setInterval(() => {
-      void loadProjectReadiness(projectId)
-        .then(setRemoteRows)
-        .catch(() => setRemoteRows([]));
-    }, 30_000);
-    const onVisible = () => {
-      if (document.visibilityState === "visible")
-        void loadProjectReadiness(projectId)
-          .then(setRemoteRows)
-          .catch(() => setRemoteRows([]));
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, [projectId]);
+  const {
+    readiness: remoteRows,
+    error: readinessError,
+    refresh,
+  } = useReadiness(projectId);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
@@ -961,9 +939,15 @@ function ContributorsPanel({
         <div className="panel-heading">
           <div>
             <Eyebrow>Assigned contributors</Eyebrow>
-            <h2>Checking the roster</h2>
+            <h2>
+              {readinessError
+                ? "Roster temporarily unavailable"
+                : "Checking the roster"}
+            </h2>
             <p>
-              Readiness is based on the last status reported by each device.
+              {readinessError
+                ? "It will refresh automatically when the connection returns."
+                : "Readiness is based on the last status reported by each device."}
             </p>
           </div>
         </div>

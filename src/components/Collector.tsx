@@ -6,6 +6,7 @@ import { Button } from "./ui";
 import { FieldRenderer } from "./FieldRenderer";
 import { attentionFieldFor, pickAttentionCheck } from "../lib/attention";
 import { orderFieldsForCollection } from "../lib/fieldOrdering";
+import { sha256Blob } from "../lib/mediaIntegrity";
 
 interface CollectorProps {
   project: Project;
@@ -76,6 +77,7 @@ export function Collector({
       return result;
     }, {}),
   );
+  const mediaByFieldRef = useRef(mediaByField);
   const [activeMediaField, setActiveMediaField] = useState("site_photos");
   const [locationError, setLocationError] = useState<string | null>(null);
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
@@ -381,44 +383,43 @@ export function Collector({
           blob: file,
         }) satisfies MediaAsset,
     );
-    // Compute the content hash in the background so every stored media row
-    // carries an integrity fingerprint without any user involvement.
+    const fieldKey = activeMediaField;
+    const maxCount = Number(field.config?.maxCount ?? 5);
+    const nextAssets = [
+      ...(mediaByFieldRef.current[fieldKey] ?? []),
+      ...assets,
+    ].slice(0, maxCount);
+    const nextMediaByField = {
+      ...mediaByFieldRef.current,
+      [fieldKey]: nextAssets,
+    };
+    mediaByFieldRef.current = nextMediaByField;
+    setMediaByField(nextMediaByField);
+    onDraftChange(fieldKey, nextAssets);
+
+    // Hashing is deliberately invisible. Keep a ref to the latest media state
+    // so concurrent completions cannot restore a removed item or erase a
+    // sibling asset through a stale render closure.
     for (const asset of assets) {
-      if (!("crypto" in window) || !crypto.subtle || !asset.blob) continue;
-      void asset.blob
-        .arrayBuffer()
-        .then((buffer) => crypto.subtle.digest("SHA-256", buffer))
-        .then((digest) =>
-          Array.from(new Uint8Array(digest), (byte) =>
-            byte.toString(16).padStart(2, "0"),
-          ).join(""),
-        )
+      if (!asset.blob) continue;
+      void sha256Blob(asset.blob)
         .then((sha256) => {
           if (!sha256) return;
-          setMediaByField((current) => ({
-            ...current,
-            [activeMediaField]: (current[activeMediaField] ?? []).map((item) =>
-              item.id === asset.id ? { ...item, sha256 } : item,
-            ),
-          }));
-          onDraftChange(activeMediaField, [
-            ...(mediaByField[activeMediaField] ?? []).map((item) =>
-              item.id === asset.id ? { ...item, sha256 } : item,
-            ),
-          ]);
+          const currentAssets = mediaByFieldRef.current[fieldKey] ?? [];
+          if (!currentAssets.some((item) => item.id === asset.id)) return;
+          const hashedAssets = currentAssets.map((item) =>
+            item.id === asset.id ? { ...item, sha256 } : item,
+          );
+          const next = {
+            ...mediaByFieldRef.current,
+            [fieldKey]: hashedAssets,
+          };
+          mediaByFieldRef.current = next;
+          setMediaByField(next);
+          onDraftChange(fieldKey, hashedAssets);
         })
         .catch(() => undefined);
     }
-    const maxCount = Number(field.config?.maxCount ?? 5);
-    const nextAssets = [
-      ...(mediaByField[activeMediaField] ?? []),
-      ...assets,
-    ].slice(0, maxCount);
-    setMediaByField((current) => ({
-      ...current,
-      [activeMediaField]: nextAssets,
-    }));
-    onDraftChange(activeMediaField, nextAssets);
     setErrorText(null);
     event.target.value = "";
   };
@@ -427,7 +428,9 @@ export function Collector({
     const nextAssets = (mediaByField[fieldKey] ?? []).filter(
       (_, currentIndex) => currentIndex !== index,
     );
-    setMediaByField((current) => ({ ...current, [fieldKey]: nextAssets }));
+    const next = { ...mediaByFieldRef.current, [fieldKey]: nextAssets };
+    mediaByFieldRef.current = next;
+    setMediaByField(next);
     onDraftChange(fieldKey, nextAssets);
   };
 
@@ -519,7 +522,7 @@ export function Collector({
       </div>
 
       <div className="flow-body">
-        {locationNotice && (
+        {locationNotice && locationFields.some((field) => field.required) && (
           <p className="background-status" role="status">
             <Icon name="location" size={15} /> {locationNotice}
           </p>

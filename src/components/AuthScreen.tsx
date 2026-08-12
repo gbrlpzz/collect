@@ -641,22 +641,25 @@ export function AuthScreen({
               </>
             )}
             {configured && entryMode !== "device" && (
-              <button
-                type="button"
-                className="text-button"
-                onClick={() => {
-                  setEntryMode("device");
-                  setCode("");
-                  setCodeError(null);
-                  window.setTimeout(
-                    () => deviceCodeInputRef.current?.focus(),
-                    0,
-                  );
-                }}
-              >
-                Signed in on the web? Enter the code shown there{" "}
-                <Icon name="arrow-right" size={15} />
-              </button>
+              <details className="auth-alternatives">
+                <summary>Other sign-in options</summary>
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => {
+                    setEntryMode("device");
+                    setCode("");
+                    setCodeError(null);
+                    window.setTimeout(
+                      () => deviceCodeInputRef.current?.focus(),
+                      0,
+                    );
+                  }}
+                >
+                  Use a code from a signed-in device{" "}
+                  <Icon name="arrow-right" size={15} />
+                </button>
+              </details>
             )}
           </>
         ) : (

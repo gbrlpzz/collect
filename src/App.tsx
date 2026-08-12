@@ -1,15 +1,54 @@
-import { AdminDashboard, AdminProject } from "./components/AdminDashboard";
+import { lazy, Suspense } from "react";
 import { AuthScreen } from "./components/AuthScreen";
-import { Collector } from "./components/Collector";
 import { ConsentScreen } from "./components/ConsentScreen";
 import { ContributorHome } from "./components/ContributorHome";
 import { Button, ConfirmationDialog, Eyebrow } from "./components/ui";
 import { Icon } from "./components/Icon";
-import { NewProjectWizard } from "./components/NewProjectWizard";
-import { ProjectOverview } from "./components/ProjectOverview";
-import { SyncSheet } from "./components/SyncSheet";
 import { TopBar } from "./components/TopBar";
 import { useAppController } from "./app/useAppController";
+
+// The installed role is fixed at launch, so route-level code is loaded only
+// when that surface is actually opened. Field capture and admin tooling no
+// longer compete on the first-sign-in bundle.
+const Collector = lazy(() =>
+  import("./components/Collector").then(({ Collector }) => ({
+    default: Collector,
+  })),
+);
+const ProjectOverview = lazy(() =>
+  import("./components/ProjectOverview").then(({ ProjectOverview }) => ({
+    default: ProjectOverview,
+  })),
+);
+const SyncSheet = lazy(() =>
+  import("./components/SyncSheet").then(({ SyncSheet }) => ({
+    default: SyncSheet,
+  })),
+);
+const AdminDashboard = lazy(() =>
+  import("./components/AdminDashboard").then(({ AdminDashboard }) => ({
+    default: AdminDashboard,
+  })),
+);
+const AdminProject = lazy(() =>
+  import("./components/AdminDashboard").then(({ AdminProject }) => ({
+    default: AdminProject,
+  })),
+);
+const NewProjectWizard = lazy(() =>
+  import("./components/NewProjectWizard").then(({ NewProjectWizard }) => ({
+    default: NewProjectWizard,
+  })),
+);
+
+function SurfaceFallback() {
+  return (
+    <main className="page surface-fallback" aria-busy="true" aria-live="polite">
+      <span className="button-spinner" aria-hidden="true" />
+      <span>Opening…</span>
+    </main>
+  );
+}
 
 export default function App() {
   const {
@@ -20,6 +59,7 @@ export default function App() {
     authLoading,
     requiresAuthentication,
     session,
+    adminAccess,
     syncSheetOpen,
     isSyncing,
     syncProgress,
@@ -129,6 +169,53 @@ export default function App() {
     );
   }
 
+  if (
+    surface === "admin" &&
+    configured &&
+    (adminAccess === "checking" || adminAccess === "unavailable")
+  ) {
+    return (
+      <main className="page page-contributor">
+        <div className="page-heading page-heading-home">
+          <Eyebrow>Admin workspace</Eyebrow>
+          <h1>
+            {adminAccess === "checking"
+              ? "Checking access…"
+              : "Admin access is unavailable"}
+          </h1>
+          <p className="page-lede">
+            {adminAccess === "checking"
+              ? "This normally takes only a moment."
+              : "Reconnect and reopen collect Admin. Your local data remains unchanged."}
+          </p>
+        </div>
+        {adminAccess === "unavailable" && (
+          <Button variant="secondary" onClick={() => window.location.reload()}>
+            Try again
+          </Button>
+        )}
+      </main>
+    );
+  }
+
+  if (surface === "admin" && configured && adminAccess === "denied") {
+    return (
+      <main className="page page-contributor">
+        <div className="page-heading page-heading-home">
+          <Eyebrow>Admin workspace</Eyebrow>
+          <h1>Administrator access required</h1>
+          <p className="page-lede">
+            This account is not an administrator. Sign in with an invited
+            administrator account.
+          </p>
+        </div>
+        <Button variant="primary" onClick={() => void signOut()}>
+          Sign out
+        </Button>
+      </main>
+    );
+  }
+
   return (
     <div
       className="app-shell"
@@ -146,99 +233,105 @@ export default function App() {
       />
 
       <div className="main-shell">
-        {state.mode === "contributor" && state.view === "home" && (
-          <ContributorHome
-            projects={
-              state.projects?.length
-                ? state.projects
-                : state.project.id === "empty-project"
-                  ? []
-                  : [state.project]
-            }
-            activeProject={state.project}
-            observations={state.observations}
-            hasDraft={hasDraft}
-            onStartObservation={(project) =>
-              selectProject(project, "collector")
-            }
-            onOpenProject={(project) => selectProject(project, "project")}
-            onChooseProject={(project) => selectProject(project, "home")}
-            onResumeObservation={() => navigate("collector")}
-          />
-        )}
+        <Suspense fallback={<SurfaceFallback />}>
+          {state.mode === "contributor" && state.view === "home" && (
+            <ContributorHome
+              projects={
+                state.projects?.length
+                  ? state.projects
+                  : state.project.id === "empty-project"
+                    ? []
+                    : [state.project]
+              }
+              activeProject={state.project}
+              observations={state.observations}
+              hasDraft={hasDraft}
+              onStartObservation={(project) =>
+                selectProject(project, "collector")
+              }
+              onOpenProject={(project) => selectProject(project, "project")}
+              onChooseProject={(project) => selectProject(project, "home")}
+              onResumeObservation={() => navigate("collector")}
+            />
+          )}
 
-        {state.mode === "contributor" && state.view === "project" && (
-          <ProjectOverview
-            project={state.project}
-            observations={selectedObservations}
-            onNavigate={navigate}
-            onOpenSync={openSyncSheetAndSync}
-          />
-        )}
+          {state.mode === "contributor" && state.view === "project" && (
+            <ProjectOverview
+              project={state.project}
+              observations={selectedObservations}
+              onNavigate={navigate}
+              onOpenSync={openSyncSheetAndSync}
+            />
+          )}
 
-        {state.mode === "contributor" && state.view === "collector" && (
-          <Collector
-            project={state.project}
-            draft={state.draft}
-            lastSavedAt={state.lastSavedAt}
-            onDraftChange={updateDraft}
-            onSubmit={
-              collectorPreview ? completeContributorPreview : submitObservation
-            }
-            onBack={
-              collectorPreview
-                ? cancelContributorPreview
-                : () => navigate("project")
-            }
-            isSaving={isSaving}
-            preview={collectorPreview}
-          />
-        )}
+          {state.mode === "contributor" && state.view === "collector" && (
+            <Collector
+              project={state.project}
+              draft={state.draft}
+              lastSavedAt={state.lastSavedAt}
+              onDraftChange={updateDraft}
+              onSubmit={
+                collectorPreview
+                  ? completeContributorPreview
+                  : submitObservation
+              }
+              onBack={
+                collectorPreview
+                  ? cancelContributorPreview
+                  : () => navigate("project")
+              }
+              isSaving={isSaving}
+              preview={collectorPreview}
+            />
+          )}
 
-        {state.mode === "admin" && state.view === "admin" && (
-          <AdminDashboard
-            project={state.project}
-            projects={state.projects}
-            observations={state.observations}
-            onNavigate={navigate}
-            onSelectProject={(project) =>
-              selectProject(project, "admin-project")
-            }
-          />
-        )}
+          {state.mode === "admin" && state.view === "admin" && (
+            <AdminDashboard
+              project={state.project}
+              projects={state.projects}
+              observations={state.observations}
+              onNavigate={navigate}
+              onSelectProject={(project) =>
+                selectProject(project, "admin-project")
+              }
+            />
+          )}
 
-        {state.mode === "admin" && state.view === "admin-project" && (
-          <AdminProject
-            project={state.project}
-            observations={selectedObservations}
-            onBack={() => navigate("admin")}
-            onToast={showToast}
-            onExport={() => void exportCheckpoint()}
-            onSchemaPublished={applySchemaPublished}
-            onToggleStatus={() => void toggleProjectStatus()}
-            onPreviewContributor={beginContributorPreview}
-          />
-        )}
+          {state.mode === "admin" && state.view === "admin-project" && (
+            <AdminProject
+              project={state.project}
+              observations={selectedObservations}
+              onBack={() => navigate("admin")}
+              onToast={showToast}
+              onExport={() => void exportCheckpoint()}
+              onSchemaPublished={applySchemaPublished}
+              onToggleStatus={() => void toggleProjectStatus()}
+              onPreviewContributor={beginContributorPreview}
+            />
+          )}
 
-        {state.mode === "admin" && state.view === "new-project" && (
-          <NewProjectWizard
-            onBack={() => navigate("admin")}
-            onPublish={publishProject}
-          />
-        )}
+          {state.mode === "admin" && state.view === "new-project" && (
+            <NewProjectWizard
+              onBack={() => navigate("admin")}
+              onPublish={publishProject}
+            />
+          )}
+        </Suspense>
       </div>
 
-      {syncSheetOpen && (
-        <SyncSheet
-          observations={state.observations}
-          lastSyncAt={state.lastSyncAt}
-          isSyncing={isSyncing}
-          progress={syncProgress}
-          onClose={closeSyncSheet}
-          onSync={syncNow}
-          onRecoveryExport={exportRecoveryPackage}
-        />
-      )}
+      <Suspense fallback={null}>
+        {syncSheetOpen && (
+          <SyncSheet
+            observations={state.observations}
+            lastSyncAt={state.lastSyncAt}
+            isSyncing={isSyncing}
+            progress={syncProgress}
+            onClose={closeSyncSheet}
+            onSync={syncNow}
+            onRecoveryExport={exportRecoveryPackage}
+          />
+        )}
+      </Suspense>
 
       {confirmation && (
         <ConfirmationDialog

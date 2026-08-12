@@ -2,7 +2,7 @@ import {
   createClient,
   type SupabaseClient,
   type User,
-} from "npm:@supabase/supabase-js@2";
+} from "npm:@supabase/supabase-js@2.112.2";
 
 export function serviceClient(): SupabaseClient {
   const url = Deno.env.get("SUPABASE_URL");
@@ -18,10 +18,9 @@ export function serviceClient(): SupabaseClient {
 export async function requireUser(
   request: Request,
 ): Promise<{ user: User; service: SupabaseClient }> {
-  const token = request.headers.get("Authorization")?.replace(
-    /^Bearer\s+/i,
-    "",
-  );
+  const token = request.headers
+    .get("Authorization")
+    ?.replace(/^Bearer\s+/i, "");
   if (!token) throw new Response("Authentication required", { status: 401 });
   const service = serviceClient();
   const { data, error } = await service.auth.getUser(token);
@@ -55,7 +54,8 @@ export async function projectAccess(
     .eq("project_id", projectId)
     .eq("user_id", userId)
     .maybeSingle();
-  const admin = organizationMembership?.role === "admin" ||
+  const admin =
+    organizationMembership?.role === "admin" ||
     projectMembership?.role === "admin";
   if (!admin && !projectMembership) return null;
   return { project, admin };
@@ -82,16 +82,16 @@ export async function isEmailAllowed(
 ): Promise<boolean> {
   const raw = Deno.env.get("ALLOWED_EMAIL_PATTERNS")?.trim();
   if (raw) {
-    return raw.split(",").map((entry) => entry.trim()).filter(Boolean).some((
-      pattern,
-    ) => matchesAllowedPattern(pattern, email));
+    return raw
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .some((pattern) => matchesAllowedPattern(pattern, email));
   }
-  const { data } = await service.from("allowed_admin_patterns").select(
-    "pattern",
-  );
-  const patterns = (data ?? []).map((row) =>
-    String((row as { pattern?: unknown }).pattern ?? "")
-  ).filter(Boolean);
+  const { data } = await service.rpc("list_allowed_admin_patterns");
+  const patterns = (data ?? [])
+    .map((row) => String((row as { pattern?: unknown }).pattern ?? ""))
+    .filter(Boolean);
   if (!patterns.length) return true;
   return patterns.some((pattern) => matchesAllowedPattern(pattern, email));
 }
