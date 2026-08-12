@@ -118,7 +118,7 @@ tests/                  vitest suites (ledger, sync, attention, ordering, compon
 
 ## License and business model
 
-`collect` is licensed under the **Apache License 2.0** — a permissive, OSI-approved open-source license. Copyright © 2026 **Gabriele Pizzi**. You can use, modify, distribute, and build on the software for any purpose, including commercially, subject only to the standard Apache terms (retain the license notice, state your changes, no trademark use).
+`collect` is licensed under the **Apache License 2.0**. Copyright © 2026 **Gabriele Pizzi**. See `LICENSE` and `NOTICE`.
 
 How the project stays sustainable:
 
