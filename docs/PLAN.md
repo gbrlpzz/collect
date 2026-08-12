@@ -204,6 +204,8 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 | Manifest carries metadata    | ✅     | manifest.dataset { license, contact_email, dataset_identifier }                                           |
 | Docs                         | ✅     | docs/export-format.md FAIR mapping table; README summary                                                  |
 
+## Value narrative — see [docs/value.md](value.md)
+
 ## Gap work queue
 
 _(filled from audits)_

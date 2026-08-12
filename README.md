@@ -11,6 +11,12 @@ Contributor:   Open → Observe → Submit
 Administrator: Create → Define → Assign → Monitor → Export
 ```
 
+> **The value in one line:** the dataset you export is the fieldwork you
+> actually did — every observation saved on-device before anything is
+> promised, synced only on a durable server receipt, verified by automatic
+> attention QA, and packaged with the FAIR metadata a published dataset
+> needs. See [`docs/value.md`](docs/value.md) for the full case.
+
 ## Why collect exists
 
 Most survey software is either a generic form builder or a fragile online tool. Fieldwork needs a different contract:
@@ -20,6 +26,7 @@ Most survey software is either a generic form builder or a fragile online tool. 
 - **Kill the app, drop the connection, wait a week.** The queue, drafts, media, and receipts all survive. Nothing is discarded until the server acknowledges it.
 - **Evidence stays honest.** Published schemas are immutable; finalized observations are immutable; conflicts are explicit, never silently overwritten; every record carries full provenance (who, what schema, which device, when, where, which app version).
 - **The dataset is yours.** Checkpoint exports produce a plain ZIP — JSONL, CSV, GeoJSON, schema history, media, manifest — readable without this application. Each package also carries **FAIR dataset metadata**: DataCite 4.4 (`dataset/datacite.json`), a data dictionary with semantic mapping hooks, license, dataset contact, and optional DOI — set once on the project, embedded in every export.
+- **The quality is measurable.** Every observation carries an automatic attention check, and every contributor carries a guess-adjusted attention score — exported with the dataset, so trust is quantified, not assumed.
 
 ## Key features
 
@@ -90,7 +97,7 @@ npm run provision -- --issue-magic-link
 
 `npm run provision` configures Auth (redirect URLs, magic-link template), applies the ordered migrations, deploys every Edge Function, and can request the first administrator's sign-in link. It never prints or stores one-time tokens, and the service-role key stays inside Edge Functions. The included **Deploy collect** GitHub Actions workflow runs the same path end-to-end (tests → provision → build → deploy).
 
-Read `docs/architecture.md` for the reliability boundaries and backend contract, `docs/export-format.md` for the checkpoint package specification, `docs/dataset-standards.md` for the FAIR dataset metadata, `docs/attention-qa.md` for the automatic attention verification, `docs/background-automation.md` for the automation suite, `docs/deployment.md` for the full self-hosting guide, and `docs/design.md` for the interface baseline.
+Read [`docs/value.md`](docs/value.md) for the case for the product, `docs/architecture.md` for the reliability boundaries and backend contract, `docs/export-format.md` for the checkpoint package specification, `docs/dataset-standards.md` for the FAIR dataset metadata, `docs/attention-qa.md` for the automatic attention verification, `docs/background-automation.md` for the automation suite, `docs/deployment.md` for the full self-hosting guide, and `docs/design.md` for the interface baseline.
 
 ## Repository layout
 
