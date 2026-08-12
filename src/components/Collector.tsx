@@ -381,6 +381,34 @@ export function Collector({
           blob: file,
         }) satisfies MediaAsset,
     );
+    // Compute the content hash in the background so every stored media row
+    // carries an integrity fingerprint without any user involvement.
+    for (const asset of assets) {
+      if (!("crypto" in window) || !crypto.subtle || !asset.blob) continue;
+      void asset.blob
+        .arrayBuffer()
+        .then((buffer) => crypto.subtle.digest("SHA-256", buffer))
+        .then((digest) =>
+          Array.from(new Uint8Array(digest), (byte) =>
+            byte.toString(16).padStart(2, "0"),
+          ).join(""),
+        )
+        .then((sha256) => {
+          if (!sha256) return;
+          setMediaByField((current) => ({
+            ...current,
+            [activeMediaField]: (current[activeMediaField] ?? []).map((item) =>
+              item.id === asset.id ? { ...item, sha256 } : item,
+            ),
+          }));
+          onDraftChange(activeMediaField, [
+            ...(mediaByField[activeMediaField] ?? []).map((item) =>
+              item.id === asset.id ? { ...item, sha256 } : item,
+            ),
+          ]);
+        })
+        .catch(() => undefined);
+    }
     const maxCount = Number(field.config?.maxCount ?? 5);
     const nextAssets = [
       ...(mediaByField[activeMediaField] ?? []),

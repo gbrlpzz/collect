@@ -138,7 +138,7 @@ export function syncNow({
                 )
               : null;
             syncedIds.add(observation.id);
-            const receiptAt = new Date().toISOString();
+            const receiptAt = receipt?.received_at ?? new Date().toISOString();
             await markLocalSubmissionsSynced([observation.id], {
               receivedAt: receiptAt,
               finalizedAt: receipt?.finalized_at ?? null,

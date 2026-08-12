@@ -2223,6 +2223,64 @@ p {
   background: var(--grouped-strong);
 }
 
+/* Schema builder: per-field configuration controls */
+.builder-config {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--separator-light);
+}
+.builder-config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+.builder-config-title {
+  color: var(--secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.builder-config-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--secondary);
+  font-size: 0.75rem;
+}
+.builder-config-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+}
+.builder-config-input {
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--separator);
+  border-radius: 9px;
+  background: var(--paper);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+}
+.builder-option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.builder-option-row .builder-config-value {
+  max-width: 150px;
+}
+.builder-option-row .icon-button {
+  flex: 0 0 auto;
+}
+.builder-config-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+
 /* Single choice "Other" free text */
 .other-value-row {
   display: flex;

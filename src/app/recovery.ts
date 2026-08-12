@@ -1,4 +1,4 @@
-import { strToU8, zipSync } from "fflate";
+import { strToU8, zip } from "fflate";
 import type { Observation, Project } from "../types";
 import { readStoredRecoveryData } from "../lib/localStore";
 
@@ -97,8 +97,15 @@ export async function exportRecoveryPackage({
       );
   }
 
-  const archive = zipSync(entries, { level: 0 });
-  const blob = new Blob([archive], { type: "application/zip" });
+  // fflate's async zip runs on its worker pool, keeping the export off the
+  // main thread for large media.
+  const archive = await new Promise<Uint8Array>((resolve, reject) => {
+    zip(entries, { level: 0 }, (error, data) => {
+      if (error) reject(error);
+      else resolve(data);
+    });
+  });
+  const blob = new Blob([new Uint8Array(archive)], { type: "application/zip" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

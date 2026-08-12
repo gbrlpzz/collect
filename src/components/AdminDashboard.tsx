@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import type { FieldDefinition, Observation, Project, View } from "../types";
+import type {
+  FieldDefinition,
+  FieldOption,
+  Observation,
+  Project,
+  View,
+} from "../types";
 import { Icon } from "./Icon";
 import {
   Avatar,
@@ -445,6 +451,201 @@ function SchemaPanel({
   );
 }
 
+function FieldConfigControls({
+  field,
+  update,
+}: {
+  field: FieldDefinition;
+  update: (patch: Partial<FieldDefinition>) => void;
+}) {
+  const config = field.config ?? {};
+  const setConfig = (
+    patch: Record<string, string | number | boolean | undefined>,
+  ) => {
+    const clean: Record<string, string | number | boolean> = {};
+    for (const [key, value] of Object.entries(patch)) {
+      if (value !== undefined) clean[key] = value;
+    }
+    update({ config: { ...config, ...clean } });
+  };
+  const setOptions = (options: FieldOption[]) => update({ options });
+
+  const numberInput = (
+    key: string,
+    label: string,
+    value: string | number | boolean | undefined,
+  ) => (
+    <label className="builder-config-item">
+      <span>{label}</span>
+      <input
+        className="builder-config-input"
+        type="number"
+        value={value === undefined ? "" : String(value)}
+        onChange={(event) => {
+          const raw = event.target.value;
+          setConfig({ [key]: raw === "" ? undefined : Number(raw) });
+        }}
+      />
+    </label>
+  );
+
+  if (field.type === "single_choice" || field.type === "multiple_choice") {
+    const options = field.options ?? [];
+    const otherIndex = options.findIndex(
+      (option) => option.value === "other" || option.id.endsWith("-other"),
+    );
+    const hasOther = otherIndex >= 0;
+    return (
+      <div className="builder-config">
+        <span className="builder-config-title">Options</span>
+        {options.map((option, index) => (
+          <div className="builder-option-row" key={option.id}>
+            <input
+              className="builder-config-input"
+              value={option.label}
+              aria-label={`${field.label} option ${index + 1} label`}
+              onChange={(event) =>
+                setOptions(
+                  options.map((item, itemIndex) =>
+                    itemIndex === index
+                      ? { ...item, label: event.target.value }
+                      : item,
+                  ),
+                )
+              }
+            />
+            <input
+              className="builder-config-input builder-config-value"
+              value={option.value}
+              aria-label={`${field.label} option ${index + 1} value`}
+              disabled={option.value === "other"}
+              onChange={(event) =>
+                setOptions(
+                  options.map((item, itemIndex) =>
+                    itemIndex === index
+                      ? { ...item, value: event.target.value }
+                      : item,
+                  ),
+                )
+              }
+            />
+            <IconButton
+              label={`Remove option ${index + 1}`}
+              icon="x"
+              onClick={() =>
+                setOptions(
+                  options.filter((_, itemIndex) => itemIndex !== index),
+                )
+              }
+            />
+          </div>
+        ))}
+        <div className="builder-config-actions">
+          <button
+            className="text-button"
+            type="button"
+            onClick={() =>
+              setOptions([
+                ...options,
+                {
+                  id: `option-${crypto.randomUUID().slice(0, 8)}`,
+                  value: `value-${options.length + 1}`,
+                  label: `Option ${options.length + 1}`,
+                },
+              ])
+            }
+          >
+            <Icon name="plus" size={14} /> Add option
+          </button>
+          {field.type === "single_choice" && !hasOther && (
+            <button
+              className="text-button"
+              type="button"
+              onClick={() =>
+                setOptions([
+                  ...options,
+                  {
+                    id: `option-${crypto.randomUUID().slice(0, 8)}-other`,
+                    value: "other",
+                    label: "Other",
+                  },
+                ])
+              }
+            >
+              <Icon name="plus" size={14} /> Add “Other”
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (field.type === "number") {
+    return (
+      <div className="builder-config builder-config-grid">
+        <label className="builder-config-item builder-config-check">
+          <input
+            type="checkbox"
+            checked={config.integer === true}
+            onChange={(event) => setConfig({ integer: event.target.checked })}
+          />{" "}
+          Whole numbers only
+        </label>
+        {numberInput("min", "Minimum", config.min)}
+        {numberInput("max", "Maximum", config.max)}
+        <label className="builder-config-item">
+          <span>Unit</span>
+          <input
+            className="builder-config-input"
+            value={String(config.unit ?? "")}
+            onChange={(event) => setConfig({ unit: event.target.value })}
+          />
+        </label>
+      </div>
+    );
+  }
+
+  if (field.type === "short_text" || field.type === "long_text") {
+    return (
+      <div className="builder-config builder-config-grid">
+        {numberInput("minLength", "Min length", config.minLength)}
+        {numberInput("maxLength", "Max length", config.maxLength)}
+        {field.type === "short_text" && (
+          <label className="builder-config-item">
+            <span>Placeholder</span>
+            <input
+              className="builder-config-input"
+              value={String(config.placeholder ?? "")}
+              onChange={(event) =>
+                setConfig({ placeholder: event.target.value })
+              }
+            />
+          </label>
+        )}
+      </div>
+    );
+  }
+
+  if (field.type === "photo" || field.type === "audio") {
+    return (
+      <div className="builder-config builder-config-grid">
+        {numberInput("minCount", "Min count", config.minCount)}
+        {numberInput("maxCount", "Max count", config.maxCount)}
+        <label className="builder-config-item builder-config-check">
+          <input
+            type="checkbox"
+            checked={config.multiple === true}
+            onChange={(event) => setConfig({ multiple: event.target.checked })}
+          />{" "}
+          Allow multiple
+        </label>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 function SchemaDraftEditor({
   project,
   draft,
@@ -572,6 +773,10 @@ function SchemaDraftEditor({
               />{" "}
               Required
             </label>
+            <FieldConfigControls
+              field={field}
+              update={(patch) => updateField(field.id, patch)}
+            />
             <IconButton
               label={`Remove ${field.label}`}
               icon="x"

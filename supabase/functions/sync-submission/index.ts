@@ -193,9 +193,14 @@ async function createSubmission(
   if (!access) return invalid("Project assignment is not active", 403);
 
   // In-app collection consent is a prerequisite for every submission.
-  const { data: profile } = await service.from("contributor_profiles").select("consent_granted_at,consent_revoked_at").eq("user_id", userId).maybeSingle();
+  const { data: profile } = await service.from("contributor_profiles").select(
+    "consent_granted_at,consent_revoked_at",
+  ).eq("user_id", userId).maybeSingle();
   if (!profile?.consent_granted_at || profile.consent_revoked_at) {
-    return invalid("Collection consent is required before submitting observations", 403);
+    return invalid(
+      "Collection consent is required before submitting observations",
+      403,
+    );
   }
 
   const { data: schema, error: schemaError } = await service
@@ -265,7 +270,10 @@ async function createSubmission(
 
   const attention = body.attention_response &&
       typeof body.attention_response === "object"
-    ? body.attention_response as { check_key?: unknown; selected_value?: unknown }
+    ? body.attention_response as {
+      check_key?: unknown;
+      selected_value?: unknown;
+    }
     : null;
   const attentionCheckKey = attention &&
       typeof attention.check_key === "string"
@@ -348,7 +356,9 @@ async function createSubmission(
       .maybeSingle();
     if (check) {
       const correct = attentionSelected === check.correct_value;
-      const { error: attentionError } = await service.from("attention_responses")
+      const { error: attentionError } = await service.from(
+        "attention_responses",
+      )
         .insert({
           submission_id: submissionId,
           contributor_id: userId,
@@ -368,7 +378,9 @@ async function createSubmission(
           // The flag is advisory; never block ingestion on it.
         }
         try {
-          await service.rpc("recompute_attention_score", { target_user: userId });
+          await service.rpc("recompute_attention_score", {
+            target_user: userId,
+          });
         } catch {
           // The score is advisory; never block ingestion on it.
         }
@@ -442,6 +454,10 @@ async function confirmMedia(
   // Verify the stored object against the declared metadata. Storage metadata
   // includes size/contentLength; when present it must match the declared byte
   // size so a different file cannot be finalized under a known media id.
+  // The declared SHA-256 (computed automatically on the client while media is
+  // selected) is recorded on the row and travels into exports; byte-level
+  // hash verification is performed by the checkpoint builder / consumers so
+  // it never doubles upload bandwidth inside the sync path.
   const storedSize = Number(
     (stored.metadata as Record<string, unknown> | undefined)?.size ??
       (stored.metadata as Record<string, unknown> | undefined)?.contentLength ??
@@ -474,7 +490,7 @@ async function finalizeSubmission(
 ): Promise<Response> {
   const submissionId = String(body.submission_id ?? "");
   const { data: submission } = await service.from("submissions").select(
-    "id,project_id,contributor_id,status,expected_media_count,finalized_at",
+    "id,project_id,contributor_id,status,expected_media_count,finalized_at,server_received_at",
   ).eq("id", submissionId).maybeSingle();
   if (!submission || submission.contributor_id !== userId) {
     return invalid("Submission is not available", 403);
@@ -486,6 +502,7 @@ async function finalizeSubmission(
       submission_id: submissionId,
       status: "COMPLETE",
       finalized_at: submission.finalized_at,
+      received_at: submission.server_received_at,
     });
   }
 
@@ -498,16 +515,34 @@ async function finalizeSubmission(
     (media ?? []).some((item) => item.status !== "UPLOADED")
   ) return invalid("Media is still uploading", 409);
 
-  const finalizedAt = new Date().toISOString();
-  const { error: updateError } = await service.from("submissions").update({
+  // Atomic finalize: only the caller that flips status to COMPLETE gets to
+  // mint the receipt timestamp; a concurrent caller that updates zero rows
+  // re-reads and returns the stored receipt instead of inventing its own.
+  const { data: updated, error: updateError } = await service.from(
+    "submissions",
+  ).update({
     status: "COMPLETE",
-    finalized_at: finalizedAt,
-  }).eq("id", submissionId).neq("status", "COMPLETE");
+    finalized_at: new Date().toISOString(),
+  }).eq("id", submissionId).neq("status", "COMPLETE").select(
+    "finalized_at,server_received_at",
+  ).maybeSingle();
   if (updateError) return invalid("Submission could not be finalized", 500);
+  if (updated) {
+    return json({
+      submission_id: submissionId,
+      status: "COMPLETE",
+      finalized_at: updated.finalized_at,
+      received_at: updated.server_received_at,
+    });
+  }
+  const { data: after } = await service.from("submissions").select(
+    "finalized_at,server_received_at",
+  ).eq("id", submissionId).maybeSingle();
   return json({
     submission_id: submissionId,
     status: "COMPLETE",
-    finalized_at: finalizedAt,
+    finalized_at: after?.finalized_at ?? null,
+    received_at: after?.server_received_at ?? null,
   });
 }
 

@@ -131,10 +131,16 @@ async function buildExport(
   ).eq("project_id", projectId).order("assigned_at", { ascending: true });
   const memberIds = (members ?? []).map((member) => member.user_id);
   const { data: attentionRows } = submissionIds.length
-    ? await service.from("attention_responses").select("submission_id,contributor_id,project_id,check_key,selected_value,correct,guess_probability,created_at").in("submission_id", submissionIds).order("created_at", { ascending: true })
+    ? await service.from("attention_responses").select(
+      "submission_id,contributor_id,project_id,check_key,selected_value,correct,guess_probability,created_at",
+    ).in("submission_id", submissionIds).order("created_at", {
+      ascending: true,
+    })
     : { data: [] };
   const { data: profiles } = memberIds.length
-    ? await service.from("contributor_profiles").select("user_id,consent_version,consent_granted_at,consent_revoked_at,quality_score,attention_score,attention_checks_total,attention_correct_total,attention_last_at").in("user_id", memberIds)
+    ? await service.from("contributor_profiles").select(
+      "user_id,consent_version,consent_granted_at,consent_revoked_at,quality_score,attention_score,attention_checks_total,attention_correct_total,attention_last_at",
+    ).in("user_id", memberIds)
     : { data: [] };
   const { data: invites } = await service.from("project_invites").select(
     "email,invited_user_id,status",
@@ -286,8 +292,28 @@ async function buildExport(
     ),
   ].join("\n");
   const attentionCsv = [
-    csvRow(["submission_id", "contributor_id", "project_id", "check_key", "selected_value", "correct", "guess_probability", "created_at"]),
-    ...(attentionRows ?? []).map((row) => csvRow([row.submission_id, row.contributor_id, row.project_id, row.check_key, row.selected_value, row.correct, row.guess_probability, row.created_at])),
+    csvRow([
+      "submission_id",
+      "contributor_id",
+      "project_id",
+      "check_key",
+      "selected_value",
+      "correct",
+      "guess_probability",
+      "created_at",
+    ]),
+    ...(attentionRows ?? []).map((row) =>
+      csvRow([
+        row.submission_id,
+        row.contributor_id,
+        row.project_id,
+        row.check_key,
+        row.selected_value,
+        row.correct,
+        row.guess_probability,
+        row.created_at,
+      ])
+    ),
   ].join("\n");
 
   const features = submissionRows.map(locationFeature).filter((
@@ -309,6 +335,17 @@ async function buildExport(
       submissions_jsonl_sha256: await sha256(jsonl),
       media_csv_sha256: await sha256(mediaCsv),
     },
+    // Device-reported readiness frozen at the export cutoff: what each
+    // contributor's device had pending and whether fieldwork was complete.
+    contributor_readiness: (readiness ?? []).map((row) => ({
+      device_id: row.device_id,
+      contributor_id: row.contributor_id,
+      last_seen_at: row.last_seen_at,
+      last_sync_success_at: row.last_sync_success_at,
+      pending_submissions: row.pending_submissions,
+      pending_media: row.pending_media,
+      fieldwork_complete: row.fieldwork_complete,
+    })),
     note:
       "A checkpoint contains only complete submissions received by the server at the cutoff timestamp. Offline devices may hold additional unseen data.",
   };

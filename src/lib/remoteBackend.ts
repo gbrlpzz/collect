@@ -10,6 +10,7 @@ const receiptSchema = z.object({
   submission_id: z.string(),
   status: z.string(),
   finalized_at: z.string().nullable().optional(),
+  received_at: z.string().nullable().optional(),
 });
 
 function requireClient() {
@@ -219,6 +220,7 @@ export interface RemoteReceipt {
   submission_id: string;
   status: string;
   finalized_at?: string | null;
+  received_at?: string | null;
 }
 
 export async function finalizeRemoteSubmission({
