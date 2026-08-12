@@ -5,6 +5,7 @@ import { Button, ClearButton, Eyebrow } from "./Primitives";
 
 interface AuthScreenProps {
   configured: boolean;
+  role?: "admin" | "contributor";
   onPreview?: () => void;
 }
 
@@ -26,7 +27,8 @@ function isLocalDevelopmentOrigin(): boolean {
   return window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 }
 
-export function AuthScreen({ configured, onPreview }: AuthScreenProps) {
+export function AuthScreen({ configured, role = "contributor", onPreview }: AuthScreenProps) {
+  const isAdmin = role === "admin";
   const emailInputId = useId();
   const showInstallHint = isAppleMobileBrowser() && !isStandaloneApp();
   const showLocalRedirectHint = configured && isLocalDevelopmentOrigin();
@@ -90,14 +92,16 @@ export function AuthScreen({ configured, onPreview }: AuthScreenProps) {
   };
 
   return (
-    <main className="auth-page">
-      <div className="auth-mark">collect<span>.</span></div>
+    <main className={`auth-page auth-page-${role}`} data-role={role}>
+      <div className="auth-brand">
+        <div className="auth-mark">collect<span className="auth-mark-dot">.</span>{isAdmin && <span className="auth-mark-suffix">Admin</span>}</div>
+      </div>
       <section className="auth-card" aria-labelledby="auth-title">
       {!sent ? (
           <>
-            <Eyebrow>{configured ? callbackIssue ? "Sign in again" : "Sign in" : "Authentication required"}</Eyebrow>
-            <h1 id="auth-title">{callbackIssue ? "Request a new link." : "Sign in to collect."}</h1>
-            <p>{configured ? callbackIssue ? "Enter the invited email address and we’ll send a fresh one-time link." : "Use the email address your administrator invited. We’ll send a one-time link." : "This deployment is not connected to an authentication service yet."}</p>
+            <Eyebrow>{configured ? callbackIssue ? "Sign in again" : isAdmin ? "Admin workspace" : "Sign in" : "Authentication required"}</Eyebrow>
+            <h1 id="auth-title">{callbackIssue ? "Request a new link." : isAdmin ? "Sign in to collect Admin." : "Sign in to collect."}</h1>
+            <p>{configured ? callbackIssue ? "Enter the invited email address and we’ll send a fresh one-time link." : isAdmin ? "Use the administrator email you were invited with. We’ll send a one-time link." : "Use the email address your administrator invited. We’ll send a one-time link." : "This deployment is not connected to an authentication service yet."}</p>
             {showStandaloneNote && <p className="auth-config-note"><Icon name="info" size={16} /><span>This installed app keeps its own sign-in. If you signed in on the web, sign in again here — synced data returns from the server.</span></p>}
             {configured && <ol className="auth-steps" aria-label="Sign-in steps"><li><span>1</span><span>Enter your invited email.</span></li><li><span>2</span><span>Tap Continue.</span></li><li><span>3</span><span>Open the newest email on this device.</span></li></ol>}
             <div className="auth-label">
@@ -118,7 +122,7 @@ export function AuthScreen({ configured, onPreview }: AuthScreenProps) {
             )}
           </>
         ) : (
-          <div className="auth-sent"><Eyebrow>Check your inbox</Eyebrow><h1>Link sent.</h1><p>Open the newest link sent to <strong>{email}</strong> on this device. Each link works once and then expires.</p><p className="auth-sent-hint">If you do not see it, check spam. Do not use an older message.</p>{error && <p className="auth-error" role="alert">{error}</p>}
+          <div className="auth-sent"><Eyebrow>{isAdmin ? "Admin workspace" : "Check your inbox"}</Eyebrow><h1>Link sent.</h1><p>Open the newest link sent to <strong>{email}</strong> on this device. Each link works once and then expires.</p><p className="auth-sent-hint">If you do not see it, check spam. Do not use an older message.</p>{error && <p className="auth-error" role="alert">{error}</p>}
             {codeMode ? (
               <div className="auth-code">
                 <label className="auth-label" htmlFor="auth-code-input">6-digit code from the email<input id="auth-code-input" className="field-input" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={(event) => { setCode(event.target.value.replace(/\D/g, "").slice(0, 6)); setCodeError(null); }} placeholder="000000" disabled={codeBusy} /></label>

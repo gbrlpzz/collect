@@ -18,6 +18,7 @@ export function TopBar({ mode, view, onModeChange, onNavigate, canAdmin = true, 
   const menuRef = useRef<HTMLDivElement>(null);
   const isAdmin = mode === "admin";
   const accountLabel = isPreview ? "Preview" : userEmail ?? "Account";
+  const surfaceLabel = isAdmin ? "Admin" : "Fieldwork";
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -41,11 +42,14 @@ export function TopBar({ mode, view, onModeChange, onNavigate, canAdmin = true, 
   };
 
   return (
-    <header className={`topbar topbar-${view}`}>
+    <header className={`topbar topbar-${view} topbar-${mode}`} data-surface={mode}>
       <div className="topbar-inner">
-        <button className="wordmark" onClick={() => onNavigate(isAdmin ? "admin" : "home")} aria-label="collect home">
-          collect<span className="wordmark-dot">.</span>
-        </button>
+        <div className="topbar-brand">
+          <button className="wordmark" onClick={() => onNavigate(isAdmin ? "admin" : "home")} aria-label={`collect ${surfaceLabel.toLowerCase()} home`}>
+            collect<span className="wordmark-dot">.</span>
+          </button>
+          <span className="surface-label">{surfaceLabel}</span>
+        </div>
 
         <div className="topbar-actions" ref={menuRef}>
           <button
