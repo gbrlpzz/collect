@@ -1040,26 +1040,488 @@ h3 {
   }
 }
 
-/* Attention score visibility. */
-.account-menu-profile {
-  padding: 9px 12px 11px;
+/* Compact profile metrics. Semantic color reinforces a visible number; it is
+   never the only score signal. */
+.score-ring {
+  --score-color: var(--tertiary);
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  color: var(--score-color);
+}
+.score-ring-medium {
+  --score-color: #ff9500;
+}
+.score-ring-high {
+  --score-color: #34c759;
+}
+.score-ring-low {
+  --score-color: #ff3b30;
+}
+:root[data-collect-surface="admin"] .score-ring-medium {
+  --score-color: #ff9f0a;
+}
+:root[data-collect-surface="admin"] .score-ring-high {
+  --score-color: #30d158;
+}
+:root[data-collect-surface="admin"] .score-ring-low {
+  --score-color: #ff453a;
+}
+.score-ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform: rotate(-90deg);
+}
+.score-ring circle {
+  fill: none;
+  stroke-width: 3;
+}
+.score-ring-track {
+  stroke: var(--grouped-strong);
+}
+.score-ring-value {
+  stroke: currentColor;
+  stroke-linecap: round;
+}
+.score-ring strong {
+  color: var(--text);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+.account-menu {
+  width: min(330px, calc(100vw - 32px));
+}
+.account-profile {
+  padding: 8px;
   border-bottom: 1px solid var(--separator-light);
   margin-bottom: 5px;
+}
+.account-profile-metrics {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 6px;
+}
+.account-metric {
+  min-width: 0;
+  min-height: 64px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  justify-content: center;
+  gap: 2px;
+  padding: 9px 10px;
+  border-radius: 11px;
+  background: var(--grouped);
 }
-.account-menu-profile strong {
+.account-metric > strong {
   color: var(--text);
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+.account-metric > span,
+.account-metric-score > span > span {
+  color: var(--secondary);
+  font-size: 0.6875rem;
+  line-height: 1.3;
+}
+.account-menu .account-metric-score {
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 9px;
+  padding: 8px 9px;
+  text-align: left;
+}
+.account-metric-score > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.account-metric-score > span > strong {
   font-size: 0.8125rem;
   font-weight: 650;
 }
-.account-menu-profile span {
+.account-metric-score > svg {
+  color: var(--secondary);
+}
+.account-score-explainer {
+  margin-top: 6px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: var(--grouped);
+}
+.account-score-explainer strong {
+  font-size: 0.75rem;
+}
+.account-score-explainer p {
+  margin-top: 4px;
   color: var(--secondary);
   font-size: 0.75rem;
   line-height: 1.4;
 }
-.readiness-attention {
+.account-consent-status {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 4px 0;
+  color: var(--secondary);
+  font-size: 0.6875rem;
+}
+
+/* Contributor home keeps exactly one project context and one primary action. */
+.collection-context {
+  display: block;
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  border: 0;
+}
+.collection-project-row {
+  width: 100%;
+  min-height: var(--row-height);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--separator-light);
+  border-radius: var(--group-radius);
+  background: var(--paper);
+  text-align: left;
+}
+.collection-project-row > span {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.collection-project-row strong {
+  overflow: hidden;
+  font-size: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.collection-project-row span span {
+  color: var(--secondary);
+  font-size: 0.8125rem;
+}
+.project-picker-label {
+  width: 100%;
+}
+.project-picker-label select {
+  width: 100%;
+  max-width: none;
+  background: var(--paper);
+}
+.draft-note {
+  margin-top: 8px;
   color: var(--secondary);
   font-size: 0.75rem;
+  text-align: center;
+}
+.collection-status .section-heading-row {
+  align-items: flex-start;
+}
+.collection-status .section-heading-row p {
+  margin-top: 4px;
+}
+
+/* Project privacy reads like a native settings disclosure, not legal fine
+   print or a second scroll container. */
+.project-guidance {
+  margin-bottom: var(--space-6);
+}
+.project-guidance h2 {
+  margin-bottom: var(--space-2);
+  font-size: 1rem;
+}
+.project-instructions {
+  margin: 0;
+}
+.privacy-disclosure {
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--separator-light);
+  border-radius: var(--group-radius);
+  background: var(--paper);
+}
+.privacy-disclosure summary {
+  min-height: var(--row-height);
+  gap: 10px;
+  padding: var(--space-3) var(--space-4);
+  color: var(--text);
+  list-style: none;
+}
+.privacy-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+.privacy-summary-copy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.privacy-summary-copy strong {
+  font-size: 0.9375rem;
+}
+.privacy-summary-copy span {
+  color: var(--secondary);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+.privacy-disclosure[open] summary > svg:last-child {
+  transform: rotate(180deg);
+}
+.privacy-facts {
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-2) 43px;
+}
+.privacy-facts > div {
+  display: grid;
+  grid-template-columns: 94px minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: 11px 0;
+  border-top: 1px solid var(--separator-light);
+}
+.privacy-facts dt {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.privacy-facts dd {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+/* Consent uses the page scroll and semantic sections, avoiding a nested legal
+   text box that is difficult to read with VoiceOver or large text. */
+.consent-page {
+  justify-content: flex-start;
+}
+.consent-card {
+  width: min(100%, 560px);
+}
+.consent-statement {
+  margin: var(--space-6) 0 var(--space-5);
+}
+.consent-statement h2 {
+  margin-bottom: var(--space-3);
+  font-size: 1rem;
+}
+.consent-statement p,
+.consent-statement li {
+  color: var(--secondary);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.consent-statement p + p,
+.consent-statement ol + p {
+  margin-top: var(--space-3);
+}
+.consent-statement ol {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+  padding-left: 24px;
+}
+.consent-statement li {
+  padding-left: 4px;
+}
+.consent-record-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: var(--space-4);
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--grouped);
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+.consent-record-note svg {
+  flex: 0 0 auto;
+}
+
+/* Admin hierarchy: list rows first, rare project actions in a menu, technical
+   schema identifiers behind disclosure, and no decorative duplicate stats. */
+.admin-project-card {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+.admin-project-leading p {
+  white-space: normal;
+}
+.admin-project-title-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: 3px;
+}
+.admin-project-header {
+  align-items: flex-start;
+}
+.admin-project-actions {
+  position: relative;
+  flex: 0 0 auto;
+}
+.admin-project-actions > summary {
+  width: var(--control-height);
+  height: var(--control-height);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text);
+  cursor: pointer;
+  list-style: none;
+}
+.admin-project-actions > summary::-webkit-details-marker {
+  display: none;
+}
+.admin-project-actions > summary:hover,
+.admin-project-actions[open] > summary {
+  background: var(--grouped);
+}
+.admin-project-actions-menu {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  z-index: 20;
+  width: max-content;
+  min-width: 190px;
+  padding: 6px;
+  border: 1px solid var(--separator-light);
+  border-radius: 13px;
+  background: var(--paper);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+.admin-project-actions-menu button {
+  width: 100%;
+  min-height: var(--control-height);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+}
+.admin-project-actions-menu button:hover {
+  background: var(--grouped);
+}
+.schema-field-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+.schema-field-row > div span {
+  font-family: inherit;
+  font-size: 0.75rem;
+}
+.builder-primary-controls {
+  display: block;
+}
+.builder-primary-controls .builder-select {
+  width: 100%;
+}
+.builder-advanced {
+  margin-top: 4px;
+}
+.builder-advanced summary {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  color: var(--secondary);
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+.builder-advanced label {
+  display: grid;
+  gap: 5px;
+  color: var(--secondary);
+  font-size: 0.75rem;
+}
+.contributor-row {
+  gap: var(--space-3);
+}
+.contributor-row .button-quiet {
+  flex: 0 0 auto;
+}
+.attention-score-help {
+  margin-top: var(--space-3);
+  color: var(--secondary);
+}
+.attention-score-help summary {
+  min-height: var(--control-height);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  list-style: none;
+}
+.attention-score-help summary::-webkit-details-marker {
+  display: none;
+}
+.attention-score-help p {
+  max-width: 34rem;
+  padding-bottom: var(--space-2);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+.export-panel > .button {
+  margin-top: var(--space-2);
+}
+
+@media (max-width: 680px) {
+  .admin-project-card {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .admin-project-card > svg {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .admin-project-header {
+    display: flex;
+  }
+  .admin-project-header > .admin-project-actions {
+    margin-top: 0;
+  }
+  .admin-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+  .admin-metrics > div {
+    min-width: 0;
+  }
+  .admin-metrics > div:last-child {
+    grid-column: 1 / -1;
+  }
+  .privacy-facts {
+    padding-left: var(--space-4);
+  }
+  .privacy-facts > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .contributor-row .button {
+    width: var(--control-height);
+    padding: 0;
+  }
+  .contributor-row .button span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
 }

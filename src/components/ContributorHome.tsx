@@ -1,6 +1,6 @@
 import type { Observation, Project } from "../types";
 import { Icon } from "./Icon";
-import { Button, Eyebrow } from "./ui";
+import { Button } from "./ui";
 
 interface ContributorHomeProps {
   projects: Project[];
@@ -49,7 +49,6 @@ export function ContributorHome({
   return (
     <main className="page page-contributor">
       <div className="page-heading page-heading-home">
-        <Eyebrow>Fieldwork</Eyebrow>
         <h1>New observation</h1>
         <p className="page-lede">
           Record what you see. It is saved on this device before it is sent.
@@ -58,41 +57,13 @@ export function ContributorHome({
 
       {projects.length ? (
         <>
-          {hasDraft && (
-            <button
-              className="resume-row list-row"
-              onClick={onResumeObservation}
-            >
-              <span className="resume-copy">
-                <strong>Resume observation</strong>
-                <span>Draft saved on this device</span>
-              </span>
-              <Icon name="chevron-right" size={18} />
-            </button>
-          )}
-
-          <Button
-            variant="primary"
-            fullWidth
-            icon="plus"
-            onClick={() => onStartObservation(project)}
-            disabled={isClosed}
-          >
-            {isClosed ? "Collection closed" : "Start observation"}
-          </Button>
-
           <section
             className="collection-context"
             aria-labelledby="project-context-title"
           >
-            <div className="collection-context-copy">
-              <Eyebrow>Project</Eyebrow>
-              <h2 id="project-context-title">{project.name}</h2>
-              <p>{project.description}</p>
-            </div>
             {projects.length > 1 ? (
               <label className="project-picker-label">
-                <span>Project</span>
+                <span id="project-context-title">Project</span>
                 <select
                   aria-label="Project"
                   value={project.id}
@@ -112,13 +83,34 @@ export function ContributorHome({
               </label>
             ) : (
               <button
-                className="text-button collection-details-button"
+                className="collection-project-row"
                 onClick={() => onOpenProject(project)}
               >
-                Project details <Icon name="chevron-right" size={15} />
+                <span>
+                  <strong id="project-context-title">{project.name}</strong>
+                  <span>{project.organization}</span>
+                </span>
+                <Icon name="chevron-right" size={17} />
               </button>
             )}
           </section>
+
+          <Button
+            variant="primary"
+            fullWidth
+            icon={hasDraft ? undefined : "plus"}
+            onClick={
+              hasDraft ? onResumeObservation : () => onStartObservation(project)
+            }
+            disabled={isClosed}
+          >
+            {isClosed
+              ? "Collection closed"
+              : hasDraft
+                ? "Resume observation"
+                : "Start observation"}
+          </Button>
+          {hasDraft && <p className="draft-note">Draft saved on this device</p>}
 
           {recent.length > 0 && (
             <section
@@ -127,18 +119,15 @@ export function ContributorHome({
             >
               <div className="section-heading-row">
                 <div>
-                  <Eyebrow>Recent</Eyebrow>
-                  <h2>
+                  <h2>Recent observations</h2>
+                  <p>
                     {attentionCount
                       ? `${attentionCount} need attention`
                       : waitingCount
                         ? `${waitingCount} waiting to send`
                         : "All saved"}
-                  </h2>
+                  </p>
                 </div>
-                <span className="collection-status-count">
-                  {projectObservations.length} total
-                </span>
               </div>
               <div className="recent-observation-list">
                 {recent.map((observation) => {

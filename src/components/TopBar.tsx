@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { AppMode, View } from "../types";
 import { getMyProfile, type ContributorProfile } from "../lib/consent";
-import { formatAttentionScore } from "../lib/attention";
 import { Icon } from "./Icon";
+import { AttentionScoreRing } from "./ui";
 
 interface TopBarProps {
   mode: AppMode;
@@ -24,12 +24,13 @@ export function TopBar({
   onSignOut,
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileInfoOpen, setProfileInfoOpen] = useState(false);
   const [profile, setProfile] = useState<ContributorProfile | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const isAdmin = mode === "admin";
 
   useEffect(() => {
-    if (!userEmail) {
+    if (!userEmail || isAdmin) {
       setProfile(null);
       return;
     }
@@ -42,7 +43,7 @@ export function TopBar({
     return () => {
       active = false;
     };
-  }, [userEmail]);
+  }, [isAdmin, userEmail]);
   const accountLabel = isPreview ? "Preview" : (userEmail ?? "Account");
   const surfaceLabel = isAdmin ? "Admin" : "Fieldwork";
 
@@ -87,7 +88,7 @@ export function TopBar({
           <button
             className={`account-button ${menuOpen ? "account-button-open" : ""}`}
             aria-expanded={menuOpen}
-            aria-haspopup="menu"
+            aria-haspopup="dialog"
             aria-controls="account-menu"
             onClick={() => setMenuOpen((open) => !open)}
           >
@@ -98,28 +99,63 @@ export function TopBar({
             <div
               className="account-menu"
               id="account-menu"
-              role="menu"
-              aria-label="Account"
+              role="dialog"
+              aria-label="Account profile"
             >
               <div className="account-menu-heading">
                 {isPreview ? "Interface preview" : (userEmail ?? "Signed in")}
               </div>
               {profile && (
-                <div className="account-menu-profile">
-                  <strong>
-                    {formatAttentionScore(
-                      profile.attentionScore,
-                      profile.attentionChecksTotal,
-                    ) ?? "No attention checks yet"}
-                  </strong>
-                  <span>
-                    Adjusted for random guessing · 0 = blind-guessing level
-                  </span>
+                <div className="account-profile" aria-label="Your profile">
+                  <div className="account-profile-metrics">
+                    <div className="account-metric">
+                      <strong>{profile.contributionCount}</strong>
+                      <span>Contributions</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="account-metric account-metric-score"
+                      aria-expanded={profileInfoOpen}
+                      onClick={() => setProfileInfoOpen((open) => !open)}
+                    >
+                      <AttentionScoreRing
+                        score={profile.attentionScore}
+                        total={profile.attentionChecksTotal}
+                      />
+                      <span>
+                        <strong>Attention</strong>
+                        <span>
+                          {profile.attentionChecksTotal
+                            ? `${profile.attentionChecksTotal} checks`
+                            : "No checks yet"}
+                        </span>
+                      </span>
+                      <Icon name="info" size={16} />
+                    </button>
+                  </div>
+                  {profileInfoOpen && (
+                    <div className="account-score-explainer" role="status">
+                      <strong>About this score</strong>
+                      <p>
+                        It summarizes the quick verification questions in your
+                        observations and adjusts for random guessing. It never
+                        changes or removes a contribution.
+                      </p>
+                    </div>
+                  )}
+                  <div className="account-consent-status">
+                    <Icon name="shield" size={15} />
+                    <span>
+                      Data consent recorded
+                      {profile.consentGrantedAt
+                        ? ` · ${new Date(profile.consentGrantedAt).toLocaleDateString()}`
+                        : ""}
+                    </span>
+                  </div>
                 </div>
               )}
               {onSignOut && (
                 <button
-                  role="menuitem"
                   className="account-menu-signout"
                   onClick={() => {
                     onSignOut();
