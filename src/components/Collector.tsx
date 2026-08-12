@@ -25,7 +25,12 @@ type Step =
   | { kind: "field"; field: FieldDefinition };
 
 function isAutoAdvanceType(type: FieldDefinition["type"]): boolean {
-  return type === "single_choice" || type === "tri_state";
+  return (
+    type === "single_choice" ||
+    type === "tri_state" ||
+    type === "date" ||
+    type === "datetime"
+  );
 }
 
 /**
@@ -68,6 +73,7 @@ export function Collector({
   const [locationError, setLocationError] = useState<string | null>(null);
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const locationAttemptedFieldRef = useRef<string | null>(null);
 
   const steps = useMemo<Step[]>(
     () =>
@@ -310,11 +316,17 @@ export function Collector({
 
   const activeField = current?.kind === "field" ? current.field : null;
 
-  // Location is background provenance: the app captures it when the
-  // observation opens and refreshes it at submit. The UI stays quiet unless
-  // the permission is unavailable, and only a required schema blocks saving.
+  // Location is background provenance: the app captures it as soon as the
+  // location step opens and refreshes it at submit. The manual action is only
+  // a retry path for denied or unavailable permissions.
   useEffect(() => {
-    if (activeField?.type !== "location") return;
+    if (activeField?.type !== "location") {
+      locationAttemptedFieldRef.current = null;
+      return;
+    }
+    if (locationAttemptedFieldRef.current === activeField.key) return;
+    locationAttemptedFieldRef.current = activeField.key;
+    if (draft[activeField.key]) return;
     if (!("geolocation" in navigator)) {
       setLocationNotice(
         "Location is off for this app. Enable it in Settings so coordinates record automatically.",
@@ -325,14 +337,18 @@ export function Collector({
     const permissionQuery = navigator.permissions?.query({
       name: "geolocation" as PermissionName,
     });
-    if (!permissionQuery) return;
+    if (!permissionQuery) {
+      captureLocation(activeField.key);
+      return;
+    }
     void permissionQuery
       .then((status) => {
-        if (active && status.state === "denied") {
+        if (!active) return;
+        if (status.state === "denied")
           setLocationNotice(
             "Location is off for this app. Enable it in Settings so coordinates record automatically.",
           );
-        }
+        else captureLocation(activeField.key);
       })
       .catch(() => undefined);
     return () => {
@@ -350,9 +366,7 @@ export function Collector({
       : isSaving
         ? "Saving…"
         : "Save observation"
-    : current.kind === "heading"
-      ? "Continue"
-      : "Continue";
+    : "Continue";
 
   if (!current) {
     return (

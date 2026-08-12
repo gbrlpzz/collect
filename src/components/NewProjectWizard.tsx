@@ -23,7 +23,7 @@ interface NewProjectWizardProps {
   }) => void | Promise<void>;
 }
 
-const wizardSteps = ["Identity", "Schema", "Contributors", "Publish"];
+const wizardSteps = ["Identity", "Schema", "Contributors"];
 export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
   const [step, setStep] = useState(1);
   const [organizationName, setOrganizationName] = useState(
@@ -39,7 +39,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const continueStep = () => setStep((current) => Math.min(current + 1, 4));
+  const continueStep = () => setStep((current) => Math.min(current + 1, 3));
   const publish = async () => {
     setPublishing(true);
     setError(null);
@@ -265,7 +265,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
         {step === 3 && (
           <div className="wizard-form">
             <div>
-              <Eyebrow>Step 3 of 4</Eyebrow>
+              <Eyebrow>Step 3 of 3</Eyebrow>
               <h2>Assign the field team.</h2>
               <p>People only see the project and form assigned to them.</p>
             </div>
@@ -300,18 +300,6 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
                 Existing accounts are assigned immediately. Unknown addresses
                 receive an email invitation.
               </span>
-            </div>
-          </div>
-        )}
-        {step === 4 && (
-          <div className="wizard-form">
-            <div>
-              <Eyebrow>Step 4 of 4</Eyebrow>
-              <h2>Ready to publish.</h2>
-              <p>
-                Publishing makes this schema available offline to the assigned
-                field team.
-              </p>
             </div>
             <div className="publish-summary">
               <div>
@@ -368,7 +356,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
           >
             {step === 1 ? "Cancel" : "Back"}
           </Button>
-          {step < 4 ? (
+          {step < 3 ? (
             <Button
               variant="primary"
               iconAfter="arrow-right"

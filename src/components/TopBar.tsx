@@ -28,6 +28,8 @@ export function TopBar({
   const isAdmin = mode === "admin";
   const accountLabel = isPreview ? "Preview" : (userEmail ?? "Account");
   const surfaceLabel = isAdmin ? "Admin" : "Fieldwork";
+  const alternateMode = isAdmin ? "contributor" : "admin";
+  const alternateSurfaceLabel = isAdmin ? "Fieldwork" : "Admin";
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -68,7 +70,19 @@ export function TopBar({
           >
             collect<span className="wordmark-dot">.</span>
           </button>
-          <span className="surface-label">{surfaceLabel}</span>
+          {canAdmin ? (
+            <button
+              type="button"
+              className="surface-switch"
+              onClick={() => chooseMode(alternateMode)}
+              aria-label={`Switch to ${alternateSurfaceLabel}`}
+            >
+              <span className="surface-label">{surfaceLabel}</span>
+              <Icon name="arrow-right" size={14} />
+            </button>
+          ) : (
+            <span className="surface-label">{surfaceLabel}</span>
+          )}
         </div>
 
         <div className="topbar-actions" ref={menuRef}>
@@ -92,24 +106,6 @@ export function TopBar({
               <div className="account-menu-heading">
                 {isPreview ? "Interface preview" : (userEmail ?? "Signed in")}
               </div>
-              <button
-                role="menuitem"
-                aria-current={!isAdmin ? "page" : undefined}
-                className={!isAdmin ? "account-menu-selected" : ""}
-                onClick={() => chooseMode("contributor")}
-              >
-                Fieldwork
-              </button>
-              {canAdmin && (
-                <button
-                  role="menuitem"
-                  aria-current={isAdmin ? "page" : undefined}
-                  className={isAdmin ? "account-menu-selected" : ""}
-                  onClick={() => chooseMode("admin")}
-                >
-                  Admin
-                </button>
-              )}
               {onSignOut && (
                 <button
                   role="menuitem"

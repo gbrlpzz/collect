@@ -54,12 +54,24 @@ export function ProjectOverview({
         className="project-list project-list-detail"
         aria-label="Project status"
       >
-        <button className="list-row" onClick={onOpenSync}>
+        <button
+          className="list-row"
+          onClick={onOpenSync}
+          aria-label={
+            waitingCount ? "Sync saved observations now" : "Open sync status"
+          }
+        >
           <span className="list-row-copy">
             <strong>
-              {waitingCount ? `${waitingCount} waiting to sync` : "Up to date"}
+              {waitingCount
+                ? `Sync ${waitingCount} waiting observation${waitingCount === 1 ? "" : "s"}`
+                : "Up to date"}
             </strong>
-            <span>{syncedCount} observations synced</span>
+            <span>
+              {waitingCount
+                ? "Tap to sync now"
+                : `${syncedCount} observations synced`}
+            </span>
           </span>
           <Icon name="chevron-right" size={17} />
         </button>
