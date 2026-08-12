@@ -137,7 +137,7 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 | Server enforcement          | ✅     | sync-submission rejects without granted consent         |
 | Exports carry consent       | ✅     | contributors.csv columns                                |
 
-## Attention verification (2026-08-12)
+## Attention verification (2026-08-12) — see [docs/attention-qa.md](attention-qa.md)
 
 | Item                           | Status | Notes                                                                                                 |
 | ------------------------------ | ------ | ----------------------------------------------------------------------------------------------------- |
@@ -150,7 +150,7 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 | Visibility                     | ✅     | profile (contributor + admin), readiness data, exports (data/attention.csv + contributors.csv)        |
 | Environment payload regression | ✅     | re-added observation.environment to sync payload                                                      |
 
-## Background automation pass (2026-08-12)
+## Background automation pass (2026-08-12) — see [docs/background-automation.md](background-automation.md)
 
 | Item                                    | Status | Notes                                                                                        |
 | --------------------------------------- | ------ | -------------------------------------------------------------------------------------------- |
@@ -192,7 +192,7 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 | Bundle                           | ✅     | 462 KB JS / ~121 KB gzip, offline-first (must be cached anyway)                                          |
 | Concurrency                      | ✅     | bounded media parallelism + health timeout landed with the media-uploads unit                            |
 
-## FAIR dataset standards (2026-08-12)
+## FAIR dataset standards (2026-08-12) — see [docs/dataset-standards.md](dataset-standards.md)
 
 | Item                         | Status | Notes                                                                                                     |
 | ---------------------------- | ------ | --------------------------------------------------------------------------------------------------------- |

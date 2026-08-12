@@ -21,6 +21,17 @@ Most survey software is either a generic form builder or a fragile online tool. 
 - **Evidence stays honest.** Published schemas are immutable; finalized observations are immutable; conflicts are explicit, never silently overwritten; every record carries full provenance (who, what schema, which device, when, where, which app version).
 - **The dataset is yours.** Checkpoint exports produce a plain ZIP — JSONL, CSV, GeoJSON, schema history, media, manifest — readable without this application. Each package also carries **FAIR dataset metadata**: DataCite 4.4 (`dataset/datacite.json`), a data dictionary with semantic mapping hooks, license, dataset contact, and optional DOI — set once on the project, embedded in every export.
 
+## Key features
+
+| Feature                                   | What it means for your science                                                                                                                                                                                                    | Doc                                                              |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| **FAIR dataset standards**                | Every export is a self-contained, licensed, machine-readable research package: DataCite 4.4 metadata, data dictionary with ontology hooks, license/contact/DOI set once on the project.                                           | [`docs/dataset-standards.md`](docs/dataset-standards.md)         |
+| **Automatic attention QA**                | One random, universally valid quick check per observation — options shuffled, answer stripped from the data, verified server-side, guess-adjusted score per contributor, shown to contributor + admin, exported with the dataset. | [`docs/attention-qa.md`](docs/attention-qa.md)                   |
+| **Background automation**                 | Sync, heartbeats, readiness, media integrity, receipts, and recovery all run automatically and invisibly; nothing asks the contributor to babysit the machine.                                                                    | [`docs/background-automation.md`](docs/background-automation.md) |
+| **Consent that is enforced, not assumed** | Versioned in-app consent at first sign-in; the server refuses submissions without it; consent record travels in exports.                                                                                                          | `docs/PLAN.md` (Consent + profiles)                              |
+| **Provenance on every record**            | Who, what schema, which device, when, where, which app version — plus environment and location, captured silently.                                                                                                                | [`docs/background-automation.md`](docs/background-automation.md) |
+| **Durable offline contract**              | Saved means saved (atomic local receipt), synced means synced (server finalization receipt), nothing discarded before the server acknowledges it.                                                                                 | [`docs/architecture.md`](docs/architecture.md)                   |
+
 ## What's inside
 
 **Automatic attention verification.** Every observation quietly includes one random multiple-choice check (a universally valid question, options shuffled, inserted after the first two questions). The question is never stored — only a binary pass/fail flag on the submission — and every contributor gets a guess-adjusted attention score (0 = indistinguishable from blind guessing, 100 = perfect). The score is shown to the contributor and to the administrator, and it rides along in every export.
@@ -79,7 +90,7 @@ npm run provision -- --issue-magic-link
 
 `npm run provision` configures Auth (redirect URLs, magic-link template), applies the ordered migrations, deploys every Edge Function, and can request the first administrator's sign-in link. It never prints or stores one-time tokens, and the service-role key stays inside Edge Functions. The included **Deploy collect** GitHub Actions workflow runs the same path end-to-end (tests → provision → build → deploy).
 
-Read `docs/architecture.md` for the reliability boundaries and backend contract, `docs/export-format.md` for the checkpoint package specification, `docs/deployment.md` for the full self-hosting guide, and `docs/design.md` for the interface baseline.
+Read `docs/architecture.md` for the reliability boundaries and backend contract, `docs/export-format.md` for the checkpoint package specification, `docs/dataset-standards.md` for the FAIR dataset metadata, `docs/attention-qa.md` for the automatic attention verification, `docs/background-automation.md` for the automation suite, `docs/deployment.md` for the full self-hosting guide, and `docs/design.md` for the interface baseline.
 
 ## Repository layout
 

@@ -171,3 +171,9 @@ every export. Licenses are stored as SPDX identifiers where possible
 
 Checkpoints remain immutable snapshots: the same data exported twice yields two
 packages, each with its own DataCite metadata and cutoff timestamp.
+
+---
+
+See [`docs/dataset-standards.md`](dataset-standards.md) for the FAIR dataset
+metadata carried in every checkpoint (`dataset/datacite.json`,
+`dataset/data-dictionary.json`, `dataset/README.md`).
