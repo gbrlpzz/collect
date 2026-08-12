@@ -68,6 +68,9 @@ describe("low-friction primary actions", () => {
 
   it("signs in with email and password from the focused email field", async () => {
     render(<AuthScreen configured role="contributor" />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /sign in with a password instead/i }),
+    );
     const emailInput = screen.getByLabelText("Email address");
     fireEvent.change(emailInput, { target: { value: "field@example.com" } });
     fireEvent.change(screen.getByLabelText("Password"), {
@@ -85,9 +88,6 @@ describe("low-friction primary actions", () => {
 
   it("falls back to a magic link and auto-verifies the email code", async () => {
     render(<AuthScreen configured role="contributor" />);
-    fireEvent.click(
-      screen.getByRole("button", { name: /sign in with a link instead/i }),
-    );
     const emailInput = screen.getByLabelText("Email address");
     fireEvent.change(emailInput, { target: { value: "field@example.com" } });
     fireEvent.submit(emailInput.closest("form")!);

@@ -469,6 +469,19 @@ export function Collector({
   };
 
   const activeField = current?.kind === "field" ? current.field : null;
+  const activeMediaAssets =
+    activeField &&
+    (activeField.type === "photo" || activeField.type === "audio")
+      ? (mediaByField[activeField.key] ?? [])
+      : [];
+  const activeFieldHasValue = activeField
+    ? activeField.type === "photo" || activeField.type === "audio"
+      ? activeMediaAssets.length > 0
+      : hasValue(draft[activeField.key])
+    : false;
+  const skippingOptionalField = Boolean(
+    activeField && !activeField.required && !activeFieldHasValue,
+  );
 
   // Location is background provenance. Ask the browser once when an
   // observation opens, without inserting a location question into the flow.
@@ -480,18 +493,15 @@ export function Collector({
     locationCaptureStartedRef.current = true;
     void Promise.all(locationFields.map((field) => captureLocation(field.key)));
   }, [locationFields]);
-  const activeMediaAssets =
-    activeField &&
-    (activeField.type === "photo" || activeField.type === "audio")
-      ? (mediaByField[activeField.key] ?? [])
-      : [];
   const primaryLabel = isLastStep
     ? preview
       ? "Finish preview"
       : isSaving
         ? "Saving…"
         : "Save observation"
-    : "Continue";
+    : skippingOptionalField
+      ? "Skip"
+      : "Continue";
 
   if (!current) {
     return (
@@ -634,17 +644,12 @@ export function Collector({
                   }
                   required={current.field.required}
                   invalid={Boolean(errorText)}
-                  autoFocus={[
-                    "short_text",
-                    "long_text",
-                    "number",
-                    "single_choice",
-                    "tri_state",
-                    "multiple_choice",
-                    "date",
-                    "datetime",
-                    "repeatable_group",
-                  ].includes(current.field.type)}
+                  autoFocus={
+                    Boolean(current.field.required) ||
+                    ["single_choice", "tri_state", "multiple_choice"].includes(
+                      current.field.type,
+                    )
+                  }
                 />
               </div>
             </div>

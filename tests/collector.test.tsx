@@ -67,7 +67,7 @@ const validationProject: Project = { ...project, fields: validationFields };
 
 describe("Collector guided flow (§10 client-side enforcement)", () => {
   const continueButton = () =>
-    screen.getByRole("button", { name: /^continue$/i });
+    screen.getByRole("button", { name: /^(continue|skip)$/i });
 
   it("keeps Continue disabled until a required first question is answered", () => {
     const onSubmit = vi.fn();
@@ -146,6 +146,36 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         value: previousViewport,
       });
     }
+  });
+
+  it("does not summon the keyboard for an empty optional field and labels the action Skip", () => {
+    const optionalProject = {
+      ...project,
+      fields: [
+        { ...fields[3], required: false },
+        { ...fields[1], required: true },
+      ],
+    };
+    render(
+      <Collector
+        project={optionalProject}
+        draft={{}}
+        lastSavedAt={null}
+        onDraftChange={() => undefined}
+        onSubmit={() => undefined}
+        onBack={() => undefined}
+        isSaving={false}
+        attentionCheck={false}
+      />,
+    );
+
+    expect(document.activeElement).not.toBe(
+      screen.getByLabelText("Field notes"),
+    );
+    const skipButton = screen.getByRole("button", { name: /^skip$/i });
+    expect(skipButton).toBeTruthy();
+    fireEvent.click(skipButton);
+    expect(screen.getByText("People present")).toBeTruthy();
   });
 
   it("enforces number min/max with a specific message", () => {
@@ -350,7 +380,8 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         .getAllByRole("button")
         .find(
           (button) =>
-            button.textContent && !/continue|back/i.test(button.textContent),
+            button.textContent &&
+            !/continue|skip|back/i.test(button.textContent),
         );
       expect(option).toBeTruthy();
       fireEvent.click(option!);

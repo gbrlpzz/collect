@@ -733,6 +733,9 @@ h3 {
 .collector-keyboard-open .flow-actions {
   padding-bottom: var(--space-2);
 }
+.collector-keyboard-open .flow-back {
+  display: none;
+}
 
 /* Sheets, dialogs, and transient messages */
 .sheet-backdrop {

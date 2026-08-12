@@ -64,7 +64,7 @@ export function AuthScreen({
   const showLocalRedirectHint = configured && isLocalDevelopmentOrigin();
   const showStandaloneNote = configured && standalone;
   const [entryMode, setEntryMode] = useState<EntryMode>(() =>
-    standalone ? "device" : "password",
+    standalone ? "device" : "link",
   );
   const [email, setEmail] = useState(pendingAuthEmail);
   const [password, setPasswordValue] = useState("");
@@ -543,12 +543,13 @@ export function AuthScreen({
                       type="button"
                       className="text-button"
                       onClick={() => {
-                        setEntryMode("password");
+                        setEntryMode("link");
                         setCode("");
                         setCodeError(null);
                       }}
                     >
-                      Back to sign-in <Icon name="arrow-right" size={15} />
+                      Sign in with email instead{" "}
+                      <Icon name="arrow-right" size={15} />
                     </button>
                   </form>
                 </div>
@@ -617,7 +618,7 @@ export function AuthScreen({
                       setCallbackIssue(null);
                     }}
                   >
-                    Sign in with your password instead{" "}
+                    Sign in with a password instead{" "}
                     <Icon name="arrow-right" size={15} />
                   </button>
                 </form>
