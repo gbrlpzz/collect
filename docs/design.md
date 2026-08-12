@@ -182,3 +182,27 @@ form — only answer the visible question and tap the obvious next action.
   away. Scope: single-choice and tri-state steps only.
 - **Capsule answers instead of list rows** keep the Apple geometry while giving
   options a 56 pt target — larger than the 44 pt minimum — for glove use.
+
+
+## Colour: the house neutral greys
+
+collect uses the **house monochrome palette** shared by
+[gbrlpzz/index](https://github.com/gbrlpzz/index) and
+[gbrlpzz/dispatch](https://github.com/gbrlpzz/dispatch) — no colour tint
+anywhere:
+
+| Token | Light | Dark |
+| --- | --- | --- |
+| Canvas | `#f5f5f7` | `#000000` |
+| Paper | `#ffffff` | `#1c1c1e` |
+| Ink (text) | `rgba(0,0,0,.85)` | `rgba(255,255,255,.88)` |
+| Dim (secondary) | `rgba(0,0,0,.55)` | `rgba(255,255,255,.58)` |
+| Tertiary | `rgba(0,0,0,.35)` | `rgba(255,255,255,.36)` |
+| Separator | `rgba(0,0,0,.14)` | `rgba(255,255,255,.18)` |
+| Fill / fill-strong | `rgba(0,0,0,.07)` / `.14` | `rgba(255,255,255,.10)` / `.20` |
+| Chrome (nav/glass) | `rgba(245,245,247,.85)` | `rgba(0,0,0,.85)` |
+| Accent / accent text | `#000` / `#fff` | `#fff` / `#000` |
+| Destructive | `#d70015` | `#ff6961` |
+
+`prefers-contrast: more` strengthens dim/tertiary tokens to WCAG AA for
+accessibility settings; the default appearance keeps the house greys verbatim.

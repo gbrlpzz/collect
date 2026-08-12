@@ -471,19 +471,20 @@ p { line-height: 1.45; }
    states; it is not a substitute for labels or shape.
    ------------------------------------------------------------------------- */
 :root {
-  --canvas: #f2f2f7; /* systemGroupedBackground */
-  --paper: #ffffff; /* secondarySystemGroupedBackground */
-  --text: rgba(0, 0, 0, .9);
-  --secondary: rgba(60, 60, 67, .72);
-  --tertiary: rgba(60, 60, 67, .48);
-  --separator: rgba(60, 60, 67, .29);
-  --separator-light: rgba(60, 60, 67, .15);
-  --grouped: rgba(118, 118, 128, .12); /* systemGray6 */
-  --grouped-strong: rgba(118, 118, 128, .22);
+  /* House neutral greys (gbrlpzz/index · gbrlpzz/dispatch): monochrome, no tint. */
+  --canvas: #f5f5f7;
+  --paper: #ffffff;
+  --text: rgba(0, 0, 0, .85);
+  --secondary: rgba(0, 0, 0, .55);
+  --tertiary: rgba(0, 0, 0, .35);
+  --separator: rgba(0, 0, 0, .14);
+  --separator-light: rgba(0, 0, 0, .09);
+  --grouped: rgba(0, 0, 0, .07);
+  --grouped-strong: rgba(0, 0, 0, .14);
   --focus: rgba(0, 0, 0, .9);
-  --focus-ring: rgba(0, 0, 0, .18);
+  --focus-ring: rgba(0, 0, 0, .14);
   --error: rgba(0, 0, 0, .84);
-  --glass: rgba(249, 249, 251, .86);
+  --glass: rgba(245, 245, 247, .85);
   --accent: #000000;
   --accent-hover: #1c1c1e;
   --accent-text: #ffffff;
@@ -497,24 +498,23 @@ p { line-height: 1.45; }
   :root {
     --canvas: #000000;
     --paper: #1c1c1e;
-    --text: rgba(255, 255, 255, .94);
-    --secondary: rgba(235, 235, 245, .68);
-    --tertiary: rgba(235, 235, 245, .46);
-    --separator: rgba(84, 84, 88, .72);
-    --separator-light: rgba(84, 84, 88, .5);
-    --grouped: rgba(118, 118, 128, .24);
-    --grouped-strong: rgba(118, 118, 128, .38);
-    --focus: rgba(255, 255, 255, .94);
-    --focus-ring: rgba(255, 255, 255, .24);
+    --text: rgba(255, 255, 255, .88);
+    --secondary: rgba(255, 255, 255, .58);
+    --tertiary: rgba(255, 255, 255, .36);
+    --separator: rgba(255, 255, 255, .18);
+    --separator-light: rgba(255, 255, 255, .10);
+    --grouped: rgba(255, 255, 255, .10);
+    --grouped-strong: rgba(255, 255, 255, .20);
+    --focus: rgba(255, 255, 255, .9);
+    --focus-ring: rgba(255, 255, 255, .22);
     --error: rgba(255, 255, 255, .9);
-    --glass: rgba(28, 28, 30, .86);
+    --glass: rgba(0, 0, 0, .85);
     --accent: #ffffff;
     --accent-hover: #f2f2f7;
     --accent-text: #000000;
-    --selection-bg: rgba(255, 255, 255, .92);
+    --selection-bg: rgba(255, 255, 255, .9);
   }
 }
-
 html { background: var(--canvas); }
 body { background: var(--canvas); }
 button, a, input, textarea, select, label { touch-action: manipulation; }
@@ -689,16 +689,16 @@ button { -webkit-user-select: none; user-select: none; }
 
 /* HIG audit corrections: legibility, adaptive contrast, and complete hit areas. */
 :root {
-  --secondary: rgba(60, 60, 67, .75);
-  --tertiary: rgba(60, 60, 67, .74);
-  --destructive: #ff3b30;
+  --secondary: rgba(0, 0, 0, .55);
+  --tertiary: rgba(0, 0, 0, .35);
+  --destructive: #d70015;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --secondary: rgba(235, 235, 245, .78);
-    --tertiary: rgba(235, 235, 245, .62);
-    --destructive: #ff453a;
+    --secondary: rgba(255, 255, 255, .58);
+    --tertiary: rgba(255, 255, 255, .36);
+    --destructive: #ff6961;
   }
 }
 

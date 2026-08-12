@@ -42,10 +42,11 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
   }, {}));
   const [activeMediaField, setActiveMediaField] = useState("site_photos");
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [locationNotice, setLocationNotice] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
 
   const steps = useMemo<Step[]>(() => project.fields.map((field) => field.type === "heading" ? { kind: "heading", field } : { kind: "field", field }), [project.fields]);
-  const current = steps[Math.min(stepIndex, steps.length - 1)];
+  const current = steps[Math.min(stepIndex, Math.max(steps.length - 1, 0))];
   const allMediaAssets = useMemo(() => Object.values(mediaByField).flat(), [mediaByField]);
   const isLastStep = stepIndex === steps.length - 1;
 
@@ -171,12 +172,13 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
         heading: coords.heading,
       });
       setLocationError(null);
+      setLocationNotice(null);
       setErrorText(null);
     };
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => saveLocation(position.coords),
-        () => setLocationError("Location access was unavailable. Enable location services or try again."),
+        () => { setLocationError("Location access was unavailable. Enable location services or try again."); setLocationNotice("Location is off for this app. Enable it in Settings so coordinates record automatically."); },
         { enableHighAccuracy: true, timeout: 5000 },
       );
     } else {
@@ -213,11 +215,44 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
     onDraftChange(fieldKey, nextAssets);
   };
 
-  const activeField = current.kind === "field" ? current.field : null;
+  const activeField = current?.kind === "field" ? current.field : null;
+
+  // Location is background provenance: the app captures it when the
+  // observation opens and refreshes it at submit. The UI stays quiet unless
+  // the permission is unavailable, and only a required schema blocks saving.
+  useEffect(() => {
+    if (activeField?.type !== "location") return;
+    if (!("geolocation" in navigator)) {
+      setLocationNotice("Location is off for this app. Enable it in Settings so coordinates record automatically.");
+      return;
+    }
+    let active = true;
+    const permissionQuery = navigator.permissions?.query({ name: "geolocation" as PermissionName });
+    if (!permissionQuery) return;
+    void permissionQuery.then((status) => {
+      if (active && status.state === "denied") {
+        setLocationNotice("Location is off for this app. Enable it in Settings so coordinates record automatically.");
+      }
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [activeField?.key, activeField?.type]);
   const activeMediaAssets = activeField && (activeField.type === "photo" || activeField.type === "audio") ? (mediaByField[activeField.key] ?? []) : [];
   const primaryLabel = isLastStep
     ? preview ? "Finish preview" : isSaving ? "Saving…" : "Save observation"
     : current.kind === "heading" ? "Continue" : "Continue";
+
+  if (!current) {
+    return (
+      <main className="collector-page collector-flow">
+        <div className="collector-topbar">
+          <button className="back-button" onClick={onBack} aria-label="Back"><Icon name="chevron-left" size={17} /> Project</button>
+          <div className="collector-title"><strong>New observation</strong><span>{project.name}</span></div>
+          <span className="collector-save-state" />
+        </div>
+        <div className="flow-body"><div className="flow-step"><p className="step-description">This project has no questions yet. Ask an administrator to add fields.</p></div></div>
+      </main>
+    );
+  }
 
   return (
     <main className="collector-page collector-flow">
@@ -261,6 +296,7 @@ export function Collector({ project, draft, lastSavedAt, onDraftChange, onSubmit
                   onCaptureLocation={() => captureLocation(current.field.key)}
                   onAddPhoto={() => { setActiveMediaField(current.field.key); window.setTimeout(() => fileInputRef.current?.click(), 0); }}
                   locationError={current.field.type === "location" ? locationError : null}
+                  locationNotice={current.field.type === "location" ? locationNotice : null}
                   required={current.field.required}
                   invalid={Boolean(errorText)}
                   autoFocus={["short_text", "long_text", "number", "date", "datetime"].includes(current.field.type)}

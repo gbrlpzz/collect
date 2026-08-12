@@ -15,6 +15,7 @@ interface FieldRendererProps {
   mediaAssets?: MediaAsset[];
   onRemoveMedia?: (index: number) => void;
   locationError?: string | null;
+  locationNotice?: string | null;
   required?: boolean;
   describedBy?: string;
   invalid?: boolean;
@@ -73,6 +74,7 @@ export function FieldRenderer({
   mediaAssets,
   onRemoveMedia,
   locationError,
+  locationNotice,
   required = false,
   describedBy,
   invalid = false,
@@ -259,27 +261,31 @@ export function FieldRenderer({
 
   if (field.type === "location") {
     const location = value as LocationValue | undefined;
+    const problem = locationError ?? locationNotice;
     return (
-      <>
-        <div className={`capture-card ${location ? "capture-complete" : ""}`} role="group" {...accessibilityProps}>
-          <div className="capture-icon"><Icon name="location" size={20} /></div>
-          <div className="capture-copy">
-            {location ? (
-              <>
-                <strong>{location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}</strong>
-                <span>Accuracy ±{Math.round(location.accuracy)} m · captured just now</span>
-              </>
-            ) : (
-              <>
-                <strong>Location not captured</strong>
-                <span>Coordinates and accuracy stay with this observation.</span>
-              </>
-            )}
-          </div>
-          <Button variant="secondary" aria-label={`${location ? "Recapture" : "Capture"} ${field.label}`} onClick={onCaptureLocation}>{location ? "Recapture" : "Capture"}</Button>
+      <div className={`capture-card ${location ? "capture-complete" : ""}`} role="group" {...accessibilityProps}>
+        <div className="capture-icon"><Icon name="location" size={20} /></div>
+        <div className="capture-copy">
+          {location ? (
+            <>
+              <strong>{location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}</strong>
+              <span>Accuracy ±{Math.round(location.accuracy)} m · captured automatically</span>
+            </>
+          ) : problem ? (
+            <>
+              <strong>Location not recorded</strong>
+              <span>{problem}</span>
+            </>
+          ) : (
+            <>
+              <strong>Capturing location…</strong>
+              <span>Coordinates record automatically with this observation.</span>
+            </>
+          )}
         </div>
-        {locationError && <p className="field-help-error" role="alert">{locationError}</p>}
-      </>
+        {!location && <Button variant="secondary" aria-label={`Capture ${field.label}`} onClick={onCaptureLocation}>Capture now</Button>}
+        {location && <Icon name="check" size={20} />}
+      </div>
     );
   }
 
