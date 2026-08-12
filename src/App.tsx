@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { AuthScreen } from "./components/AuthScreen";
 import { ConsentScreen } from "./components/ConsentScreen";
 import { ContributorHome } from "./components/ContributorHome";
@@ -40,6 +40,11 @@ const NewProjectWizard = lazy(() =>
     default: NewProjectWizard,
   })),
 );
+const DeviceLinkSheet = lazy(() =>
+  import("./components/DeviceLinkSheet").then(({ DeviceLinkSheet }) => ({
+    default: DeviceLinkSheet,
+  })),
+);
 
 function SurfaceFallback() {
   return (
@@ -51,6 +56,7 @@ function SurfaceFallback() {
 }
 
 export default function App() {
+  const [deviceLinkOpen, setDeviceLinkOpen] = useState(false);
   const {
     state,
     surface,
@@ -229,6 +235,9 @@ export default function App() {
         onNavigate={navigate}
         userEmail={session?.user.email}
         isPreview={!configured}
+        onLinkDevice={
+          session && configured ? () => setDeviceLinkOpen(true) : undefined
+        }
         onSignOut={() => void signOut()}
       />
 
@@ -319,6 +328,9 @@ export default function App() {
       </div>
 
       <Suspense fallback={null}>
+        {deviceLinkOpen && (
+          <DeviceLinkSheet onClose={() => setDeviceLinkOpen(false)} />
+        )}
         {syncSheetOpen && (
           <SyncSheet
             observations={state.observations}

@@ -627,10 +627,15 @@ h3 {
 
 /* Collection flow */
 .collector-flow {
+  position: fixed;
+  z-index: 30;
+  top: var(--collector-viewport-top, 0);
+  right: 0;
+  left: 0;
   width: 100%;
   max-width: none;
-  min-height: 100dvh;
-  height: 100dvh;
+  min-height: 0;
+  height: var(--collector-viewport-height, 100dvh);
 }
 .collector-flow .collector-topbar {
   height: calc(52px + env(safe-area-inset-top));
@@ -724,6 +729,9 @@ h3 {
 }
 .flow-continue {
   min-height: 52px;
+}
+.collector-keyboard-open .flow-actions {
+  padding-bottom: var(--space-2);
 }
 
 /* Sheets, dialogs, and transient messages */
@@ -1172,6 +1180,19 @@ h3 {
   padding: 6px 4px 0;
   color: var(--secondary);
   font-size: 0.6875rem;
+}
+.account-menu .account-menu-device-link {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+}
+.account-menu-device-link > svg:last-child {
+  color: var(--secondary);
+}
+.device-link-actions {
+  display: grid;
+  gap: var(--space-2);
 }
 
 /* Contributor home keeps exactly one project context and one primary action. */

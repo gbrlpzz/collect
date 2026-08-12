@@ -20,11 +20,13 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
   const requestCode = async () => {
     setBusy(true);
     setError(null);
+    setCopied(false);
     try {
       const result = await requestDeviceLinkCode();
       setCode(result.code);
@@ -48,6 +50,18 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
       }
     } finally {
       setBusy(false);
+    }
+  };
+
+  const copyCode = async () => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+    } catch {
+      setError(
+        "Copy was unavailable. Read the code above and enter it in the app.",
+      );
     }
   };
 
@@ -132,14 +146,15 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
           <IconButton label="Close" icon="x" autoFocus onClick={onClose} />
         </div>
         <p className="sheet-copy">
-          On the device you want to sign in on, open collect and choose “Enter
-          the code shown there”. This code is single-use and expires quickly.
+          In the installed collect app, paste this one-time code. It signs in
+          the app without a password or another email.
         </p>
-        {error ? (
+        {error && (
           <p className="field-help-error" role="alert">
             {error}
           </p>
-        ) : busy && !code ? (
+        )}
+        {busy && !code ? (
           <p className="sheet-copy">Creating a code…</p>
         ) : code ? (
           <>
@@ -157,20 +172,31 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
                 ? "This code has expired. Request a new one."
                 : `Expires in ${minutes}:${String(seconds).padStart(2, "0")}`}
             </p>
-            <Button
-              variant="secondary"
-              icon="refresh"
-              fullWidth
-              onClick={() => void requestCode()}
-              disabled={busy}
-              busy={busy}
-            >
-              {busy ? "Creating…" : "New code"}
-            </Button>
+            <div className="device-link-actions">
+              <Button
+                variant="primary"
+                icon="file"
+                fullWidth
+                onClick={() => void copyCode()}
+                disabled={expired}
+              >
+                {copied ? "Code copied" : "Copy code"}
+              </Button>
+              <Button
+                variant="quiet"
+                icon="refresh"
+                fullWidth
+                onClick={() => void requestCode()}
+                disabled={busy}
+                busy={busy}
+              >
+                {busy ? "Creating…" : "New code"}
+              </Button>
+            </div>
           </>
         ) : null}
         <p className="sheet-footnote">
-          The code is shown only on this device and cannot be sent anywhere.
+          The code works once and expires after five minutes.
         </p>
       </section>
     </div>

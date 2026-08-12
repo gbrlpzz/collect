@@ -90,6 +90,64 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
+  it("keeps Continue inside the visible viewport when the keyboard opens", () => {
+    const listeners = new Map<string, EventListener>();
+    const viewport = {
+      height: 420,
+      offsetTop: 0,
+      addEventListener: vi.fn((name: string, listener: EventListener) =>
+        listeners.set(name, listener),
+      ),
+      removeEventListener: vi.fn(),
+    };
+    const previousViewport = window.visualViewport;
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      value: viewport,
+    });
+
+    const optionalProject = {
+      ...project,
+      fields: [{ ...fields[3], required: false }],
+    };
+    const { container, unmount } = render(
+      <Collector
+        project={optionalProject}
+        draft={{}}
+        lastSavedAt={null}
+        onDraftChange={() => undefined}
+        onSubmit={() => undefined}
+        onBack={() => undefined}
+        isSaving={false}
+        attentionCheck={false}
+      />,
+    );
+    try {
+      const collector = container.querySelector<HTMLElement>(".collector-flow");
+      expect(
+        collector?.style.getPropertyValue("--collector-viewport-height"),
+      ).toBe("420px");
+      expect(collector?.classList.contains("collector-keyboard-open")).toBe(
+        true,
+      );
+      expect(
+        screen.getByRole("button", { name: /save observation/i }),
+      ).toHaveProperty("disabled", false);
+
+      viewport.height = 390;
+      listeners.get("resize")?.(new Event("resize"));
+      expect(
+        collector?.style.getPropertyValue("--collector-viewport-height"),
+      ).toBe("390px");
+    } finally {
+      unmount();
+      Object.defineProperty(window, "visualViewport", {
+        configurable: true,
+        value: previousViewport,
+      });
+    }
+  });
+
   it("enforces number min/max with a specific message", () => {
     const onSubmit = vi.fn();
     render(

@@ -1,7 +1,6 @@
 import { useId, useRef, useState } from "react";
 import {
   authCallbackError,
-  isStandalonePwa,
   linkDeviceSession,
   pendingAuthEmail,
   rememberAuthEmail,
@@ -60,10 +59,13 @@ export function AuthScreen({
   const isAdmin = role === "admin";
   const emailInputId = useId();
   const passwordInputId = useId();
-  const showInstallHint = isAppleMobileBrowser() && !isStandaloneApp();
+  const standalone = isStandaloneApp();
+  const showInstallHint = isAppleMobileBrowser() && !standalone;
   const showLocalRedirectHint = configured && isLocalDevelopmentOrigin();
-  const showStandaloneNote = configured && isStandalonePwa();
-  const [entryMode, setEntryMode] = useState<EntryMode>("password");
+  const showStandaloneNote = configured && standalone;
+  const [entryMode, setEntryMode] = useState<EntryMode>(() =>
+    standalone ? "device" : "password",
+  );
   const [email, setEmail] = useState(pendingAuthEmail);
   const [password, setPasswordValue] = useState("");
   const [sent, setSent] = useState(false);
@@ -375,17 +377,21 @@ export function AuthScreen({
             <h1 id="auth-title">
               {callbackIssue
                 ? "Request a new link."
-                : isAdmin
-                  ? "Sign in to collect Admin."
-                  : "Sign in to collect."}
+                : entryMode === "device"
+                  ? "Sign in to this app."
+                  : isAdmin
+                    ? "Sign in to collect Admin."
+                    : "Sign in to collect."}
             </h1>
             <p>
               {configured
                 ? callbackIssue
                   ? "Enter the invited email address and we’ll send a fresh one-time link."
-                  : isAdmin
-                    ? "Use the administrator email you were invited with."
-                    : "Use the email address your administrator invited."
+                  : entryMode === "device"
+                    ? "In the signed-in browser, open your profile and choose “Sign in another device”, then enter the code here."
+                    : isAdmin
+                      ? "Use the administrator email you were invited with."
+                      : "Use the email address your administrator invited."
                 : "This deployment is not connected to an authentication service yet."}
             </p>
             {showStandaloneNote && (
@@ -393,8 +399,7 @@ export function AuthScreen({
                 <Icon name="info" size={16} />
                 <span>
                   This installed app keeps its own sign-in. If you signed in on
-                  the web, sign in again here — synced data returns from the
-                  server.
+                  the web, transfer that sign-in with the one-time code below.
                 </span>
               </p>
             )}
@@ -517,7 +522,7 @@ export function AuthScreen({
                       <Icon name="info" size={16} />
                       <span>
                         On the signed-in device, open collect → Sign in on
-                        another device, and enter the code shown there.
+                        another device, copy the code, and paste it here.
                       </span>
                     </p>
                     {codeError && (

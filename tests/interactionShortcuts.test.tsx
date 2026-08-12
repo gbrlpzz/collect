@@ -152,6 +152,29 @@ describe("low-friction primary actions", () => {
     );
   });
 
+  it("opens device-code entry first in an installed iOS app", () => {
+    const standaloneNavigator = navigator as Navigator & {
+      standalone?: boolean;
+    };
+    const previousStandalone = standaloneNavigator.standalone;
+    Object.defineProperty(navigator, "standalone", {
+      configurable: true,
+      value: true,
+    });
+    try {
+      render(<AuthScreen configured role="contributor" />);
+      expect(
+        screen.getByLabelText(/8-character code from the signed-in device/i),
+      ).toBeTruthy();
+      expect(screen.getByText(/open your profile/i)).toBeTruthy();
+    } finally {
+      Object.defineProperty(navigator, "standalone", {
+        configurable: true,
+        value: previousStandalone,
+      });
+    }
+  });
+
   it("shows the device-link code on the signed-in device", async () => {
     render(<DeviceLinkSheet onClose={() => undefined} />);
 
@@ -231,6 +254,25 @@ describe("low-friction primary actions", () => {
     ).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Account" }));
     expect(screen.queryByRole("menuitem", { name: /admin/i })).toBeNull();
+  });
+
+  it("offers a device sign-in code from the signed-in account menu", () => {
+    const onLinkDevice = vi.fn();
+    render(
+      <TopBar
+        mode="contributor"
+        view="home"
+        userEmail="field@example.com"
+        onNavigate={() => undefined}
+        onLinkDevice={onLinkDevice}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "field@example.com" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /sign in another device/i }),
+    );
+    expect(onLinkDevice).toHaveBeenCalledTimes(1);
   });
 
   it("shows the attention score in the account menu for a signed-in contributor", async () => {
