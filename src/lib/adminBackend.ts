@@ -495,6 +495,10 @@ export async function loadProjectReadiness(
         .eq("project_id", projectId)
         .order("last_seen_at", { ascending: false }),
     ]);
+  const memberIds = (members ?? []).map((member: { user_id: string }) => member.user_id);
+  const { data: profiles } = memberIds.length
+    ? await client.from("contributor_profiles").select("user_id,attention_score,attention_checks_total,attention_correct_total,consent_granted_at,consent_revoked_at").in("user_id", memberIds)
+    : { data: [] };
   return (members ?? []).map((member: { user_id: string }) => {
     const invite = (invites ?? []).find(
       (candidate: { invited_user_id: string | null }) =>
@@ -503,6 +507,9 @@ export async function loadProjectReadiness(
     const device = (statuses ?? []).find(
       (candidate: { contributor_id: string }) =>
         candidate.contributor_id === member.user_id,
+    );
+    const profile = (profiles ?? []).find(
+      (candidate: { user_id: string }) => candidate.user_id === member.user_id,
     );
     const pending =
       Number(device?.pending_submissions ?? 0) +
@@ -523,6 +530,10 @@ export async function loadProjectReadiness(
       pending,
       lastSeen: device?.last_seen_at ?? null,
       received: 0,
+      attentionScore: profile?.attention_score ?? null,
+      attentionChecksTotal: profile?.attention_checks_total ?? null,
+      attentionCorrectTotal: profile?.attention_correct_total ?? null,
+      consentGranted: profile?.consent_granted_at ? !profile.consent_revoked_at : false,
     };
   });
 }

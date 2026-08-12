@@ -359,6 +359,14 @@ async function createSubmission(
           guess_probability: check.guess_probability,
         });
       if (!attentionError) {
+        // Binary per-submission flag: the filterable signal admins use.
+        try {
+          await service.from("submissions")
+            .update({ attention_failed: !correct })
+            .eq("id", submissionId);
+        } catch {
+          // The flag is advisory; never block ingestion on it.
+        }
         try {
           await service.rpc("recompute_attention_score", { target_user: userId });
         } catch {

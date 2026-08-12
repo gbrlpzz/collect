@@ -82,7 +82,7 @@ async function buildExport(
   const { data: submissions, error: submissionError } = await service
     .from("submissions")
     .select(
-      "id,project_id,schema_id,contributor_id,device_id,payload,environment,client_created_at,client_timezone,server_received_at,status,finalized_at,app_version,device_model,device_os,browser,collected_after_remote_close,corrects_submission_id",
+      "id,project_id,schema_id,contributor_id,device_id,payload,environment,client_created_at,client_timezone,server_received_at,status,finalized_at,app_version,device_model,device_os,browser,attention_failed,collected_after_remote_close,corrects_submission_id",
     )
     .eq("project_id", projectId)
     .eq("status", "COMPLETE")
@@ -198,6 +198,7 @@ async function buildExport(
       "server_received_at",
       "finalized_at",
       "status",
+      "attention_failed",
       "payload_json",
     ]),
     ...submissionRows.map((submission) =>
@@ -211,6 +212,7 @@ async function buildExport(
         submission.server_received_at,
         submission.finalized_at,
         submission.status,
+        submission.attention_failed,
         submission.payload,
       ])
     ),
