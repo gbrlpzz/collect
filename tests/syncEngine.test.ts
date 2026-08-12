@@ -20,7 +20,11 @@ import {
   type DurableMedia,
   type DurableSubmission,
 } from "../src/lib/localStore";
-import { buildMediaObjectPath, outboxKey, hasServerReceipt } from "../src/lib/syncProtocol";
+import {
+  buildMediaObjectPath,
+  outboxKey,
+  hasServerReceipt,
+} from "../src/lib/syncProtocol";
 
 // ---------------------------------------------------------------------------
 // §54 critical-failure coverage at the ledger level: every scenario below
@@ -28,7 +32,11 @@ import { buildMediaObjectPath, outboxKey, hasServerReceipt } from "../src/lib/sy
 // receipts survive and resume from the durable phase.
 // ---------------------------------------------------------------------------
 
-function makeSubmission(id = crypto.randomUUID()): { submission: DurableSubmission; media: DurableMedia[]; observation: Observation } {
+function makeSubmission(id = crypto.randomUUID()): {
+  submission: DurableSubmission;
+  media: DurableMedia[];
+  observation: Observation;
+} {
   const clientCreatedAt = new Date().toISOString();
   const submission: DurableSubmission = {
     id,
@@ -88,12 +96,12 @@ describe("local ledger survival (§54 lifecycle)", () => {
     expect(state!.observations[0].id).toBe(submission.id);
     expect(recovery.media).toHaveLength(1);
     expect(recovery.media[0].submissionId).toBe(submission.id);
-    expect(operations.map((operation) => operation.operationType).sort()).toEqual([
-      "CREATE_SUBMISSION",
-      "FINALIZE_SUBMISSION",
-      "UPLOAD_MEDIA",
-    ]);
-    expect(operations.every((operation) => operation.state === "QUEUED")).toBe(true);
+    expect(
+      operations.map((operation) => operation.operationType).sort(),
+    ).toEqual(["CREATE_SUBMISSION", "FINALIZE_SUBMISSION", "UPLOAD_MEDIA"]);
+    expect(operations.every((operation) => operation.state === "QUEUED")).toBe(
+      true,
+    );
   });
 
   it("kill during metadata sync: phase persists and the operation is still queued/in-progress", async () => {
@@ -104,7 +112,11 @@ describe("local ledger survival (§54 lifecycle)", () => {
     const state = await loadAppState();
     expect(state?.observations[0].status).toBe("SYNCING_METADATA");
     const operations = await getOutboxOperations();
-    expect(operations.find((operation) => operation.id === `submission:${submission.id}`)?.state).toBe("QUEUED");
+    expect(
+      operations.find(
+        (operation) => operation.id === `submission:${submission.id}`,
+      )?.state,
+    ).toBe("QUEUED");
   });
 
   it("kill after media upload before finalization: media acknowledged, finalize still queued, submission resumable", async () => {
@@ -112,7 +124,9 @@ describe("local ledger survival (§54 lifecycle)", () => {
     await commitLocalSubmission({ submission, media, observation });
     await setLocalSubmissionStatus(submission.id, "SYNCING_MEDIA");
     const operations = await getOutboxOperations();
-    const mediaOperation = operations.find((operation) => operation.id === `media:${media[0].id}`);
+    const mediaOperation = operations.find(
+      (operation) => operation.id === `media:${media[0].id}`,
+    );
     expect(mediaOperation).toBeDefined();
     expect(mediaOperation!.state).toBe("QUEUED");
 
@@ -124,14 +138,26 @@ describe("local ledger survival (§54 lifecycle)", () => {
     const { submission, media, observation } = makeSubmission();
     await commitLocalSubmission({ submission, media, observation });
 
-    await markLocalSubmissionsSynced([submission.id], { receivedAt: "2026-08-10T00:00:00Z", finalizedAt: "2026-08-10T00:00:01Z", serverStatus: "COMPLETE" });
+    await markLocalSubmissionsSynced([submission.id], {
+      receivedAt: "2026-08-10T00:00:00Z",
+      finalizedAt: "2026-08-10T00:00:01Z",
+      serverStatus: "COMPLETE",
+    });
 
     const state = await loadAppState();
     expect(state?.observations[0].status).toBe("SYNCED");
     const operations = await getOutboxOperations();
-    expect(operations.filter((operation) => operation.entityId === submission.id || media.some((item) => item.id === operation.entityId))).toHaveLength(0);
+    expect(
+      operations.filter(
+        (operation) =>
+          operation.entityId === submission.id ||
+          media.some((item) => item.id === operation.entityId),
+      ),
+    ).toHaveLength(0);
     const recovery = await readStoredRecoveryData();
-    expect(recovery.media.every((item) => item.uploadState === "SYNCED")).toBe(true);
+    expect(recovery.media.every((item) => item.uploadState === "SYNCED")).toBe(
+      true,
+    );
     expect(recovery.receipts).toHaveLength(1);
   });
 
@@ -145,7 +171,9 @@ describe("local ledger survival (§54 lifecycle)", () => {
       expect(operation.attempts).toBe(1);
       expect(operation.lastError).toBe("connection reset");
       expect(operation.lastAttemptAt).not.toBeNull();
-      expect(new Date(operation.nextAttemptAt).getTime()).toBeGreaterThan(Date.now() - 1000);
+      expect(new Date(operation.nextAttemptAt).getTime()).toBeGreaterThan(
+        Date.now() - 1000,
+      );
       expect(operation.state).toBe("RETRYABLE_ERROR");
     }
     const state = await loadAppState();
@@ -153,7 +181,9 @@ describe("local ledger survival (§54 lifecycle)", () => {
 
     await recordOutboxFailure(submission.id, "Unknown schema version", true);
     const afterAction = await getOutboxOperations();
-    expect(afterAction.every((operation) => operation.state === "ACTION_REQUIRED")).toBe(true);
+    expect(
+      afterAction.every((operation) => operation.state === "ACTION_REQUIRED"),
+    ).toBe(true);
     const reloaded = await loadAppState();
     expect(reloaded?.observations[0].status).toBe("ACTION_REQUIRED");
   });
@@ -168,13 +198,20 @@ describe("local ledger survival (§54 lifecycle)", () => {
     // Expired lease is reacquirable.
     const database = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open("collect-local-v1", 2);
-      request.onupgradeneeded = () => { /* stores already exist */ };
+      request.onupgradeneeded = () => {
+        /* stores already exist */
+      };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
     const tx = database.transaction("device-state", "readwrite");
-    tx.objectStore("device-state").put({ owner: ownerA, expiresAt: Date.now() - 1000 }, "sync_lease");
-    await new Promise<void>((resolve) => { tx.oncomplete = () => resolve(); });
+    tx.objectStore("device-state").put(
+      { owner: ownerA, expiresAt: Date.now() - 1000 },
+      "sync_lease",
+    );
+    await new Promise<void>((resolve) => {
+      tx.oncomplete = () => resolve();
+    });
     database.close();
     expect(await acquireSyncLease(ownerB)).toBe(true);
     await releaseSyncLease(ownerB);
@@ -198,13 +235,24 @@ describe("local ledger survival (§54 lifecycle)", () => {
     expect(restored.media).toHaveLength(1);
     const restoredBlob = restored.media![0].blob as Blob | undefined;
     expect(restoredBlob).toBeDefined();
-    expect(new Uint8Array(await restoredBlob!.arrayBuffer())).toEqual(new Uint8Array(blobBytes));
+    expect(new Uint8Array(await restoredBlob!.arrayBuffer())).toEqual(
+      new Uint8Array(blobBytes),
+    );
   });
 
   it("mediaFromAssets preserves per-field provenance and capture source", () => {
     const { submission } = makeSubmission();
     const durable = mediaFromAssets(
-      [{ id: "m1", name: "a.jpg", mimeType: "image/jpeg", byteSize: 10, fieldId: "tree_photos", captureSource: "camera" }],
+      [
+        {
+          id: "m1",
+          name: "a.jpg",
+          mimeType: "image/jpeg",
+          byteSize: 10,
+          fieldId: "tree_photos",
+          captureSource: "camera",
+        },
+      ],
       submission.id,
       "field-site-photos",
     );
@@ -224,7 +272,9 @@ describe("local ledger survival (§54 lifecycle)", () => {
     });
     const tx = database.transaction("app-state", "readwrite");
     tx.objectStore("app-state").delete("singleton");
-    await new Promise<void>((resolve) => { tx.oncomplete = () => resolve(); });
+    await new Promise<void>((resolve) => {
+      tx.oncomplete = () => resolve();
+    });
     database.close();
 
     const probe = await probeLocalDatabase();
@@ -254,7 +304,9 @@ describe("local ledger survival (§54 lifecycle)", () => {
   });
 
   it("protocol helpers: deterministic paths, outbox keys, receipt semantics", () => {
-    expect(buildMediaObjectPath("p", "s", "m")).toBe("projects/p/submissions/s/m");
+    expect(buildMediaObjectPath("p", "s", "m")).toBe(
+      "projects/p/submissions/s/m",
+    );
     expect(outboxKey("UPLOAD_MEDIA", "m")).toBe("UPLOAD_MEDIA:m");
     expect(hasServerReceipt("SYNCED")).toBe(true);
     expect(hasServerReceipt("QUEUED")).toBe(false);

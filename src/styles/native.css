@@ -1,0 +1,1386 @@
+/* -------------------------------------------------------------------------
+   Native system layer
+
+   The UI follows Apple's Human Interface Guidelines as the default language:
+   system/grouped surfaces, a navigation bar, inset list rows, native controls,
+   Dynamic Type-friendly rem units, 44 pt hit targets, and progressive
+   disclosure. Monochrome is intentional for field legibility and evidence
+   states; it is not a substitute for labels or shape.
+   ------------------------------------------------------------------------- */
+:root {
+  /* House neutral greys (gbrlpzz/index · gbrlpzz/dispatch): monochrome, no tint. */
+  --canvas: #f5f5f7;
+  --paper: #ffffff;
+  --text: rgba(0, 0, 0, 0.85);
+  --secondary: rgba(0, 0, 0, 0.55);
+  --tertiary: rgba(0, 0, 0, 0.35);
+  --separator: rgba(0, 0, 0, 0.14);
+  --separator-light: rgba(0, 0, 0, 0.09);
+  --grouped: rgba(0, 0, 0, 0.07);
+  --grouped-strong: rgba(0, 0, 0, 0.14);
+  --focus: rgba(0, 0, 0, 0.9);
+  --focus-ring: rgba(0, 0, 0, 0.14);
+  --error: rgba(0, 0, 0, 0.84);
+  --glass: rgba(245, 245, 247, 0.85);
+  --accent: #000000;
+  --accent-hover: #1c1c1e;
+  --accent-text: #ffffff;
+  --selection-bg: rgba(0, 0, 0, 0.9);
+  --radius: 10px;
+  --radius-large: 14px;
+  --control-height: 44px;
+}
+
+html {
+  background: var(--canvas);
+}
+body {
+  background: var(--canvas);
+}
+button,
+a,
+input,
+textarea,
+select,
+label {
+  touch-action: manipulation;
+}
+button {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Native buttons do not grow or shrink when pressed; they communicate state
+   through the system-like opacity change instead. */
+.button {
+  min-height: var(--control-height);
+  border-radius: 10px;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease,
+    opacity 0.16s ease;
+}
+.button:active {
+  transform: none;
+  opacity: 0.68;
+}
+.button-primary {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.button-primary:hover {
+  background: var(--accent-hover);
+}
+.button-secondary {
+  background: var(--grouped);
+  color: var(--text);
+}
+.button-secondary:hover {
+  background: var(--grouped-strong);
+}
+.button-tertiary,
+.button-quiet {
+  min-height: var(--control-height);
+}
+.icon-button {
+  width: var(--control-height);
+  height: var(--control-height);
+}
+.icon-button:hover,
+.account-button:hover,
+.account-button-open {
+  background: var(--grouped);
+  color: var(--text);
+}
+.text-button {
+  min-height: var(--control-height);
+  font-size: 0.9375rem;
+}
+
+/* Navigation bars and tab bars use a translucent system material only for
+   chrome. Collection data itself remains opaque and readable. */
+.main-shell {
+  min-height: calc(100vh - 52px);
+}
+.topbar {
+  height: 52px;
+  border-bottom-color: var(--separator-light);
+  background: var(--glass);
+}
+.topbar-inner {
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-left: max(16px, env(safe-area-inset-left));
+}
+.wordmark {
+  font-size: 1.125rem;
+  letter-spacing: -0.06em;
+}
+.account-button {
+  min-height: var(--control-height);
+  border-radius: 10px;
+}
+.account-menu {
+  top: 48px;
+  border-color: var(--separator-light);
+  border-radius: 13px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.16);
+}
+.account-menu button {
+  min-height: var(--control-height);
+  border-radius: 9px;
+}
+
+/* Inset grouped lists are the shared language for contributor and admin
+   surfaces. Rows remain plain buttons; containers are used only when they
+   communicate grouping or afford a system action. */
+.project-list,
+.admin-project-list,
+.readiness-list,
+.schema-list,
+.contributor-list {
+  overflow: hidden;
+  border: 1px solid var(--separator-light);
+  border-radius: 14px;
+  background: var(--paper);
+}
+.project-list {
+  border-top: 1px solid var(--separator-light);
+}
+.project-row,
+.list-row {
+  min-height: 64px;
+  padding: 10px 14px;
+}
+.project-row + .project-row,
+.list-row + .list-row {
+  border-top: 1px solid var(--separator-light);
+}
+.project-row:hover,
+.list-row:hover,
+.admin-project-card:hover {
+  background: var(--grouped);
+}
+.project-row-wrap + .project-row-wrap {
+  border-top: 1px solid var(--separator-light);
+}
+.resume-row {
+  border: 1px solid var(--separator-light);
+}
+.admin-project-card {
+  min-height: 76px;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--separator-light);
+  background: var(--paper);
+}
+.admin-project-card:last-child {
+  border-bottom: 0;
+}
+.empty-list-state {
+  padding: 20px 16px;
+  border-bottom: 0;
+}
+
+/* Collection is an inset, grouped list rather than a generic form. One group
+   is one mental unit; a field is one quiet row inside it. */
+.collector-page {
+  width: min(100%, 760px);
+  padding-right: 16px;
+  padding-left: 16px;
+  padding-bottom: calc(112px + env(safe-area-inset-bottom));
+}
+.collector-topbar {
+  min-height: 52px;
+  margin: 0 -16px;
+  padding: 0 16px;
+  border-bottom-color: var(--separator-light);
+  background: var(--glass);
+}
+.collector-title strong {
+  font-size: 1rem;
+}
+.collector-title span {
+  max-width: 220px;
+  font-size: 0.75rem;
+}
+.collector-save-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 130px;
+  color: var(--secondary);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.collector-progress-row {
+  padding-top: 20px;
+  color: var(--secondary);
+  font-size: 0.8125rem;
+}
+.collector-progress-copy {
+  gap: 6px;
+}
+.collector-progress-title {
+  color: var(--text);
+  font-weight: 600;
+}
+.progress-track {
+  height: 4px;
+  margin-top: 9px;
+  background: var(--grouped-strong);
+}
+.progress-track span {
+  background: var(--accent);
+}
+.collector-surface {
+  margin-top: 20px;
+}
+.collector-fields {
+  gap: 22px;
+}
+.collector-group {
+  overflow: hidden;
+  border: 1px solid var(--separator-light);
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.025);
+}
+.field-section-heading {
+  display: block;
+  padding: 15px 16px 11px;
+  background: var(--grouped);
+}
+.field-section-heading .eyebrow {
+  margin-bottom: 4px;
+  color: var(--secondary);
+  letter-spacing: 0.02em;
+}
+.field-section-heading p {
+  color: var(--secondary);
+  font-size: 0.8125rem;
+}
+.collector-group-body {
+  background: var(--paper);
+}
+.collector-field {
+  padding: 17px 16px 19px;
+  border-top: 1px solid var(--separator-light);
+  scroll-margin-top: 70px;
+}
+.collector-group-body .collector-field:first-child {
+  border-top: 0;
+}
+.field-label-row {
+  gap: 10px;
+}
+.field-label-row label {
+  min-height: 24px;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.required-mark {
+  color: var(--secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.field-description {
+  margin: 5px 0 10px;
+  color: var(--secondary);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+.field-input,
+.builder-inline-input,
+.builder-key-input,
+.builder-select {
+  min-height: var(--control-height);
+  border: 0;
+  border-radius: 10px;
+  outline: 0;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--separator) inset;
+  color: var(--text);
+  font-size: 1rem;
+}
+.field-input {
+  padding-right: 13px;
+  padding-left: 13px;
+}
+.field-input:hover,
+.builder-inline-input:hover,
+.builder-key-input:hover,
+.builder-select:hover {
+  border-color: transparent;
+  box-shadow: 0 0 0 1px var(--text) inset;
+}
+.field-input:focus,
+.builder-inline-input:focus,
+.builder-key-input:focus,
+.builder-select:focus {
+  border-color: transparent;
+  box-shadow:
+    0 0 0 1px var(--text) inset,
+    0 0 0 3px var(--focus-ring);
+}
+.field-input::placeholder {
+  color: var(--tertiary);
+  opacity: 1;
+}
+.field-textarea {
+  min-height: 104px;
+  padding-top: 11px;
+  padding-bottom: 11px;
+  line-height: 1.45;
+}
+.number-input-wrap .field-input {
+  padding-right: 78px;
+}
+.number-input-wrap span {
+  right: 13px;
+  font-size: 0.875rem;
+}
+
+/* Choice rows mirror grouped iOS list rows. The checkmark is the visible
+   selection cue; monochrome contrast and aria-pressed cover non-colour users. */
+.choice-grid {
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--separator-light);
+  border-radius: 10px;
+  background: var(--separator-light);
+}
+.choice-button {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 0;
+  background: var(--paper);
+  font-size: 1rem;
+}
+.choice-button:hover {
+  background: var(--grouped);
+}
+.choice-button:active {
+  opacity: 0.68;
+}
+.choice-selected {
+  border: 0;
+  box-shadow: none;
+  background: var(--grouped);
+  font-weight: 600;
+}
+.choice-selected:hover {
+  background: var(--grouped-strong);
+}
+.tri-state,
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  padding: 2px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--grouped);
+}
+.tri-state button,
+.segmented-control button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--secondary);
+  font-size: 0.9375rem;
+}
+.tri-state .tri-selected,
+.segmented-control .segmented-control-selected {
+  background: var(--paper);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  font-weight: 600;
+}
+.segmented-control button:active {
+  opacity: 0.68;
+}
+
+.capture-card {
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 12px;
+  border: 1px solid var(--separator-light);
+  border-radius: 10px;
+  background: var(--paper);
+}
+.capture-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--grouped);
+  color: var(--secondary);
+}
+.capture-copy strong {
+  font-size: 0.9375rem;
+}
+.capture-copy span {
+  font-size: 0.75rem;
+}
+.capture-card .button {
+  min-height: 40px;
+  padding: 0 12px;
+  font-size: 0.875rem;
+}
+.capture-complete {
+  box-shadow: 0 0 0 1px var(--text) inset;
+}
+
+.media-field {
+  padding-top: 1px;
+}
+.photo-strip {
+  gap: 8px;
+}
+.media-tile,
+.photo-placeholder,
+.add-media {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  overflow: hidden;
+  border-radius: 10px;
+}
+.media-tile {
+  border: 1px solid var(--separator-light);
+  background: var(--grouped);
+}
+.media-tile img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.media-tile-icon {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--secondary);
+}
+.media-tile-index {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  min-width: 18px;
+  padding: 2px 4px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.68);
+  color: white;
+  font-size: 0.6875rem;
+  text-align: center;
+}
+.media-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.68);
+  color: white;
+}
+.media-remove:active {
+  opacity: 0.68;
+}
+.add-media {
+  border: 1px dashed var(--separator);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.6875rem;
+}
+.add-media:hover {
+  background: var(--grouped);
+}
+.add-media span {
+  font-size: 0.6875rem;
+}
+.media-caption {
+  padding-top: 9px;
+  color: var(--secondary);
+  font-size: 0.75rem;
+}
+.field-error {
+  box-shadow: inset 3px 0 0 var(--text);
+}
+.field-error .field-input,
+.field-error .capture-card,
+.field-error .choice-grid,
+.field-error .photo-placeholder,
+.field-error .add-media {
+  box-shadow: 0 0 0 1px var(--text) inset;
+}
+.field-error-copy,
+.field-help-error {
+  color: var(--error);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.field-help-error {
+  margin-top: 8px;
+}
+.other-value-row {
+  gap: 6px;
+  margin-top: 9px;
+}
+.field-help-label {
+  color: var(--secondary);
+  font-size: 0.875rem;
+}
+.repeatable-group {
+  gap: 10px;
+}
+.repeatable-row {
+  padding: 12px;
+  border: 1px solid var(--separator-light);
+  border-radius: 10px;
+  background: var(--grouped);
+}
+.repeatable-child {
+  margin-top: 12px;
+}
+.repeatable-child > label {
+  margin-bottom: 6px;
+  color: var(--secondary);
+  font-size: 0.875rem;
+}
+.collector-receipt-note {
+  padding: 16px 2px 2px;
+  color: var(--secondary);
+  font-size: 0.8125rem;
+}
+.collector-action-bar {
+  padding: 10px max(16px, env(safe-area-inset-right))
+    calc(10px + env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  border-top-color: var(--separator-light);
+  background: var(--glass);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+}
+.collector-action-bar .button {
+  width: min(100%, 728px);
+}
+
+/* Sheets are the native progressive-disclosure surface for sync and recovery. */
+.sheet-backdrop {
+  background: rgba(0, 0, 0, 0.32);
+}
+.bottom-sheet {
+  border-radius: 22px 22px 0 0;
+  border: 1px solid var(--separator-light);
+  border-bottom: 0;
+}
+.sheet-handle {
+  width: 36px;
+  height: 5px;
+  margin-bottom: 18px;
+  background: var(--grouped-strong);
+}
+
+/* The contributor tabs are navigation, not an action bar. They appear only
+   outside the observation screen, matching Apple's tab-bar guidance. */
+.mobile-tabbar {
+  display: none;
+}
+
+@media (max-width: 680px) {
+  .page {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+  .page-contributor,
+  .page-project {
+    padding-bottom: calc(106px + env(safe-area-inset-bottom));
+  }
+  .mobile-tabbar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    min-height: calc(50px + env(safe-area-inset-bottom));
+    display: flex;
+    align-items: flex-start;
+    padding: 3px max(8px, env(safe-area-inset-right))
+      env(safe-area-inset-bottom) max(8px, env(safe-area-inset-left));
+    border-top: 1px solid var(--separator-light);
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+  }
+  .mobile-tabbar button {
+    min-width: 0;
+    min-height: 49px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 2px 4px;
+    border: 0;
+    background: transparent;
+    color: var(--secondary);
+    font-size: 0.6875rem;
+    font-weight: 500;
+  }
+  .mobile-tabbar button svg {
+    width: 20px;
+    height: 20px;
+  }
+  .mobile-tabbar button.mobile-tab-active {
+    color: var(--text);
+    font-weight: 650;
+  }
+  .mobile-tabbar button:active {
+    opacity: 0.68;
+  }
+  .project-row,
+  .list-row {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+  .project-row-meta span {
+    max-width: 92px;
+  }
+  .collector-topbar {
+    grid-template-columns: minmax(92px, 1fr) auto minmax(92px, 1fr);
+  }
+  .collector-save-state {
+    max-width: 95px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .collector-title span {
+    max-width: 150px;
+  }
+  .collector-action-bar {
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-left: max(16px, env(safe-area-inset-left));
+  }
+  .admin-project-card {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+}
+
+@media (min-width: 681px) {
+  .mobile-tabbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .progress-track span {
+    transition: none;
+  }
+}
+
+/* Small labels are sentence case by default. Group headers are the one place
+   where the compact all-caps treatment helps people scan a long observation. */
+.eyebrow {
+  text-transform: none;
+  letter-spacing: -0.01em;
+  font-size: 0.8125rem;
+}
+.field-section-heading .eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: 0.75rem;
+}
+.admin-tabs button,
+.wizard-step {
+  min-height: 44px;
+}
+.builder-required {
+  min-height: 44px;
+}
+
+/* The sign-in gate is an app entry screen, not a marketing card. */
+.auth-page {
+  justify-content: flex-start;
+  padding-top: max(72px, calc(72px + env(safe-area-inset-top)));
+}
+.auth-card {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.auth-steps {
+  overflow: hidden;
+  border: 1px solid var(--separator-light);
+  border-radius: 12px;
+  background: var(--paper);
+}
+.auth-label {
+  margin-top: 22px;
+}
+
+/* HIG audit corrections: legibility, adaptive contrast, and complete hit areas. */
+:root {
+  --secondary: rgba(0, 0, 0, 0.55);
+  --tertiary: rgba(0, 0, 0, 0.35);
+  --destructive: #d70015;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --text: #000;
+    --secondary: #303038;
+    --tertiary: #50505a;
+    --separator: rgba(0, 0, 0, 0.52);
+    --separator-light: rgba(0, 0, 0, 0.34);
+    --grouped: rgba(118, 118, 128, 0.2);
+    --focus-ring: rgba(0, 0, 0, 0.38);
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body {
+  font-size: 1.0625rem;
+}
+h1 {
+  font-size: clamp(2.125rem, 5vw, 2.75rem);
+}
+.wordmark {
+  min-height: var(--control-height);
+  display: inline-flex;
+  align-items: center;
+}
+.button,
+.field-input,
+.builder-inline-input,
+.builder-key-input,
+.builder-select {
+  font-size: 1.0625rem;
+}
+.field-label-row label {
+  font-size: 1.0625rem;
+}
+.choice-button {
+  font-size: 1.0625rem;
+}
+.auth-steps li > span:first-child {
+  font-size: 0.6875rem;
+}
+
+/* Every interactive affordance, including a small visual icon, retains a
+   44 pt activation region. */
+.capture-card .button {
+  min-height: var(--control-height);
+  font-size: 0.9375rem;
+}
+.download-offline-button {
+  min-height: var(--control-height);
+}
+.storage-alert button {
+  width: var(--control-height);
+  height: var(--control-height);
+}
+.media-remove {
+  top: 0;
+  right: 0;
+  width: var(--control-height);
+  height: var(--control-height);
+  background: transparent;
+}
+.media-remove::before {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.68);
+  content: "";
+}
+.media-remove svg {
+  position: relative;
+  z-index: 1;
+}
+.tri-state,
+.segmented-control {
+  min-height: 48px;
+}
+.tri-state button,
+.segmented-control button {
+  min-height: 44px;
+}
+
+.button-destructive {
+  background: var(--destructive);
+  color: #fff;
+}
+.button-destructive:hover {
+  background: color-mix(in srgb, var(--destructive) 88%, #000);
+}
+.button-destructive:active {
+  opacity: 0.68;
+}
+
+.button:focus-visible,
+.back-button:focus-visible,
+.project-row:focus-visible,
+.list-row:focus-visible,
+.admin-project-card:focus-visible,
+.choice-button:focus-visible,
+.mobile-tabbar button:focus-visible,
+.clear-button:focus-visible,
+.media-remove:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.button:active,
+.back-button:active,
+.project-row:active,
+.list-row:active,
+.admin-project-card:active,
+.account-menu button:active {
+  opacity: 0.68;
+}
+
+/* Apple's text-field guidance calls for a trailing clear affordance when a
+   field has content. It stays visually quiet but remains a full hit target. */
+.input-with-clear {
+  position: relative;
+}
+.input-with-clear > .field-input {
+  padding-right: 52px;
+}
+.clear-button {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: var(--control-height);
+  height: var(--control-height);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--secondary);
+  transform: translateY(-50%);
+}
+.clear-button:hover {
+  background: var(--grouped);
+  color: var(--text);
+}
+.input-with-clear-textarea .clear-button {
+  top: 6px;
+  transform: none;
+}
+
+/* A real alertdialog replaces browser confirm/prompt chrome. On iPhone it
+   behaves like a scoped action sheet; on larger screens it is centered. */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.32);
+}
+.confirmation-dialog {
+  width: min(100%, 420px);
+  padding: 24px;
+  border: 1px solid var(--separator-light);
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.2);
+}
+.dialog-copy h2 {
+  font-size: 1.375rem;
+}
+.dialog-copy p {
+  margin-top: 9px;
+  color: var(--secondary);
+  font-size: 1rem;
+  line-height: 1.45;
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+.dialog-actions .button {
+  min-width: 104px;
+}
+@media (max-width: 680px) {
+  .dialog-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .confirmation-dialog {
+    width: 100%;
+    padding: 22px 16px calc(16px + env(safe-area-inset-bottom));
+    border-radius: 22px 22px 0 0;
+    border-bottom: 0;
+  }
+  .dialog-actions {
+    flex-direction: column;
+  }
+  .dialog-actions .button {
+    width: 100%;
+  }
+}
+
+/* Safe-area and material behavior for installed iOS PWAs. */
+.topbar {
+  height: calc(52px + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+}
+.topbar-inner {
+  height: 52px;
+}
+.main-shell {
+  min-height: calc(100vh - 52px - env(safe-area-inset-top));
+}
+.collector-topbar {
+  height: calc(52px + env(safe-area-inset-top));
+  min-height: calc(52px + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+  grid-template-rows: 52px;
+}
+.collector-field {
+  scroll-margin-top: calc(70px + env(safe-area-inset-top));
+}
+.storage-alert {
+  top: calc(72px + env(safe-area-inset-top));
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .topbar,
+  .collector-topbar,
+  .collector-action-bar,
+  .mobile-tabbar,
+  .account-menu {
+    background: var(--paper);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .sheet-backdrop {
+    background: rgba(0, 0, 0, 0.48);
+  }
+}
+
+/* Activity indicator inside buttons (HIG: indicate non-instant actions). */
+.button-busy {
+  cursor: progress;
+}
+.button-spinner {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  opacity: 0.8;
+  animation: button-spin 0.7s linear infinite;
+}
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .button-spinner {
+    animation-duration: 1.4s;
+  }
+}
+
+.toast {
+  gap: 9px;
+  text-align: left;
+}
+.toast span {
+  flex: 1;
+}
+.toast button {
+  width: var(--control-height);
+  height: var(--control-height);
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  margin: -6px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  opacity: 0.8;
+}
+.toast button:hover {
+  background: rgba(128, 128, 128, 0.25);
+}
+.toast button:active {
+  opacity: 0.6;
+}
+
+/* -------------------------------------------------------------------------
+   Guided observation flow (one question per screen)
+
+   Pattern: Apple-style setup/checkout flow. The page never scrolls; each
+   question is one screen; the primary action is a capsule at thumb reach.
+   Geometry: capsules for answers and actions, large titles, page progress.
+   ------------------------------------------------------------------------- */
+.collector-flow {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+.collector-flow .collector-topbar {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0 max(16px, env(safe-area-inset-right)) 0
+    max(16px, env(safe-area-inset-left));
+}
+.collector-flow .collector-title strong {
+  font-size: 1rem;
+}
+.collector-flow .collector-title span {
+  max-width: 220px;
+  font-size: 0.75rem;
+}
+
+.flow-progress {
+  flex: 0 0 auto;
+  height: 3px;
+  margin: 0 16px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--grouped-strong);
+}
+.flow-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.22s ease;
+}
+
+.flow-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.flow-step {
+  width: min(100%, 560px);
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 20px 32px;
+  animation: step-in 0.18s ease;
+}
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flow-step {
+    animation: none;
+  }
+  .flow-progress span {
+    transition: none;
+  }
+}
+
+.step-heading-screen {
+  padding: 24px 0;
+}
+.step-kicker {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.step-title {
+  font-size: clamp(1.75rem, 6vw, 2.125rem);
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.step-label-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.step-required {
+  flex: 0 0 auto;
+  margin-top: 7px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--grouped);
+  color: var(--secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.step-optional {
+  background: transparent;
+  color: var(--tertiary);
+}
+.step-description {
+  margin-top: 10px;
+  color: var(--secondary);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+}
+.step-heading-screen .step-description {
+  margin-top: 14px;
+}
+.step-control {
+  margin-top: 26px;
+}
+.step-control .field-help-error {
+  margin-top: 12px;
+  font-size: 0.9375rem;
+}
+
+/* Apple capsule geometry for the flow controls */
+.flow-step .field-input {
+  min-height: 56px;
+  border-radius: 999px;
+  padding-right: 20px;
+  padding-left: 20px;
+  font-size: 1.0625rem;
+}
+.flow-step .field-textarea {
+  min-height: 132px;
+  border-radius: 20px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  line-height: 1.5;
+}
+.flow-step .input-with-clear > .field-input {
+  padding-right: 56px;
+}
+.flow-step .input-with-clear-textarea > .field-input {
+  padding-right: 20px;
+}
+.flow-step .clear-button {
+  right: 6px;
+}
+
+.flow-step .choice-grid {
+  gap: 10px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.flow-step .choice-button {
+  min-height: 56px;
+  padding: 0 22px;
+  border: 1px solid var(--separator);
+  border-radius: 999px;
+  background: var(--paper);
+  font-size: 1.0625rem;
+}
+.flow-step .choice-button:hover {
+  background: var(--grouped);
+  border-color: var(--separator);
+}
+.flow-step .choice-selected,
+.flow-step .choice-selected:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow: none;
+  font-weight: 650;
+}
+.flow-step .choice-selected .icon-check {
+  color: inherit;
+}
+
+.flow-step .tri-state,
+.flow-step .segmented-control {
+  min-height: 52px;
+  padding: 3px;
+  border-radius: 999px;
+  gap: 2px;
+}
+.flow-step .tri-state button,
+.flow-step .segmented-control button {
+  min-height: 46px;
+  border-radius: 999px;
+  font-size: 1rem;
+}
+
+.flow-step .number-stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.flow-step .number-stepper .field-input {
+  flex: 1 1 auto;
+  text-align: center;
+}
+.stepper-button {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--separator);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--text);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+.stepper-button:hover {
+  background: var(--grouped);
+}
+.stepper-button:active {
+  opacity: 0.68;
+}
+.stepper-button:disabled {
+  opacity: 0.35;
+}
+
+.flow-step .capture-card {
+  min-height: 84px;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 22px;
+}
+.flow-step .capture-card .button {
+  min-height: 48px;
+  border-radius: 999px;
+  padding: 0 18px;
+  font-size: 0.9375rem;
+}
+.flow-step .capture-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.flow-step .photo-strip {
+  gap: 10px;
+  justify-content: center;
+}
+.flow-step .media-tile,
+.flow-step .photo-placeholder {
+  width: 84px;
+  height: 84px;
+  border-radius: 18px;
+}
+.flow-step .add-media {
+  width: 100%;
+  height: 56px;
+  flex-direction: row;
+  gap: 9px;
+  border: 1px dashed var(--separator);
+  border-radius: 999px;
+  background: var(--paper);
+  font-size: 1rem;
+}
+.flow-step .add-media span {
+  font-size: 0.9375rem;
+}
+.flow-step .media-caption {
+  justify-content: center;
+  padding-top: 10px;
+  font-size: 0.8125rem;
+}
+
+.flow-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px max(16px, env(safe-area-inset-right))
+    calc(12px + env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  border-top: 1px solid var(--separator-light);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+}
+.flow-back {
+  min-width: 96px;
+  min-height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+}
+.flow-back:hover {
+  background: var(--grouped);
+}
+.flow-back:active {
+  opacity: 0.68;
+}
+.flow-continue {
+  min-height: 52px;
+  flex: 1 1 auto;
+  border-radius: 999px;
+  font-size: 1.0625rem;
+}
+@media (max-width: 680px) {
+  .flow-back {
+    min-width: 84px;
+  }
+  .flow-step {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+}
+
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+@media (max-width: 680px) {
+  .panel-actions {
+    flex-wrap: wrap;
+  }
+}

@@ -1,8 +1,16 @@
-import { createClient, type EmailOtpType, type Session, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  createClient,
+  type EmailOtpType,
+  type Session,
+  type SupabaseClient,
+} from "@supabase/supabase-js";
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const publishableKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
-const configuredAppUrl = (import.meta.env.VITE_APP_URL as string | undefined)?.trim();
+const publishableKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+  import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
+const configuredAppUrl = (
+  import.meta.env.VITE_APP_URL as string | undefined
+)?.trim();
 
 export const isSupabaseConfigured = Boolean(url && publishableKey);
 export const localBackendKey = url ? `supabase:${url}` : "preview";
@@ -20,7 +28,11 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
 function isLocalOrigin(origin: string): boolean {
   try {
     const hostname = new URL(origin).hostname;
-    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+    return (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]"
+    );
   } catch {
     return false;
   }
@@ -28,11 +40,13 @@ function isLocalOrigin(origin: string): boolean {
 
 /** Keep magic links on the deployed app, never on localhost from a production build. */
 export function authRedirectOrigin(): string {
-  const currentOrigin = typeof window === "undefined" ? "" : window.location.origin;
+  const currentOrigin =
+    typeof window === "undefined" ? "" : window.location.origin;
   if (!configuredAppUrl) return currentOrigin;
   try {
     const configuredOrigin = new URL(configuredAppUrl).origin;
-    if (isLocalOrigin(configuredOrigin) && !isLocalOrigin(currentOrigin)) return currentOrigin;
+    if (isLocalOrigin(configuredOrigin) && !isLocalOrigin(currentOrigin))
+      return currentOrigin;
     return configuredOrigin;
   } catch {
     return currentOrigin;
@@ -47,13 +61,23 @@ function authCallbackParams(): URLSearchParams[] {
   ];
 }
 
-function authTokenHashParams(): { tokenHash: string; type: EmailOtpType } | null {
+function authTokenHashParams(): {
+  tokenHash: string;
+  type: EmailOtpType;
+} | null {
   if (typeof window === "undefined") return null;
   const params = new URLSearchParams(window.location.search);
   const tokenHash = params.get("token_hash");
   if (!tokenHash) return null;
   const requestedType = params.get("type");
-  const supportedTypes: EmailOtpType[] = ["email", "invite", "magiclink", "recovery", "email_change", "signup"];
+  const supportedTypes: EmailOtpType[] = [
+    "email",
+    "invite",
+    "magiclink",
+    "recovery",
+    "email_change",
+    "signup",
+  ];
   const type = supportedTypes.includes(requestedType as EmailOtpType)
     ? (requestedType as EmailOtpType)
     : "email";
@@ -67,12 +91,25 @@ function authTokenHashParams(): { tokenHash: string; type: EmailOtpType } | null
  */
 export function authCallbackError(): string | null {
   const params = authCallbackParams();
-  const code = params.map((current) => current.get("error_code") ?? current.get("error")).find(Boolean) ?? "";
-  const description = params.map((current) => current.get("error_description") ?? current.get("error_reason")).find(Boolean) ?? "";
+  const code =
+    params
+      .map((current) => current.get("error_code") ?? current.get("error"))
+      .find(Boolean) ?? "";
+  const description =
+    params
+      .map(
+        (current) =>
+          current.get("error_description") ?? current.get("error_reason"),
+      )
+      .find(Boolean) ?? "";
   if (!code && !description) return null;
 
   const detail = `${code} ${description}`.toLowerCase();
-  if (detail.includes("expired") || detail.includes("otp_expired") || detail.includes("invalid")) {
+  if (
+    detail.includes("expired") ||
+    detail.includes("otp_expired") ||
+    detail.includes("invalid")
+  ) {
     return "That one-time link expired or was already used. Request a new link below.";
   }
   return "That sign-in link could not be used. Request a new one below.";
@@ -97,14 +134,22 @@ export function clearAuthCallbackUrl(): void {
   ]);
   for (const key of callbackKeys) url.searchParams.delete(key);
   url.hash = "";
-  window.history.replaceState(window.history.state, document.title, `${url.pathname}${url.search}`);
+  window.history.replaceState(
+    window.history.state,
+    document.title,
+    `${url.pathname}${url.search}`,
+  );
 }
 
 /** True when this page is running as an installed PWA (home-screen app). */
 export function isStandalonePwa(): boolean {
-  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
+  if (typeof window === "undefined" || typeof navigator === "undefined")
+    return false;
   const standaloneNavigator = navigator as Navigator & { standalone?: boolean };
-  return Boolean(window.matchMedia?.("(display-mode: standalone)").matches || standaloneNavigator.standalone);
+  return Boolean(
+    window.matchMedia?.("(display-mode: standalone)").matches ||
+      standaloneNavigator.standalone,
+  );
 }
 
 /**
@@ -112,9 +157,16 @@ export function isStandalonePwa(): boolean {
  * code is typed into the current app, so it works identically in Safari and
  * in an installed PWA — the two storage containers iOS keeps separate.
  */
-export async function verifySignInCode(email: string, code: string): Promise<void> {
+export async function verifySignInCode(
+  email: string,
+  code: string,
+): Promise<void> {
   if (!supabase) throw new Error("Supabase is not configured");
-  const { error } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: "email" });
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token: code.trim(),
+    type: "email",
+  });
   if (error) throw error;
 }
 
@@ -163,11 +215,17 @@ export async function sendMagicLink(email: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function authSession(): Promise<{ data: { session: Session | null }; error: Error | null }> {
+export async function authSession(): Promise<{
+  data: { session: Session | null };
+  error: Error | null;
+}> {
   if (!supabase) return { data: { session: null }, error: null };
   const tokenHash = authTokenHashParams();
   if (tokenHash) {
-    const result = await supabase.auth.verifyOtp({ token_hash: tokenHash.tokenHash, type: tokenHash.type });
+    const result = await supabase.auth.verifyOtp({
+      token_hash: tokenHash.tokenHash,
+      type: tokenHash.type,
+    });
     // Token-hash callbacks are single-use credentials. Remove them whether
     // verification succeeded or returned an explicit Auth error.
     clearAuthCallbackUrl();

@@ -6,9 +6,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
+    "build": "npm run typecheck && vite build",
     "preview": "vite preview",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" vite.config.ts index.html \"docs/*.md\" README.md package.json",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" vite.config.ts index.html \"docs/*.md\" README.md package.json",
     "test": "vitest run",
+    "check": "npm run format:check && npm test && npm run build",
     "provision": "node scripts/provision.mjs"
   },
   "dependencies": {
@@ -28,6 +32,7 @@
     "@vitejs/plugin-react": "6.0.5",
     "fake-indexeddb": "6.2.5",
     "jsdom": "^30.0.1",
+    "prettier": "3.6.2",
     "typescript": "7.0.2",
     "vite": "8.2.1",
     "vitest": "4.1.10"

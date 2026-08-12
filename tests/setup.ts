@@ -6,7 +6,9 @@ if (typeof globalThis.window === "undefined") {
   (globalThis as Record<string, unknown>).window = globalThis;
 }
 if (typeof globalThis.navigator === "undefined") {
-  (globalThis as Record<string, unknown>).navigator = { onLine: true } as Navigator;
+  (globalThis as Record<string, unknown>).navigator = {
+    onLine: true,
+  } as Navigator;
 }
 
 if (typeof Element !== "undefined" && !Element.prototype.scrollIntoView) {

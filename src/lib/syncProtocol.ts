@@ -2,7 +2,11 @@ import type { SubmissionState } from "../types";
 
 export type { SubmissionState } from "../types";
 
-export function buildMediaObjectPath(projectId: string, submissionId: string, mediaId: string): string {
+export function buildMediaObjectPath(
+  projectId: string,
+  submissionId: string,
+  mediaId: string,
+): string {
   return `projects/${projectId}/submissions/${submissionId}/${mediaId}`;
 }
 

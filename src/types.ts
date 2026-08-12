@@ -24,6 +24,11 @@ export type SubmissionState =
   | "RETRYABLE_ERROR"
   | "ACTION_REQUIRED";
 
+export interface SyncProgressEntry {
+  phase: string;
+  media: Record<string, number>;
+}
+
 export function isSubmissionPending(status: SubmissionState): boolean {
   return status !== "SYNCED" && status !== "DRAFT";
 }

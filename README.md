@@ -15,7 +15,7 @@ Administrator: Create → Define → Assign → Monitor → Export
 
 Most survey software is either a generic form builder or a fragile online tool. Fieldwork — rural surveys, ecological monitoring, territorial inspection — needs a different contract:
 
-- **Saved means saved.** A submission and its media commit to on-device storage *before* the app says anything. A "Saved on this device" receipt never depends on the network.
+- **Saved means saved.** A submission and its media commit to on-device storage _before_ the app says anything. A "Saved on this device" receipt never depends on the network.
 - **Synced means synced.** Only a durable server finalization receipt moves a record to synced. Metadata, media, finalization: three phases, each resumable, none skippable.
 - **Kill the app, drop the connection, wait a week.** The queue, drafts, media, and receipts all survive. Nothing is discarded until the server acknowledges it.
 - **Evidence stays honest.** Published schemas are immutable; finalized observations are immutable; conflicts are explicit, never silently overwritten; every record carries full provenance (who, what schema, which device, when, where, which app version).
@@ -23,7 +23,7 @@ Most survey software is either a generic form builder or a fragile online tool. 
 
 ## What it feels like
 
-**Contributors** sign in with a magic link, open their assigned project, and collect. Photos and location work fully offline. The sync sheet says, in plain words: *saved on this device*, *waiting*, *syncing*, *synced*. Finish Fieldwork confirms zero pending operations before the administrator sees them as ready.
+**Contributors** sign in with a magic link, open their assigned project, and collect. Photos and location work fully offline. The sync sheet says, in plain words: _saved on this device_, _waiting_, _syncing_, _synced_. Finish Fieldwork confirms zero pending operations before the administrator sees them as ready.
 
 **Administrators** create a workspace, define the form from a deliberately small set of strongly typed fields (text, number, single/multiple choice, yes/no/unknown, date, datetime, location, photo, audio, repeatable groups), publish immutable schema versions, invite contributors by email, watch device-reported readiness, ping stragglers, and export reproducible checkpoints — or a final dataset once every contributor is confirmed.
 
@@ -44,8 +44,7 @@ npm run dev
 Without Supabase credentials the app opens a clearly labeled local interface preview (no server receipts). The real contract needs a Supabase project:
 
 ```bash
-npm run build
-npm test
+npm run check
 ```
 
 ## Deploy your own instance
@@ -70,6 +69,10 @@ Read `docs/architecture.md` for the reliability boundaries and backend contract,
 
 ```text
 src/                    React PWA — contributor + administrator surfaces
+src/app/                application orchestration, local submission, sync, recovery
+src/components/ui/      shared controls and feedback primitives
+src/data/               demo fixtures and sample schemas
+src/styles/             ordered CSS layers: foundation, native, geometry
 src/lib/                local ledger, sync adapter, admin adapter, protocol
 supabase/migrations/    canonical Postgres/RLS/storage schema (immutable history)
 supabase/functions/     Edge Functions: ingestion, finalization, invites, export
@@ -93,4 +96,4 @@ The core collection path — the part that must earn a researcher's trust — re
 
 ## Contributing
 
-Read `AGENTS.md` for the product principles and the invariants every change must preserve (local receipts before UI promises, server receipts before `SYNCED`, immutable schemas and evidence, service-role confinement, no AI in the collection path). Run `npm test`, `npm run build`, and `git diff --check` before opening a change.
+Read `AGENTS.md` for the product principles and the invariants every change must preserve (local receipts before UI promises, server receipts before `SYNCED`, immutable schemas and evidence, service-role confinement, no AI in the collection path). Run `npm run check` and `git diff --check` before opening a change.
