@@ -102,8 +102,21 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 | Project-admin role invites | ✅ | `send-project-invite` accepts role; `loadUserAdminAccess` includes project admins |
 | Per-account local databases | ✅ | IndexedDB scoped by user id; account switch reloads; isolation test |
 | Dual PWA identity | ✅ | `/` white contributor PWA · `/?role=admin` black Admin PWA; icons/manifests/apple-touch |
-| Magic links return to deployed app | ✅ | `VITE_APP_URL` set locally + documented; Supabase accepts deployed-origin redirects |
+| Magic links return to deployed app | ✅ | `VITE_APP_URL` set locally + documented; Supabase project Auth config patched 2026-08-12 (`site_url` + redirect allow-list = `https://collect-tawny.vercel.app`); verified by reading a real magic-link email |
 | App.tsx role entry + scope wiring | ✅ | 78f8f06; deployed with the UI pass |
+
+## Auto-provenance pass (2026-08-12)
+
+| Item | Status | Notes |
+|---|---|---|
+| Email-code sign-in (PWA bridge) | ✅ | verifySignInCode + AuthScreen code UI (2a5de00); needs {{ .Token }} in the magic-link template |
+| Localhost link refusal | ✅ | deployed; broken links can't be created from local instances |
+| Automatic location | ✅ | permission probe once per container; capture on collector open + silent refresh at submit |
+| Environment provenance | ✅ | device model (incl. iOS family), OS, browser, screen, orientation, connection, battery, timezone, language |
+| Device columns + environment JSONB | ✅ | migration 20260811180000 applied; functions v6/v3/v4 deployed |
+| Legacy data migration | ✅ | collect-local-v1 adopted into the first account's scoped DB after upgrade |
+| Media upload assurance | ✅ | missing blob -> ACTION_REQUIRED; TUS resume; size verification at confirm |
+| Minimal UI contract | ✅ | handed to UI agent: invisible provenance, problem-only prompts, location-off notice |
 
 ## Gap work queue
 

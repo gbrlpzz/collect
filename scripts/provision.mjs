@@ -91,20 +91,35 @@ function runSupabase(cli, cliArgs, env) {
 }
 
 async function updateAuthConfig({ projectRef, accessToken, appUrl, redirectUrls }) {
-  const response = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/config/auth`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      site_url: appUrl,
-      uri_allow_list: redirectUrls.join(","),
-      mailer_subjects_magic_link: "Your collect sign-in link",
-      mailer_templates_magic_link_content:
-        '<h2>Sign in to collect</h2><p>Use the link below to open your fieldwork workspace. This link expires shortly and can only be used once.</p><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email">Open collect</a></p><p>If you did not request this, you can ignore this email.</p>',
-    }),
-  });
+  const baseBody = {
+    site_url: appUrl,
+    uri_allow_list: redirectUrls.join(","),
+    // Custom email templates require a paid plan (or a custom SMTP provider);
+    // free-tier projects reject them with HTTP 400. Keep them optional so
+    // provisioning still configures the URLs that make magic links work.
+    mailer_subjects_magic_link: "Your collect sign-in link",
+    mailer_templates_magic_link_content:
+      '<h2>Sign in to collect</h2><p>Use the link below to open your fieldwork workspace. This link expires shortly and can only be used once.</p><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email">Open collect</a></p><p>If you did not request this, you can ignore this email.</p>',
+  };
+
+  async function patch(body) {
+    return fetch(`https://api.supabase.com/v1/projects/${projectRef}/config/auth`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+  }
+
+  let response = await patch(baseBody);
+  if (response.status === 400 && /template|smtp|provider/i.test(await response.text())) {
+    // Free tier: retry without the custom mailer template.
+    const { mailer_subjects_magic_link, mailer_templates_magic_link_content, ...urlsOnly } = baseBody;
+    console.warn("Free tier: custom magic-link email template not applied (requires a paid plan or custom SMTP). URLs configured only.");
+    response = await patch(urlsOnly);
+  }
 
   if (!response.ok) {
     throw new Error(`Supabase Auth configuration failed with HTTP ${response.status}.`);

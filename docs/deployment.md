@@ -82,8 +82,14 @@ session, and offers **Send a new link** from the same screen. If an email
 security scanner consumes a link first, request another link rather than
 reusing the old one. Set `VITE_APP_URL` to the canonical deployed origin so
 links generated from a preview or local development page still return to the
-real app. Also set the Supabase **Site URL** to that same origin; the email
-template's redirect must not be a localhost URL.
+real app. Also set the Supabase **Site URL** to that same origin and add it to the
+**redirect allow-list**; the email template's redirect must not be a localhost
+URL. `npm run provision` applies both automatically (site_url + uri_allow_list).
+Note: on the **free tier** the platform rejects custom mailer templates with
+HTTP 400 — provisioning retries with the URL settings only, and the default
+template is used, which is sufficient once the allow-list contains the app
+origin. Applied to the production project on 2026-08-12 (site_url and
+allow-list = `https://collect-tawny.vercel.app`).
 
 ### 3. Establish the first administrator
 
