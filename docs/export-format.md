@@ -17,7 +17,8 @@ project-name_checkpoint-YYYY-MM-DD.zip
 │   ├── submissions.jsonl       # canonical: one complete submission per line
 │   ├── submissions.csv         # convenience flat view (payload as JSON column)
 │   ├── media.csv               # media metadata with export paths
-│   ├── contributors.csv        # roster, invites, readiness snapshot
+│   ├── contributors.csv        # roster, invites, consent, attention, readiness
+│   ├── attention.csv           # per-submission attention-check results
 │   └── submissions.geojson     # point features from top-level `location` fields
 └── media/
     └── {submission_id}/
@@ -102,6 +103,12 @@ Notes:
   numbers store `{ "value": 3, "unit": "people" }`.
 - `status` is always `COMPLETE` in a checkpoint; `corrects_submission_id`
   links corrected copies while the original stays in the audit history.
+- `attention_failed` is the binary attention-verification signal: `true`
+  means the random check embedded in that observation was answered wrong
+  (useful for filtering low-attention records). The check question itself is
+  never stored; see `data/attention.csv` for the details.
+- `environment` carries the automatically recorded provenance (device model,
+  OS, browser, screen, orientation, connection, battery, timezone).
 - Media is never recompressed or renamed beyond a sanitized extension derived
   from the original filename (or the MIME type when the filename has none).
 
@@ -116,6 +123,21 @@ metadata plus the full payload, so the GeoJSON is usable on its own.
 Convenience flat views. Nested/repeated structures are **not** flattened away:
 `payload` is a JSON column and `media` is a JSON column, so the CSV round-trips
 without losing structure. JSONL remains canonical.
+
+## data/attention.csv
+
+One row per submission that contained an attention check:
+
+```text
+submission_id, contributor_id, project_id, check_key, selected_value, correct, guess_probability, created_at
+```
+
+`correct` is the server-computed truth against its own bank; the question
+text is never exported. The contributor-level guess-adjusted score and totals
+appear in `contributors.csv` (`attention_score`, `attention_checks_total`,
+`attention_correct_total`, `attention_last_at`), alongside the consent record
+(`consent_version`, `consent_granted_at`, `consent_revoked_at`) and the
+administrator-set `quality_score`.
 
 ## Integrity
 
