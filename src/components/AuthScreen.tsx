@@ -2,9 +2,12 @@ import { useId, useRef, useState } from "react";
 import {
   authCallbackError,
   isStandalonePwa,
+  linkDeviceSession,
   pendingAuthEmail,
   rememberAuthEmail,
   sendMagicLink,
+  setPassword,
+  signInWithPassword,
   verifySignInCode,
 } from "../lib/supabaseClient";
 import { Icon } from "./Icon";
@@ -14,6 +17,9 @@ interface AuthScreenProps {
   configured: boolean;
   role?: "admin" | "contributor";
   onPreview?: () => void;
+  /** After an invite/link sign-in, the account has no password yet. */
+  requirePasswordSetup?: boolean;
+  onPasswordSet?: () => void;
 }
 
 function isAppleMobileBrowser(): boolean {
@@ -42,17 +48,24 @@ function isLocalDevelopmentOrigin(): boolean {
   );
 }
 
+type EntryMode = "password" | "link" | "device";
+
 export function AuthScreen({
   configured,
   role = "contributor",
   onPreview,
+  requirePasswordSetup = false,
+  onPasswordSet,
 }: AuthScreenProps) {
   const isAdmin = role === "admin";
   const emailInputId = useId();
+  const passwordInputId = useId();
   const showInstallHint = isAppleMobileBrowser() && !isStandaloneApp();
   const showLocalRedirectHint = configured && isLocalDevelopmentOrigin();
   const showStandaloneNote = configured && isStandalonePwa();
+  const [entryMode, setEntryMode] = useState<EntryMode>("password");
   const [email, setEmail] = useState(pendingAuthEmail);
+  const [password, setPasswordValue] = useState("");
   const [sent, setSent] = useState(false);
   const [callbackIssue, setCallbackIssue] = useState<string | null>(() =>
     authCallbackError(),
@@ -63,11 +76,20 @@ export function AuthScreen({
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState<string | null>(null);
   const [codeBusy, setCodeBusy] = useState(false);
+  // One-time password setup after invite/link sign-in.
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordSetupError, setPasswordSetupError] = useState<string | null>(
+    null,
+  );
+  const [passwordSetupBusy, setPasswordSetupBusy] = useState(false);
+  // Device-link entry.
+  const deviceCodeInputRef = useRef<HTMLInputElement>(null);
   const codeInputRef = useRef<HTMLInputElement>(null);
 
   const submit = async () => {
     const address = email.trim();
-    if (!address || busy) return;
+    if (!address) return;
     setBusy(true);
     setError(null);
     setCallbackIssue(null);
@@ -104,14 +126,49 @@ export function AuthScreen({
     }
   };
 
-  const verifyCode = async (candidate = code) => {
+  const submitPassword = async () => {
     const address = email.trim();
-    const token = candidate.trim();
-    if (!address || token.length !== 6 || codeBusy) return;
+    if (!address || !password) return;
+    setBusy(true);
+    setError(null);
+    setCallbackIssue(null);
+    rememberAuthEmail(address);
+    try {
+      await signInWithPassword(address, password);
+      // Session updates flow through the auth listener; this screen unmounts.
+    } catch (caught) {
+      const message =
+        caught instanceof Error ? caught.message.toLowerCase() : "";
+      if (
+        message.includes("invalid") ||
+        message.includes("credentials") ||
+        message.includes("password")
+      ) {
+        setError("The email address or password is incorrect. Try again.");
+      } else if (
+        message.includes("network") ||
+        message.includes("fetch") ||
+        message.includes("failed to")
+      ) {
+        setError(
+          "We couldn’t reach the sign-in service. Check your connection and try again.",
+        );
+      } else {
+        setError("Sign-in could not be completed. Check your details and try again.");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const verifyCode = async (token?: string) => {
+    const address = email.trim();
+    const nextToken = (token ?? code).trim();
+    if (!address || nextToken.length !== 6) return;
     setCodeBusy(true);
     setCodeError(null);
     try {
-      await verifySignInCode(address, token);
+      await verifySignInCode(address, nextToken);
       // Session updates flow through the auth listener; this screen unmounts.
     } catch (caught) {
       const message =
@@ -121,42 +178,179 @@ export function AuthScreen({
         message.includes("invalid") ||
         message.includes("token")
       ) {
-        setCodeError(
-          "That code is invalid or expired. Check the newest email for the current code.",
-        );
+        setCodeError("That code is invalid or expired. Check the newest email for the current code.");
       } else {
-        setCodeError(
-          "That code could not be verified. Check the email and try again.",
-        );
+        setCodeError("That code could not be verified. Check the email and try again.");
       }
       setCodeError((current) =>
         `${current ?? ""}${current ? " " : ""}If the email has no 6-digit code, its template needs the sign-in code added — the link in that email still works.`.trim(),
       );
-      window.setTimeout(() => codeInputRef.current?.focus(), 0);
     } finally {
       setCodeBusy(false);
     }
   };
 
-  return (
-    <main className={`auth-page auth-page-${role}`} data-role={role}>
-      <div className="auth-brand">
+  const submitDeviceLink = async (token?: string) => {
+    const nextToken = (token ?? code).trim();
+    if (nextToken.length !== 6) return;
+    setCodeBusy(true);
+    setCodeError(null);
+    try {
+      await linkDeviceSession(nextToken);
+      // Session updates flow through the auth listener; this screen unmounts.
+    } catch (caught) {
+      const message =
+        caught instanceof Error ? caught.message.toLowerCase() : "";
+      if (
+        message.includes("expired") ||
+        message.includes("invalid") ||
+        message.includes("code") ||
+        message.includes("not found")
+      ) {
+        setCodeError("That code is invalid or expired. Open collect on the signed-in device and request a fresh code.");
+      } else if (
+        message.includes("network") ||
+        message.includes("fetch") ||
+        message.includes("failed to")
+      ) {
+        setCodeError("We couldn’t reach the sign-in service. Check your connection and try again.");
+      } else {
+        setCodeError("That code could not be used. Request a fresh code on the other device and try again.");
+      }
+    } finally {
+      setCodeBusy(false);
+    }
+  };
+
+  const submitPasswordSetup = async () => {
+    if (newPassword.length < 6) {
+      setPasswordSetupError("Choose a password with at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordSetupError("The two passwords do not match.");
+      return;
+    }
+    setPasswordSetupBusy(true);
+    setPasswordSetupError(null);
+    try {
+      await setPassword(newPassword);
+      onPasswordSet?.();
+    } catch (caught) {
+      const message =
+        caught instanceof Error ? caught.message.toLowerCase() : "";
+      if (message.includes("weak") || message.includes("short") || message.includes("6")) {
+        setPasswordSetupError("Choose a stronger password (at least 6 characters).");
+      } else if (
+        message.includes("network") ||
+        message.includes("fetch") ||
+        message.includes("failed to")
+      ) {
+        setPasswordSetupError("We couldn’t reach the sign-in service. Check your connection and try again.");
+      } else {
+        setPasswordSetupError("The password could not be saved. Try again.");
+      }
+    } finally {
+      setPasswordSetupBusy(false);
+    }
+  };
+
+  // One-time password setup screen (shown after invite/link sign-in).
+  if (requirePasswordSetup) {
+    return (
+      <main className={`auth-page auth-page-${role}`}>
         <div className="auth-mark">
-          collect<span className="auth-mark-dot">.</span>
-          {isAdmin && <span className="auth-mark-suffix">Admin</span>}
+          collect<span>.</span>
         </div>
+        <section className="auth-card" aria-labelledby="auth-password-title">
+          <Eyebrow>One more step</Eyebrow>
+          <h1 id="auth-password-title">Set a password.</h1>
+          <p>
+            Sign in on any device with your email and this password. Links and
+            codes stay available as fallbacks.
+          </p>
+          <form
+            className="auth-set-password"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submitPasswordSetup();
+            }}
+          >
+            <div className="auth-label">
+              <label htmlFor="new-password">New password</label>
+              <input
+                id="new-password"
+                className="field-input"
+                type="password"
+                required
+                minLength={6}
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(event) => {
+                  setNewPassword(event.target.value);
+                  setPasswordSetupError(null);
+                }}
+                placeholder="At least 6 characters"
+                autoFocus
+                disabled={passwordSetupBusy}
+              />
+            </div>
+            <div className="auth-label">
+              <label htmlFor="confirm-password">Confirm password</label>
+              <input
+                id="confirm-password"
+                className="field-input"
+                type="password"
+                required
+                minLength={6}
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(event) => {
+                  setConfirmPassword(event.target.value);
+                  setPasswordSetupError(null);
+                }}
+                placeholder="Repeat the password"
+                disabled={passwordSetupBusy}
+              />
+            </div>
+            {passwordSetupError && (
+              <p className="auth-error" role="alert">
+                {passwordSetupError}
+              </p>
+            )}
+            <Button
+              type="submit"
+              variant="primary"
+              fullWidth
+              disabled={
+                passwordSetupBusy ||
+                newPassword.length < 6 ||
+                confirmPassword.length < 6
+              }
+              busy={passwordSetupBusy}
+            >
+              {passwordSetupBusy ? "Saving…" : "Save password"}
+            </Button>
+          </form>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className={`auth-page auth-page-${role}`}>
+      <div className="auth-mark">
+        collect<span>.</span>
       </div>
       <section className="auth-card" aria-labelledby="auth-title">
         {!sent ? (
           <>
             <Eyebrow>
-              {configured
-                ? callbackIssue
+              {isAdmin
+                ? "Admin workspace"
+                : callbackIssue
                   ? "Sign in again"
-                  : isAdmin
-                    ? "Admin workspace"
-                    : "Sign in"
-                : "Authentication required"}
+                  : "Sign in"}
             </Eyebrow>
             <h1 id="auth-title">
               {callbackIssue
@@ -170,8 +364,8 @@ export function AuthScreen({
                 ? callbackIssue
                   ? "Enter the invited email address and we’ll send a fresh one-time link."
                   : isAdmin
-                    ? "Use the administrator email you were invited with. We’ll send a one-time link."
-                    : "Use the email address your administrator invited. We’ll send a one-time link."
+                    ? "Use the administrator email you were invited with."
+                    : "Use the email address your administrator invited."
                 : "This deployment is not connected to an authentication service yet."}
             </p>
             {showStandaloneNote && (
@@ -184,79 +378,223 @@ export function AuthScreen({
                 </span>
               </p>
             )}
-            {configured && (
-              <ol className="auth-steps" aria-label="Sign-in steps">
-                <li>
-                  <span>1</span>
-                  <span>Enter your invited email.</span>
-                </li>
-                <li>
-                  <span>2</span>
-                  <span>Tap Continue.</span>
-                </li>
-                <li>
-                  <span>3</span>
-                  <span>Open the newest email on this device.</span>
-                </li>
-              </ol>
-            )}
             {configured ? (
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void submit();
-                }}
-              >
-                <div className="auth-label">
-                  <label htmlFor={emailInputId}>Email address</label>
-                  <div className="input-with-clear">
-                    <input
-                      id={emailInputId}
-                      className="field-input"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      placeholder="you@example.com"
-                      autoComplete="email"
-                      inputMode="email"
-                      autoCapitalize="none"
-                      spellCheck={false}
-                      autoFocus
-                    />
-                    {email && (
-                      <ClearButton
-                        label="Clear email address"
-                        onClick={() => setEmail("")}
-                      />
-                    )}
-                  </div>
-                </div>
-                {(callbackIssue || error) && (
-                  <p className="auth-error" role="alert">
-                    {callbackIssue ?? error}
-                  </p>
-                )}
-                {showLocalRedirectHint && (
-                  <p className="auth-config-note">
-                    <Icon name="info" size={16} />
-                    <span>
-                      Local preview: sign-in links return to the deployed app.
-                      Open the deployed address on your phone.
-                    </span>
-                  </p>
-                )}
-                <Button
-                  type="submit"
-                  variant="primary"
-                  fullWidth
-                  iconAfter="arrow-right"
-                  disabled={busy || !email.trim()}
-                  busy={busy}
+              entryMode === "password" ? (
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void submitPassword();
+                  }}
                 >
-                  {busy ? "Sending…" : "Continue"}
-                </Button>
-              </form>
+                  <div className="auth-label">
+                    <label htmlFor={emailInputId}>Email address</label>
+                    <div className="input-with-clear">
+                      <input
+                        id={emailInputId}
+                        className="field-input"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                        inputMode="email"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        autoFocus
+                      />
+                      {email && (
+                        <ClearButton
+                          label="Clear email address"
+                          onClick={() => setEmail("")}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  <div className="auth-label">
+                    <label htmlFor={passwordInputId}>Password</label>
+                    <input
+                      id={passwordInputId}
+                      className="field-input"
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(event) => {
+                        setPasswordValue(event.target.value);
+                        setError(null);
+                      }}
+                      placeholder="Your password"
+                      autoComplete="current-password"
+                    />
+                  </div>
+                  {(callbackIssue || error) && (
+                    <p className="auth-error" role="alert">
+                      {callbackIssue ?? error}
+                    </p>
+                  )}
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    fullWidth
+                    iconAfter="arrow-right"
+                    disabled={busy || !email.trim() || !password}
+                    busy={busy}
+                  >
+                    {busy ? "Signing in…" : "Sign in"}
+                  </Button>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => {
+                      setEntryMode("link");
+                      setError(null);
+                      setCallbackIssue(null);
+                    }}
+                  >
+                    Sign in with a link instead{" "}
+                    <Icon name="arrow-right" size={15} />
+                  </button>
+                </form>
+              ) : entryMode === "device" ? (
+                <div className="auth-code">
+                  <form
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void submitDeviceLink();
+                    }}
+                  >
+                    <label className="auth-label" htmlFor="auth-device-code">
+                      6-digit code from the signed-in device
+                      <input
+                        ref={deviceCodeInputRef}
+                        id="auth-device-code"
+                        className="field-input"
+                        type="text"
+                        required
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        pattern="[0-9]{6}"
+                        maxLength={6}
+                        value={code}
+                        onChange={(event) => {
+                          const nextCode = event.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, 6);
+                          setCode(nextCode);
+                          setCodeError(null);
+                          if (nextCode.length === 6 && !codeBusy)
+                            void submitDeviceLink(nextCode);
+                        }}
+                        placeholder="000000"
+                        autoFocus
+                        disabled={codeBusy}
+                      />
+                    </label>
+                    <p className="auth-config-note">
+                      <Icon name="info" size={16} />
+                      <span>
+                        On the signed-in device, open collect → Sign in on
+                        another device, and enter the code shown there.
+                      </span>
+                    </p>
+                    {codeError && (
+                      <p className="auth-error" role="alert">
+                        {codeError}
+                      </p>
+                    )}
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      fullWidth
+                      disabled={codeBusy || code.length !== 6}
+                      busy={codeBusy}
+                    >
+                      {codeBusy ? "Linking…" : "Link this device"}
+                    </Button>
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={() => {
+                        setEntryMode("password");
+                        setCode("");
+                        setCodeError(null);
+                      }}
+                    >
+                      Back to sign-in{" "}
+                      <Icon name="arrow-right" size={15} />
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void submit();
+                  }}
+                >
+                  <div className="auth-label">
+                    <label htmlFor={emailInputId}>Email address</label>
+                    <div className="input-with-clear">
+                      <input
+                        id={emailInputId}
+                        className="field-input"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                        inputMode="email"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        autoFocus
+                      />
+                      {email && (
+                        <ClearButton
+                          label="Clear email address"
+                          onClick={() => setEmail("")}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  {(callbackIssue || error) && (
+                    <p className="auth-error" role="alert">
+                      {callbackIssue ?? error}
+                    </p>
+                  )}
+                  {showLocalRedirectHint && (
+                    <p className="auth-config-note">
+                      <Icon name="info" size={16} />
+                      <span>
+                        Local preview: sign-in links return to the deployed
+                        app. Open the deployed address on your phone.
+                      </span>
+                    </p>
+                  )}
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    fullWidth
+                    iconAfter="arrow-right"
+                    disabled={busy || !email.trim()}
+                    busy={busy}
+                  >
+                    {busy ? "Sending…" : "Continue"}
+                  </Button>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => {
+                      setEntryMode("password");
+                      setError(null);
+                      setCallbackIssue(null);
+                    }}
+                  >
+                    Sign in with your password instead{" "}
+                    <Icon name="arrow-right" size={15} />
+                  </button>
+                </form>
+              )
             ) : (
               <>
                 <div className="auth-label">
@@ -279,6 +617,24 @@ export function AuthScreen({
                   </span>
                 </div>
               </>
+            )}
+            {configured && entryMode !== "device" && (
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => {
+                  setEntryMode("device");
+                  setCode("");
+                  setCodeError(null);
+                  window.setTimeout(
+                    () => deviceCodeInputRef.current?.focus(),
+                    0,
+                  );
+                }}
+              >
+                Signed in on the web? Enter the code shown there{" "}
+                <Icon name="arrow-right" size={15} />
+              </button>
             )}
           </>
         ) : (
@@ -362,7 +718,8 @@ export function AuthScreen({
                     setCodeError(null);
                   }}
                 >
-                  Back to the sign-in link <Icon name="arrow-right" size={15} />
+                  Back to the sign-in link{" "}
+                  <Icon name="arrow-right" size={15} />
                 </button>
               </div>
             ) : (
@@ -391,6 +748,8 @@ export function AuthScreen({
                     onClick={() => {
                       setCodeMode(true);
                       setCodeError(null);
+                      setCode("");
+                      window.setTimeout(() => codeInputRef.current?.focus(), 0);
                     }}
                   >
                     Enter the code from the email instead{" "}
@@ -412,9 +771,7 @@ export function AuthScreen({
               <Icon name="plus" size={16} /> Add collect to Home Screen
             </summary>
             <div className="auth-install-content">
-              <p>
-                For reliable offline fieldwork, install collect from Safari.
-              </p>
+              <p>For reliable offline fieldwork, install collect from Safari.</p>
               <ol>
                 <li>
                   Tap <strong>Share</strong>.

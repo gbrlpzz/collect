@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AuthScreen } from "../src/components/AuthScreen";
 import { Collector } from "../src/components/Collector";
+import { ContributorHome } from "../src/components/ContributorHome";
+import { DeviceLinkSheet } from "../src/components/DeviceLinkSheet";
 import { NewProjectWizard } from "../src/components/NewProjectWizard";
 import { ProjectOverview } from "../src/components/ProjectOverview";
 import { TopBar } from "../src/components/TopBar";
@@ -12,6 +14,12 @@ import type { FieldDefinition, Project } from "../src/types";
 const authMocks = vi.hoisted(() => ({
   sendMagicLink: vi.fn().mockResolvedValue(undefined),
   verifySignInCode: vi.fn().mockResolvedValue(undefined),
+  signInWithPassword: vi.fn().mockResolvedValue(undefined),
+  setPassword: vi.fn().mockResolvedValue(undefined),
+  linkDeviceSession: vi.fn().mockResolvedValue(undefined),
+  requestDeviceLinkCode: vi
+    .fn()
+    .mockResolvedValue({ code: "123456", expiresInSeconds: 120 }),
 }));
 
 vi.mock("../src/lib/supabaseClient", () => ({
@@ -21,6 +29,10 @@ vi.mock("../src/lib/supabaseClient", () => ({
   rememberAuthEmail: () => undefined,
   sendMagicLink: authMocks.sendMagicLink,
   verifySignInCode: authMocks.verifySignInCode,
+  signInWithPassword: authMocks.signInWithPassword,
+  setPassword: authMocks.setPassword,
+  linkDeviceSession: authMocks.linkDeviceSession,
+  requestDeviceLinkCode: authMocks.requestDeviceLinkCode,
 }));
 
 const project: Project = {
@@ -45,8 +57,28 @@ describe("low-friction primary actions", () => {
     expect(document.activeElement).toBe(screen.getByLabelText("Email address"));
   });
 
-  it("submits login from the focused email field and auto-verifies a complete code", async () => {
+  it("signs in with email and password from the focused email field", async () => {
     render(<AuthScreen configured role="contributor" />);
+    const emailInput = screen.getByLabelText("Email address");
+    fireEvent.change(emailInput, { target: { value: "field@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "secret123" },
+    });
+    fireEvent.submit(emailInput.closest("form")!);
+
+    await waitFor(() =>
+      expect(authMocks.signInWithPassword).toHaveBeenCalledWith(
+        "field@example.com",
+        "secret123",
+      ),
+    );
+  });
+
+  it("falls back to a magic link and auto-verifies the email code", async () => {
+    render(<AuthScreen configured role="contributor" />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /sign in with a link instead/i }),
+    );
     const emailInput = screen.getByLabelText("Email address");
     fireEvent.change(emailInput, { target: { value: "field@example.com" } });
     fireEvent.submit(emailInput.closest("form")!);
@@ -54,8 +86,10 @@ describe("low-friction primary actions", () => {
     await waitFor(() =>
       expect(authMocks.sendMagicLink).toHaveBeenCalledWith("field@example.com"),
     );
-    fireEvent.click(screen.getByRole("button", { name: /enter the code/i }));
-    fireEvent.change(screen.getByLabelText(/6-digit code/i), {
+    fireEvent.click(
+      screen.getByRole("button", { name: /enter the code from the email/i }),
+    );
+    fireEvent.change(screen.getByLabelText(/6-digit code from the email/i), {
       target: { value: "123456" },
     });
 
@@ -65,6 +99,57 @@ describe("low-friction primary actions", () => {
         "123456",
       ),
     );
+  });
+
+  it("sets a password once after an invite sign-in", async () => {
+    const onPasswordSet = vi.fn();
+    render(
+      <AuthScreen
+        configured
+        role="contributor"
+        requirePasswordSetup
+        onPasswordSet={onPasswordSet}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("New password"), {
+      target: { value: "secret123" },
+    });
+    fireEvent.change(screen.getByLabelText("Confirm password"), {
+      target: { value: "secret123" },
+    });
+    fireEvent.submit(screen.getByLabelText("New password").closest("form")!);
+
+    await waitFor(() =>
+      expect(authMocks.setPassword).toHaveBeenCalledWith("secret123"),
+    );
+    await waitFor(() => expect(onPasswordSet).toHaveBeenCalledTimes(1));
+  });
+
+  it("links this device with the code shown on the signed-in device", async () => {
+    render(<AuthScreen configured role="contributor" />);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /signed in on the web\? enter the code shown there/i,
+      }),
+    );
+    const codeInput = screen.getByLabelText(
+      /6-digit code from the signed-in device/i,
+    );
+    fireEvent.change(codeInput, { target: { value: "123456" } });
+
+    await waitFor(() =>
+      expect(authMocks.linkDeviceSession).toHaveBeenCalledWith("123456"),
+    );
+  });
+
+  it("shows the device-link code on the signed-in device", async () => {
+    render(<DeviceLinkSheet onClose={() => undefined} />);
+
+    await waitFor(() =>
+      expect(authMocks.requestDeviceLinkCode).toHaveBeenCalledTimes(1),
+    );
+    expect(screen.getByLabelText(/code 123456/i)).toBeTruthy();
+    expect(screen.getByText(/expires in/i)).toBeTruthy();
   });
 
   it("focuses a modal email field without a second tap", () => {
@@ -79,21 +164,39 @@ describe("low-friction primary actions", () => {
     expect(document.activeElement).toBe(screen.getByLabelText("Email address"));
   });
 
-  it("switches from contributor to admin in one top-bar tap", () => {
-    const onModeChange = vi.fn();
+  it("puts starting an observation before project routing", () => {
+    const onStartObservation = vi.fn();
     render(
-      <TopBar
-        mode="contributor"
-        view="home"
-        canAdmin
-        onModeChange={onModeChange}
-        onNavigate={() => undefined}
+      <ContributorHome
+        projects={[project]}
+        activeProject={project}
+        observations={[]}
+        hasDraft={false}
+        onStartObservation={onStartObservation}
+        onOpenProject={() => undefined}
+        onChooseProject={() => undefined}
+        onResumeObservation={() => undefined}
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /switch to admin/i }));
+    expect(
+      screen.getByRole("heading", { name: /new observation/i }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /^projects$/i })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /start observation/i }));
+    expect(onStartObservation).toHaveBeenCalledWith(project);
+  });
 
-    expect(onModeChange).toHaveBeenCalledWith("admin");
+  it("keeps the contributor and admin surfaces separate", () => {
+    render(
+      <TopBar mode="contributor" view="home" onNavigate={() => undefined} />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /switch to admin/i }),
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Account" }));
+    expect(screen.queryByRole("menuitem", { name: /admin/i })).toBeNull();
   });
 
   it("opens sync status and starts synchronization from the project row", () => {
@@ -112,7 +215,6 @@ describe("low-friction primary actions", () => {
         ]}
         onNavigate={() => undefined}
         onOpenSync={onOpenSync}
-        onFinishFieldwork={() => undefined}
       />,
     );
 

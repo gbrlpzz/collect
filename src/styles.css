@@ -8,3 +8,4 @@
 @import "./styles/foundation.css" layer(foundation);
 @import "./styles/native.css" layer(native);
 @import "./styles/geometry.css" layer(geometry);
+@import "./styles/device-link.css" layer(geometry);
