@@ -128,6 +128,15 @@ Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status l
 | AuthScreen password tab + device-link panels | 🟡     | UI agent in progress (contract delivered)                                                                    |
 | Email codes                                  | ⚠️     | implemented; emails cannot carry {{ .Token }} on free tier (Pro/SMTP needed)                                 |
 
+## Consent + profiles (2026-08-12)
+
+| Item                        | Status | Notes                                                   |
+| --------------------------- | ------ | ------------------------------------------------------- |
+| Versioned consent statement | ✅     | consent_versions seeded; ConsentScreen at first sign-in |
+| Contributor profiles        | ✅     | consent, quality_score, attention score; RLS self/admin |
+| Server enforcement          | ✅     | sync-submission rejects without granted consent         |
+| Exports carry consent       | ✅     | contributors.csv columns                                |
+
 ## Attention verification (2026-08-12)
 
 | Item                           | Status | Notes                                                                                                 |

@@ -181,7 +181,27 @@ Until then the magic-link (fragment-flow) sign-in works and is correctly
 redirected to the deployed origin; the email-code path is implemented in the
 app but the email cannot yet carry a code on the free tier.
 
-### 4b. Administrator allow-list
+### 4b. What the migrations create
+
+`supabase db push` applies every migration in order and creates the full
+backend in one pass:
+
+- **Tenant model**: organizations, organization_members, projects,
+  project_members, project_invites, project_schemas (immutable versions),
+  devices, device_project_status, checkpoints, audit_events.
+- **Evidence**: submissions (with payload hash, environment provenance,
+  device model/OS/browser, attention_failed flag, collected-after-close
+  provenance), submission_media, and immutable triggers on published
+  schemas and finalized submissions.
+- **People**: contributor_profiles (consent version/timestamps, quality
+  score, attention score and totals), consent_versions (seeded statement),
+  attention_checks (seeded bank) and attention_responses.
+- **Auth support**: private.session_link_codes (device-link sign-in bridge)
+  and private.allowed_admin_patterns (administrator allow-list).
+- **Storage**: private `collect-media` and `collect-exports` buckets with
+  ownership-checked policies.
+
+### 4c. Administrator allow-list
 
 By default any address can be invited as a workspace administrator. To
 restrict who may _become_ an admin (contributor invitations stay open to any
