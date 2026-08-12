@@ -15,6 +15,7 @@ export interface ContributorProfile {
   attentionChecksTotal: number | null;
   attentionCorrectTotal: number | null;
   attentionLastAt: string | null;
+  contributionCount: number;
 }
 
 function requireClient() {
@@ -40,13 +41,20 @@ export async function getMyProfile(): Promise<ContributorProfile | null> {
   const client = requireClient();
   const { data: userData, error: userError } = await client.auth.getUser();
   if (userError || !userData.user) return null;
-  const { data } = await client
-    .from("contributor_profiles")
-    .select(
-      "user_id,consent_version,consent_granted_at,consent_revoked_at,quality_score,attention_score,attention_checks_total,attention_correct_total,attention_last_at",
-    )
-    .eq("user_id", userData.user.id)
-    .maybeSingle();
+  const [{ data }, { count: contributionCount }] = await Promise.all([
+    client
+      .from("contributor_profiles")
+      .select(
+        "user_id,consent_version,consent_granted_at,consent_revoked_at,quality_score,attention_score,attention_checks_total,attention_correct_total,attention_last_at",
+      )
+      .eq("user_id", userData.user.id)
+      .maybeSingle(),
+    client
+      .from("submissions")
+      .select("id", { count: "exact", head: true })
+      .eq("contributor_id", userData.user.id)
+      .eq("status", "COMPLETE"),
+  ]);
   if (!data) return null;
   return {
     userId: data.user_id,
@@ -58,6 +66,7 @@ export async function getMyProfile(): Promise<ContributorProfile | null> {
     attentionChecksTotal: data.attention_checks_total,
     attentionCorrectTotal: data.attention_correct_total,
     attentionLastAt: data.attention_last_at,
+    contributionCount: contributionCount ?? 0,
   };
 }
 

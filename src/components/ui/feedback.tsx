@@ -186,3 +186,54 @@ export function Avatar({
     <span className={`avatar${muted ? " avatar-muted" : ""}`}>{initials}</span>
   );
 }
+
+/** A compact, accessible score indicator. Color reinforces the numeric value
+ * but never carries meaning by itself. */
+export function AttentionScoreRing({
+  score,
+  total,
+  size = 44,
+}: {
+  score: number | null;
+  total: number | null;
+  size?: number;
+}) {
+  const available = score !== null && total !== null && total > 0;
+  const rounded = available ? Math.round(score) : null;
+  const tone =
+    rounded === null
+      ? "empty"
+      : rounded >= 75
+        ? "high"
+        : rounded >= 50
+          ? "medium"
+          : "low";
+  const radius = 18;
+  const progress = rounded ?? 0;
+  const label =
+    rounded === null
+      ? "Attention score unavailable; no checks completed"
+      : `Attention score ${rounded} out of 100, based on ${total} checks`;
+
+  return (
+    <span
+      className={`score-ring score-ring-${tone}`}
+      style={{ width: size, height: size }}
+      role="img"
+      aria-label={label}
+    >
+      <svg viewBox="0 0 44 44" aria-hidden="true">
+        <circle className="score-ring-track" cx="22" cy="22" r={radius} />
+        <circle
+          className="score-ring-value"
+          cx="22"
+          cy="22"
+          r={radius}
+          pathLength={100}
+          strokeDasharray={`${progress} 100`}
+        />
+      </svg>
+      <strong>{rounded ?? "–"}</strong>
+    </span>
+  );
+}

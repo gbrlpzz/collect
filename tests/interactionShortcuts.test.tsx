@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AuthScreen } from "../src/components/AuthScreen";
 import { Collector } from "../src/components/Collector";
+import { ConsentScreen } from "../src/components/ConsentScreen";
 import { ContributorHome } from "../src/components/ContributorHome";
 import { DeviceLinkSheet } from "../src/components/DeviceLinkSheet";
 import { NewProjectWizard } from "../src/components/NewProjectWizard";
@@ -196,6 +197,30 @@ describe("low-friction primary actions", () => {
     expect(onStartObservation).toHaveBeenCalledWith(project);
   });
 
+  it("shows only the resume action when a draft already exists", () => {
+    const onResumeObservation = vi.fn();
+    render(
+      <ContributorHome
+        projects={[project]}
+        activeProject={project}
+        observations={[]}
+        hasDraft
+        onStartObservation={() => undefined}
+        onOpenProject={() => undefined}
+        onChooseProject={() => undefined}
+        onResumeObservation={onResumeObservation}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /start observation/i }),
+    ).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: /resume observation/i }),
+    );
+    expect(onResumeObservation).toHaveBeenCalledTimes(1);
+  });
+
   it("keeps the contributor and admin surfaces separate", () => {
     render(
       <TopBar mode="contributor" view="home" onNavigate={() => undefined} />,
@@ -219,6 +244,7 @@ describe("low-friction primary actions", () => {
       attentionChecksTotal: 24,
       attentionCorrectTotal: 22,
       attentionLastAt: null,
+      contributionCount: 14,
     });
     render(
       <TopBar
@@ -231,9 +257,51 @@ describe("low-friction primary actions", () => {
     fireEvent.click(screen.getByRole("button", { name: "field@example.com" }));
 
     await waitFor(() =>
-      expect(screen.getByText("92/100 · 24 checks")).toBeTruthy(),
+      expect(
+        screen.getByRole("img", {
+          name: /attention score 92 out of 100, based on 24 checks/i,
+        }),
+      ).toBeTruthy(),
     );
-    expect(screen.getByText(/adjusted for random guessing/i)).toBeTruthy();
+    expect(screen.getByText("14")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /attention/i }));
+    expect(screen.getByText(/adjusts for random guessing/i)).toBeTruthy();
+  });
+
+  it("presents consent as readable sections and prevents duplicate acceptance", async () => {
+    let finish!: () => void;
+    const onAccept = vi.fn(
+      () => new Promise<void>((resolve) => (finish = resolve)),
+    );
+    render(
+      <ConsentScreen
+        version={2}
+        text={
+          "Please review this statement.\n\n1. We collect observation answers.\n\n2. Location is included when requested.\n\nYou can decline and sign out."
+        }
+        onAccept={onAccept}
+        onDecline={() => undefined}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "What you agree to" }),
+    ).toBeTruthy();
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    const accept = screen.getByRole("button", { name: /agree and continue/i });
+    fireEvent.click(accept);
+    expect(onAccept).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByRole("button", { name: /saving/i }).hasAttribute("disabled"),
+    ).toBe(true);
+    finish();
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole("button", { name: /agree and continue/i })
+          .hasAttribute("disabled"),
+      ).toBe(false),
+    );
   });
 
   it("opens sync status and starts synchronization from the project row", () => {

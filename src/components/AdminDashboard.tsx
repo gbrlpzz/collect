@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type {
   FieldDefinition,
   FieldOption,
@@ -8,7 +8,7 @@ import type {
 } from "../types";
 import { Icon } from "./Icon";
 import {
-  Avatar,
+  AttentionScoreRing,
   Button,
   Divider,
   EmailPrompt,
@@ -17,7 +17,6 @@ import {
   StatusBadge,
 } from "./ui";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
-import { formatAttentionScore } from "../lib/attention";
 import { useReadiness } from "../lib/useReadiness";
 import {
   createSchemaDraft,
@@ -36,7 +35,6 @@ import {
 interface AdminDashboardProps {
   project: Project;
   projects?: Project[];
-  observations: Observation[];
   onNavigate: (view: View) => void;
   onSelectProject: (project: Project) => void;
 }
@@ -44,7 +42,6 @@ interface AdminDashboardProps {
 export function AdminDashboard({
   project,
   projects = [],
-  observations,
   onNavigate,
   onSelectProject,
 }: AdminDashboardProps) {
@@ -52,24 +49,10 @@ export function AdminDashboard({
     (candidate) => candidate.id !== "empty-project",
   );
   const hasProject = projectList.length > 0 || project.id !== "empty-project";
-  const localWaiting = observations.filter(
-    (item) => item.status !== "SYNCED",
-  ).length;
-  const receivedCount = project.completeSubmissions;
-  const { readiness, error: readinessError } = useReadiness(
-    hasProject ? project.id : null,
-  );
-
-  const reportedWaiting =
-    readiness?.reduce((total, row) => total + row.pending, 0) ?? null;
-
   return (
     <main className="page page-admin">
       <div className="page-heading admin-heading">
-        <div>
-          <Eyebrow>Admin workspace</Eyebrow>
-          <h1>Projects</h1>
-        </div>
+        <h1>Projects</h1>
         <Button
           variant="primary"
           icon="plus"
@@ -80,9 +63,6 @@ export function AdminDashboard({
       </div>
 
       <section className="admin-section">
-        <div className="section-heading-row">
-          <h2>Active fieldwork</h2>
-        </div>
         {hasProject ? (
           <div className="admin-project-list">
             {(projectList.length ? projectList : [project]).map((candidate) => (
@@ -95,37 +75,21 @@ export function AdminDashboard({
                 }}
               >
                 <div className="admin-project-leading">
-                  <div className="organization-mark">
-                    {candidate.organizationMark}
-                  </div>
                   <div>
                     <div className="admin-project-title-row">
                       <h3>{candidate.name}</h3>
                     </div>
                     <p>
-                      {candidate.organization} · Schema v
-                      {candidate.schemaVersion}
+                      {candidate.organization} · {candidate.completeSubmissions}{" "}
+                      received · {candidate.contributors} contributors
                     </p>
                   </div>
                 </div>
-                <div className="admin-project-stats">
-                  <span>
-                    {candidate.id === project.id
-                      ? receivedCount
-                      : candidate.completeSubmissions}{" "}
-                    received
-                  </span>
-                  <span>{candidate.contributors} contributors</span>
-                  <span>
-                    {candidate.id === project.id
-                      ? isSupabaseConfigured
-                        ? reportedWaiting === null
-                          ? "Checking status"
-                          : `${reportedWaiting} reported waiting`
-                        : `${localWaiting} local waiting`
-                      : "Open for status"}
-                  </span>
-                </div>
+                <StatusBadge
+                  tone={candidate.status === "active" ? "dark" : "soft"}
+                >
+                  {candidate.status === "active" ? "Active" : "Closed"}
+                </StatusBadge>
                 <Icon name="chevron-right" size={19} />
               </button>
             ))}
@@ -146,79 +110,16 @@ export function AdminDashboard({
           </div>
         )}
       </section>
-
-      {hasProject && (
-        <section className="admin-readiness">
-          <div className="section-heading-row">
-            <h2>Readiness</h2>
-            <p>Last reported device status</p>
-          </div>
-          {!isSupabaseConfigured ? (
-            <div className="empty-list-state">
-              <span>
-                Preview data is not connected to a live contributor roster.
-              </span>
-            </div>
-          ) : readinessError && readiness === null ? (
-            <div className="empty-list-state" role="status">
-              <strong>Status temporarily unavailable</strong>
-              <span>
-                It will refresh automatically when the connection returns.
-              </span>
-            </div>
-          ) : readiness === null ? (
-            <div className="empty-list-state">
-              <span>Checking the latest contributor status…</span>
-            </div>
-          ) : (
-            <ReadinessList rows={readiness} />
-          )}
-        </section>
-      )}
     </main>
   );
 }
 
-function ReadinessList({ rows }: { rows: ContributorReadiness[] }) {
-  if (!rows.length)
-    return (
-      <div className="empty-list-state">
-        <strong>No contributors assigned</strong>
-        <span>Invite contributors from the project detail view.</span>
-      </div>
-    );
-  return (
-    <div className="readiness-list">
-      {rows.map((row) => (
-        <div key={row.id}>
-          <Avatar
-            initials={row.email.slice(0, 2).toUpperCase()}
-            muted={!row.ready}
-          />
-          <div>
-            <strong>{row.email}</strong>
-            <span>{row.status}</span>
-            {row.attentionChecksTotal ? (
-              <span className="readiness-attention">
-                {formatAttentionScore(
-                  row.attentionScore,
-                  row.attentionChecksTotal,
-                )}
-              </span>
-            ) : null}
-          </div>
-          {row.ready ? (
-            <Icon name="check" size={16} />
-          ) : (
-            <span className="readiness-pending">Needs attention</span>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
 type AdminTab = "setup" | "contributors" | "export";
+
+function fieldTypeLabel(type: FieldDefinition["type"]): string {
+  const label = type.replaceAll("_", " ");
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
 
 interface AdminProjectProps {
   project: Project;
@@ -246,7 +147,12 @@ export function AdminProject({
   const waitingCount = observations.filter(
     (item) => item.status !== "SYNCED",
   ).length;
-  const { readiness } = useReadiness(project.id);
+  const projectActionsRef = useRef<HTMLDetailsElement>(null);
+  const {
+    readiness,
+    error: readinessError,
+    refresh: refreshReadiness,
+  } = useReadiness(tab === "setup" ? null : project.id);
 
   return (
     <main className="page page-admin-project">
@@ -254,25 +160,41 @@ export function AdminProject({
         <button className="back-button" onClick={onBack}>
           <Icon name="chevron-left" size={17} /> Projects
         </button>
-        <StatusBadge tone={project.status === "active" ? "dark" : "soft"}>
-          {project.status === "active" ? "Active" : "Closed"}
-        </StatusBadge>
       </div>
       <div className="admin-project-header">
         <div>
-          <Eyebrow>{project.organization}</Eyebrow>
+          <div className="admin-project-title-meta">
+            <Eyebrow>{project.organization}</Eyebrow>
+            <StatusBadge tone={project.status === "active" ? "dark" : "soft"}>
+              {project.status === "active" ? "Active" : "Closed"}
+            </StatusBadge>
+          </div>
           <h1>{project.name}</h1>
           <p className="lede">{project.description}</p>
         </div>
-        <Button
-          variant="secondary"
-          icon={project.status === "active" ? "lock" : "refresh"}
-          onClick={onToggleStatus}
-        >
-          {project.status === "active"
-            ? "Close collection"
-            : "Reopen collection"}
-        </Button>
+        <details className="admin-project-actions" ref={projectActionsRef}>
+          <summary aria-label="Project actions">
+            <Icon name="more" size={20} />
+            <span className="visually-hidden">Project actions</span>
+          </summary>
+          <div className="admin-project-actions-menu">
+            <button
+              type="button"
+              onClick={() => {
+                projectActionsRef.current?.removeAttribute("open");
+                onToggleStatus();
+              }}
+            >
+              <Icon
+                name={project.status === "active" ? "lock" : "refresh"}
+                size={17}
+              />
+              {project.status === "active"
+                ? "Close collection"
+                : "Reopen collection"}
+            </button>
+          </div>
+        </details>
       </div>
       <div className="admin-metrics">
         <div>
@@ -321,7 +243,7 @@ export function AdminProject({
             }}
           >
             {item === "setup"
-              ? "Setup"
+              ? "Form"
               : item === "contributors"
                 ? "Contributors"
                 : "Export"}
@@ -352,6 +274,9 @@ export function AdminProject({
             projectId={project.id}
             waitingCount={waitingCount}
             onToast={onToast}
+            rows={readiness}
+            error={readinessError}
+            refresh={refreshReadiness}
           />
         </div>
       )}
@@ -415,14 +340,16 @@ function SchemaPanel({
     <section className="admin-panel">
       <div className="panel-heading">
         <div>
-          <Eyebrow>Published schema</Eyebrow>
-          <h2>Version {project.schemaVersion}</h2>
-          <p>Immutable for historical observations</p>
+          <h2>Form</h2>
+          <p>
+            Version {project.schemaVersion} · {dataFields.length}{" "}
+            {dataFields.length === 1 ? "question" : "questions"}
+          </p>
         </div>
         <div className="panel-actions">
           {onPreview && (
             <Button variant="secondary" icon="play" onClick={onPreview}>
-              Preview flow
+              Preview
             </Button>
           )}
           <Button
@@ -431,27 +358,20 @@ function SchemaPanel({
             onClick={() => void startDraft()}
             disabled={busy}
           >
-            Edit as draft
+            Edit form
           </Button>
         </div>
       </div>
-      <Divider />
       <div className="schema-list">
-        {dataFields.map((field, index) => (
+        {dataFields.map((field) => (
           <div className="schema-field-row" key={field.id}>
-            <span className="schema-index">
-              {String(index + 1).padStart(2, "0")}
-            </span>
             <div>
               <strong>{field.label}</strong>
-              <span>{field.key}</span>
+              <span>
+                {fieldTypeLabel(field.type)} ·{" "}
+                {field.required ? "Required" : "Optional"}
+              </span>
             </div>
-            <span className="schema-type">
-              {field.type.replaceAll("_", " ")}
-            </span>
-            <span className="schema-required">
-              {field.required ? "Required" : "Optional"}
-            </span>
           </div>
         ))}
       </div>
@@ -735,17 +655,7 @@ function SchemaDraftEditor({
                   updateField(field.id, { label: event.target.value })
                 }
               />
-              <div>
-                <input
-                  className="builder-key-input"
-                  value={field.key}
-                  aria-label={`${field.label} machine key`}
-                  onChange={(event) =>
-                    updateField(field.id, {
-                      key: event.target.value.replace(/[^a-zA-Z0-9_]/g, "_"),
-                    })
-                  }
-                />
+              <div className="builder-primary-controls">
                 <select
                   className="builder-select"
                   value={field.type}
@@ -765,11 +675,26 @@ function SchemaDraftEditor({
                 >
                   {schemaFieldTypes.map((type) => (
                     <option value={type} key={type}>
-                      {type.replaceAll("_", " ")}
+                      {fieldTypeLabel(type)}
                     </option>
                   ))}
                 </select>
               </div>
+              <details className="builder-advanced">
+                <summary>Advanced</summary>
+                <label>
+                  <span>Data key</span>
+                  <input
+                    className="builder-key-input"
+                    value={field.key}
+                    onChange={(event) =>
+                      updateField(field.id, {
+                        key: event.target.value.replace(/[^a-zA-Z0-9_]/g, "_"),
+                      })
+                    }
+                  />
+                </label>
+              </details>
             </div>
             <label className="builder-required">
               <input
@@ -825,17 +750,17 @@ function ContributorsPanel({
   projectId,
   waitingCount,
   onToast,
+  rows,
+  error,
+  refresh,
 }: {
   projectId: string;
   waitingCount: number;
   onToast: (message: string) => void;
+  rows: ContributorReadiness[] | null;
+  error: boolean;
+  refresh: () => void;
 }) {
-  const {
-    readiness: remoteRows,
-    error: readinessError,
-    refresh,
-  } = useReadiness(projectId);
-
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
 
@@ -866,16 +791,13 @@ function ContributorsPanel({
     }
   };
 
-  if (remoteRows)
+  if (rows)
     return (
       <section className="admin-panel">
         <div className="panel-heading">
           <div>
-            <Eyebrow>Assigned contributors</Eyebrow>
-            <h2>{remoteRows.length} people on this project</h2>
-            <p>
-              Readiness is based on the last status reported by each device.
-            </p>
+            <h2>Contributors</h2>
+            <p>{rows.length} assigned · status updates automatically</p>
           </div>
           <Button
             variant="secondary"
@@ -886,31 +808,28 @@ function ContributorsPanel({
             Add contributor
           </Button>
         </div>
-        <Divider />
         <div className="contributor-list">
-          {remoteRows.length ? (
-            remoteRows.map((row) => (
+          {rows.length ? (
+            rows.map((row) => (
               <div className="contributor-row" key={row.id}>
-                <Avatar
-                  initials={row.email.slice(0, 2).toUpperCase()}
-                  muted={!row.ready}
-                />
                 <div className="contributor-copy">
                   <strong>{row.email}</strong>
                   <span>{row.status}</span>
                 </div>
-                <StatusBadge tone={row.ready ? "soft" : "neutral"}>
-                  {row.ready ? "Confirmed synced" : "Needs attention"}
-                </StatusBadge>
-                {row.ready ? (
-                  <Icon name="check" size={17} />
-                ) : (
+                {row.attentionChecksTotal ? (
+                  <AttentionScoreRing
+                    score={row.attentionScore}
+                    total={row.attentionChecksTotal}
+                    size={38}
+                  />
+                ) : null}
+                {!row.ready && (
                   <Button
-                    variant="tertiary"
+                    variant="quiet"
                     icon="send"
                     onClick={() => void ping(row.id, row.email)}
                   >
-                    Ping
+                    Remind
                   </Button>
                 )}
               </div>
@@ -922,6 +841,16 @@ function ContributorsPanel({
             </div>
           )}
         </div>
+        <details className="attention-score-help">
+          <summary>
+            <Icon name="info" size={16} /> About attention scores
+          </summary>
+          <p>
+            The ring is a 0–100 summary of quick verification questions,
+            adjusted for random guessing. The number remains visible so color is
+            never the only signal.
+          </p>
+        </details>
         {inviteOpen && isSupabaseConfigured && (
           <EmailPrompt
             title="Add contributor"
@@ -940,12 +869,10 @@ function ContributorsPanel({
           <div>
             <Eyebrow>Assigned contributors</Eyebrow>
             <h2>
-              {readinessError
-                ? "Roster temporarily unavailable"
-                : "Checking the roster"}
+              {error ? "Roster temporarily unavailable" : "Checking the roster"}
             </h2>
             <p>
-              {readinessError
+              {error
                 ? "It will refresh automatically when the connection returns."
                 : "Readiness is based on the last status reported by each device."}
             </p>
@@ -994,16 +921,8 @@ function ExportPanel({
     <section className="admin-panel export-panel">
       <div className="panel-heading">
         <div>
-          <Eyebrow>Checkpoint export</Eyebrow>
-          <h2>
-            {readinessKnown
-              ? `${ready} of ${total} contributors confirmed fully synced`
-              : "Checking contributor readiness"}
-          </h2>
-          <p>
-            You can always export a checkpoint of everything completely received
-            by the server.
-          </p>
+          <h2>Export checkpoint</h2>
+          <p>Download everything completely received by the server.</p>
         </div>
         <StatusBadge tone={readyForFinal ? "dark" : "soft"}>
           {readyForFinal ? "Ready for final export" : "Checkpoint available"}
@@ -1014,40 +933,15 @@ function ExportPanel({
           <span style={{ width: `${percentage}%` }} />
         </div>
         <div>
-          <span>Received at the server</span>
-          <strong>
-            {receivedCount} submissions · media included in package
-          </strong>
+          <span>
+            {readinessKnown
+              ? `${ready} of ${total} contributors fully synced`
+              : "Checking contributor readiness"}
+          </span>
+          <strong>{receivedCount} complete submissions · media included</strong>
         </div>
       </div>
-      <div className="package-preview">
-        <div className="package-row">
-          <Icon name="file" size={18} />
-          <div>
-            <strong>
-              {project.name.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase()}
-              _checkpoint.zip
-            </strong>
-            <span>JSONL · CSV · GeoJSON · schema versions · media</span>
-          </div>
-          <Icon name="check" size={16} />
-        </div>
-        <div className="package-tree">
-          <span>
-            <Icon name="folder" size={15} /> schema/
-          </span>
-          <span>
-            <Icon name="folder" size={15} /> data/submissions.jsonl
-          </span>
-          <span>
-            <Icon name="folder" size={15} /> media/
-          </span>
-          <span>
-            <Icon name="file" size={15} /> manifest.json
-          </span>
-        </div>
-      </div>
-      <Button variant="primary" icon="download" onClick={onExport}>
+      <Button variant="primary" icon="download" onClick={onExport} fullWidth>
         Export checkpoint
       </Button>
       <p className="export-note">

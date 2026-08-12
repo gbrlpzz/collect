@@ -27,7 +27,7 @@ export function ProjectOverview({
     <main className="page page-project">
       <div className="back-row">
         <button className="back-button" onClick={() => onNavigate("home")}>
-          <Icon name="chevron-left" size={17} /> Projects
+          <Icon name="chevron-left" size={17} /> Fieldwork
         </button>
       </div>
 
@@ -39,7 +39,15 @@ export function ProjectOverview({
         </div>
       </section>
 
-      <p className="project-instructions">{project.instructions}</p>
+      {project.instructions && (
+        <section
+          className="project-guidance"
+          aria-labelledby="instructions-title"
+        >
+          <h2 id="instructions-title">Instructions</h2>
+          <p className="project-instructions">{project.instructions}</p>
+        </section>
+      )}
 
       <Button
         variant="primary"
@@ -82,41 +90,45 @@ export function ProjectOverview({
 
       <details className="privacy-disclosure">
         <summary>
-          <Icon name="lock" size={15} /> What collect records on this device
+          <Icon name="lock" size={17} />
+          <span className="privacy-summary-copy">
+            <strong>Data and privacy</strong>
+            <span>What is recorded and when it leaves this device</span>
+          </span>
+          <Icon name="chevron-down" size={16} />
         </summary>
-        <ul>
-          <li>
-            <strong>Location</strong> is captured automatically when an
-            observation starts and refreshed when it is saved. Latitude,
-            longitude, accuracy, and capture time are stored with that
-            observation.
-          </li>
-          <li>
-            <strong>Time</strong>: each observation stores the moment you saved
-            it and your device timezone, so field evidence stays interpretable
-            later.
-          </li>
-          <li>
-            <strong>Device identifier</strong>: a random, per-install ID (not a
-            hardware fingerprint) labels observations so the server can show
-            your sync status.
-          </li>
-          <li>
-            <strong>Media</strong>: photos and audio you add are kept as
-            original files on this device.
-          </li>
-          <li>
-            Nothing leaves this device until synchronization, and only the
-            server that hosts your project receives it.
-          </li>
-        </ul>
+        <dl className="privacy-facts">
+          <div>
+            <dt>Observation</dt>
+            <dd>Your answers, save time, timezone, and schema version.</dd>
+          </div>
+          <div>
+            <dt>Location</dt>
+            <dd>
+              Coordinates, accuracy, and capture time when location permission
+              is available.
+            </dd>
+          </div>
+          <div>
+            <dt>Device</dt>
+            <dd>
+              A random install ID plus device, operating system, browser,
+              screen, connection, battery, and language information.
+            </dd>
+          </div>
+          <div>
+            <dt>Media</dt>
+            <dd>Original photos and audio you choose to add.</dd>
+          </div>
+          <div>
+            <dt>Transfer</dt>
+            <dd>
+              Data stays on this device until synchronization and goes only to
+              this project&rsquo;s server.
+            </dd>
+          </div>
+        </dl>
       </details>
-
-      <div className="project-footnote">
-        Schema v{project.schemaVersion} ·{" "}
-        {project.fields.filter((field) => field.type !== "heading").length}{" "}
-        fields
-      </div>
     </main>
   );
 }

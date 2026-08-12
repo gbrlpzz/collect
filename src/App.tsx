@@ -160,7 +160,7 @@ export default function App() {
         text={consentVersion.text}
         version={consentVersion.version}
         onAccept={() =>
-          void recordConsent().catch(() =>
+          recordConsent().catch(() =>
             showToast("Consent could not be recorded yet"),
           )
         }
@@ -289,7 +289,6 @@ export default function App() {
             <AdminDashboard
               project={state.project}
               projects={state.projects}
-              observations={state.observations}
               onNavigate={navigate}
               onSelectProject={(project) =>
                 selectProject(project, "admin-project")
