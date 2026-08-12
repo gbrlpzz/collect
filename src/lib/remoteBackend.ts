@@ -2,6 +2,7 @@ import { Upload } from "tus-js-client";
 import { z } from "zod";
 import type { MediaAsset, Observation, Project } from "../types";
 import { markOutboxOperation, setLocalSubmissionStatus } from "./localStore";
+import { invokeFunction } from "./functionError";
 import { buildMediaObjectPath } from "./syncProtocol";
 import { collectDeviceInfo } from "./deviceInfo";
 import { supabase } from "./supabaseClient";
@@ -24,38 +25,10 @@ async function invoke<T>(
   schema: z.ZodType<T>,
 ): Promise<T> {
   const client = requireClient();
-  const { data, error } = await client.functions.invoke(functionName, { body });
-  if (error) {
-    // Supabase wraps non-2xx responses in FunctionsHttpError whose message is
-    // only a status line. The server's reason lives in the response body; it
-    // is what drives ACTION_REQUIRED classification and honest UI copy.
-    const context =
-      error && typeof error === "object"
-        ? (error as { context?: unknown }).context
-        : null;
-    if (
-      context &&
-      typeof context === "object" &&
-      "clone" in context &&
-      typeof (context as { clone?: unknown }).clone === "function"
-    ) {
-      try {
-        const body = (await (context as Response).clone().json()) as {
-          error?: unknown;
-        };
-        if (typeof body.error === "string" && body.error.trim())
-          throw new Error(body.error);
-      } catch (caught) {
-        if (
-          caught instanceof Error &&
-          caught.message !== "Unexpected end of JSON input"
-        )
-          throw caught;
-      }
-    }
-    throw error;
-  }
-  return schema.parse(data);
+  // invokeFunction unwraps the server's own error message from the
+  // FunctionsHttpError body; it drives ACTION_REQUIRED classification and
+  // honest UI copy.
+  return invokeFunction(client, functionName, body, schema);
 }
 
 export interface RemoteSyncInput {
@@ -137,8 +110,9 @@ export async function uploadRemoteMedia({
   onProgress?: (percent: number) => void;
 }): Promise<void> {
   const client = requireClient();
-  if (!asset.blob) throw new Error(`Media ${asset.id} has no local blob`);
   const objectName = buildMediaObjectPath(project.id, observation.id, asset.id);
+  // Ask the server first: the object may already be acknowledged from an
+  // earlier attempt even when the local blob was cleaned up.
   const existing = await invoke(
     "sync-submission",
     {
@@ -150,6 +124,7 @@ export async function uploadRemoteMedia({
     z.object({ confirmed: z.boolean() }),
   );
   if (existing.confirmed) return;
+  if (!asset.blob) throw new Error(`Media ${asset.id} has no local blob`);
   const { data: sessionData } = await client.auth.getSession();
   const accessToken = sessionData.session?.access_token;
   if (!accessToken)
@@ -159,46 +134,63 @@ export async function uploadRemoteMedia({
     import.meta.env.VITE_SUPABASE_ANON_KEY) as string;
   const endpoint = `${projectUrl.replace(/\/$/, "")}/storage/v1/upload/resumable`;
 
-  await new Promise<void>((resolve, reject) => {
-    const upload = new Upload(asset.blob!, {
-      endpoint,
-      retryDelays: [0, 1000, 3000, 5000, 10000],
-      uploadSize: asset.byteSize,
-      fingerprint: () =>
-        Promise.resolve(
-          `collect:${objectName}:${asset.byteSize}:${asset.sha256 ?? ""}`,
-        ),
-      removeFingerprintOnSuccess: true,
-      headers: {
-        authorization: `Bearer ${accessToken}`,
-        apikey: publishableKey,
-      },
-      onProgress: onProgress
-        ? (bytesSent: number, bytesTotal: number) => {
-            if (bytesTotal > 0)
-              onProgress(
-                Math.min(100, Math.round((bytesSent / bytesTotal) * 100)),
-              );
-          }
-        : undefined,
-      metadata: {
-        bucketName: "collect-media",
-        objectName,
-        contentType: asset.mimeType,
-        cacheControl: "3600",
-      },
-      onError: reject,
-      onSuccess: () => resolve(),
-    });
-    void upload
-      .findPreviousUploads()
-      .then((previousUploads) => {
-        if (previousUploads.length)
-          upload.resumeFromPreviousUpload(previousUploads[0]);
+  const runUpload = (resumeFrom: boolean): Promise<void> =>
+    new Promise<void>((resolve, reject) => {
+      const upload = new Upload(asset.blob!, {
+        endpoint,
+        retryDelays: [0, 1000, 3000, 5000, 10000],
+        uploadSize: asset.byteSize,
+        fingerprint: () =>
+          Promise.resolve(
+            `collect:${objectName}:${asset.byteSize}:${asset.sha256 ?? ""}`,
+          ),
+        removeFingerprintOnSuccess: true,
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          apikey: publishableKey,
+        },
+        onProgress: onProgress
+          ? (bytesSent: number, bytesTotal: number) => {
+              if (bytesTotal > 0)
+                onProgress(
+                  Math.min(100, Math.round((bytesSent / bytesTotal) * 100)),
+                );
+            }
+          : undefined,
+        metadata: {
+          bucketName: "collect-media",
+          objectName,
+          contentType: asset.mimeType,
+          cacheControl: "3600",
+        },
+        onError: reject,
+        onSuccess: () => resolve(),
+      });
+      if (resumeFrom) {
+        void upload
+          .findPreviousUploads()
+          .then((previousUploads) => {
+            if (previousUploads.length)
+              upload.resumeFromPreviousUpload(previousUploads[0]);
+            upload.start();
+          })
+          .catch(reject);
+      } else {
         upload.start();
-      })
-      .catch(reject);
-  });
+      }
+    });
+
+  try {
+    await runUpload(true);
+  } catch (firstError) {
+    // The stored upload may be stale/expired. Retry once with a fresh
+    // session (no resume) before giving up.
+    try {
+      await runUpload(false);
+    } catch {
+      throw firstError;
+    }
+  }
 
   const confirmation = await invoke(
     "sync-submission",
@@ -249,18 +241,31 @@ export async function syncRemoteObservation(
   await createRemoteSubmission(input);
   progress.onPhase?.(id, "SYNCING_MEDIA");
   await setLocalSubmissionStatus(id, "SYNCING_MEDIA");
-  for (const asset of input.observation.media ?? []) {
-    await markOutboxOperation(`media:${asset.id}`, "IN_PROGRESS");
-    await uploadRemoteMedia({
-      observation: input.observation,
-      project: input.project,
-      asset,
-      onProgress: (percent) =>
-        progress.onMediaProgress?.(id, asset.id, percent),
-    });
-    await markOutboxOperation(`media:${asset.id}`, "ACKNOWLEDGED");
-    progress.onMediaProgress?.(id, asset.id, 100);
-  }
+  const mediaAssets = input.observation.media ?? [];
+  // Bounded parallelism: uploads are independent, so up to two run at once
+  // (with durable per-media progress); failures abort the remaining batch.
+  let mediaCursor = 0;
+  const workers = Array.from(
+    { length: Math.min(2, mediaAssets.length) },
+    async () => {
+      while (mediaCursor < mediaAssets.length) {
+        const index = mediaCursor;
+        mediaCursor += 1;
+        const asset = mediaAssets[index];
+        await markOutboxOperation(`media:${asset.id}`, "IN_PROGRESS");
+        await uploadRemoteMedia({
+          observation: input.observation,
+          project: input.project,
+          asset,
+          onProgress: (percent) =>
+            progress.onMediaProgress?.(id, asset.id, percent),
+        });
+        await markOutboxOperation(`media:${asset.id}`, "ACKNOWLEDGED");
+        progress.onMediaProgress?.(id, asset.id, 100);
+      }
+    },
+  );
+  await Promise.all(workers);
   progress.onPhase?.(id, "FINALIZING");
   await setLocalSubmissionStatus(id, "FINALIZING");
   await markOutboxOperation(`finalize:${id}`, "IN_PROGRESS");
@@ -274,15 +279,22 @@ export async function probeRemoteHealth(): Promise<boolean> {
     import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
   if (!projectUrl || !publishableKey) return false;
   try {
-    const response = await fetch(
-      `${projectUrl.replace(/\/$/, "")}/functions/v1/health`,
-      {
-        method: "HEAD",
-        headers: { apikey: publishableKey },
-        cache: "no-store",
-      },
-    );
-    return response.ok;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 8000);
+    try {
+      const response = await fetch(
+        `${projectUrl.replace(/\/$/, "")}/functions/v1/health`,
+        {
+          method: "HEAD",
+          headers: { apikey: publishableKey },
+          cache: "no-store",
+          signal: controller.signal,
+        },
+      );
+      return response.ok;
+    } finally {
+      window.clearTimeout(timer);
+    }
   } catch {
     return false;
   }
