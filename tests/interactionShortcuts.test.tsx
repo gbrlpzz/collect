@@ -219,7 +219,7 @@ describe("low-friction primary actions", () => {
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: /sync saved observations now/i }),
+      screen.getByRole("button", { name: /view sync status/i }),
     );
 
     expect(onOpenSync).toHaveBeenCalledTimes(1);
@@ -234,6 +234,7 @@ describe("low-friction primary actions", () => {
         type: "date",
         required: true,
         semantic_uri: null,
+        config: { keyIdentifier: true },
       },
       {
         id: "notes",

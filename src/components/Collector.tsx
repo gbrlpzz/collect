@@ -4,6 +4,7 @@ import type { FieldDefinition, MediaAsset, Project } from "../types";
 import { Icon } from "./Icon";
 import { Button } from "./ui";
 import { FieldRenderer } from "./FieldRenderer";
+import { orderFieldsForCollection } from "../lib/fieldOrdering";
 
 interface CollectorProps {
   project: Project;
@@ -51,6 +52,8 @@ export function Collector({
 }: CollectorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stepIndex, setStepIndex] = useState(0);
+  const [capturingLocation, setCapturingLocation] = useState(false);
+  const locationCaptureStartedRef = useRef(false);
   const [mediaByField, setMediaByField] = useState<
     Record<string, MediaAsset[]>
   >(() =>
@@ -75,13 +78,23 @@ export function Collector({
   const [errorText, setErrorText] = useState<string | null>(null);
   const locationAttemptedFieldRef = useRef<string | null>(null);
 
+  // Collection order follows requirement #6: the key identifier comes first,
+  // then the highest-effort questions (photos/audio, location, long text)
+  // while attention is fresh. Location stays background provenance: it never
+  // becomes a step, only a silent capture at the save boundary.
   const steps = useMemo<Step[]>(
     () =>
-      project.fields.map((field) =>
-        field.type === "heading"
-          ? { kind: "heading", field }
-          : { kind: "field", field },
-      ),
+      orderFieldsForCollection(project.fields)
+        .filter((field) => field.type !== "location")
+        .map((field) =>
+          field.type === "heading"
+            ? { kind: "heading", field }
+            : { kind: "field", field },
+        ),
+    [project.fields],
+  );
+  const locationFields = useMemo(
+    () => project.fields.filter((field) => field.type === "location"),
     [project.fields],
   );
   const current = steps[Math.min(stepIndex, Math.max(steps.length - 1, 0))];
@@ -177,8 +190,7 @@ export function Collector({
     }, 60);
   };
 
-  const goNext = () => {
-    if (isSaving) return;
+  const goNext = async () => {
     if (current.kind === "field") {
       const error = stepError(current.field);
       if (error) {
@@ -189,15 +201,52 @@ export function Collector({
     }
     setErrorText(null);
     if (isLastStep) {
-      const mediaValues = Object.fromEntries(
-        project.fields
-          .filter((field) => field.type === "photo" || field.type === "audio")
-          .map((field) => [
-            field.key,
-            (mediaByField[field.key] ?? []).map((asset) => asset.id),
-          ]),
+      // Most projects have no location field. Keep the ordinary save path
+      // synchronous so a completed form never waits on an invisible task.
+      const saveValues = (values: Record<string, unknown>) => {
+        const mediaValues = Object.fromEntries(
+          project.fields
+            .filter((field) => field.type === "photo" || field.type === "audio")
+            .map((field) => [
+              field.key,
+              (mediaByField[field.key] ?? []).map((asset) => asset.id),
+            ]),
+        );
+        void onSubmit({ ...values, ...mediaValues }, allMediaAssets);
+      };
+      if (!locationFields.length) {
+        saveValues(draft);
+        return;
+      }
+      // Location is provenance, not a question. Refresh it silently at the
+      // save boundary; only a required schema failure becomes visible here.
+      setCapturingLocation(true);
+      const capturedLocations = Object.fromEntries(
+        await Promise.all(
+          locationFields.map(async (field) => {
+            const location = await captureLocation(field.key);
+            return [field.key, location] as const;
+          }),
+        ),
       );
-      void onSubmit({ ...draft, ...mediaValues }, allMediaAssets);
+      setCapturingLocation(false);
+      const values = { ...draft };
+      for (const [key, location] of Object.entries(capturedLocations)) {
+        if (location) values[key] = location;
+      }
+      const missingRequiredLocation = locationFields.some(
+        (field) => field.required && !hasValue(values[field.key]),
+      );
+      if (missingRequiredLocation) {
+        setLocationError(
+          "Location could not be captured. Allow location access and try again.",
+        );
+        setErrorText(
+          "Location is required for this observation. Allow location access and try again.",
+        );
+        return;
+      }
+      saveValues(values);
       return;
     }
     setStepIndex((index) => index + 1);
@@ -238,40 +287,44 @@ export function Collector({
     }, 220);
   };
 
-  const captureLocation = (fieldKey: string) => {
-    const saveLocation = (coords: GeolocationCoordinates) => {
-      onDraftChange(fieldKey, {
-        latitude: coords.latitude,
-        longitude: coords.longitude,
-        accuracy: coords.accuracy,
-        capturedAt: new Date().toISOString(),
-        altitude: coords.altitude,
-        altitudeAccuracy: coords.altitudeAccuracy,
-        heading: coords.heading,
-      });
-      setLocationError(null);
-      setLocationNotice(null);
-      setErrorText(null);
-    };
-    if ("geolocation" in navigator) {
+  const captureLocation = (
+    fieldKey: string,
+  ): Promise<Record<string, unknown> | null> =>
+    new Promise((resolve) => {
+      if (!("geolocation" in navigator)) {
+        setLocationNotice(
+          "Location is unavailable in this browser. The observation can still be kept here, but required coordinates need location access.",
+        );
+        resolve(null);
+        return;
+      }
       navigator.geolocation.getCurrentPosition(
-        (position) => saveLocation(position.coords),
+        (position) => {
+          const location = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            capturedAt: new Date().toISOString(),
+            altitude: position.coords.altitude,
+            altitudeAccuracy: position.coords.altitudeAccuracy,
+            heading: position.coords.heading,
+            autoCaptured: true,
+          };
+          onDraftChange(fieldKey, location);
+          setLocationError(null);
+          setLocationNotice(null);
+          setErrorText(null);
+          resolve(location);
+        },
         () => {
-          setLocationError(
-            "Location access was unavailable. Enable location services or try again.",
-          );
           setLocationNotice(
             "Location is off for this app. Enable it in Settings so coordinates record automatically.",
           );
+          resolve(null);
         },
         { enableHighAccuracy: true, timeout: 5000 },
       );
-    } else {
-      setLocationError(
-        "This browser cannot provide location data. The required field remains unsaved.",
-      );
-    }
-  };
+    });
 
   const handleMediaChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
@@ -317,47 +370,16 @@ export function Collector({
 
   const activeField = current?.kind === "field" ? current.field : null;
 
-  // Location is background provenance: the app captures it as soon as the
-  // location step opens and refreshes it at submit. The manual action is only
-  // a retry path for denied or unavailable permissions.
+  // Location is background provenance. Ask the browser once when an
+  // observation opens, without inserting a location question into the flow.
+  // A failed optional capture stays quiet; a required failure is explained at
+  // the save boundary so the contributor never has to navigate to a location
+  // step.
   useEffect(() => {
-    if (activeField?.type !== "location") {
-      locationAttemptedFieldRef.current = null;
-      return;
-    }
-    if (locationAttemptedFieldRef.current === activeField.key) return;
-    locationAttemptedFieldRef.current = activeField.key;
-    if (draft[activeField.key]) return;
-    if (!("geolocation" in navigator)) {
-      setLocationNotice(
-        "Location is off for this app. Enable it in Settings so coordinates record automatically.",
-      );
-      return;
-    }
-    let active = true;
-    const permissionQuery = navigator.permissions?.query({
-      name: "geolocation" as PermissionName,
-    });
-    if (!permissionQuery) {
-      captureLocation(activeField.key);
-      return;
-    }
-    void permissionQuery
-      .then((status) => {
-        if (!active) return;
-        if (status.state === "denied")
-          setLocationNotice(
-            "Location is off for this app. Enable it in Settings so coordinates record automatically.",
-          );
-        else captureLocation(activeField.key);
-      })
-      .catch(() => {
-        if (active) captureLocation(activeField.key);
-      });
-    return () => {
-      active = false;
-    };
-  }, [activeField?.key, activeField?.type]);
+    if (!locationFields.length || locationCaptureStartedRef.current) return;
+    locationCaptureStartedRef.current = true;
+    void Promise.all(locationFields.map((field) => captureLocation(field.key)));
+  }, [locationFields]);
   const activeMediaAssets =
     activeField &&
     (activeField.type === "photo" || activeField.type === "audio")
@@ -434,6 +456,11 @@ export function Collector({
       </div>
 
       <div className="flow-body">
+        {locationNotice && (
+          <p className="background-status" role="status">
+            <Icon name="location" size={15} /> {locationNotice}
+          </p>
+        )}
         <form
           className="flow-step"
           key={stepIndex}
@@ -521,8 +548,8 @@ export function Collector({
           variant="primary"
           className="flow-continue"
           onClick={goNext}
-          disabled={!canContinue() || isSaving}
-          busy={isSaving && isLastStep}
+          disabled={!canContinue() || isSaving || capturingLocation}
+          busy={(isSaving || capturingLocation) && isLastStep}
         >
           {primaryLabel}
         </Button>

@@ -106,8 +106,10 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
       />,
     );
     fireEvent.click(continueButton());
-    expect(screen.getByText("People present")).toBeTruthy();
+    expect(screen.getByText("Field notes")).toBeTruthy();
     fireEvent.click(continueButton());
+    expect(screen.getByText("People present")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /save observation/i }));
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByText(/maximum is 50/i)).toBeTruthy();
   });
@@ -131,6 +133,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
     );
     fireEvent.click(continueButton());
     fireEvent.click(continueButton());
+    fireEvent.click(screen.getByRole("button", { name: /save observation/i }));
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByText(/whole number/i)).toBeTruthy();
   });
@@ -181,8 +184,6 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
       />,
     );
     fireEvent.click(continueButton());
-    expect(screen.getByText("People present")).toBeTruthy();
-    fireEvent.click(continueButton());
     expect(screen.getByText("Site photos")).toBeTruthy();
     const input = document.querySelector(
       'input[type="file"]',
@@ -197,6 +198,8 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
     });
     fireEvent.click(continueButton());
     expect(screen.getByText("Field notes")).toBeTruthy();
+    fireEvent.click(continueButton());
+    expect(screen.getByText("People present")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /save observation/i }));
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
