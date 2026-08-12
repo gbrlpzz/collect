@@ -263,6 +263,19 @@ async function createSubmission(
     return json({ accepted: true, idempotent: true });
   }
 
+  const attention = body.attention_response &&
+      typeof body.attention_response === "object"
+    ? body.attention_response as { check_key?: unknown; selected_value?: unknown }
+    : null;
+  const attentionCheckKey = attention &&
+      typeof attention.check_key === "string"
+    ? attention.check_key
+    : null;
+  const attentionSelected = attention &&
+      typeof attention.selected_value === "string"
+    ? attention.selected_value
+    : null;
+
   const correctsSubmissionId = body.corrects_submission_id
     ? String(body.corrects_submission_id)
     : null;
@@ -325,6 +338,34 @@ async function createSubmission(
   });
   if (submissionError) {
     return invalid("Submission metadata could not be stored", 500);
+  }
+
+  if (attentionCheckKey && attentionSelected) {
+    const { data: check } = await service.from("attention_checks")
+      .select("correct_value,guess_probability")
+      .eq("key", attentionCheckKey)
+      .eq("active", true)
+      .maybeSingle();
+    if (check) {
+      const correct = attentionSelected === check.correct_value;
+      const { error: attentionError } = await service.from("attention_responses")
+        .insert({
+          submission_id: submissionId,
+          contributor_id: userId,
+          project_id: projectId,
+          check_key: attentionCheckKey,
+          selected_value: attentionSelected,
+          correct,
+          guess_probability: check.guess_probability,
+        });
+      if (!attentionError) {
+        try {
+          await service.rpc("recompute_attention_score", { target_user: userId });
+        } catch {
+          // The score is advisory; never block ingestion on it.
+        }
+      }
+    }
   }
 
   if (media.length) {

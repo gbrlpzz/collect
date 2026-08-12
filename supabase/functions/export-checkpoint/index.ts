@@ -130,8 +130,11 @@ async function buildExport(
     "user_id,role",
   ).eq("project_id", projectId).order("assigned_at", { ascending: true });
   const memberIds = (members ?? []).map((member) => member.user_id);
+  const { data: attentionRows } = submissionIds.length
+    ? await service.from("attention_responses").select("submission_id,contributor_id,project_id,check_key,selected_value,correct,guess_probability,created_at").in("submission_id", submissionIds).order("created_at", { ascending: true })
+    : { data: [] };
   const { data: profiles } = memberIds.length
-    ? await service.from("contributor_profiles").select("user_id,consent_version,consent_granted_at,consent_revoked_at,quality_score").in("user_id", memberIds)
+    ? await service.from("contributor_profiles").select("user_id,consent_version,consent_granted_at,consent_revoked_at,quality_score,attention_score,attention_checks_total,attention_correct_total,attention_last_at").in("user_id", memberIds)
     : { data: [] };
   const { data: invites } = await service.from("project_invites").select(
     "email,invited_user_id,status",
@@ -157,6 +160,10 @@ async function buildExport(
       consent_granted_at: profile?.consent_granted_at ?? null,
       consent_revoked_at: profile?.consent_revoked_at ?? null,
       quality_score: profile?.quality_score ?? null,
+      attention_score: profile?.attention_score ?? null,
+      attention_checks_total: profile?.attention_checks_total ?? null,
+      attention_correct_total: profile?.attention_correct_total ?? null,
+      attention_last_at: profile?.attention_last_at ?? null,
       last_seen_at: status?.last_seen_at ?? null,
       last_sync_success_at: status?.last_sync_success_at ?? null,
       pending_submissions: status?.pending_submissions ?? null,
@@ -244,6 +251,10 @@ async function buildExport(
       "consent_granted_at",
       "consent_revoked_at",
       "quality_score",
+      "attention_score",
+      "attention_checks_total",
+      "attention_correct_total",
+      "attention_last_at",
       "last_seen_at",
       "last_sync_success_at",
       "pending_submissions",
@@ -260,6 +271,10 @@ async function buildExport(
         row.consent_granted_at,
         row.consent_revoked_at,
         row.quality_score,
+        row.attention_score,
+        row.attention_checks_total,
+        row.attention_correct_total,
+        row.attention_last_at,
         row.last_seen_at,
         row.last_sync_success_at,
         row.pending_submissions,
@@ -268,6 +283,11 @@ async function buildExport(
       ])
     ),
   ].join("\n");
+  const attentionCsv = [
+    csvRow(["submission_id", "contributor_id", "project_id", "check_key", "selected_value", "correct", "guess_probability", "created_at"]),
+    ...(attentionRows ?? []).map((row) => csvRow([row.submission_id, row.contributor_id, row.project_id, row.check_key, row.selected_value, row.correct, row.guess_probability, row.created_at])),
+  ].join("\n");
+
   const features = submissionRows.map(locationFeature).filter((
     feature,
   ): feature is Record<string, unknown> => Boolean(feature));
@@ -297,6 +317,7 @@ async function buildExport(
     "data/submissions.csv": strToU8(submissionsCsv),
     "data/media.csv": strToU8(mediaCsv),
     "data/contributors.csv": strToU8(contributorsCsv),
+    "data/attention.csv": strToU8(attentionCsv),
     "data/submissions.geojson": strToU8(geojson),
   };
   for (const schema of (schemas ?? []) as Record<string, unknown>[]) {

@@ -1,5 +1,6 @@
 import type { MediaAsset, Observation, Project } from "../types";
 import { collectEnvironment } from "../lib/deviceInfo";
+import { extractAttentionResponse } from "../lib/attention";
 import {
   commitLocalSubmission,
   getOrCreateDeviceId,
@@ -31,9 +32,15 @@ export async function commitLocalObservation({
   const clientCreatedAt = new Date().toISOString();
   const deviceId = await getOrCreateDeviceId();
 
+  // The automatic attention check (injected by the collector as
+  // "_attention" = "checkKey:selectedValue") is stripped from the research
+  // payload and carried separately to the server, which validates it.
+  const { values: cleanedValues, response: attentionResponse } =
+    extractAttentionResponse(values);
+
   // A fresh location fix is captured at submit time when the browser permits it.
   // Failure to obtain a fix never blocks the durable local receipt.
-  let submittedValues = values;
+  let submittedValues = cleanedValues;
   const hasLocationField = project.fields.some(
     (field) => field.type === "location",
   );
@@ -71,6 +78,7 @@ export async function commitLocalObservation({
     deviceId,
     values: submittedValues,
     media: mediaAssets,
+    attentionResponse,
   };
   const media = mediaFromAssets(mediaAssets, id, "field-site-photos");
   const submission: DurableSubmission = {
@@ -79,6 +87,7 @@ export async function commitLocalObservation({
     schemaVersionId: `${project.id}-v${project.schemaVersion}`,
     payload: submittedValues,
     environment: environment as unknown as Record<string, unknown>,
+    attentionResponse,
     payloadHash: null,
     clientCreatedAt,
     deviceId,

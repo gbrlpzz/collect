@@ -125,6 +125,8 @@ export interface Observation {
   /** Everything recorded automatically with the observation (device, screen,
    * connection, battery, timezone); never shown in the collection UI. */
   environment?: Record<string, unknown>;
+  /** The automatic attention-check answer (check key + selected value). */
+  attentionResponse?: { checkKey: string; selectedValue: string } | null;
   correctsSubmissionId?: string;
 }
 

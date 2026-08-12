@@ -62,6 +62,7 @@ export interface DurableSubmission {
   /** Everything recorded automatically with the observation (device, screen,
    * connection, battery, timezone); never shown in the collection UI. */
   environment?: Record<string, unknown>;
+  attentionResponse?: { checkKey: string; selectedValue: string } | null;
   payloadHash: string | null;
   clientCreatedAt: string;
   deviceId: string;

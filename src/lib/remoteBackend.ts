@@ -96,6 +96,13 @@ export async function createRemoteSubmission({
       device_model: deviceInfo.deviceModel,
       device_os: deviceInfo.os,
       browser: deviceInfo.browser,
+      environment: observation.environment ?? {},
+      attention_response: observation.attentionResponse
+        ? {
+            check_key: observation.attentionResponse.checkKey,
+            selected_value: observation.attentionResponse.selectedValue,
+          }
+        : null,
       app_version: appVersion,
       expected_media_count: (observation.media ?? []).length,
       corrects_submission_id: observation.correctsSubmissionId ?? null,
