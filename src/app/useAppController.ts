@@ -107,6 +107,9 @@ export function useAppController() {
   );
   const toastTimerRef = useRef<number | undefined>(undefined);
   const syncOwnerRef = useRef(`sync-worker-${crypto.randomUUID()}`);
+  const syncNowRef = useRef<
+    (options?: { silent?: boolean }) => Promise<boolean>
+  >(() => Promise.resolve(false));
 
   const surface: "admin" | "contributor" =
     state.mode === "admin" ? "admin" : "contributor";
@@ -348,6 +351,33 @@ export function useAppController() {
         .length,
     [state.observations],
   );
+  // Background Sync: register whenever there is pending work; the service
+  // worker wakes the app and the same silent sync path runs.
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !pendingCount) return;
+    let active = true;
+    void navigator.serviceWorker.ready
+      .then((registration) =>
+        (
+          registration as unknown as {
+            sync?: { register: (tag: string) => Promise<void> };
+          }
+        ).sync
+          ?.register("collect-sync")
+          .catch(() => undefined),
+      )
+      .catch(() => undefined);
+    const onMessage = (event: MessageEvent) => {
+      if (!active || event.data?.type !== "collect-sync") return;
+      syncNowRef.current({ silent: true });
+    };
+    navigator.serviceWorker.addEventListener("message", onMessage);
+    return () => {
+      active = false;
+      navigator.serviceWorker.removeEventListener("message", onMessage);
+    };
+  }, [pendingCount]);
+
   const selectedObservations = useMemo(
     () =>
       state.observations.filter(
@@ -505,6 +535,8 @@ export function useAppController() {
       showToast,
       silent: options?.silent,
     });
+
+  syncNowRef.current = syncNow;
 
   useSyncLifecycle({
     configured: isSupabaseConfigured,

@@ -773,6 +773,23 @@ export async function getPendingOutboxCounts(projectId?: string): Promise<{
   return { pendingSubmissions: submissionIds.size, pendingMedia };
 }
 
+/** True when a durable server receipt exists for this submission. */
+export async function hasLocalReceipt(id: string): Promise<boolean> {
+  if (!("indexedDB" in window)) return false;
+  try {
+    const database = await openDatabase();
+    const transaction = database.transaction(RECEIPTS_STORE, "readonly");
+    const transactionComplete = waitForTransaction(transaction);
+    const result = await createRequest(
+      transaction.objectStore(RECEIPTS_STORE).get(id),
+    );
+    await transactionComplete;
+    return result !== undefined && result !== null;
+  } catch {
+    return false;
+  }
+}
+
 export async function getOutboxOperations(): Promise<OutboxOperation[]> {
   if (!("indexedDB" in window)) return [];
   const database = await openDatabase();

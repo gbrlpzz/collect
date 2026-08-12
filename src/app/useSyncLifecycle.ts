@@ -70,7 +70,11 @@ export function useSyncLifecycle({
           const due = operations.some(
             (operation) =>
               (operation.state === "QUEUED" ||
-                operation.state === "RETRYABLE_ERROR") &&
+                operation.state === "RETRYABLE_ERROR" ||
+                // IN_PROGRESS rows left by a killed tab are rescued here once
+                // the lease has expired (the launch effect covers the same
+                // case for a fresh boot).
+                operation.state === "IN_PROGRESS") &&
               new Date(operation.nextAttemptAt).getTime() <= Date.now(),
           );
           if (due) {

@@ -6,6 +6,7 @@ import {
   acquireSyncLease,
   getOrCreateDeviceId,
   getPendingOutboxCounts,
+  hasLocalReceipt,
   markLocalSubmissionsSynced,
   recordOutboxFailure,
   releaseSyncLease,
@@ -137,6 +138,19 @@ export function syncNow({
                   },
                 )
               : null;
+            // The receipt must name exactly this submission before the local
+            // queue is cleared.
+            if (
+              configured &&
+              receipt &&
+              receipt.submission_id !== observation.id
+            )
+              throw new Error(
+                "Server receipt does not match the submission identifier",
+              );
+            const alreadyCounted = configured
+              ? await hasLocalReceipt(observation.id)
+              : false;
             syncedIds.add(observation.id);
             const receiptAt = receipt?.received_at ?? new Date().toISOString();
             await markLocalSubmissionsSynced([observation.id], {
@@ -150,7 +164,9 @@ export function syncNow({
                 candidate.id === project.id
                   ? {
                       ...candidate,
-                      completeSubmissions: candidate.completeSubmissions + 1,
+                      completeSubmissions:
+                        candidate.completeSubmissions +
+                        (alreadyCounted ? 0 : 1),
                       lastReceived: "Just now",
                     }
                   : candidate,
@@ -160,7 +176,8 @@ export function syncNow({
                   ? {
                       ...current.project,
                       completeSubmissions:
-                        current.project.completeSubmissions + 1,
+                        current.project.completeSubmissions +
+                        (alreadyCounted ? 0 : 1),
                       lastReceived: "Just now",
                     }
                   : current.project;

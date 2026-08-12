@@ -40,6 +40,25 @@ self.addEventListener("install", (event) => {
   );
 });
 
+// Background Sync: when the browser wakes the worker for a pending sync,
+// nudge every open collect window; the app decides whether work is due.
+self.addEventListener("sync", (event) => {
+  if (event.tag !== "collect-sync") return;
+  event.waitUntil(
+    self.clients
+      .matchAll({ includeUncontrolled: true })
+      .then((clients) =>
+        clients.forEach((client) =>
+          client.postMessage({ type: "collect-sync" }),
+        ),
+      ),
+  );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "collect-sync-ok") return;
+});
+
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
