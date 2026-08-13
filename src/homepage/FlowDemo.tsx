@@ -429,9 +429,9 @@ export function FlowDemo() {
   // Start the self-play once the demo scrolls into view — unless the
   // visitor prefers reduced motion or has already interacted.
   useEffect(() => {
-    const phone = phoneRef.current;
+    const frame = frameRef.current;
     if (
-      !phone ||
+      !frame ||
       reducedMotion ||
       interactedRef.current ||
       typeof IntersectionObserver === "undefined"
@@ -445,9 +445,9 @@ export function FlowDemo() {
           setAutoState("playing");
         }
       },
-      { threshold: 0.1 },
+      { threshold: 0.05 },
     );
-    observer.observe(phone);
+    observer.observe(frame);
     return () => observer.disconnect();
   }, []);
 
@@ -532,12 +532,6 @@ export function FlowDemo() {
   return (
     <div className="hp-flow-layout" ref={frameRef}>
       <div className="hp-flow-copy">
-        <div className="section-heading">
-          <p className="eyebrow">Try it</p>
-          <h2>A short walk through the core flow.</h2>
-          <p>The app's real frontend. Watch it fill itself, or take over.</p>
-        </div>
-
         <div className="hp-story" aria-live="polite">
           <span className="hp-story-kicker">While you fill it in</span>
           <h3>{narrative.title}</h3>

@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "../components/Icon";
 import { AdminDashboard, AdminProject } from "../components/AdminDashboard";
+import { NewProjectWizard } from "../components/NewProjectWizard";
 import { SegmentedControl } from "../components/ui";
 import { FlowDemo, demoProject } from "./FlowDemo";
 import { AttentionDemo } from "./AttentionDemo";
@@ -144,42 +145,80 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
 }
 
 function AdminPreview() {
-  const [view, setView] = useState<"dashboard" | "project">("dashboard");
+  const [view, setView] = useState<"dashboard" | "wizard" | "project">(
+    "dashboard",
+  );
   const [project, setProject] = useState(demoProject);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (view !== "dashboard") return;
+    const timer = window.setTimeout(() => {
+      rootRef.current
+        ?.querySelector<HTMLButtonElement>(".admin-project-card")
+        ?.click();
+    }, 1400);
+    return () => window.clearTimeout(timer);
+  }, [view]);
+
+  if (view === "wizard") {
+    return (
+      <div ref={rootRef}>
+        <NewProjectWizard
+          onBack={() => setView("dashboard")}
+          onPublish={async (input) => {
+            setProject((current) => ({
+              ...current,
+              name: input.name || current.name,
+              description: input.description || current.description,
+              instructions: input.instructions || current.instructions,
+              fields: input.fields,
+            }));
+            setView("project");
+          }}
+        />
+      </div>
+    );
+  }
 
   if (view === "project") {
     return (
-      <AdminProject
-        project={project}
-        onBack={() => setView("dashboard")}
-        onToast={() => undefined}
-        onExport={() => undefined}
-        onSchemaPublished={setProject}
-        onToggleStatus={() =>
-          setProject((current) => ({
-            ...current,
-            status: current.status === "active" ? "closed" : "active",
-          }))
-        }
-        onPreviewContributor={() => setView("dashboard")}
-      />
+      <div ref={rootRef}>
+        <AdminProject
+          project={project}
+          onBack={() => setView("dashboard")}
+          onToast={() => undefined}
+          onExport={() => undefined}
+          onSchemaPublished={setProject}
+          onToggleStatus={() =>
+            setProject((current) => ({
+              ...current,
+              status: current.status === "active" ? "closed" : "active",
+            }))
+          }
+          onPreviewContributor={() => setView("dashboard")}
+        />
+      </div>
     );
   }
 
   return (
-    <AdminDashboard
-      project={demoProject}
-      projects={[demoProject]}
-      onNavigate={(next) => {
-        if (next === "admin-project") setView("project");
-      }}
-      onSelectProject={setProject}
-    />
+    <div ref={rootRef}>
+      <AdminDashboard
+        project={demoProject}
+        projects={[demoProject]}
+        onNavigate={(next) => {
+          if (next === "admin-project") setView("project");
+          if (next === "new-project") setView("wizard");
+        }}
+        onSelectProject={setProject}
+      />
+    </div>
   );
 }
 
 function DemoSurface() {
-  const [surface, setSurface] = useState("contributor");
+  const [surface, setSurface] = useState("admin");
   return (
     <section
       className="hp-section hp-hero-demo"
@@ -187,13 +226,20 @@ function DemoSurface() {
       aria-label="Live product preview"
     >
       <div className="hp-section-inner">
+        <div className="hp-demo-heading">
+          <p className="eyebrow">Live preview</p>
+          <h2>Create the survey. Then collect the data.</h2>
+          <p>
+            Start in Admin, then fill the same protocol offline in Contributor.
+          </p>
+        </div>
         <div className="hp-demo-tabs-wrap">
           <SegmentedControl
             className="hp-demo-tabs"
             label="Product surface"
             options={[
-              { value: "contributor", label: "Contributor" },
-              { value: "admin", label: "Admin" },
+              { value: "admin", label: "1 Create survey" },
+              { value: "contributor", label: "2 Fill survey" },
             ]}
             value={surface}
             onChange={setSurface}

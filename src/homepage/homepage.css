@@ -237,6 +237,60 @@ main [id] {
 }
 
 /* ---------- Demo section ---------- */
+.hp-demo-heading {
+  max-width: 560px;
+  margin-bottom: 28px;
+}
+.hp-demo-heading h2 {
+  margin-top: 2px;
+  font-size: clamp(1.625rem, 3vw, 2.375rem);
+  letter-spacing: -0.03em;
+}
+.hp-demo-heading p:last-child {
+  margin-top: 10px;
+  color: var(--secondary);
+  font-size: 1rem;
+}
+.hp-browser-device {
+  overflow: hidden;
+  border: 1px solid rgba(235, 235, 245, 0.2);
+  border-radius: 22px;
+  background: #000000;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+}
+.hp-browser-chrome {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  background: #1c1c1e;
+  color: rgba(235, 235, 245, 0.6);
+}
+.hp-browser-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(235, 235, 245, 0.36);
+}
+.hp-browser-address {
+  width: min(100%, 300px);
+  margin-left: 12px;
+  padding: 5px 12px;
+  border: 1px solid rgba(235, 235, 245, 0.16);
+  border-radius: 7px;
+  font-size: 0.6875rem;
+  text-align: center;
+}
+.hp-browser-device .hp-admin-preview {
+  min-height: 520px;
+  max-height: 640px;
+  overflow: auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .hp-hero-demo {
   background: var(--paper);
   border-top: 1px solid var(--separator-light);

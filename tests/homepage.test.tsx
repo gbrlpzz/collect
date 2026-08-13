@@ -194,7 +194,9 @@ describe("PackageBrowser — derived from the canonical demo dataset", () => {
 describe("HomepageApp — product surfaces stay real", () => {
   it("shows the real contributor and admin flows from one demo", () => {
     render(<HomepageApp />);
-    fireEvent.click(screen.getByRole("button", { name: "Admin", exact: true }));
+    expect(
+      screen.getByRole("button", { name: "1 Create survey", exact: true }),
+    ).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Projects" })).toBeTruthy();
     fireEvent.click(
       screen.getByRole("button", { name: /Vernacular buildings/i }),
