@@ -4,11 +4,11 @@
    The UI follows Apple's Human Interface Guidelines as the default language:
    system/grouped surfaces, a navigation bar, inset list rows, native controls,
    Dynamic Type-friendly rem units, 44 pt hit targets, and progressive
-   disclosure. A single contributor accent creates recognition and hierarchy;
-   labels, shape, and position continue to carry every functional meaning.
+   disclosure. Monochrome contrast, labels, shape, and position carry the
+   hierarchy without competing with field content.
    ------------------------------------------------------------------------- */
 :root {
-  /* Neutral field surfaces keep the high-chroma identity accent legible. */
+  /* Stable neutral field surfaces maximize legibility in variable conditions. */
   --canvas: #f5f5f7;
   --paper: #ffffff;
   --text: rgba(0, 0, 0, 0.85);
@@ -18,15 +18,15 @@
   --separator-light: rgba(0, 0, 0, 0.09);
   --grouped: rgba(0, 0, 0, 0.07);
   --grouped-strong: rgba(0, 0, 0, 0.14);
-  --brand: #d10074;
-  --focus: var(--brand);
-  --focus-ring: rgba(209, 0, 116, 0.2);
+  --brand: #000000;
+  --focus: rgba(0, 0, 0, 0.9);
+  --focus-ring: rgba(0, 0, 0, 0.14);
   --error: rgba(0, 0, 0, 0.84);
   --glass: rgba(245, 245, 247, 0.85);
-  --accent: var(--brand);
-  --accent-hover: #b00062;
+  --accent: #000000;
+  --accent-hover: #1c1c1e;
   --accent-text: #ffffff;
-  --selection-bg: var(--brand);
+  --selection-bg: rgba(0, 0, 0, 0.9);
   --radius: 10px;
   --radius-large: 14px;
   --control-height: 44px;
@@ -701,11 +701,6 @@ button {
   text-transform: none;
   letter-spacing: -0.01em;
   font-size: 0.8125rem;
-}
-.app-shell[data-mode="contributor"] .eyebrow,
-.auth-page-contributor .eyebrow,
-.consent-page .sheet-kicker {
-  color: var(--brand);
 }
 .field-section-heading .eyebrow {
   color: var(--secondary);

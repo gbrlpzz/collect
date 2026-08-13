@@ -3,9 +3,6 @@
   font-family:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
     "Helvetica Neue", Arial, sans-serif;
-  --display-font:
-    ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont,
-    "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -18,14 +15,14 @@
   --separator-light: rgba(0, 0, 0, 0.08);
   --grouped: rgba(120, 120, 128, 0.12);
   --grouped-strong: #e5e5ea;
-  --brand: #d10074;
-  --focus: var(--brand);
+  --brand: rgba(0, 0, 0, 0.9);
+  --focus: rgba(0, 0, 0, 0.36);
   --error: rgba(0, 0, 0, 0.72);
   --glass: rgba(250, 250, 252, 0.82);
-  --accent: var(--brand);
-  --accent-hover: #b00062;
+  --accent: rgba(0, 0, 0, 0.9);
+  --accent-hover: #000;
   --accent-text: #fff;
-  --selection-bg: var(--brand);
+  --selection-bg: rgba(0, 0, 0, 0.9);
   --radius: 14px;
   --radius-large: 22px;
 }
@@ -84,7 +81,6 @@ p {
 h1,
 h2,
 h3 {
-  font-family: var(--display-font);
   letter-spacing: -0.03em;
 }
 h1 {
@@ -163,10 +159,9 @@ p {
   border: 0;
   background: transparent;
   color: var(--text);
-  font-family: var(--display-font);
 }
 .wordmark-dot {
-  color: var(--brand);
+  color: var(--tertiary);
 }
 .collect-brand {
   display: inline-flex;
@@ -191,9 +186,8 @@ p {
   fill: currentColor;
 }
 .collect-wordmark {
-  font-family: var(--display-font);
   font-size: 1.5rem;
-  font-weight: 760;
+  font-weight: 700;
   line-height: 1;
   letter-spacing: -0.075em;
 }
@@ -1860,7 +1854,7 @@ p {
   letter-spacing: -0.07em;
 }
 .auth-mark .wordmark-dot {
-  color: var(--brand);
+  color: var(--tertiary);
 }
 .auth-card {
   width: min(100%, 400px);

@@ -2,10 +2,7 @@ interface CollectBrandProps {
   compact?: boolean;
 }
 
-/**
- * The capture mark combines a letterform-like C with an observation point.
- * It stays geometric at small sizes and inherits the surface identity color.
- */
+/** A field frame and observation point: capture without implying a data type. */
 export function CollectBrand({ compact = false }: CollectBrandProps) {
   return (
     <span
@@ -13,7 +10,7 @@ export function CollectBrand({ compact = false }: CollectBrandProps) {
       aria-hidden="true"
     >
       <svg className="collect-mark" viewBox="0 0 32 32" focusable="false">
-        <path d="M23.75 8.4a10 10 0 1 0 0 15.2" />
+        <path d="M12 5H8a3 3 0 0 0-3 3v4M20 5h4a3 3 0 0 1 3 3v4M5 20v4a3 3 0 0 0 3 3h4M27 20v4a3 3 0 0 1-3 3h-4" />
         <circle cx="16" cy="16" r="3.25" />
       </svg>
       <span className="collect-wordmark">

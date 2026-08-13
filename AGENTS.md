@@ -32,7 +32,7 @@
 
 ## Interface baseline
 
-Follow `docs/design.md` and the official Apple Human Interface Guidelines links there. Prefer system typography, native controls, semantic hierarchy, neutral surfaces, comfortable touch targets, visible text states, reduced motion, and progressive disclosure. Commands use the shared capsule/circle system; floating material is reserved for mobile commands and navigation, never research content. The contributor surface uses one contrast-validated identity accent; the administrator surface stays black and white. Never rely on the accent alone to communicate state. Do not add dashboards, gradients, decorative cards, or settings that do not help the field operation.
+Follow `docs/design.md` and the official Apple Human Interface Guidelines links there. Prefer system typography, native controls, semantic hierarchy, neutral surfaces, comfortable touch targets, visible text states, reduced motion, and progressive disclosure. Commands use the shared capsule/circle system; floating material is reserved for mobile commands and navigation, never research content. The contributor surface uses a light monochrome identity and the administrator surface uses its dark inverse. Do not add dashboards, gradients, decorative cards, custom display faces, or settings that do not help the field operation.
 
 ## Safe workflow
 

@@ -21,9 +21,9 @@ function contrast(first: string, second: string) {
 }
 
 describe("installable surface identity", () => {
-  it("keeps the contributor accent legible with white and the field canvas", () => {
-    expect(contrast("#d10074", "#ffffff")).toBeGreaterThanOrEqual(4.5);
-    expect(contrast("#d10074", "#f5f5f7")).toBeGreaterThanOrEqual(4.5);
+  it("keeps the monochrome contributor controls legible", () => {
+    expect(contrast("#000000", "#ffffff")).toBeGreaterThanOrEqual(7);
+    expect(contrast("#000000", "#f5f5f7")).toBeGreaterThanOrEqual(7);
   });
 
   it.each([
