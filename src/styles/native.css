@@ -141,6 +141,7 @@ button {
    surfaces. Rows remain plain buttons; containers are used only when they
    communicate grouping or afford a system action. */
 .project-list,
+.recent-observation-list,
 .admin-project-list,
 .readiness-list,
 .schema-list,

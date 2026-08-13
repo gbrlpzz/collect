@@ -488,7 +488,7 @@ p {
   min-height: 44px;
 }
 .collection-status {
-  margin-top: 30px;
+  margin-top: var(--space-6);
 }
 .collection-status .section-heading-row {
   display: flex;
@@ -498,9 +498,6 @@ p {
 .collection-status-count {
   color: var(--tertiary);
   font-size: 0.75rem;
-}
-.recent-observation-list {
-  border-top: 1px solid var(--separator);
 }
 .recent-observation-row {
   min-height: 58px;
@@ -642,10 +639,6 @@ p {
   background: var(--grouped-strong);
 }
 
-/* Project overview */
-.page-project {
-  max-width: 680px;
-}
 .project-intro {
   margin-bottom: 26px;
 }
@@ -662,9 +655,6 @@ p {
   color: var(--text);
   font-size: 1.0625rem;
   line-height: 1.48;
-}
-.project-list-detail {
-  margin-top: 28px;
 }
 .project-list-detail .list-row {
   min-height: 68px;
@@ -1256,6 +1246,7 @@ p {
 }
 .section-heading-row h2 {
   margin: 0;
+  font-size: 1rem;
 }
 .section-heading-row p {
   margin-top: 5px;

@@ -625,6 +625,7 @@ export function Collector({
             <span className="back-button-label">{exitLabel}</span>
           </button>
           <div className="collector-title">
+            <span>{project.organization}</span>
             <strong>{project.name}</strong>
           </div>
           <span className="collector-save-state" />
@@ -670,6 +671,7 @@ export function Collector({
             <span className="back-button-label">{exitLabel}</span>
           </button>
           <div className="collector-title">
+            <span>{project.organization}</span>
             <strong>{project.name}</strong>
           </div>
           <span className="collector-save-state" />
@@ -698,6 +700,7 @@ export function Collector({
           <span className="back-button-label">{exitLabel}</span>
         </button>
         <div className="collector-title">
+          <span>{project.organization}</span>
           <strong>{project.name}</strong>
         </div>
         <span className="collector-save-state" aria-live="polite">

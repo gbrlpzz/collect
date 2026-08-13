@@ -16,11 +16,6 @@ const Collector = lazy(() =>
     default: Collector,
   })),
 );
-const ProjectOverview = lazy(() =>
-  import("./components/ProjectOverview").then(({ ProjectOverview }) => ({
-    default: ProjectOverview,
-  })),
-);
 const SyncSheet = lazy(() =>
   import("./components/SyncSheet").then(({ SyncSheet }) => ({
     default: SyncSheet,
@@ -263,19 +258,10 @@ export default function App() {
               onStartObservation={(project) =>
                 selectProject(project, "collector")
               }
-              onOpenProject={(project) => selectProject(project, "project")}
+              onOpenSync={openSyncSheetAndSync}
               onChooseProject={(project) => selectProject(project, "home")}
               onResumeObservation={() => navigate("collector")}
               onDiscardAndStartObservation={discardDraftAndStart}
-            />
-          )}
-
-          {state.mode === "contributor" && state.view === "project" && (
-            <ProjectOverview
-              project={state.project}
-              observations={selectedObservations}
-              onNavigate={navigate}
-              onOpenSync={openSyncSheetAndSync}
             />
           )}
 

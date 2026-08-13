@@ -34,7 +34,7 @@ The contributor interface is intentionally smaller than this infrastructure.
 
 Feature components do not open IndexedDB stores or call privileged backend endpoints directly. New behavior should enter through a domain module or application controller rather than expanding the composition shell.
 
-Collector, project detail, synchronization, project creation, and administration load as route-level chunks. Contributor sign-in and the capture-first home surface do not download administration code.
+Collector, synchronization, project creation, and administration load as route-level chunks. Contributor sign-in and the capture-first home surface do not download administration code.
 
 ## Receipt boundaries
 

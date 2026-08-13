@@ -299,7 +299,7 @@ h3 {
   line-height: 1.5;
 }
 .project-list-detail {
-  margin-top: var(--space-6);
+  margin-top: 0;
 }
 .project-footnote {
   margin-top: var(--space-6);
@@ -310,6 +310,7 @@ h3 {
 
 /* Grouped rows: one separator per boundary, one gutter per group */
 .project-list,
+.recent-observation-list,
 .admin-project-list,
 .readiness-list,
 .schema-list,
@@ -324,6 +325,17 @@ h3 {
 .list-row + .list-row,
 .admin-project-card + .admin-project-card {
   border-top: 1px solid var(--separator-light);
+}
+
+/* Status cards keep card gutters on their rows and drop the trailing
+   separator, matching the other inset lists in the app. */
+.recent-observation-list .recent-observation-row {
+  padding: 0 var(--space-4);
+}
+
+.project-list .list-row:last-child,
+.recent-observation-list .recent-observation-row:last-child {
+  border-bottom: 0;
 }
 .project-row,
 .list-row {
@@ -904,8 +916,7 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   width: fit-content;
   max-width: min(420px, calc(100vw - 32px));
 }
-.app-shell[data-view="home"] .toast,
-.app-shell[data-view="project"] .toast {
+.app-shell[data-view="home"] .toast {
   bottom: calc(72px + env(safe-area-inset-bottom));
 }
 
@@ -1438,36 +1449,6 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   margin: 0 0 var(--space-4);
   padding: 0;
   border: 0;
-}
-.collection-project-row {
-  width: 100%;
-  min-height: var(--row-height);
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--separator-light);
-  border-radius: 999px;
-  background: var(--paper);
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.045);
-  text-align: left;
-}
-.collection-project-row > span {
-  min-width: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.collection-project-row strong {
-  overflow: hidden;
-  font-size: 1rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.collection-project-row span span {
-  color: var(--secondary);
-  font-size: 0.8125rem;
 }
 .project-picker-label {
   width: 100%;

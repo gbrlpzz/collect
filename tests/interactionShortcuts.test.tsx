@@ -8,7 +8,6 @@ import { ContributorHome } from "../src/components/ContributorHome";
 import { DeviceLinkSheet } from "../src/components/DeviceLinkSheet";
 import { NewProjectWizard } from "../src/components/NewProjectWizard";
 import { ProfileSheet } from "../src/components/ProfileSheet";
-import { ProjectOverview } from "../src/components/ProjectOverview";
 import { TopBar } from "../src/components/TopBar";
 import { EmailPrompt } from "../src/components/ui";
 import type { FieldDefinition, Project } from "../src/types";
@@ -232,10 +231,10 @@ describe("low-friction primary actions", () => {
         observations={[]}
         hasDraft={false}
         onStartObservation={onStartObservation}
-        onOpenProject={() => undefined}
         onChooseProject={() => undefined}
         onResumeObservation={() => undefined}
         onDiscardAndStartObservation={() => undefined}
+        onOpenSync={() => undefined}
       />,
     );
 
@@ -259,10 +258,10 @@ describe("low-friction primary actions", () => {
         observations={[]}
         hasDraft
         onStartObservation={() => undefined}
-        onOpenProject={() => undefined}
         onChooseProject={() => undefined}
         onResumeObservation={onResumeObservation}
         onDiscardAndStartObservation={onDiscardAndStartObservation}
+        onOpenSync={() => undefined}
       />,
     );
 
@@ -445,11 +444,12 @@ describe("low-friction primary actions", () => {
     );
   });
 
-  it("opens sync status and starts synchronization from the project row", () => {
+  it("opens sync status and starts synchronization from the home screen", () => {
     const onOpenSync = vi.fn();
     render(
-      <ProjectOverview
-        project={project}
+      <ContributorHome
+        projects={[project]}
+        activeProject={project}
         observations={[
           {
             id: "waiting-1",
@@ -459,7 +459,11 @@ describe("low-friction primary actions", () => {
             values: {},
           },
         ]}
-        onNavigate={() => undefined}
+        hasDraft={false}
+        onStartObservation={() => undefined}
+        onChooseProject={() => undefined}
+        onResumeObservation={() => undefined}
+        onDiscardAndStartObservation={() => undefined}
         onOpenSync={onOpenSync}
       />,
     );
