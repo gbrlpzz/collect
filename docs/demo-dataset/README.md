@@ -1,12 +1,13 @@
-# Synthetic demo dataset
+# Synthetic checkpoint example
 
-Three synthetic observations for the demo schema (`schema-v1.json`, the
-default project form: site code, building type/occupancy/condition, features,
-date, people count, location, photos, notes).
+This directory contains three synthetic observations for the example schema.
+It demonstrates the canonical JSONL representation without exposing research
+or contributor data.
 
-- `schema-v1.json` — the published schema these rows validate against
-- `submissions.jsonl` — canonical checkpoint format (see `docs/export-format.md`)
+- `schema-v1.json` — published schema used to interpret the rows
+- `submissions.jsonl` — canonical checkpoint records; see
+  [Checkpoint export format](../export-format.md)
 
-The rows exercise: required fields, single and multiple choice, tri-state
-(yes/no/**unknown**), a number with unit, location provenance, photo metadata,
-long text, and the **Other** free-text value (VA-003, "Chapel").
+The rows cover required fields, single and multiple choice, tri-state values,
+a number with a unit, location provenance, photo metadata, long text, and an
+**Other** value with associated free text.

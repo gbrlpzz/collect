@@ -1,9 +1,9 @@
 # Checkpoint export format
 
-Every **checkpoint** is an immutable snapshot of everything the server had
-completely received at a single server timestamp. Exporting twice creates two
-checkpoints; each package is self-contained and interpretable without this
-application.
+A **checkpoint** is an immutable snapshot of complete submissions finalized by
+the server at or before one cutoff timestamp. Exporting twice creates two
+checkpoint records and two independent packages. Each package remains
+interpretable without the application.
 
 ## Package layout
 
@@ -96,6 +96,13 @@ One JSON object per line, ordered by `server_received_at`:
   "status": "COMPLETE",
   "finalized_at": "2026-08-09T07:45:02Z",
   "app_version": "0.1.2",
+  "environment": {
+    "deviceModel": "iPhone",
+    "deviceOs": "iOS",
+    "browser": "Safari",
+    "timezone": "Europe/Madrid"
+  },
+  "attention_failed": false,
   "collected_after_remote_close": false,
   "corrects_submission_id": null,
   "media": [
@@ -123,10 +130,10 @@ Notes:
   numbers store `{ "value": 3, "unit": "people" }`.
 - `status` is always `COMPLETE` in a checkpoint; `corrects_submission_id`
   links corrected copies while the original stays in the audit history.
-- `attention_failed` is the binary attention-verification signal: `true`
-  means the random check embedded in that observation was answered wrong
-  (useful for filtering low-attention records). The check question itself is
-  never stored; see `data/attention.csv` for the details.
+- `attention_failed` is the server-derived record-level attention signal.
+  Interpret it with the configured bank, contributor totals, and research
+  protocol. It is not an automatic exclusion rule. The prompt text is not
+  copied into the response row; see `data/attention.csv`.
 - `environment` carries the automatically recorded provenance (device model,
   OS, browser, screen, orientation, connection, battery, timezone).
 - Media is never recompressed or renamed beyond a sanitized extension derived
@@ -170,8 +177,8 @@ administrator-set `quality_score`.
 
 ## FAIR data standards
 
-Checkpoints carry the metadata needed to make the dataset findable, accessible,
-interoperable, and reusable without extra tooling:
+Checkpoints carry metadata that supports findability, accessibility,
+interoperability, and reuse:
 
 | FAIR principle    | Where it lives in the package                                                                                                                                                                       |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -190,6 +197,6 @@ packages, each with its own DataCite metadata and cutoff timestamp.
 
 ---
 
-See [`docs/dataset-standards.md`](dataset-standards.md) for the FAIR dataset
-metadata carried in every checkpoint (`dataset/datacite.json`,
-`dataset/data-dictionary.json`, `dataset/README.md`).
+See [FAIR-supporting dataset metadata](dataset-standards.md) for the metadata
+carried in `dataset/datacite.json`, `dataset/data-dictionary.json`, and
+`dataset/README.md`.

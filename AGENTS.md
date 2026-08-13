@@ -1,6 +1,6 @@
 # Agent guidance for collect
 
-`collect` is infrastructure for trustworthy field evidence, not a generic form builder. The interface should be calm and legible, and the data path should remain dependable when the network, browser lifecycle, or device storage is hostile. Contributors are consented professionals: the app records everything that can be recorded automatically, shows almost nothing of it, and surfaces a problem only when one exists.
+`collect` is infrastructure for trustworthy field evidence, not a generic form builder. The interface should be calm and legible, and the data path should remain dependable when the network, browser lifecycle, or device storage is hostile. Authorized contributors complete an explicit, versioned consent step. The application automates routine provenance and transfer, keeps healthy technical detail quiet, and surfaces a problem only when a person can act on it.
 
 ## Product principles
 
@@ -11,8 +11,9 @@
 - Treat `SYNCED` as a server fact, never a request-started or upload-completed guess.
 - Never use `navigator.onLine` as proof of reachability.
 - Never silently overwrite conflicts, finalized observations, media originals, or unsynced local records.
-- Keep the contributor surface almost boring: few controls, clear text states, strong touch targets, native browser semantics. Provenance (location, device info, attention checks) is invisible by default and surfaced only as a problem notice.
+- Keep the contributor surface almost boring: few controls, clear text states, strong touch targets, and native browser semantics. Location and device provenance remain background context; the configured Quick check appears as one ordinary guided-flow step and is explained in Profile.
 - On iOS, an installed PWA is a separate storage container from Safari: sessions and local data never cross containers. The server is the shared source of truth; passwords and device-link codes bridge sign-in.
+- Treat the software keyboard as part of the mobile viewport. Keep the primary action reachable, do not autofocus empty optional fields, and never require keyboard dismissal before Skip or Continue.
 
 ## Required invariants when changing code
 
@@ -29,7 +30,7 @@
 11. Every account reads and writes its own IndexedDB database (`collect-local-v1-<userId>`); set the local scope before any local read and never let cached data leak across accounts.
 12. Location and environment provenance are captured automatically whenever the platform allows; a failed optional capture must never block the durable local receipt.
 
-## UI baseline
+## Interface baseline
 
 Follow `docs/design.md` and the official Apple Human Interface Guidelines links there. Prefer system typography, native controls, semantic hierarchy, neutral surfaces, comfortable touch targets, visible text states, reduced motion, and progressive disclosure. Do not add dashboards, gradients, decorative cards, or settings that do not help the field operation.
 
