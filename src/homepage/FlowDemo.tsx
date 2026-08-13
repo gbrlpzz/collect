@@ -18,9 +18,15 @@ import type { Observation, Project } from "../types";
  * any moment — one tap stops the automaton and hands over the phone.
  */
 
-/** Demo schema = the real fixture, with location trimmed and photos optional. */
+/** Demo schema: the real fixture, narrowed to the moments that matter here. */
+const DEMO_KEYS = new Set([
+  "site_section",
+  "site_code",
+  "site_photos",
+  "building_type",
+]);
 const demoFields = projectFields
-  .filter((field) => field.type !== "location")
+  .filter((field) => DEMO_KEYS.has(field.key))
   .map((field) =>
     field.key === "site_photos"
       ? {
@@ -399,7 +405,7 @@ export function FlowDemo() {
         setAutoState("done");
         return;
       }
-      tickTimer = window.setTimeout(tick, 1250);
+      tickTimer = window.setTimeout(tick, 1050);
     };
     tickTimer = window.setTimeout(tick, 1200);
     return () => window.clearTimeout(tickTimer);
@@ -488,20 +494,20 @@ export function FlowDemo() {
           setObservation((current) =>
             current ? { ...current, status: "SYNCED" } : current,
           );
-        }, 1200),
+        }, 800),
       );
       return;
     }
     timersRef.current.push(
-      window.setTimeout(() => setSyncStage(1), 1800),
-      window.setTimeout(() => setSyncStage(2), 3400),
+      window.setTimeout(() => setSyncStage(1), 900),
+      window.setTimeout(() => setSyncStage(2), 1700),
       window.setTimeout(() => {
         setSyncStage(3);
         setAutoState("done");
         setObservation((current) =>
           current ? { ...current, status: "SYNCED" } : current,
         );
-      }, 5400),
+      }, 3000),
     );
   };
 
@@ -513,11 +519,8 @@ export function FlowDemo() {
       <div className="hp-flow-copy">
         <div className="section-heading">
           <p className="eyebrow">Try it</p>
-          <h2>The collection flow, one question at a time.</h2>
-          <p>
-            The app's real frontend. Watch it fill itself, or take over —
-            nothing is recorded anywhere.
-          </p>
+          <h2>A short walk through the core flow.</h2>
+          <p>The app's real frontend. Watch it fill itself, or take over.</p>
         </div>
 
         <div className="hp-story" aria-live="polite">
