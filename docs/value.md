@@ -51,7 +51,7 @@ A checkpoint is a self-contained server snapshot containing canonical JSONL, CSV
 
 ## Value for research and operations teams
 
-- Multi-device readiness is derived from server-visible device reports instead of manual completion claims.
+- Multi-device readiness is derived from server-visible device reports.
 - Immutable schema versions preserve the meaning of historical observations.
 - Deterministic identifiers and idempotent endpoints prevent duplicate transfer from becoming duplicate evidence.
 - Attention verification provides an advisory, exported quality signal without modifying or automatically rejecting research data.

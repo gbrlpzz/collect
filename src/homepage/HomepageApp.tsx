@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "../components/Icon";
+import { SegmentedControl } from "../components/ui";
 import { FlowDemo } from "./FlowDemo";
 import { AttentionDemo } from "./AttentionDemo";
 import { PackageBrowser } from "./PackageBrowser";
@@ -12,11 +13,10 @@ const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 const DOCS = (file: string) => `${GITHUB_URL}/blob/main/docs/${file}`;
 
 const NAV = [
-  { label: "Why collect", href: "#why" },
-  { label: "Features", href: "#features" },
-  { label: "Data formats", href: "#formats" },
-  { label: "Attention", href: "#attention" },
-  { label: "Research preview", href: "#preview" },
+  { label: "Why", href: "#why" },
+  { label: "Data", href: "#formats" },
+  { label: "Quality", href: "#quality" },
+  { label: "Preview", href: "#preview" },
 ];
 
 function TopBar() {
@@ -36,75 +36,26 @@ function TopBar() {
         <div className="hp-topbar-actions">
           <a
             className="hp-nav-link"
-            href={GITHUB_URL}
+            href={APP_URL}
             target="_blank"
             rel="noopener"
           >
-            GitHub
+            Contributor
           </a>
-          <span className="hp-topbar-group" aria-label="Sign in">
-            <a
-              className="hp-nav-link"
-              href={APP_URL}
-              target="_blank"
-              rel="noopener"
-            >
-              Contributor
-            </a>
-            <a
-              className="hp-nav-link"
-              href={ADMIN_URL}
-              target="_blank"
-              rel="noopener"
-            >
-              Admin
-            </a>
-          </span>
+          <a
+            className="hp-nav-link"
+            href={ADMIN_URL}
+            target="_blank"
+            rel="noopener"
+          >
+            Admin
+          </a>
           <a className="button button-primary button-small" href="#preview">
             Request access
           </a>
         </div>
       </div>
     </header>
-  );
-}
-
-function AppTiles() {
-  return (
-    <div className="hp-tiles" aria-label="The two installable apps">
-      <a className="hp-tile" href={APP_URL} target="_blank" rel="noopener">
-        <img
-          className="hp-tile-icon"
-          src="/icon.svg"
-          alt=""
-          width={56}
-          height={56}
-        />
-        <span className="hp-tile-copy">
-          <strong>collect</strong>
-          <span>Field app — contributor surface</span>
-        </span>
-        <span className="hp-tile-action">
-          Sign in <Icon name="arrow-right" size={14} />
-        </span>
-      </a>
-      <a className="hp-tile" href={ADMIN_URL} target="_blank" rel="noopener">
-        <img
-          className="hp-tile-icon hp-tile-icon-admin"
-          src="/icon-admin.svg"
-          alt=""
-          width={56}
-          height={56}
-        />
-        <span className="hp-tile-copy">
-          <strong>collect Admin</strong>
-          <span>Operations console — administrator surface</span>
-        </span>
-        <span className="hp-tile-action">
-          Sign in <Icon name="arrow-right" size={14} />
-        </span>
-      </a>
-    </div>
   );
 }
 
@@ -134,11 +85,9 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
           where the signal ends.
         </h1>
         <p className="hp-hero-lede">
-          collect is a field data collector for scientific surveys and
-          structured observation. It saves every answer on the device before
-          promising anything, syncs only on a durable server receipt, measures
-          the attention quality of every contributor — and exports the fieldwork
-          you actually did as a FAIR, machine-readable dataset.
+          collect saves every observation on the device before promising
+          anything, syncs only on a durable server receipt, and exports a FAIR
+          dataset with attention quality measured per contributor.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -163,8 +112,8 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
           </p>
         )}
         <p className="hp-capture-note">
-          The research preview is invite-only — we read every request. Tell us
-          your use case after leaving your email.
+          The research preview is invite-only. Leave your email — we read every
+          request.
         </p>
 
         <div className="hp-hero-actions">
@@ -175,19 +124,22 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
           <span className="hp-hero-sep" aria-hidden="true" />
           <a
             className="text-button"
-            href={GITHUB_URL}
+            href={APP_URL}
             target="_blank"
             rel="noopener"
           >
-            Source on GitHub
+            Contributor sign-in
+          </a>
+          <span className="hp-hero-sep" aria-hidden="true" />
+          <a
+            className="text-button"
+            href={ADMIN_URL}
+            target="_blank"
+            rel="noopener"
+          >
+            Admin sign-in
           </a>
         </div>
-
-        <AppTiles />
-      </div>
-
-      <div className="hp-hero-demo" id="demo">
-        <FlowDemo />
       </div>
     </section>
   );
@@ -205,7 +157,7 @@ const COMPARISON: Array<{
     collect: (
       <>
         Saved means <strong>committed to the device</strong> in one local
-        transaction — before the interface says anything
+        transaction, before the interface says anything
       </>
     ),
   },
@@ -261,91 +213,15 @@ const COMPARISON: Array<{
   },
 ];
 
-const FEATURES = [
-  {
-    icon: "signal" as const,
-    title: "Three days offline",
-    body: "Kill the app, drop the connection, wait a week. The queue, drafts, media, and receipts survive — nothing is discarded before the server acknowledges it.",
-  },
-  {
-    icon: "check" as const,
-    title: "One question at a time",
-    body: "A guided flow with capsule answers and auto-advance — no scrolling, no parsing, one thumb action at a time.",
-  },
-  {
-    icon: "location" as const,
-    title: "Location, in the background",
-    body: "Captured automatically after one permission grant. Never a question the contributor must answer.",
-  },
-  {
-    icon: "camera" as const,
-    title: "Media, fully offline",
-    body: "Photos and audio work with no signal; original files are never recompressed, and integrity hashes are computed invisibly.",
-  },
-  {
-    icon: "users" as const,
-    title: "Readiness, not self-reports",
-    body: "Device-reported status aggregates every device a contributor uses — no “I'm done” button.",
-  },
-  {
-    icon: "lock" as const,
-    title: "Consent, enforced",
-    body: "Versioned in-app consent at first sign-in; the server refuses submissions without it. Accounts are invite-only.",
-  },
-];
-
-const STEPS = [
-  {
-    title: "Define the form",
-    body: "A deliberately small set of strongly typed fields — text, numbers, choices, tri-state, date, location, photo, audio, repeatable groups. Publishing freezes an immutable schema version.",
-  },
-  {
-    title: "Invite the team",
-    body: "Accounts are invite-only. Contributors accept versioned consent at first sign-in, work fully offline, and every observation carries an automatic attention check.",
-  },
-  {
-    title: "Export the dataset",
-    body: "One reproducible checkpoint per cutoff: JSONL, CSV, GeoJSON, schema history, media originals, and the FAIR metadata a published dataset needs.",
-  },
-];
-
-const ADMIN_FEATURES = [
-  {
-    title: "FAIR by default",
-    body: "License, dataset contact, and an optional DOI are set once on the project and embedded in every export: DataCite 4.4 metadata, a data dictionary with semantic mapping hooks, and a human-readable README.",
-    chip: "dataset/datacite.json",
-  },
-  {
-    title: "Immutable schemas",
-    body: "Forms are built from a deliberately small set of strongly typed fields. Publishing freezes a version; history keeps its meaning.",
-    chip: "schema/schema-v1.json",
-  },
-  {
-    title: "Readiness, not self-reports",
-    body: "Device-reported status aggregates every device a contributor uses — no “I'm done” button. Administrators watch pending submissions per device and ping stragglers.",
-    chip: "contributors.csv",
-  },
-  {
-    title: "Consent, enforced",
-    body: "Contributors accept a versioned consent statement at first sign-in; the server refuses submissions without it, and the consent record travels in exports.",
-    chip: "submissions.jsonl",
-  },
-];
-
-function Differentiators() {
+function WhySection() {
   return (
     <section className="hp-section" id="why" aria-labelledby="why-title">
       <div className="hp-section-inner">
         <div className="section-heading">
           <p className="eyebrow">Why collect is different</p>
           <h2 id="why-title">Built for the place generic tools fail.</h2>
-          <p>
-            Most survey software is a generic form builder or a fragile online
-            tool. Fieldwork needs a different contract — and the difference is
-            in the mechanisms, not the marketing.
-          </p>
+          <p>Fieldwork needs a contract, not a form builder.</p>
         </div>
-
         <div
           className="hp-compare"
           role="table"
@@ -370,165 +246,132 @@ function Differentiators() {
             </div>
           ))}
         </div>
-
-        <ol className="hp-contract-list">
-          {[
-            {
-              title: "Saved means saved",
-              body: (
-                <>
-                  Submit commits the structured payload, media metadata, media
-                  blobs, and outbox operations in{" "}
-                  <strong>one local database transaction</strong> before the
-                  interface says anything. The receipt never depends on the
-                  network.
-                </>
-              ),
-            },
-            {
-              title: "Synced means synced",
-              body: (
-                <>
-                  Metadata → each media object → finalization: three resumable
-                  phases, retried automatically with backoff. Only the server's{" "}
-                  <strong>durable finalization receipt</strong> moves a record
-                  to “synced”.
-                </>
-              ),
-            },
-            {
-              title: "Evidence stays honest",
-              body: (
-                <>
-                  Published schemas and finalized observations are immutable;
-                  conflicts are explicit, never silently overwritten. Every
-                  record carries full provenance:{" "}
-                  <strong>
-                    who, what schema, which device, when, where, which app
-                    version
-                  </strong>
-                  .
-                </>
-              ),
-            },
-          ].map((item, index) => (
-            <li className="hp-contract-row" key={item.title}>
-              <span className="hp-contract-index">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <div className="hp-contract-copy">
-                <h3>{item.title}</h3>
-                <p>{item.body}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
       </div>
     </section>
   );
 }
 
-function FeatureGrid() {
+function DataSection() {
   return (
     <section
       className="hp-section hp-section-paper"
-      id="features"
-      aria-labelledby="features-title"
+      id="formats"
+      aria-labelledby="formats-title"
     >
       <div className="hp-section-inner">
         <div className="section-heading">
-          <p className="eyebrow">What's inside</p>
-          <h2 id="features-title">Everything a field team needs.</h2>
+          <p className="eyebrow">The data you get</p>
+          <h2 id="formats-title">A dataset, not a folder.</h2>
+          <p>
+            Every checkpoint is a self-contained, machine-readable research
+            package. Browse a real one below.
+          </p>
         </div>
-        <div className="hp-feature-grid">
-          {FEATURES.map((feature) => (
-            <article className="hp-feature-card" key={feature.title}>
-              <span className="hp-feature-icon" aria-hidden="true">
-                <Icon name={feature.icon} size={18} />
-              </span>
-              <h3>{feature.title}</h3>
-              <p>{feature.body}</p>
-            </article>
-          ))}
-        </div>
+        <PackageBrowser />
+        <p className="hp-section-note">
+          Demo rows from <code>docs/demo-dataset</code>. The package format is
+          specified in{" "}
+          <a href={DOCS("export-format.md")} target="_blank" rel="noopener">
+            docs/export-format.md
+          </a>
+          .
+        </p>
       </div>
     </section>
   );
 }
 
-function HowItWorks() {
+const QUALITY_TABS = [
+  { value: "attention", label: "Attention QA" },
+  { value: "provenance", label: "Provenance" },
+];
+
+function QualitySection() {
+  const [tab, setTab] = useState("attention");
   return (
-    <section className="hp-section" aria-labelledby="how-title">
+    <section
+      className="hp-section"
+      id="quality"
+      aria-labelledby="quality-title"
+    >
       <div className="hp-section-inner">
         <div className="section-heading">
-          <p className="eyebrow">How it works</p>
-          <h2 id="how-title">From blank project to published dataset.</h2>
+          <p className="eyebrow">Quality &amp; provenance</p>
+          <h2 id="quality-title">Measured, not assumed.</h2>
+          <p>
+            Every observation carries verifiable quality signals and full device
+            provenance — both exported with the dataset.
+          </p>
         </div>
-        <ol className="hp-steps">
-          {STEPS.map((step, index) => (
-            <li className="hp-step" key={step.title}>
-              <span className="hp-step-index">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <h3>{step.title}</h3>
-              <p>{step.body}</p>
-            </li>
-          ))}
-        </ol>
+        <div className="hp-quality">
+          <SegmentedControl
+            className="hp-quality-tabs"
+            label="Quality topic"
+            options={QUALITY_TABS}
+            value={tab}
+            onChange={setTab}
+          />
+          <div className="hp-quality-panel" key={tab}>
+            {tab === "attention" ? <AttentionDemo /> : <ProvenanceCard />}
+          </div>
+        </div>
       </div>
     </section>
   );
 }
 
-function AdminSection() {
+function AdminBand() {
   return (
     <section
       className="hp-section hp-section-dark"
       aria-labelledby="admin-title"
     >
-      <div className="hp-section-inner">
-        <div className="section-heading">
+      <div className="hp-section-inner hp-admin-band">
+        <div>
           <p className="eyebrow">collect Admin</p>
-          <h2 id="admin-title">For the team that owns the dataset.</h2>
+          <h2 id="admin-title">The operations surface.</h2>
           <p>
-            The operations surface — a separate install, black tile, same
-            system. Create the form, publish immutable schema versions, invite
-            contributors, watch readiness and attention, and export reproducible
-            checkpoints.
+            Define the form, publish immutable schema versions, invite
+            contributors, and export reproducible checkpoints.
           </p>
-          <a
-            className="button button-primary button-small hp-admin-cta"
-            href={ADMIN_URL}
-            target="_blank"
-            rel="noopener"
-          >
-            Sign in to collect Admin
-          </a>
         </div>
-        <div className="hp-admin-grid">
-          {ADMIN_FEATURES.map((feature) => (
-            <article className="hp-admin-card" key={feature.title}>
-              <h3>{feature.title}</h3>
-              <p>{feature.body}</p>
-              <code className="hp-mono-chip">{feature.chip}</code>
-            </article>
-          ))}
-        </div>
+        <a
+          className="button button-primary"
+          href={ADMIN_URL}
+          target="_blank"
+          rel="noopener"
+        >
+          Sign in to collect Admin
+        </a>
       </div>
     </section>
   );
 }
 
-const PREVIEW_PERKS = [
-  "A running instance with your own schema",
-  "Invite-only access for your contributors",
-  "Automatic attention QA on every record",
-  "FAIR checkpoint exports for your dataset",
-  "Setup and onboarding support",
-];
-
 export function HomepageApp() {
   const [draftEmail, setDraftEmail] = useState("");
+
+  // Scroll-based reveals: sections appear as they enter the viewport.
+  useEffect(() => {
+    const elements = document.querySelectorAll(".hp-reveal");
+    if (typeof IntersectionObserver === "undefined") {
+      elements.forEach((element) => element.classList.add("hp-in"));
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("hp-in");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12 },
+    );
+    elements.forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, []);
 
   const captureEmail = (email: string) => {
     setDraftEmail(email);
@@ -547,90 +390,30 @@ export function HomepageApp() {
       <TopBar />
       <main id="main">
         <Hero onEmailSubmit={captureEmail} />
-        <Differentiators />
-        <FeatureGrid />
-        <HowItWorks />
 
-        <section
-          className="hp-section hp-section-paper"
-          id="formats"
-          aria-labelledby="package-title"
-        >
+        <section className="hp-section hp-hero-demo" id="demo">
           <div className="hp-section-inner">
-            <div className="section-heading">
-              <p className="eyebrow">The data you get</p>
-              <h2 id="package-title">A dataset, not a folder.</h2>
-              <p>
-                Every checkpoint is a self-contained ZIP: canonical JSONL, CSV
-                and GeoJSON views, every published schema version, media
-                originals, and the FAIR metadata a published dataset needs. No
-                application required to read it. Browse a real demo package —
-                derived from the demo dataset in the repository.
-              </p>
+            <div className="hp-reveal">
+              <FlowDemo />
             </div>
-            <PackageBrowser />
-            <p className="hp-section-note">
-              Demo rows from <code>docs/demo-dataset</code> — three observations
-              of a rural building survey. The package format is specified in{" "}
-              <a href={DOCS("export-format.md")} target="_blank" rel="noopener">
-                docs/export-format.md
-              </a>
-              .
-            </p>
           </div>
         </section>
 
-        <section
-          className="hp-section"
-          id="attention"
-          aria-labelledby="attention-title"
-        >
-          <div className="hp-section-inner hp-split">
-            <div className="section-heading hp-sticky">
-              <p className="eyebrow">Attention QA</p>
-              <h2 id="attention-title">Quality you can measure, not assume.</h2>
-              <p>
-                Every observation quietly includes one random, universally valid
-                quick check — options shuffled, inserted into the flow. The
-                question text is never stored: only a stable check key and the
-                selected value. The server verifies against its own bank and
-                computes a guess-adjusted score per contributor.
-              </p>
-              <p className="muted">
-                Answer the check — then see exactly what the dataset will
-                contain, and what it will never contain.
-              </p>
-            </div>
-            <AttentionDemo />
-          </div>
-        </section>
+        <div className="hp-reveal">
+          <WhySection />
+        </div>
 
-        <section
-          className="hp-section hp-section-paper"
-          aria-labelledby="provenance-title"
-        >
-          <div className="hp-section-inner hp-split">
-            <div className="section-heading hp-sticky">
-              <p className="eyebrow">Provenance</p>
-              <h2 id="provenance-title">
-                Recorded automatically, never asked.
-              </h2>
-              <p>
-                Device model, operating system, browser, screen, connection,
-                battery, timezone, and language are written silently with every
-                record. A failed optional capture never blocks a save.
-              </p>
-              <p className="muted">
-                This is your device, right now, read with the app's own
-                environment collector — the same record that rides along with
-                every submission.
-              </p>
-            </div>
-            <ProvenanceCard />
-          </div>
-        </section>
+        <div className="hp-reveal">
+          <DataSection />
+        </div>
 
-        <AdminSection />
+        <div className="hp-reveal">
+          <QualitySection />
+        </div>
+
+        <div className="hp-reveal">
+          <AdminBand />
+        </div>
 
         <section
           className="hp-section hp-section-paper"
@@ -642,20 +425,9 @@ export function HomepageApp() {
               <p className="eyebrow">The research preview</p>
               <h2 id="preview-title">Try it with your own fieldwork.</h2>
               <p>
-                The research preview gives you a running instance with your own
-                schema, your own contributors, and your own exports. Leave your
-                email and tell us what you collect — we read every request.
-              </p>
-              <ul className="hp-perks">
-                {PREVIEW_PERKS.map((perk) => (
-                  <li key={perk}>
-                    <Icon name="check" size={15} /> {perk}
-                  </li>
-                ))}
-              </ul>
-              <p className="hp-preview-note">
-                No account is created by this form. Access stays invite-only — a
-                preview, not a signup.
+                A running instance with your own schema, your own contributors,
+                and your own exports. Tell us what you collect — we read every
+                request.
               </p>
             </div>
             <div className="hp-preview-card">
@@ -688,26 +460,8 @@ export function HomepageApp() {
                 GitHub
               </a>
             </div>
-            <div>
-              <span className="hp-footer-heading">Docs</span>
-              <a href={DOCS("architecture.md")} target="_blank" rel="noopener">
-                Architecture
-              </a>
-              <a href={DOCS("export-format.md")} target="_blank" rel="noopener">
-                Export format
-              </a>
-              <a href={DOCS("attention-qa.md")} target="_blank" rel="noopener">
-                Attention QA
-              </a>
-              <a href={DOCS("design.md")} target="_blank" rel="noopener">
-                Design
-              </a>
-            </div>
           </nav>
-          <p className="hp-footer-legal">
-            © 2026 Gabriele Pizzi · Apache-2.0 · No AI transforms the
-            collection path.
-          </p>
+          <p className="hp-footer-legal">© 2026 Gabriele Pizzi · Apache-2.0</p>
         </div>
       </footer>
     </div>

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Collector } from "../components/Collector";
 import { ContributorHome } from "../components/ContributorHome";
-import { Button } from "../components/ui";
 import { Icon } from "../components/Icon";
 import { projectFields } from "../data/schemaFixtures";
 import { ATTENTION_CHECKS, ATTENTION_FIELD_KEY } from "../data/attentionChecks";
@@ -13,7 +12,10 @@ import type { Observation, Project } from "../types";
  * the real ContributorHome — inside a realistic iPhone mock-up. Nothing is
  * recorded anywhere: draft state lives in this component's memory only, and
  * the demo schema trims the location step so no permission is ever asked.
- * The narration column tells the app's story as the visitor fills the flow.
+ *
+ * The demo can play itself: when it scrolls into view it walks the real UI
+ * step by step (typing, answering, saving), and the visitor can take over at
+ * any moment — one tap stops the automaton and hands over the phone.
  */
 
 /** Demo schema = the real fixture, with location trimmed and photos optional. */
@@ -75,7 +77,7 @@ const NARRATION: Record<string, { title: string; body: string }> = {
   },
   building_condition: {
     title: "Typed values, stable ids",
-    body: "Choices store stable option ids (condition-maintained), not labels. The schema stays typed, and the export stays clean.",
+    body: "Choices store stable option ids, not labels. The schema stays typed, and the export stays clean.",
   },
   building_occupancy: {
     title: "Uncertainty is data",
@@ -95,7 +97,7 @@ const NARRATION: Record<string, { title: string; body: string }> = {
   },
   [ATTENTION_FIELD_KEY]: {
     title: "Attention, verified",
-    body: "A random quick check rides along after the first two questions — universally valid, options shuffled. The question text is never stored; only the check key and the answer, verified server-side, and the answer is stripped from the research payload before commit.",
+    body: "A random quick check rides along in the flow — universally valid, options shuffled. The question text is never stored; only the check key and the answer, verified server-side, and the answer is stripped from the research payload before commit.",
   },
   saved: {
     title: "Saved means saved",
@@ -118,11 +120,68 @@ const SYNC_PHASES = [
 
 type Phase = "collecting" | "home";
 type SyncStage = 0 | 1 | 2 | 3;
+type AutoState = "idle" | "playing" | "done";
 
 const reducedMotion =
   typeof window !== "undefined" && window.matchMedia
     ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
     : false;
+
+/** React ignores plain `.value` assignment; use the native input setter. */
+function setNativeValue(element: HTMLInputElement, value: string) {
+  const prototype = Object.getPrototypeOf(element);
+  Object.getOwnPropertyDescriptor(prototype, "value")?.set?.call(
+    element,
+    value,
+  );
+  element.dispatchEvent(new Event("input", { bubbles: true }));
+  element.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+/** One step of the self-playing walk, driving the real controls. */
+function autoStep(root: HTMLElement, lastTitle: string): "continue" | "done" {
+  const title =
+    root
+      .querySelector<HTMLElement>(".flow-body .step-title")
+      ?.textContent?.trim() ?? "";
+  if (!title) return "done";
+  const sameStep = title === lastTitle;
+  const primary = Array.from(
+    root.querySelectorAll<HTMLButtonElement>(".flow-actions button"),
+  ).find((button) =>
+    /continue|skip|save observation/i.test(button.textContent ?? ""),
+  );
+  const option = root.querySelector<HTMLElement>(
+    ".choice-button, .tri-state button",
+  );
+
+  if (title === "Site code") {
+    const input = root.querySelector<HTMLInputElement>("#site_code");
+    if (input) setNativeValue(input, "VA-023");
+    if (primary && !primary.disabled) primary.click();
+    return "continue";
+  }
+  if (title === "Date observed") {
+    const input = root.querySelector<HTMLInputElement>('input[type="date"]');
+    if (input) setNativeValue(input, "2026-08-10");
+    return "continue";
+  }
+  // An unchanged step after an option click is a multi-select or the final
+  // attention check: press the primary action instead of picking more options.
+  if (sameStep && option && primary && !primary.disabled) {
+    primary.click();
+    return "continue";
+  }
+  if (option) {
+    (option as HTMLButtonElement).click();
+    return "continue";
+  }
+  if (primary && !primary.disabled) {
+    primary.click();
+    return "continue";
+  }
+  return "continue";
+}
 
 function StatusBar() {
   return (
@@ -217,8 +276,12 @@ export function FlowDemo() {
   const [observation, setObservation] = useState<Observation | null>(null);
   const [narrativeKey, setNarrativeKey] = useState<string>("site_section");
   const [syncStage, setSyncStage] = useState<SyncStage>(0);
+  const [autoState, setAutoState] = useState<AutoState>("idle");
   const timersRef = useRef<number[]>([]);
   const screenRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const lastTitleRef = useRef("");
+  const interactedRef = useRef(false);
 
   // The narration follows whatever the real flow is showing: watch the step
   // title inside the phone and map it back to the schema field key.
@@ -244,9 +307,79 @@ export function FlowDemo() {
 
   useEffect(() => () => timersRef.current.forEach(clearTimeout), []);
 
+  const stopAuto = () => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+    setAutoState((state) => (state === "playing" ? "idle" : state));
+  };
+
+  // The automaton drives the real UI. It stops the moment the visitor
+  // touches the phone (or presses a key), handing over control.
+  useEffect(() => {
+    if (autoState !== "playing") return;
+    const root = screenRef.current;
+    if (!root) return;
+    const tick = () => {
+      const next = autoStep(root, lastTitleRef.current);
+      lastTitleRef.current =
+        root
+          .querySelector<HTMLElement>(".flow-body .step-title")
+          ?.textContent?.trim() ?? "";
+      if (next === "done" || phase === "home") {
+        setAutoState("done");
+        return;
+      }
+      timersRef.current.push(window.setTimeout(tick, 1250));
+    };
+    timersRef.current.push(window.setTimeout(tick, 900));
+    return stopAuto;
+  }, [autoState, phase, round]);
+
+  // Start the self-play once the demo scrolls into view — unless the
+  // visitor prefers reduced motion or has already interacted.
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (
+      !frame ||
+      reducedMotion ||
+      interactedRef.current ||
+      typeof IntersectionObserver === "undefined"
+    ) {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          observer.disconnect();
+          setAutoState("playing");
+        }
+      },
+      { threshold: 0.35 },
+    );
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, []);
+
+  // Any real user interaction inside the phone takes over from the automaton.
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame || autoState !== "playing") return;
+    const takeOver = () => {
+      interactedRef.current = true;
+      stopAuto();
+    };
+    frame.addEventListener("pointerdown", takeOver, { capture: true });
+    frame.addEventListener("keydown", takeOver, { capture: true });
+    return () => {
+      frame.removeEventListener("pointerdown", takeOver, { capture: true });
+      frame.removeEventListener("keydown", takeOver, { capture: true });
+    };
+  }, [autoState]);
+
   const reset = () => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
+    lastTitleRef.current = "";
     setDraft({});
     setSavedValues(null);
     setObservation(null);
@@ -256,9 +389,16 @@ export function FlowDemo() {
     setPhase("collecting");
   };
 
+  const watchAgain = () => {
+    reset();
+    interactedRef.current = false;
+    setAutoState("playing");
+  };
+
   const handleSubmit = (values: Record<string, unknown>) => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
+    setAutoState("done");
     setSavedValues(values);
     setObservation({
       id: "demo-observation",
@@ -298,15 +438,15 @@ export function FlowDemo() {
   const stripped = savedValues && extractAttentionResponse(savedValues);
 
   return (
-    <div className="hp-flow-layout">
+    <div className="hp-flow-layout" ref={frameRef}>
       <div className="hp-flow-copy">
         <div className="section-heading">
           <p className="eyebrow">Try it</p>
           <h2>The collection flow, one question at a time.</h2>
           <p>
-            This is the app's real frontend running inside an iPhone mock-up —
-            the same guided flow, the same copy, the same attention check. Go
-            ahead and answer it. Nothing is recorded anywhere.
+            This is the app's real frontend — the same guided flow, the same
+            copy, the same attention check. Watch it fill itself, or take over
+            at any moment. Nothing is recorded anywhere.
           </p>
         </div>
 
@@ -348,23 +488,41 @@ export function FlowDemo() {
               <summary>View what was recorded</summary>
               <pre>{JSON.stringify(stripped.values, null, 2)}</pre>
               <p>
-                The attention answer ({" "}
+                The attention answer (
                 <code>
                   {stripped.response
                     ? `${stripped.response.checkKey}:${stripped.response.selectedValue}`
                     : "—"}
-                </code>{" "}
+                </code>
                 ) was stripped before commit — it never enters the payload.
               </p>
             </details>
           )}
         </div>
 
-        <ul className="feature-points">
-          <li>Single answers auto-advance after ~200 ms</li>
-          <li>Required steps stay disabled until answered</li>
-          <li>The demo runs in your browser — nothing is recorded anywhere</li>
-        </ul>
+        <div className="hp-auto-bar">
+          {autoState === "playing" && (
+            <p className="hp-auto-note">
+              <span className="status-dot" aria-hidden="true" /> The demo is
+              playing itself — tap the phone to take over.
+            </p>
+          )}
+          {autoState === "done" && !interactedRef.current && (
+            <button className="text-button" type="button" onClick={watchAgain}>
+              <Icon name="refresh" size={15} /> Watch again
+            </button>
+          )}
+          {autoState === "idle" && (
+            <button className="text-button" type="button" onClick={watchAgain}>
+              <Icon name="play" size={15} /> Watch it fill itself
+            </button>
+          )}
+        </div>
+
+        <p className="hp-demo-note">
+          Live app frontend · demo trims the location step so no permission is
+          asked · nothing is recorded anywhere
+        </p>
       </div>
 
       <div className="hp-iphone-wrap">
@@ -398,10 +556,6 @@ export function FlowDemo() {
             ) : null}
           </div>
         </IPhone>
-        <p className="hp-demo-note">
-          Live app frontend · demo trims the location step so no permission is
-          asked · nothing is recorded anywhere
-        </p>
       </div>
     </div>
   );

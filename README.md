@@ -56,7 +56,7 @@ The application is not intended to replace a general-purpose database, a spreads
 1. Create a project and name it. Add context and dataset metadata only when needed.
 2. Define a small, typed collection schema and preview the contributor flow.
 3. Publish the immutable schema version and invite contributors.
-4. Monitor readiness, pending work, and advisory attention summaries without asking contributors to report completion manually.
+4. Monitor readiness, pending work, and advisory attention summaries from server-visible device reports.
 5. Export an immutable checkpoint at any time, or close the project and create the final package when all known devices are ready.
 
 ### iOS sign-in
