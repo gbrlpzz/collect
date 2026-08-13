@@ -1,5 +1,7 @@
 # collect
 
+![Collect administrator form editor and contributor observation interface](public/collect-preview.png)
+
 **Offline-first field data collection for research and operational fieldwork.**
 
 `collect` is a mobile-first progressive web application for structured observations, media, and location data in environments where connectivity is intermittent or unavailable. It combines a deliberately small contributor interface with a durable local ledger, resumable synchronization, immutable schema versions, and portable research exports.
