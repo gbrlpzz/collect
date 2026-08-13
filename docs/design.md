@@ -211,19 +211,30 @@ Automated tests do not replace VoiceOver, keyboard, zoom, text-size, contrast, a
 
 The contributor app uses a stable light appearance for field legibility. The administrator app uses a distinct dark appearance to signal a different operational surface.
 
-| Token          | Contributor         | Administrator       |
-| -------------- | ------------------- | ------------------- |
-| Canvas         | `#f5f5f7`           | `#000000`           |
-| Paper          | `#ffffff`           | `#1c1c1e`           |
-| Primary text   | `#1d1d1f`           | `#f5f5f7`           |
-| Secondary text | neutral system gray | neutral system gray |
-| Accent         | black               | white               |
-| Accent text    | white               | black               |
-| Destructive    | semantic red        | semantic red        |
+| Token          | Contributor  | Administrator |
+| -------------- | ------------ | ------------- |
+| Canvas         | `#f5f5f7`    | `#000000`     |
+| Paper          | `#ffffff`    | `#1c1c1e`     |
+| Primary text   | `#1d1d1f`    | `#f5f5f7`     |
+| Secondary text | `#636366`    | `#aeaeb2`     |
+| Tertiary text  | `#707075`    | `#8e8e93`     |
+| Accent         | black        | white         |
+| Accent text    | white        | black         |
+| Destructive    | semantic red | semantic red  |
 
 The contributor interface uses black controls on white or soft-gray surfaces. Words, icons, checkmarks, shape, order, and accessible names carry state. The administrator surface inverts the same system, making an accidental surface switch immediately apparent without introducing a second visual language.
 
 The wordmark, headings, body copy, and controls use the normal platform system stack. Weight, scale, and spacing create hierarchy without introducing a separate display face.
+
+### Measured interface contract
+
+- Spacing uses the 4-point sequence `4, 8, 12, 16, 20, 24, 32, 40, 48`.
+- Standard controls retain a 44-point activation region; prominent mobile actions are 52 points high.
+- Standard rows are 68 points high unless their content requires additional space.
+- Compact, medium, and grouped surfaces use 12-, 16-, and 20-point radii. Commands use the capsule radius and icon-only commands remain circular.
+- Body, subheadline, footnote, and caption roles are 17, 15, 13, and 12 points respectively and scale from the root font size.
+- Small semantic text meets a 4.5:1 contrast ratio on its relevant canvas and paper surfaces.
+- A screen uses one content axis: brand, heading, form, supporting copy, and footnote align to the same measured width.
 
 ### Identity and app icons
 

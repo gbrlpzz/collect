@@ -60,10 +60,11 @@ const project: Project = {
 };
 
 describe("low-friction primary actions", () => {
-  it("focuses the login email field as soon as the screen opens", () => {
+  it("leaves the entry keyboard closed until the person chooses a field", () => {
     render(<AuthScreen configured role="contributor" />);
 
-    expect(document.activeElement).toBe(screen.getByLabelText("Email address"));
+    expect(screen.getByLabelText("Email address")).toBeTruthy();
+    expect(document.activeElement).toBe(document.body);
   });
 
   it("signs in with email and password from the focused email field", async () => {

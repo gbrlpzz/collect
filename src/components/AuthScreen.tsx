@@ -410,7 +410,6 @@ export function AuthScreen({
                         inputMode="email"
                         autoCapitalize="none"
                         spellCheck={false}
-                        autoFocus
                       />
                       {email && (
                         <ClearButton
@@ -498,7 +497,6 @@ export function AuthScreen({
                             void submitDeviceLink(nextCode);
                         }}
                         placeholder="AB2D9KQX"
-                        autoFocus
                         disabled={codeBusy}
                       />
                     </label>
@@ -559,7 +557,6 @@ export function AuthScreen({
                         inputMode="email"
                         autoCapitalize="none"
                         spellCheck={false}
-                        autoFocus
                       />
                       {email && (
                         <ClearButton
