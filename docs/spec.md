@@ -1230,7 +1230,10 @@ Header:
 
 Project name
 Organization
-Active / closed
+Description
+
+Active is the default and is not labelled. If collection is closed, append
+**Closed** to the organization line.
 
 Primary metrics:
 

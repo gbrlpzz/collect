@@ -97,31 +97,6 @@ export function ModalSurface({
   );
 }
 
-export function StatusDot({
-  tone = "neutral",
-}: {
-  tone?: "neutral" | "dark" | "soft";
-}) {
-  return (
-    <span className={`status-dot status-dot-${tone}`} aria-hidden="true" />
-  );
-}
-
-export function StatusBadge({
-  children,
-  tone = "neutral",
-}: {
-  children: ReactNode;
-  tone?: "neutral" | "dark" | "soft";
-}) {
-  return (
-    <span className={`status-badge status-badge-${tone}`}>
-      <StatusDot tone={tone} />
-      {children}
-    </span>
-  );
-}
-
 export interface ConfirmationDialogProps {
   title: string;
   message: string;

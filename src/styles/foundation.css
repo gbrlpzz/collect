@@ -218,8 +218,7 @@ p {
   background: transparent;
   color: var(--secondary);
 }
-.account-button:hover,
-.account-button-open {
+.account-button:hover {
   color: var(--text);
   background: rgba(118, 118, 128, 0.1);
 }
@@ -362,36 +361,6 @@ p {
   height: 1px;
   margin: 22px 0;
   background: var(--separator-light);
-}
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--secondary);
-  font-size: 0.8125rem;
-  white-space: nowrap;
-}
-.status-badge-dark {
-  color: var(--text);
-}
-.status-badge-soft {
-  color: var(--secondary);
-}
-.status-dot {
-  width: 7px;
-  height: 7px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: var(--tertiary);
-}
-.status-dot-dark {
-  background: var(--text);
-}
-.status-dot-soft {
-  background: var(--secondary);
 }
 .avatar {
   width: 32px;

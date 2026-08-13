@@ -98,6 +98,20 @@ describe("visual system contract", () => {
     );
   });
 
+  it("does not decorate state with badges or active dots", () => {
+    expect(styles).not.toContain(".status-badge");
+    expect(styles).not.toContain(".status-dot");
+    expect(styles).not.toContain(".step-required");
+    expect(styles).not.toContain(".surface-label");
+    expect(styles).not.toContain(".account-button-open");
+  });
+
+  it("uses the shared floating command geometry for the mobile header", () => {
+    expect(geometry).toMatch(
+      /@media \(max-width: 680px\)[\s\S]*?\.topbar-inner\s*\{[^}]*border-radius:\s*var\(--control-radius\)[^}]*box-shadow:\s*var\(--floating-shadow\)/s,
+    );
+  });
+
   it("keeps resume and deliberate restart together in the mobile reach zone", () => {
     expect(geometry).toMatch(
       /\.draft-restart-action\s*\{[^}]*min-height:\s*var\(--control-height\)[^}]*color:\s*var\(--destructive\)/s,

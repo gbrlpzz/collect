@@ -221,7 +221,8 @@ The consent screen begins with a scannable summary and leaves the full statement
 
 - All controls have programmatic names.
 - Questions label their inputs.
-- Required and invalid state use semantic attributes and visible text.
+- Required is the default and is enforced semantically; optional fields are
+  labelled in plain text. Invalid state always has visible explanatory text.
 - Focus order follows reading order.
 - Focus indicators remain visible in both appearances.
 - Touch targets remain comfortable under text scaling.
@@ -236,6 +237,13 @@ Automated tests do not replace VoiceOver, keyboard, zoom, text-size, contrast, a
 ## Visual language
 
 The contributor app uses a stable light appearance for field legibility. The administrator app uses a distinct dark appearance to signal a different operational surface.
+
+The global header contains only the Collect home control and Profile. At mobile
+widths it uses the same floating capsule, continuous radius, material, border,
+and shadow as the reachable command system. It does not repeat the surface name
+or show a selected-state treatment after Profile opens. Ordinary project state
+is silent: do not use decorative status dots, chips, or “Active” badges. Put
+exceptional state such as **Closed** in the nearest contextual text.
 
 | Token          | Contributor  | Administrator |
 | -------------- | ------------ | ------------- |

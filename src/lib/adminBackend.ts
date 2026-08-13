@@ -301,8 +301,16 @@ export interface SchemaDraft {
 export async function createSchemaDraft(
   project: Project,
 ): Promise<SchemaDraft> {
-  const client = requireClient();
   const nextVersion = project.schemaVersion + 1;
+  if (!supabase) {
+    return {
+      id: `preview-schema-v${nextVersion}`,
+      version: nextVersion,
+      projectId: project.id,
+      fields: project.fields,
+    };
+  }
+  const client = supabase;
   const { data: existing } = await client
     .from("project_schemas")
     .select("id,version,schema_json")
@@ -341,7 +349,8 @@ export async function createSchemaDraft(
 }
 
 export async function publishSchemaDraft(draft: SchemaDraft): Promise<void> {
-  const client = requireClient();
+  if (!supabase) return;
+  const client = supabase;
   const { data: userData, error: userError } = await client.auth.getUser();
   if (userError || !userData.user)
     throw new Error("Authentication is required to publish a schema");
