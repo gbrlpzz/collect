@@ -105,8 +105,8 @@ export function ProjectOverview({
           <div>
             <dt>Location</dt>
             <dd>
-              Coordinates, accuracy, and capture time when location permission
-              is available.
+              Coordinates, accuracy, and capture time. Projects that declare a
+              location field require Location Services before collection.
             </dd>
           </div>
           <div>

@@ -6,17 +6,17 @@ It is a technical description, not a privacy notice or legal determination. Oper
 
 ## Data categories
 
-| Category            | Examples                                                                                                | Purpose                                                            |
-| ------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Research data       | Typed answers, free text, selected options, dates, repeatable groups                                    | The project’s scientific or operational record                     |
-| Media               | User-selected photos and audio, original filename, MIME type, size, capture time                        | Primary evidence associated with an observation                    |
-| Location            | Coordinates, accuracy, capture time, source                                                             | Spatial provenance when the project and platform permit collection |
-| Record provenance   | Schema version, app version, client and server timestamps, timezone, contributor and device identifiers | Interpretation, auditability, conflict detection, and recovery     |
-| Device environment  | Operating system, browser, device family, screen, orientation, connection type, battery state, language | Operational diagnostics and fieldwork provenance                   |
-| Identity and access | Email address, organization membership, project membership, invitation state                            | Authentication and authorization                                   |
-| Consent record      | Consent version, grant timestamp, revocation timestamp                                                  | Server enforcement and export provenance                           |
-| Attention metadata  | Stable check key, selected value, server-derived correctness, aggregate score and counts                | Advisory data-quality interpretation                               |
-| Operational status  | Pending submission and media counts, last-seen time, last successful receipt, completion state          | Multi-device readiness and support                                 |
+| Category            | Examples                                                                                                | Purpose                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Research data       | Typed answers, free text, selected options, dates, repeatable groups                                    | The project’s scientific or operational record                                   |
+| Media               | User-selected photos and audio, original filename, MIME type, size, capture time                        | Primary evidence associated with an observation                                  |
+| Location            | Coordinates, accuracy, capture time, source                                                             | Spatial provenance for projects whose published schema declares a location field |
+| Record provenance   | Schema version, app version, client and server timestamps, timezone, contributor and device identifiers | Interpretation, auditability, conflict detection, and recovery                   |
+| Device environment  | Operating system, browser, device family, screen, orientation, connection type, battery state, language | Operational diagnostics and fieldwork provenance                                 |
+| Identity and access | Email address, organization membership, project membership, invitation state                            | Authentication and authorization                                                 |
+| Consent record      | Consent version, grant timestamp, revocation timestamp                                                  | Server enforcement and export provenance                                         |
+| Attention metadata  | Stable check key, selected value, server-derived correctness, aggregate score and counts                | Advisory data-quality interpretation                                             |
+| Operational status  | Pending submission and media counts, last-seen time, last successful receipt, completion state          | Multi-device readiness and support                                               |
 
 ## Local storage
 
@@ -47,7 +47,7 @@ The client does not treat a request, upload start, or connectivity indicator as 
 
 ## Automatic collection
 
-The application automates provenance to reduce contributor effort and improve recoverability. Location and environment data are collected only when the browser exposes them and relevant permissions are granted.
+The application automates provenance to reduce contributor effort and improve recoverability. Environment data is collected when the browser exposes it. Location is never requested for a project without a location field. When the published schema declares one, the contributor must grant contextual location access before collection can begin; denial leaves the collection flow locked.
 
 Automatic capture must remain:
 

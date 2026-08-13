@@ -89,7 +89,7 @@ The transfer protocol is metadata → media → finalization. Each phase is idem
 - Immutable published schemas and finalized observations.
 - Invite-only authentication, administrator allow-lists, passwordless email links, passwords, email codes, and single-use device-link codes.
 - Versioned, server-enforced collection consent with plain-language privacy disclosure. Deployments remain responsible for their own legal and ethics requirements.
-- Automatic device, time, location, application, and environment provenance when the platform permits it.
+- Automatic device, time, application, and environment provenance, plus mandatory location access for projects whose schema declares a location field.
 - Advisory attention verification with server-side validation and transparent score semantics.
 - Administrator readiness aggregated across every known device.
 - Self-contained checkpoint exports with canonical data, original media, schema history, manifests, FAIR-supporting metadata, and integrity hashes.

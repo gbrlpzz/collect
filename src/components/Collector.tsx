@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import type { FieldDefinition, MediaAsset, Project } from "../types";
 import { Icon } from "./Icon";
@@ -29,6 +29,16 @@ type Step =
   | { kind: "heading"; field: FieldDefinition }
   | { kind: "field"; field: FieldDefinition };
 
+type LocationAccessState =
+  | "not-needed"
+  | "checking"
+  | "prompt"
+  | "requesting"
+  | "granted"
+  | "denied"
+  | "unavailable"
+  | "error";
+
 function isAutoAdvanceType(type: FieldDefinition["type"]): boolean {
   return (
     type === "single_choice" ||
@@ -58,7 +68,7 @@ export function Collector({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [capturingLocation, setCapturingLocation] = useState(false);
-  const locationCaptureStartedRef = useRef(false);
+  const locationPermissionCheckStartedRef = useRef(false);
   const [mediaByField, setMediaByField] = useState<
     Record<string, MediaAsset[]>
   >(() =>
@@ -81,6 +91,8 @@ export function Collector({
   const [activeMediaField, setActiveMediaField] = useState("site_photos");
   const [locationError, setLocationError] = useState<string | null>(null);
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
+  const [locationAccess, setLocationAccess] =
+    useState<LocationAccessState>("checking");
   const [errorText, setErrorText] = useState<string | null>(null);
   const locationAttemptedFieldRef = useRef<string | null>(null);
 
@@ -134,6 +146,7 @@ export function Collector({
     () => project.fields.filter((field) => field.type === "location"),
     [project.fields],
   );
+  const requiresLocationAccess = !preview && locationFields.length > 0;
   const current = steps[Math.min(stepIndex, Math.max(steps.length - 1, 0))];
   const allMediaAssets = useMemo(
     () => Object.values(mediaByField).flat(),
@@ -258,31 +271,23 @@ export function Collector({
       // Location is provenance, not a question. Refresh it silently at the
       // save boundary; only a required schema failure becomes visible here.
       setCapturingLocation(true);
-      const capturedLocations = Object.fromEntries(
-        await Promise.all(
-          locationFields.map(async (field) => {
-            const location = await captureLocation(field.key);
-            return [field.key, location] as const;
-          }),
-        ),
-      );
+      const location = await captureLocation();
       setCapturingLocation(false);
-      const values = { ...draft };
-      for (const [key, location] of Object.entries(capturedLocations)) {
-        if (location) values[key] = location;
-      }
-      const missingRequiredLocation = locationFields.some(
-        (field) => field.required && !hasValue(values[field.key]),
-      );
-      if (missingRequiredLocation) {
+      if (!location) {
         setLocationError(
           "Location could not be captured. Allow location access and try again.",
         );
         setErrorText(
-          "Location is required for this observation. Allow location access and try again.",
+          "Location access is required for this project. Allow it and try again.",
         );
         return;
       }
+      const values = {
+        ...draft,
+        ...Object.fromEntries(
+          locationFields.map((field) => [field.key, location]),
+        ),
+      };
       saveValues(values);
       return;
     }
@@ -324,44 +329,85 @@ export function Collector({
     }, 220);
   };
 
-  const captureLocation = (
-    fieldKey: string,
-  ): Promise<Record<string, unknown> | null> =>
-    new Promise((resolve) => {
-      if (!("geolocation" in navigator)) {
-        setLocationNotice(
-          "Location is unavailable in this browser. The observation can still be kept here, but required coordinates need location access.",
-        );
-        resolve(null);
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const location = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            capturedAt: new Date().toISOString(),
-            altitude: position.coords.altitude,
-            altitudeAccuracy: position.coords.altitudeAccuracy,
-            heading: position.coords.heading,
-            autoCaptured: true,
-          };
-          onDraftChange(fieldKey, location);
-          setLocationError(null);
-          setLocationNotice(null);
-          setErrorText(null);
-          resolve(location);
-        },
-        () => {
+  const captureLocation = useCallback(
+    (): Promise<Record<string, unknown> | null> =>
+      new Promise((resolve) => {
+        if (!("geolocation" in navigator)) {
+          setLocationAccess("unavailable");
           setLocationNotice(
-            "Location is off for this app. Enable it in Settings so coordinates record automatically.",
+            "This browser cannot provide location. Collection is unavailable for this project on this device.",
           );
           resolve(null);
-        },
-        { enableHighAccuracy: true, timeout: 5000 },
-      );
-    });
+          return;
+        }
+        setLocationAccess("requesting");
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const location = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+              capturedAt: new Date().toISOString(),
+              altitude: position.coords.altitude,
+              altitudeAccuracy: position.coords.altitudeAccuracy,
+              heading: position.coords.heading,
+              autoCaptured: true,
+            };
+            for (const field of locationFields) {
+              onDraftChange(field.key, location);
+            }
+            setLocationAccess("granted");
+            setLocationError(null);
+            setLocationNotice(null);
+            setErrorText(null);
+            resolve(location);
+          },
+          (error) => {
+            const denied = error.code === error.PERMISSION_DENIED;
+            setLocationAccess(denied ? "denied" : "error");
+            setLocationNotice(
+              denied
+                ? "Location is off for Collect. Enable it in Settings before continuing."
+                : "Collect could not determine your location. Check Location Services and try again.",
+            );
+            resolve(null);
+          },
+          { enableHighAccuracy: true, timeout: 10_000 },
+        );
+      }),
+    [locationFields, onDraftChange],
+  );
+
+  const checkLocationAccess = useCallback(async () => {
+    if (!requiresLocationAccess) {
+      setLocationAccess("not-needed");
+      return;
+    }
+    if (!("geolocation" in navigator)) {
+      setLocationAccess("unavailable");
+      return;
+    }
+    setLocationAccess("checking");
+    try {
+      if (!("permissions" in navigator)) {
+        setLocationAccess("prompt");
+        return;
+      }
+      const permission = await navigator.permissions.query({
+        name: "geolocation",
+      });
+      if (permission.state === "granted") {
+        await captureLocation();
+      } else {
+        setLocationAccess(permission.state);
+      }
+    } catch {
+      // Safari versions without a queryable geolocation permission still
+      // support the geolocation request itself. Keep that request attached to
+      // the contributor's explicit action.
+      setLocationAccess("prompt");
+    }
+  }, [captureLocation, requiresLocationAccess]);
 
   const handleMediaChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
@@ -449,16 +495,28 @@ export function Collector({
     activeField && !activeField.required && !activeFieldHasValue,
   );
 
-  // Location is background provenance. Ask the browser once when an
-  // observation opens, without inserting a location question into the flow.
-  // A failed optional capture stays quiet; a required failure is explained at
-  // the save boundary so the contributor never has to navigate to a location
-  // step.
+  // Location remains background provenance, but access is a hard prerequisite
+  // whenever the published schema declares a location field. Previously
+  // granted access is used automatically. A first request remains attached to
+  // an explicit, contextual action so iOS can explain the system permission.
   useEffect(() => {
-    if (!locationFields.length || locationCaptureStartedRef.current) return;
-    locationCaptureStartedRef.current = true;
-    void Promise.all(locationFields.map((field) => captureLocation(field.key)));
-  }, [locationFields]);
+    if (locationPermissionCheckStartedRef.current) return;
+    locationPermissionCheckStartedRef.current = true;
+    void checkLocationAccess();
+  }, [checkLocationAccess]);
+
+  // Re-check after a contributor returns from iOS Settings. There is no safe
+  // web deep link into an app's permission pane, so visibility is the reliable
+  // recovery boundary for an installed PWA.
+  useEffect(() => {
+    if (!requiresLocationAccess) return;
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") void checkLocationAccess();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [checkLocationAccess, requiresLocationAccess]);
   const primaryLabel = isLastStep
     ? preview
       ? "Finish preview"
@@ -468,6 +526,70 @@ export function Collector({
     : skippingOptionalField
       ? "Skip"
       : "Continue";
+
+  if (requiresLocationAccess && locationAccess !== "granted") {
+    const isChecking =
+      locationAccess === "checking" || locationAccess === "requesting";
+    const cannotRequest = locationAccess === "unavailable";
+    const title =
+      locationAccess === "denied"
+        ? "Allow location in Settings"
+        : locationAccess === "unavailable"
+          ? "Location unavailable"
+          : locationAccess === "error"
+            ? "Location not found"
+            : "Location required";
+    const description =
+      locationAccess === "denied"
+        ? "This project records coordinates with each observation. Open Settings and allow location for Collect or this browser, then return here."
+        : locationAccess === "unavailable"
+          ? "This project requires coordinates, but this browser cannot provide them. Use a device and browser with Location Services enabled."
+          : locationAccess === "error"
+            ? "Collect has access but could not determine your position. Move to an open area, check Location Services, and try again."
+            : "This project records coordinates with each observation. Your location is used only for project provenance and is saved with the observation.";
+
+    return (
+      <main className="collector-page collector-flow">
+        <div className="collector-topbar">
+          <button className="back-button" onClick={onBack} aria-label="Back">
+            <Icon name="chevron-left" size={17} /> Project
+          </button>
+          <div className="collector-title">
+            <strong>New observation</strong>
+            <span>{project.name}</span>
+          </div>
+          <span className="collector-save-state" />
+        </div>
+        <div className="permission-gate" aria-live="polite">
+          <span className="permission-gate-icon" aria-hidden="true">
+            <Icon name="location" size={26} />
+          </span>
+          <div className="permission-gate-copy">
+            <h1>{title}</h1>
+            <p>{description}</p>
+          </div>
+          {!cannotRequest && (
+            <Button
+              variant="primary"
+              fullWidth
+              busy={isChecking}
+              disabled={isChecking}
+              onClick={() => void captureLocation()}
+            >
+              {isChecking
+                ? "Checking location…"
+                : locationAccess === "prompt"
+                  ? "Allow location"
+                  : "Try again"}
+            </Button>
+          )}
+          <p className="permission-gate-note">
+            Collection remains locked until location access is available.
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   if (!current) {
     return (
@@ -532,7 +654,7 @@ export function Collector({
       </div>
 
       <div className="flow-body">
-        {locationNotice && locationFields.some((field) => field.required) && (
+        {locationNotice && locationFields.length > 0 && (
           <p className="background-status" role="status">
             <Icon name="location" size={15} /> {locationNotice}
           </p>
@@ -543,7 +665,7 @@ export function Collector({
             <button
               type="button"
               className="text-button background-status-action"
-              onClick={() => void captureLocation(locationFields[0].key)}
+              onClick={() => void captureLocation()}
             >
               Try again
             </button>
@@ -597,7 +719,7 @@ export function Collector({
                     removeMedia(current.field.key, index)
                   }
                   onChange={(value) => handleChange(current.field.key, value)}
-                  onCaptureLocation={() => captureLocation(current.field.key)}
+                  onCaptureLocation={captureLocation}
                   onAddPhoto={() => {
                     setActiveMediaField(current.field.key);
                     window.setTimeout(() => fileInputRef.current?.click(), 0);
