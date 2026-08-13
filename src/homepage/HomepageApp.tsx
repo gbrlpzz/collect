@@ -7,6 +7,7 @@ import { ProvenanceCard } from "./ProvenanceCard";
 import { PreviewForm } from "./PreviewForm";
 
 const APP_URL = "https://collect-tawny.vercel.app";
+const ADMIN_URL = `${APP_URL}/?role=admin`;
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 const DOCS = (file: string) => `${GITHUB_URL}/blob/main/docs/${file}`;
 
@@ -25,6 +26,22 @@ function TopBar() {
             rel="noopener"
           >
             GitHub
+          </a>
+          <a
+            className="hp-nav-link"
+            href={APP_URL}
+            target="_blank"
+            rel="noopener"
+          >
+            Contributor sign-in
+          </a>
+          <a
+            className="hp-nav-link"
+            href={ADMIN_URL}
+            target="_blank"
+            rel="noopener"
+          >
+            Admin sign-in
           </a>
           <a className="button button-primary button-small" href="#preview">
             Request access
@@ -106,16 +123,16 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
             target="_blank"
             rel="noopener"
           >
-            Open the app
+            Contributor sign-in
           </a>
           <span className="hp-hero-sep" aria-hidden="true" />
           <a
             className="text-button"
-            href={GITHUB_URL}
+            href={ADMIN_URL}
             target="_blank"
             rel="noopener"
           >
-            Source on GitHub
+            Admin sign-in
           </a>
         </div>
       </div>
@@ -538,11 +555,14 @@ export function HomepageApp() {
           </div>
           <nav className="hp-footer-links" aria-label="Footer">
             <div>
-              <span className="hp-footer-heading">Product</span>
+              <span className="hp-footer-heading">Access</span>
               <a href="#preview">Research preview</a>
               <a href="#demo">Live demo</a>
               <a href={APP_URL} target="_blank" rel="noopener">
-                Open the app
+                Contributor sign-in
+              </a>
+              <a href={ADMIN_URL} target="_blank" rel="noopener">
+                Admin sign-in
               </a>
               <a href={GITHUB_URL} target="_blank" rel="noopener">
                 GitHub

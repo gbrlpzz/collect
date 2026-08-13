@@ -35,6 +35,13 @@
   align-items: center;
   gap: 18px;
 }
+.hp-topbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding-left: 18px;
+  border-left: 1px solid var(--separator-light);
+}
 .hp-nav-link {
   min-height: var(--control-height);
   display: inline-flex;
