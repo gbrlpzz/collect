@@ -598,10 +598,10 @@ export function FlowDemo() {
                 observations={[observation]}
                 hasDraft={false}
                 onStartObservation={reset}
-                onOpenProject={reset}
                 onChooseProject={() => undefined}
                 onResumeObservation={reset}
                 onDiscardAndStartObservation={reset}
+                onOpenSync={() => undefined}
               />
             ) : null}
           </div>
