@@ -8,6 +8,7 @@ export {
   Divider,
   EmailPrompt,
   Eyebrow,
+  InfoDisclosure,
   ModalSurface,
   StatusBadge,
   StatusDot,

@@ -564,8 +564,7 @@ h3 {
   min-height: var(--control-height);
 }
 .schema-builder-note,
-.publish-receipt,
-.invite-preview {
+.publish-receipt {
   gap: var(--space-2);
   line-height: 1.4;
 }
@@ -1539,20 +1538,8 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 .consent-statement li {
   padding-left: 4px;
 }
-.consent-record-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
+.consent-record-disclosure {
   margin-bottom: var(--space-4);
-  padding: 12px;
-  border-radius: 12px;
-  background: var(--grouped);
-  color: var(--secondary);
-  font-size: 0.8125rem;
-  line-height: 1.4;
-}
-.consent-record-note svg {
-  flex: 0 0 auto;
 }
 
 /* Admin hierarchy: list rows first, rare project actions in a menu, technical
@@ -1660,34 +1647,67 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 .contributor-row .button-quiet {
   flex: 0 0 auto;
 }
-.attention-score-help {
+.contributor-list + .info-disclosure {
   margin-top: var(--space-3);
-  color: var(--secondary);
-}
-.attention-score-help summary {
-  min-height: var(--control-height);
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  cursor: pointer;
-  font-size: 0.75rem;
-  list-style: none;
-}
-.attention-score-help summary::-webkit-details-marker {
-  display: none;
-}
-.attention-score-help p {
-  max-width: 34rem;
-  padding-bottom: var(--space-2);
-  font-size: 0.75rem;
-  line-height: 1.45;
 }
 .export-panel > .button {
   margin-top: var(--space-2);
 }
 
-/* Progressive disclosure keeps setup, profile, privacy, and recovery quiet
-   until the person asks for the supporting detail. */
+/* Progressive disclosure keeps supporting context out of the primary reading
+   path. Errors, required actions, receipts, and irreversible warnings never use
+   this treatment. */
+.info-disclosure {
+  border-top: 1px solid var(--separator-light);
+  color: var(--secondary);
+}
+.info-disclosure summary {
+  min-height: var(--control-height);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  list-style: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.info-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+.info-disclosure summary > svg:first-child,
+.info-disclosure-chevron {
+  color: var(--tertiary);
+}
+.info-disclosure-chevron {
+  transition: transform 160ms ease;
+}
+.info-disclosure[open] .info-disclosure-chevron {
+  transform: rotate(180deg);
+}
+.info-disclosure-content {
+  max-width: 36rem;
+  padding: 0 calc(15px + var(--space-2)) var(--space-3);
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.info-disclosure-content > * + * {
+  margin-top: var(--space-2);
+}
+.info-disclosure summary:focus-visible {
+  border-radius: var(--radius-small);
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .info-disclosure-chevron {
+    transition: none;
+  }
+}
+
 .wizard-disclosure {
   overflow: hidden;
   border: 1px solid var(--separator-light);
@@ -1927,17 +1947,8 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   color: var(--text);
   text-align: right;
 }
-.sync-attention-note {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
+.sync-attention-disclosure {
   margin-bottom: var(--space-4);
-  padding: var(--space-3);
-  border-radius: var(--radius-small);
-  background: var(--grouped);
-  color: var(--secondary);
-  font-size: 0.8125rem;
-  line-height: 1.4;
 }
 .sync-recovery-disclosure {
   margin-top: var(--space-3);

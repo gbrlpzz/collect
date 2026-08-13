@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CollectBrand } from "./CollectBrand";
 import { Icon } from "./Icon";
-import { Button } from "./ui";
+import { Button, InfoDisclosure } from "./ui";
 
 interface ConsentScreenProps {
   text: string;
@@ -103,13 +103,16 @@ export function ConsentScreen({
             ))}
           </section>
         </details>
-        <div className="consent-record-note">
-          <Icon name="shield" size={17} />
-          <span>
+        <InfoDisclosure
+          className="consent-record-disclosure"
+          title="How your agreement is recorded"
+          icon="shield"
+        >
+          <p>
             Accepting records this statement version and the time on your
             contributor profile.
-          </span>
-        </div>
+          </p>
+        </InfoDisclosure>
         <Button
           variant="primary"
           fullWidth

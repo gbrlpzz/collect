@@ -161,6 +161,28 @@ Use text that states the proven system fact:
 
 Do not display a success check for request initiation or media upload alone. Use relative time in the interface and preserve the exact timestamp in an accessible title or detail.
 
+## Information disclosure
+
+The first reading pass contains only the information needed to understand the current state and take the next action. Supporting explanation uses the shared compact disclosure row and stays closed by default.
+
+Keep these visible:
+
+- errors and the action that resolves them;
+- permission requirements and blocked states;
+- local-save, transfer, and server-receipt status;
+- consequences of destructive or irreversible actions;
+- caveats that materially change how an export or result should be interpreted.
+
+Disclose these on request:
+
+- how a background mechanism works;
+- policy, scoring, or consent-recording methodology;
+- technical provenance and recovery detail;
+- reassurance already implied by a visible system state;
+- optional paths and uncommon configuration.
+
+Remove a message when it duplicates the heading, status, or adjacent summary. Do not move required instructions into a disclosure merely to make a screen look quieter. Disclosure summaries have a 44-point minimum target, a visible keyboard focus state, a text label, and a chevron whose motion respects Reduce Motion.
+
 ## Profile and secondary information
 
 Profile consolidates infrequent personal and account information:

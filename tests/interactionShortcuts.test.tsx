@@ -350,6 +350,12 @@ describe("low-friction primary actions", () => {
     );
 
     expect(screen.getByText("What is recorded")).toBeTruthy();
+    const agreementDetails = screen
+      .getByText("How your agreement is recorded")
+      .closest("details")!;
+    expect(agreementDetails.open).toBe(false);
+    fireEvent.click(screen.getByText("How your agreement is recorded"));
+    expect(agreementDetails.open).toBe(true);
     fireEvent.click(screen.getByText("Read the full consent statement"));
     expect(
       screen.getByRole("heading", { name: "Full statement" }),
@@ -611,6 +617,13 @@ describe("low-friction primary actions", () => {
     fireEvent.click(screen.getByRole("button", { name: /^continue$/i }));
 
     expect(screen.getByText("Step 3 of 3")).toBeTruthy();
+    expect(screen.queryByText("Invitation preview")).toBeNull();
+    const invitationDetails = screen
+      .getByText("How invitations work")
+      .closest("details")!;
+    expect(invitationDetails.open).toBe(false);
+    fireEvent.click(screen.getByText("How invitations work"));
+    expect(invitationDetails.open).toBe(true);
     expect(
       screen.getByRole("button", { name: /publish project/i }),
     ).toBeTruthy();

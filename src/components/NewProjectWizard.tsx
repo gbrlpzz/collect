@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { Icon } from "./Icon";
-import { Button, Divider, Eyebrow, IconButton, StatusBadge } from "./ui";
+import {
+  Button,
+  Divider,
+  Eyebrow,
+  IconButton,
+  InfoDisclosure,
+  StatusBadge,
+} from "./ui";
 import { projectFields } from "../data/schemaFixtures";
 import {
   cloneFieldDefinitions,
@@ -382,29 +389,12 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
                 placeholder="name@example.org"
               />
             </label>
-            <div className="invite-preview">
-              <div className="invite-icon">
-                <Icon name="send" size={19} />
-              </div>
-              <div>
-                <strong>Invitation preview</strong>
-                <span>
-                  “You have been invited to collect observations for this
-                  project.”
-                </span>
-              </div>
-              <StatusBadge tone="soft">
-                {emails.split(/[\n,]+/).filter((email) => email.trim()).length}{" "}
-                invites
-              </StatusBadge>
-            </div>
-            <div className="schema-builder-note">
-              <Icon name="info" size={17} />
-              <span>
+            <InfoDisclosure title="How invitations work">
+              <p>
                 Existing accounts are assigned immediately. Unknown addresses
                 receive an email invitation.
-              </span>
-            </div>
+              </p>
+            </InfoDisclosure>
             <div className="publish-summary">
               <div>
                 <span>Project</span>

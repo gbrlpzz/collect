@@ -78,4 +78,17 @@ describe("visual system contract", () => {
       /@media \(max-width: 680px\)[\s\S]*?\.admin-tabs\s*\{[^}]*width:\s*100%[^}]*padding:\s*var\(--space-1\)/,
     );
   });
+
+  it("gives supporting information one compact, accessible disclosure pattern", () => {
+    expect(geometry).toMatch(
+      /\.info-disclosure summary\s*\{[^}]*min-height:\s*var\(--control-height\)[^}]*grid-template-columns:\s*auto minmax\(0, 1fr\) auto/s,
+    );
+    expect(geometry).toContain(".info-disclosure summary:focus-visible");
+    expect(geometry).toContain(
+      ".info-disclosure[open] .info-disclosure-chevron",
+    );
+    expect(geometry).not.toMatch(
+      /\.(?:consent-record-note|sync-attention-note|attention-score-help)\b/,
+    );
+  });
 });

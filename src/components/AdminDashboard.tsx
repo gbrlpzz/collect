@@ -14,6 +14,7 @@ import {
   EmailPrompt,
   Eyebrow,
   IconButton,
+  InfoDisclosure,
   StatusBadge,
 } from "./ui";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
@@ -841,16 +842,13 @@ function ContributorsPanel({
             </div>
           )}
         </div>
-        <details className="attention-score-help">
-          <summary>
-            <Icon name="info" size={16} /> About attention scores
-          </summary>
+        <InfoDisclosure title="About attention scores">
           <p>
             The ring is a 0–100 summary of quick verification questions,
             adjusted for random guessing. The number remains visible so color is
             never the only signal.
           </p>
-        </details>
+        </InfoDisclosure>
         {inviteOpen && isSupabaseConfigured && (
           <EmailPrompt
             title="Add contributor"

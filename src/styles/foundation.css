@@ -1768,8 +1768,7 @@ p {
   font-weight: 600;
 }
 .schema-builder-note,
-.publish-receipt,
-.invite-preview {
+.publish-receipt {
   display: flex;
   align-items: flex-start;
   gap: 9px;
@@ -1777,31 +1776,9 @@ p {
   color: var(--secondary);
   font-size: 0.8125rem;
 }
-.invite-preview {
-  align-items: center;
-  padding: 14px;
-  border-radius: 12px;
-  background: var(--grouped);
-}
-.invite-preview > div {
-  min-width: 0;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 3px;
-}
-.invite-preview span,
 .publish-receipt span {
   color: var(--secondary);
   font-size: 0.75rem;
-}
-.invite-icon {
-  width: 32px;
-  height: 32px;
-  display: grid;
-  place-items: center;
-  border-radius: 9px;
-  background: var(--paper);
 }
 .publish-summary {
   border-top: 1px solid var(--separator);
