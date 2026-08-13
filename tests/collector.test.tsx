@@ -7,6 +7,7 @@ import { FieldRenderer } from "../src/components/FieldRenderer";
 import { SyncSheet } from "../src/components/SyncSheet";
 import { ClearButton, ConfirmationDialog } from "../src/components/ui";
 import { ATTENTION_FIELD_KEY } from "../src/data/attentionChecks";
+import { useVisualViewport } from "../src/lib/useVisualViewport";
 import type { FieldDefinition, Project } from "../src/types";
 
 const fields: FieldDefinition[] = [
@@ -67,7 +68,7 @@ const validationProject: Project = { ...project, fields: validationFields };
 
 describe("Collector guided flow (§10 client-side enforcement)", () => {
   const continueButton = () =>
-    screen.getByRole("button", { name: /^continue$/i });
+    screen.getByRole("button", { name: /^(continue|skip)$/i });
 
   it("keeps Continue disabled until a required first question is answered", () => {
     const onSubmit = vi.fn();
@@ -110,7 +111,58 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
       ...project,
       fields: [{ ...fields[3], required: false }],
     };
-    const { container, unmount } = render(
+    function KeyboardAwareCollector() {
+      useVisualViewport();
+      return (
+        <Collector
+          project={optionalProject}
+          draft={{}}
+          lastSavedAt={null}
+          onDraftChange={() => undefined}
+          onSubmit={() => undefined}
+          onBack={() => undefined}
+          isSaving={false}
+          attentionCheck={false}
+        />
+      );
+    }
+    const { unmount } = render(<KeyboardAwareCollector />);
+    try {
+      expect(
+        document.documentElement.style.getPropertyValue(
+          "--visual-viewport-height",
+        ),
+      ).toBe("420px");
+      expect(document.documentElement.dataset.keyboardOpen).toBe("true");
+      expect(
+        screen.getByRole("button", { name: /save observation/i }),
+      ).toHaveProperty("disabled", false);
+
+      viewport.height = 390;
+      listeners.get("resize")?.(new Event("resize"));
+      expect(
+        document.documentElement.style.getPropertyValue(
+          "--visual-viewport-height",
+        ),
+      ).toBe("390px");
+    } finally {
+      unmount();
+      Object.defineProperty(window, "visualViewport", {
+        configurable: true,
+        value: previousViewport,
+      });
+    }
+  });
+
+  it("does not summon the keyboard for an empty optional field and labels the action Skip", () => {
+    const optionalProject = {
+      ...project,
+      fields: [
+        { ...fields[3], required: false },
+        { ...fields[1], required: true },
+      ],
+    };
+    render(
       <Collector
         project={optionalProject}
         draft={{}}
@@ -122,30 +174,14 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         attentionCheck={false}
       />,
     );
-    try {
-      const collector = container.querySelector<HTMLElement>(".collector-flow");
-      expect(
-        collector?.style.getPropertyValue("--collector-viewport-height"),
-      ).toBe("420px");
-      expect(collector?.classList.contains("collector-keyboard-open")).toBe(
-        true,
-      );
-      expect(
-        screen.getByRole("button", { name: /save observation/i }),
-      ).toHaveProperty("disabled", false);
 
-      viewport.height = 390;
-      listeners.get("resize")?.(new Event("resize"));
-      expect(
-        collector?.style.getPropertyValue("--collector-viewport-height"),
-      ).toBe("390px");
-    } finally {
-      unmount();
-      Object.defineProperty(window, "visualViewport", {
-        configurable: true,
-        value: previousViewport,
-      });
-    }
+    expect(document.activeElement).not.toBe(
+      screen.getByLabelText("Field notes"),
+    );
+    const skipButton = screen.getByRole("button", { name: /^skip$/i });
+    expect(skipButton).toBeTruthy();
+    fireEvent.click(skipButton);
+    expect(screen.getByText("People present")).toBeTruthy();
   });
 
   it("enforces number min/max with a specific message", () => {
@@ -350,7 +386,8 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         .getAllByRole("button")
         .find(
           (button) =>
-            button.textContent && !/continue|back/i.test(button.textContent),
+            button.textContent &&
+            !/continue|skip|back/i.test(button.textContent),
         );
       expect(option).toBeTruthy();
       fireEvent.click(option!);
@@ -553,11 +590,12 @@ describe("SyncSheet states (§32)", () => {
       />,
     );
     expect(screen.getByText(/1 waiting/i)).toBeTruthy();
+    fireEvent.click(screen.getByText(/data recovery and device details/i));
     await waitFor(() =>
       expect(screen.getByText(/device storage/i)).toBeTruthy(),
     );
     expect(
-      screen.getByRole("button", { name: /export unsynced recovery package/i }),
+      screen.getByRole("button", { name: /export local recovery copy/i }),
     ).toBeTruthy();
   });
 
@@ -576,7 +614,7 @@ describe("SyncSheet states (§32)", () => {
         onRecoveryExport={() => undefined}
       />,
     );
-    expect(screen.getByText(/syncing 1 of 1/i)).toBeTruthy();
+    expect(screen.getByText(/sending observations/i)).toBeTruthy();
     expect(screen.getByText(/uploading media/i)).toBeTruthy();
     expect(screen.getByText("62%")).toBeTruthy();
   });

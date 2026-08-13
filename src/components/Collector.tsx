@@ -55,7 +55,6 @@ export function Collector({
   preview = false,
   attentionCheck = true,
 }: CollectorProps) {
-  const collectorRef = useRef<HTMLElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [capturingLocation, setCapturingLocation] = useState(false);
@@ -84,39 +83,6 @@ export function Collector({
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
   const locationAttemptedFieldRef = useRef<string | null>(null);
-
-  // iOS keeps the layout viewport at full screen height when its software
-  // keyboard opens. Follow the smaller visual viewport so the action bar stays
-  // directly above the keyboard instead of being covered by it.
-  useEffect(() => {
-    const viewport = window.visualViewport;
-    if (!viewport) return;
-    const syncViewport = () => {
-      const root = collectorRef.current;
-      if (!root) return;
-      root.style.setProperty(
-        "--collector-viewport-height",
-        `${Math.round(viewport.height)}px`,
-      );
-      root.style.setProperty(
-        "--collector-viewport-top",
-        `${Math.round(viewport.offsetTop)}px`,
-      );
-      root.classList.toggle(
-        "collector-keyboard-open",
-        viewport.height < window.innerHeight - 120,
-      );
-    };
-    syncViewport();
-    viewport.addEventListener("resize", syncViewport);
-    viewport.addEventListener("scroll", syncViewport);
-    window.addEventListener("orientationchange", syncViewport);
-    return () => {
-      viewport.removeEventListener("resize", syncViewport);
-      viewport.removeEventListener("scroll", syncViewport);
-      window.removeEventListener("orientationchange", syncViewport);
-    };
-  }, []);
 
   // Collection order follows requirement #6: the key identifier comes first,
   // then the highest-effort questions (photos/audio, location, long text)
@@ -469,6 +435,19 @@ export function Collector({
   };
 
   const activeField = current?.kind === "field" ? current.field : null;
+  const activeMediaAssets =
+    activeField &&
+    (activeField.type === "photo" || activeField.type === "audio")
+      ? (mediaByField[activeField.key] ?? [])
+      : [];
+  const activeFieldHasValue = activeField
+    ? activeField.type === "photo" || activeField.type === "audio"
+      ? activeMediaAssets.length > 0
+      : hasValue(draft[activeField.key])
+    : false;
+  const skippingOptionalField = Boolean(
+    activeField && !activeField.required && !activeFieldHasValue,
+  );
 
   // Location is background provenance. Ask the browser once when an
   // observation opens, without inserting a location question into the flow.
@@ -480,22 +459,19 @@ export function Collector({
     locationCaptureStartedRef.current = true;
     void Promise.all(locationFields.map((field) => captureLocation(field.key)));
   }, [locationFields]);
-  const activeMediaAssets =
-    activeField &&
-    (activeField.type === "photo" || activeField.type === "audio")
-      ? (mediaByField[activeField.key] ?? [])
-      : [];
   const primaryLabel = isLastStep
     ? preview
       ? "Finish preview"
       : isSaving
         ? "Saving…"
         : "Save observation"
-    : "Continue";
+    : skippingOptionalField
+      ? "Skip"
+      : "Continue";
 
   if (!current) {
     return (
-      <main ref={collectorRef} className="collector-page collector-flow">
+      <main className="collector-page collector-flow">
         <div className="collector-topbar">
           <button className="back-button" onClick={onBack} aria-label="Back">
             <Icon name="chevron-left" size={17} /> Project
@@ -519,7 +495,7 @@ export function Collector({
   }
 
   return (
-    <main ref={collectorRef} className="collector-page collector-flow">
+    <main className="collector-page collector-flow">
       <div className="collector-topbar">
         <button className="back-button" onClick={goBack} aria-label="Back">
           <Icon name="chevron-left" size={17} />{" "}
@@ -634,17 +610,12 @@ export function Collector({
                   }
                   required={current.field.required}
                   invalid={Boolean(errorText)}
-                  autoFocus={[
-                    "short_text",
-                    "long_text",
-                    "number",
-                    "single_choice",
-                    "tri_state",
-                    "multiple_choice",
-                    "date",
-                    "datetime",
-                    "repeatable_group",
-                  ].includes(current.field.type)}
+                  autoFocus={
+                    Boolean(current.field.required) ||
+                    ["single_choice", "tri_state", "multiple_choice"].includes(
+                      current.field.type,
+                    )
+                  }
                 />
               </div>
             </div>

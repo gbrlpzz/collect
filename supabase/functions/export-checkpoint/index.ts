@@ -99,18 +99,18 @@ async function buildExport(
   }
   const submissionRows = (submissions ?? []) as Record<string, unknown>[];
   const submissionIds = submissionRows.map((submission) =>
-    String(submission.id),
+    String(submission.id)
   );
   const { data: mediaRows, error: mediaError } = submissionIds.length
     ? await service
-        .from("submission_media")
-        .select(
-          "id,submission_id,field_id,object_path,mime_type,byte_size,original_filename,sha256,captured_at,status",
-        )
-        .in("submission_id", submissionIds)
-        .order("created_at", {
-          ascending: true,
-        })
+      .from("submission_media")
+      .select(
+        "id,submission_id,field_id,object_path,mime_type,byte_size,original_filename,sha256,captured_at,status",
+      )
+      .in("submission_id", submissionIds)
+      .order("created_at", {
+        ascending: true,
+      })
     : { data: [], error: null };
   if (mediaError) {
     return json({ error: "Media metadata could not be read" }, { status: 500 });
@@ -146,22 +146,22 @@ async function buildExport(
   const memberIds = (members ?? []).map((member) => member.user_id);
   const { data: attentionRows } = submissionIds.length
     ? await service
-        .from("attention_responses")
-        .select(
-          "submission_id,contributor_id,project_id,check_key,selected_value,correct,guess_probability,created_at",
-        )
-        .in("submission_id", submissionIds)
-        .order("created_at", {
-          ascending: true,
-        })
+      .from("attention_responses")
+      .select(
+        "submission_id,contributor_id,project_id,check_key,selected_value,correct,guess_probability,created_at",
+      )
+      .in("submission_id", submissionIds)
+      .order("created_at", {
+        ascending: true,
+      })
     : { data: [] };
   const { data: profiles } = memberIds.length
     ? await service
-        .from("contributor_profiles")
-        .select(
-          "user_id,consent_version,consent_granted_at,consent_revoked_at,quality_score,attention_score,attention_checks_total,attention_correct_total,attention_last_at",
-        )
-        .in("user_id", memberIds)
+      .from("contributor_profiles")
+      .select(
+        "user_id,consent_version,consent_granted_at,consent_revoked_at,quality_score,attention_score,attention_checks_total,attention_correct_total,attention_last_at",
+      )
+      .in("user_id", memberIds)
     : { data: [] };
   const { data: invites } = await service
     .from("project_invites")
@@ -214,7 +214,7 @@ async function buildExport(
             ...item,
             export_path: `media/${submission.id}/${mediaExportName(item)}`,
           })),
-      }),
+      })
     )
     .join("\n");
   const submissionsCsv = [
@@ -244,7 +244,7 @@ async function buildExport(
         submission.status,
         submission.attention_failed,
         submission.payload,
-      ]),
+      ])
     ),
   ].join("\n");
   const mediaCsv = [
@@ -270,7 +270,7 @@ async function buildExport(
         item.captured_at,
         item.status,
         `media/${item.submission_id}/${mediaExportName(item)}`,
-      ]),
+      ])
     ),
   ].join("\n");
   const contributorsCsv = [
@@ -312,7 +312,7 @@ async function buildExport(
         row.pending_submissions,
         row.pending_media,
         row.fieldwork_complete,
-      ]),
+      ])
     ),
   ].join("\n");
   const attentionCsv = [
@@ -336,7 +336,7 @@ async function buildExport(
         row.correct,
         row.guess_probability,
         row.created_at,
-      ]),
+      ])
     ),
   ].join("\n");
 
@@ -364,8 +364,8 @@ async function buildExport(
         required: Boolean(field.required),
         description: field.description ?? null,
         semantic_uri: field.semantic_uri ?? null,
-        unit:
-          (field.config as Record<string, unknown> | undefined)?.unit ?? null,
+        unit: (field.config as Record<string, unknown> | undefined)?.unit ??
+          null,
         options: Array.isArray(field.options) ? field.options : null,
       }));
     })
@@ -374,9 +374,9 @@ async function buildExport(
     schemaVersion: "http://datacite.org/schema/kernel-4.4",
     identifier: project?.dataset_identifier
       ? {
-          identifier: String(project.dataset_identifier),
-          identifierType: "DOI",
-        }
+        identifier: String(project.dataset_identifier),
+        identifierType: "DOI",
+      }
       : undefined,
     creators,
     titles: [{ title: `${projectName} — checkpoint dataset` }],
@@ -393,23 +393,23 @@ async function buildExport(
     license: project?.license ?? null,
     contributors: project?.contact_email
       ? [
-          {
-            name: "Dataset contact",
-            contributorType: "ContactPerson",
-            nameType: "Organizational",
-            contactEmail: String(project.contact_email),
-          },
-        ]
+        {
+          name: "Dataset contact",
+          contributorType: "ContactPerson",
+          nameType: "Organizational",
+          contactEmail: String(project.contact_email),
+        },
+      ]
       : [],
     dates: [{ date: nowIso, dateType: "Created" }],
     subjects: [{ subject: projectName }, { subject: "field data collection" }],
     alternateIdentifiers: project
       ? [
-          {
-            alternateIdentifier: String(project.id),
-            alternateIdentifierType: "collect-project",
-          },
-        ]
+        {
+          alternateIdentifier: String(project.id),
+          alternateIdentifierType: "collect-project",
+        },
+      ]
       : [],
   };
   const datasetReadme = [
@@ -464,7 +464,8 @@ async function buildExport(
       pending_media: row.pending_media,
       fieldwork_complete: row.fieldwork_complete,
     })),
-    note: "A checkpoint contains only complete submissions received by the server at the cutoff timestamp. Offline devices may hold additional unseen data.",
+    note:
+      "A checkpoint contains only complete submissions received by the server at the cutoff timestamp. Offline devices may hold additional unseen data.",
   };
 
   const entries: Record<string, Uint8Array> = {

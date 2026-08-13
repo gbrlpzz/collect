@@ -629,13 +629,13 @@ h3 {
 .collector-flow {
   position: fixed;
   z-index: 30;
-  top: var(--collector-viewport-top, 0);
+  top: var(--visual-viewport-top, 0);
   right: 0;
   left: 0;
   width: 100%;
   max-width: none;
   min-height: 0;
-  height: var(--collector-viewport-height, 100dvh);
+  height: var(--visual-viewport-height, 100dvh);
 }
 .collector-flow .collector-topbar {
   height: calc(52px + env(safe-area-inset-top));
@@ -730,8 +730,58 @@ h3 {
 .flow-continue {
   min-height: 52px;
 }
-.collector-keyboard-open .flow-actions {
+html[data-keyboard-open="true"] .flow-actions {
   padding-bottom: var(--space-2);
+}
+html[data-keyboard-open="true"] .flow-back {
+  display: none;
+}
+
+/* Every mobile task follows the same keyboard-aware viewport. */
+html[data-keyboard-open="true"] .sheet-backdrop,
+html[data-keyboard-open="true"] .dialog-backdrop {
+  top: var(--visual-viewport-top, 0);
+  bottom: auto;
+  height: var(--visual-viewport-height, 100dvh);
+}
+html[data-keyboard-open="true"] .bottom-sheet,
+html[data-keyboard-open="true"] .confirmation-dialog {
+  max-height: calc(var(--visual-viewport-height, 100dvh) - 8px);
+}
+html[data-keyboard-open="true"] .auth-page {
+  position: fixed;
+  top: var(--visual-viewport-top, 0);
+  right: 0;
+  left: 0;
+  height: var(--visual-viewport-height, 100dvh);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+html[data-keyboard-open="true"] .page-wizard {
+  padding-bottom: 92px;
+}
+html[data-keyboard-open="true"] .page-wizard .wizard-actions {
+  position: fixed;
+  z-index: 45;
+  top: calc(
+    var(--visual-viewport-top, 0px) + var(--visual-viewport-height, 100dvh) -
+      76px
+  );
+  right: 0;
+  bottom: auto;
+  left: 0;
+  min-height: 76px;
+  margin: 0;
+  padding: var(--space-3) max(var(--space-4), env(safe-area-inset-right))
+    var(--space-3) max(var(--space-4), env(safe-area-inset-left));
+  border-top: 1px solid var(--separator-light);
+  background: var(--chrome);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+}
+html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
+  display: none;
 }
 
 /* Sheets, dialogs, and transient messages */
@@ -1502,6 +1552,302 @@ h3 {
   margin-top: var(--space-2);
 }
 
+/* Progressive disclosure keeps setup, profile, privacy, and recovery quiet
+   until the person asks for the supporting detail. */
+.wizard-disclosure {
+  overflow: hidden;
+  border: 1px solid var(--separator-light);
+  border-radius: var(--radius-medium);
+  background: var(--paper);
+}
+.wizard-disclosure > summary,
+.profile-disclosure > summary {
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  list-style: none;
+}
+.wizard-disclosure > summary::-webkit-details-marker,
+.profile-disclosure > summary::-webkit-details-marker,
+.profile-attention > summary::-webkit-details-marker,
+.consent-full-statement > summary::-webkit-details-marker {
+  display: none;
+}
+.wizard-disclosure > summary > span,
+.profile-disclosure > summary > span,
+.profile-action-row > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wizard-disclosure > summary strong,
+.profile-disclosure > summary strong,
+.profile-action-row strong {
+  color: var(--text);
+  font-size: 0.9375rem;
+}
+.wizard-disclosure > summary span span,
+.profile-disclosure > summary span span,
+.profile-action-row span span {
+  color: var(--secondary);
+  font-size: 0.75rem;
+}
+.wizard-disclosure[open] > summary > svg,
+.profile-disclosure[open] > summary > svg:last-child,
+.consent-full-statement[open] > summary > svg {
+  transform: rotate(180deg);
+}
+.wizard-disclosure > label,
+.wizard-disclosure-fields > label {
+  display: grid;
+  gap: var(--space-2);
+  padding: 0 var(--space-4) var(--space-4);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+.wizard-disclosure-fields {
+  display: grid;
+  gap: 0;
+}
+.dataset-metadata {
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--separator-light);
+  border-radius: var(--radius-medium);
+}
+.builder-controls > .builder-advanced {
+  margin-top: var(--space-2);
+}
+
+.profile-sheet {
+  width: min(520px, 100%);
+}
+.profile-email {
+  margin: var(--space-2) 0 var(--space-5);
+  overflow: hidden;
+  color: var(--secondary);
+  font-size: 0.875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--separator-light);
+  border-radius: var(--radius-medium);
+  background: var(--grouped);
+}
+.profile-metrics > div {
+  min-height: 84px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: var(--space-4);
+}
+.profile-metrics > div + div {
+  border-left: 1px solid var(--separator-light);
+}
+.profile-metrics > div > strong {
+  font-size: 1.625rem;
+  letter-spacing: -0.04em;
+}
+.profile-metrics > div > span,
+.profile-attention > summary > span {
+  color: var(--secondary);
+  font-size: 0.75rem;
+}
+.profile-attention {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--separator-light);
+}
+.profile-attention > summary {
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  list-style: none;
+}
+.profile-attention > summary > svg:last-child {
+  color: var(--secondary);
+}
+.profile-attention > p {
+  margin: 0 var(--space-4) var(--space-4) calc(44px + var(--space-6));
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.profile-status-list {
+  margin-bottom: var(--space-4);
+  border-top: 1px solid var(--separator-light);
+}
+.profile-status-list > div {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--separator-light);
+  font-size: 0.8125rem;
+}
+.profile-status-list dt {
+  color: var(--secondary);
+}
+.profile-status-list dd {
+  font-weight: 650;
+  text-align: right;
+}
+.profile-actions-list {
+  overflow: hidden;
+  border: 1px solid var(--separator-light);
+  border-radius: var(--radius-medium);
+}
+.profile-action-row {
+  width: 100%;
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-top: 1px solid var(--separator-light);
+  background: var(--paper);
+  color: var(--text);
+  text-align: left;
+}
+.profile-disclosure > summary {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.profile-disclosure > ol,
+.profile-disclosure > dl {
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-4) calc(17px + var(--space-7));
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.profile-disclosure > ol {
+  padding-left: calc(17px + var(--space-8));
+}
+.profile-privacy {
+  border-top: 1px solid var(--separator-light);
+}
+.profile-privacy dl > div {
+  margin-bottom: var(--space-3);
+}
+.profile-privacy dt {
+  color: var(--text);
+  font-weight: 650;
+}
+.profile-privacy dd {
+  margin-top: 2px;
+}
+.profile-privacy .button {
+  width: calc(100% - var(--space-8));
+  margin: 0 var(--space-4) var(--space-4);
+}
+.profile-signout {
+  width: 100%;
+  min-height: 48px;
+  margin-top: var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--destructive);
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.sync-last-success {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin: var(--space-4) 0;
+  border-top: 1px solid var(--separator-light);
+  color: var(--secondary);
+  font-size: 0.8125rem;
+}
+.sync-last-success strong {
+  color: var(--text);
+  text-align: right;
+}
+.sync-attention-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  border-radius: var(--radius-small);
+  background: var(--grouped);
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+.sync-recovery-disclosure {
+  margin-top: var(--space-3);
+}
+.sync-recovery-disclosure[open] {
+  padding-bottom: var(--space-2);
+}
+
+.consent-summary {
+  overflow: hidden;
+  margin: var(--space-5) 0 var(--space-4);
+  border: 1px solid var(--separator-light);
+  border-radius: var(--radius-medium);
+}
+.consent-summary > div {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.75fr) minmax(0, 1.5fr);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--separator-light);
+}
+.consent-summary > div:last-child {
+  border-bottom: 0;
+}
+.consent-summary dt {
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+.consent-summary dd {
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+.consent-full-statement {
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--separator-light);
+}
+.consent-full-statement > summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 650;
+  list-style: none;
+}
+.consent-full-statement .consent-statement {
+  max-height: 42vh;
+  overflow: auto;
+  margin-bottom: var(--space-4);
+}
+
 @media (max-width: 680px) {
   .admin-project-card {
     grid-template-columns: minmax(0, 1fr) auto auto;
@@ -1533,6 +1879,10 @@ h3 {
   .privacy-facts > div {
     grid-template-columns: 1fr;
     gap: 4px;
+  }
+  .consent-summary > div {
+    grid-template-columns: 1fr;
+    gap: 3px;
   }
   .contributor-row .button {
     width: var(--control-height);

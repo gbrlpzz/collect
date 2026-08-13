@@ -54,8 +54,7 @@ export async function projectAccess(
     .eq("project_id", projectId)
     .eq("user_id", userId)
     .maybeSingle();
-  const admin =
-    organizationMembership?.role === "admin" ||
+  const admin = organizationMembership?.role === "admin" ||
     projectMembership?.role === "admin";
   if (!admin && !projectMembership) return null;
   return { project, admin };
@@ -89,11 +88,14 @@ export async function isEmailAllowed(
       .some((pattern) => matchesAllowedPattern(pattern, email));
   }
   const { data } = await service.rpc("list_allowed_admin_patterns");
-  const patterns = (data ?? [])
-    .map((row) => String((row as { pattern?: unknown }).pattern ?? ""))
-    .filter(Boolean);
+  const rows: unknown[] = Array.isArray(data) ? data : [];
+  const patterns: string[] = rows
+    .map((row: unknown) => String((row as { pattern?: unknown }).pattern ?? ""))
+    .filter((pattern: string) => pattern.length > 0);
   if (!patterns.length) return true;
-  return patterns.some((pattern) => matchesAllowedPattern(pattern, email));
+  return patterns.some((pattern: string) =>
+    matchesAllowedPattern(pattern, email)
+  );
 }
 
 export function errorMessage(error: unknown): string {

@@ -34,7 +34,7 @@ const LICENSE_OPTIONS = [
   "Proprietary",
 ];
 
-const wizardSteps = ["Identity", "Schema", "Contributors"];
+const wizardSteps = ["Project", "Form", "Team"];
 export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
   const [step, setStep] = useState(1);
   const [organizationName, setOrganizationName] = useState(
@@ -147,18 +147,9 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
           <div className="wizard-form">
             <div>
               <Eyebrow>Step 1 of {wizardSteps.length}</Eyebrow>
-              <h2>Give the project an identity.</h2>
-              <p>Contributors will see this before they begin collecting.</p>
+              <h2>Name the project.</h2>
+              <p>This is the only information required to begin.</p>
             </div>
-            <label>
-              Workspace name
-              <input
-                className="field-input"
-                value={organizationName}
-                onChange={(event) => setOrganizationName(event.target.value)}
-                placeholder="e.g. Field organization"
-              />
-            </label>
             <label>
               Project name
               <input
@@ -167,83 +158,106 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
                 onChange={(event) => setProjectName(event.target.value)}
                 placeholder="e.g. Valladolid Rural Houses"
                 autoFocus={step === 1}
+                required
               />
             </label>
-            <label>
-              Short description <span className="optional-label">Optional</span>
-              <input
-                className="field-input"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="e.g. Occupancy and condition survey"
-              />
-            </label>
-            <label>
-              Field instructions{" "}
-              <span className="optional-label">Optional</span>
-              <textarea
-                className="field-input field-textarea"
-                value={instructions}
-                onChange={(event) => setInstructions(event.target.value)}
-                placeholder="What should contributors know before they start?"
-                rows={4}
-              />
-            </label>
-            <div className="dataset-metadata">
-              <Eyebrow>Dataset metadata</Eyebrow>
-              <h3>Make the dataset reusable.</h3>
-              <p>
-                These values travel into every checkpoint (DataCite metadata,
-                manifest, README) so the dataset stays findable and reusable.
-              </p>
+            <details className="wizard-disclosure">
+              <summary>
+                <span>
+                  <strong>Description and instructions</strong>
+                  <span>Optional context for the field team</span>
+                </span>
+                <Icon name="chevron-down" size={16} />
+              </summary>
               <label>
-                License{" "}
-                <span className="optional-label">Recommended: CC-BY-4.0</span>
-                <select
+                Short description
+                <input
                   className="field-input"
-                  value={license}
-                  onChange={(event) => setLicense(event.target.value)}
-                >
-                  {[...LICENSE_OPTIONS, "Other"].map((option) => (
-                    <option value={option} key={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  placeholder="e.g. Occupancy and condition survey"
+                />
               </label>
-              {license === "Other" && (
+              <label>
+                Field instructions
+                <textarea
+                  className="field-input field-textarea"
+                  value={instructions}
+                  onChange={(event) => setInstructions(event.target.value)}
+                  placeholder="What should contributors know before they start?"
+                  rows={4}
+                />
+              </label>
+            </details>
+            <details className="wizard-disclosure dataset-metadata">
+              <summary>
+                <span>
+                  <strong>Workspace and dataset metadata</strong>
+                  <span>License, contact, and identifier</span>
+                </span>
+                <Icon name="chevron-down" size={16} />
+              </summary>
+              <div className="wizard-disclosure-fields">
                 <label>
-                  License name / SPDX identifier
+                  Workspace name
                   <input
                     className="field-input"
-                    value={customLicense}
-                    onChange={(event) => setCustomLicense(event.target.value)}
-                    placeholder="e.g. CC-BY-NC-4.0"
+                    value={organizationName}
+                    onChange={(event) =>
+                      setOrganizationName(event.target.value)
+                    }
+                    placeholder="e.g. Field organization"
                   />
                 </label>
-              )}
-              <label>
-                Dataset contact email{" "}
-                <span className="optional-label">Optional</span>
-                <input
-                  className="field-input"
-                  type="email"
-                  value={contactEmail}
-                  onChange={(event) => setContactEmail(event.target.value)}
-                  placeholder="dataset@organization.org"
-                />
-              </label>
-              <label>
-                Dataset identifier{" "}
-                <span className="optional-label">DOI or URL</span>
-                <input
-                  className="field-input"
-                  value={datasetIdentifier}
-                  onChange={(event) => setDatasetIdentifier(event.target.value)}
-                  placeholder="10.5281/zenodo.0000000"
-                />
-              </label>
-            </div>
+                <label>
+                  License <span className="optional-label">CC-BY-4.0</span>
+                  <select
+                    className="field-input"
+                    value={license}
+                    onChange={(event) => setLicense(event.target.value)}
+                  >
+                    {[...LICENSE_OPTIONS, "Other"].map((option) => (
+                      <option value={option} key={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {license === "Other" && (
+                  <label>
+                    License name or SPDX identifier
+                    <input
+                      className="field-input"
+                      value={customLicense}
+                      onChange={(event) => setCustomLicense(event.target.value)}
+                      placeholder="e.g. CC-BY-NC-4.0"
+                    />
+                  </label>
+                )}
+                <label>
+                  Dataset contact email
+                  <input
+                    className="field-input"
+                    type="email"
+                    value={contactEmail}
+                    onChange={(event) => setContactEmail(event.target.value)}
+                    placeholder="dataset@organization.org"
+                  />
+                </label>
+                <label>
+                  Dataset identifier{" "}
+                  <span className="optional-label">DOI or URL</span>
+                  <input
+                    className="field-input"
+                    value={datasetIdentifier}
+                    onChange={(event) =>
+                      setDatasetIdentifier(event.target.value)
+                    }
+                    placeholder="10.5281/zenodo.0000000"
+                  />
+                </label>
+              </div>
+            </details>
           </div>
         )}
         {step === 2 && (
@@ -274,19 +288,6 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
                         }
                       />
                       <div>
-                        <input
-                          className="builder-key-input"
-                          value={field.key}
-                          aria-label={`${field.label} machine key`}
-                          onChange={(event) =>
-                            updateField(field.id, {
-                              key: event.target.value.replace(
-                                /[^a-zA-Z0-9_]/g,
-                                "_",
-                              ),
-                            })
-                          }
-                        />
                         <select
                           className="builder-select"
                           value={field.type}
@@ -311,6 +312,25 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
                           ))}
                         </select>
                       </div>
+                      <details className="builder-advanced">
+                        <summary>Advanced</summary>
+                        <label>
+                          <span>Data key</span>
+                          <input
+                            className="builder-key-input"
+                            value={field.key}
+                            aria-label={`${field.label} machine key`}
+                            onChange={(event) =>
+                              updateField(field.id, {
+                                key: event.target.value.replace(
+                                  /[^a-zA-Z0-9_]/g,
+                                  "_",
+                                ),
+                              })
+                            }
+                          />
+                        </label>
+                      </details>
                     </div>
                     <label className="builder-required">
                       <input
@@ -348,17 +368,18 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
           <div className="wizard-form">
             <div>
               <Eyebrow>Step 3 of 3</Eyebrow>
-              <h2>Assign the field team.</h2>
-              <p>People only see the project and form assigned to them.</p>
+              <h2>Invite the field team.</h2>
+              <p>Add people now, or leave this empty and invite them later.</p>
             </div>
             <label>
-              Contributor email addresses
+              Contributor email addresses{" "}
+              <span className="optional-label">Optional</span>
               <textarea
                 className="field-input field-textarea"
                 value={emails}
                 onChange={(event) => setEmails(event.target.value)}
                 rows={5}
-                autoFocus
+                placeholder="name@example.org"
               />
             </label>
             <div className="invite-preview">
@@ -441,7 +462,12 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
             {step === 1 ? "Cancel" : "Back"}
           </Button>
           {step < wizardSteps.length ? (
-            <Button type="submit" variant="primary" iconAfter="arrow-right">
+            <Button
+              type="submit"
+              variant="primary"
+              iconAfter="arrow-right"
+              disabled={step === 1 && !projectName.trim()}
+            >
               Continue
             </Button>
           ) : (

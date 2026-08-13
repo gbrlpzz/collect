@@ -6,6 +6,7 @@ import { Button, ConfirmationDialog, Eyebrow } from "./components/ui";
 import { Icon } from "./components/Icon";
 import { TopBar } from "./components/TopBar";
 import { useAppController } from "./app/useAppController";
+import { useVisualViewport } from "./lib/useVisualViewport";
 
 // The installed role is fixed at launch, so route-level code is loaded only
 // when that surface is actually opened. Field capture and admin tooling no
@@ -56,6 +57,7 @@ function SurfaceFallback() {
 }
 
 export default function App() {
+  useVisualViewport();
   const [deviceLinkOpen, setDeviceLinkOpen] = useState(false);
   const {
     state,
@@ -235,9 +237,12 @@ export default function App() {
         onNavigate={navigate}
         userEmail={session?.user.email}
         isPreview={!configured}
+        observations={state.observations}
+        lastSyncAt={state.lastSyncAt}
         onLinkDevice={
           session && configured ? () => setDeviceLinkOpen(true) : undefined
         }
+        onRecoveryExport={exportRecoveryPackage}
         onSignOut={() => void signOut()}
       />
 

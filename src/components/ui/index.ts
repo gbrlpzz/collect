@@ -8,6 +8,7 @@ export {
   Divider,
   EmailPrompt,
   Eyebrow,
+  ModalSurface,
   StatusBadge,
   StatusDot,
 } from "./feedback";

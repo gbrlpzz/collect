@@ -11,6 +11,7 @@ import {
 } from "../lib/supabaseClient";
 import { Icon } from "./Icon";
 import { Button, ClearButton, Eyebrow } from "./ui";
+import { isAppleMobileBrowser, isStandaloneApp } from "../lib/platform";
 
 interface AuthScreenProps {
   configured: boolean;
@@ -19,24 +20,6 @@ interface AuthScreenProps {
   /** After an invite/link sign-in, the account has no password yet. */
   requirePasswordSetup?: boolean;
   onPasswordSet?: () => void;
-}
-
-function isAppleMobileBrowser(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const userAgent = navigator.userAgent;
-  const iPadDesktopMode =
-    navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
-  return /iPhone|iPad|iPod/.test(userAgent) || iPadDesktopMode;
-}
-
-function isStandaloneApp(): boolean {
-  if (typeof window === "undefined" || typeof navigator === "undefined")
-    return false;
-  const standaloneNavigator = navigator as Navigator & { standalone?: boolean };
-  return Boolean(
-    window.matchMedia?.("(display-mode: standalone)").matches ||
-      standaloneNavigator.standalone,
-  );
 }
 
 function isLocalDevelopmentOrigin(): boolean {
@@ -64,7 +47,7 @@ export function AuthScreen({
   const showLocalRedirectHint = configured && isLocalDevelopmentOrigin();
   const showStandaloneNote = configured && standalone;
   const [entryMode, setEntryMode] = useState<EntryMode>(() =>
-    standalone ? "device" : "password",
+    standalone ? "device" : "link",
   );
   const [email, setEmail] = useState(pendingAuthEmail);
   const [password, setPasswordValue] = useState("");
@@ -543,12 +526,13 @@ export function AuthScreen({
                       type="button"
                       className="text-button"
                       onClick={() => {
-                        setEntryMode("password");
+                        setEntryMode("link");
                         setCode("");
                         setCodeError(null);
                       }}
                     >
-                      Back to sign-in <Icon name="arrow-right" size={15} />
+                      Sign in with email instead{" "}
+                      <Icon name="arrow-right" size={15} />
                     </button>
                   </form>
                 </div>
@@ -617,7 +601,7 @@ export function AuthScreen({
                       setCallbackIssue(null);
                     }}
                   >
-                    Sign in with your password instead{" "}
+                    Sign in with a password instead{" "}
                     <Icon name="arrow-right" size={15} />
                   </button>
                 </form>

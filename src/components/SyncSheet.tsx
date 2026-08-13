@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useState } from "react";
 
-import type { Observation, SubmissionState, SyncProgressEntry } from "../types";
+import type { Observation, SyncProgressEntry } from "../types";
 import {
   estimateLocalStorage,
   getOutboxOperations,
   type OutboxOperation,
 } from "../lib/localStore";
+import { formatExactTime, formatRelativeTime } from "../lib/formatTime";
 import { Icon } from "./Icon";
-import { Button, IconButton } from "./ui";
+import { Button, IconButton, ModalSurface } from "./ui";
 
 interface SyncSheetProps {
   observations: Observation[];
@@ -40,243 +40,198 @@ export function SyncSheet({
 }: SyncSheetProps) {
   const pending = observations.filter((item) => item.status !== "SYNCED");
   const hasPending = pending.length > 0;
+  const needsAttention = pending.filter(
+    (item) =>
+      item.status === "ACTION_REQUIRED" || item.status === "RETRYABLE_ERROR",
+  );
+  const [technicalOpen, setTechnicalOpen] = useState(false);
   const [storage, setStorage] = useState<{
     usage: number | null;
     quota: number | null;
     persisted: boolean | null;
   } | null>(null);
   const [operations, setOperations] = useState<OutboxOperation[] | null>(null);
-  const sheetRef = useRef<HTMLElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    if (!technicalOpen && needsAttention.length === 0) return;
     let active = true;
-    void estimateLocalStorage()
-      .then((value) => {
-        if (active) setStorage(value);
-      })
-      .catch(() => undefined);
-    void getOutboxOperations()
-      .then((value) => {
-        if (active) setOperations(value);
+    void Promise.all([estimateLocalStorage(), getOutboxOperations()])
+      .then(([storageValue, operationValue]) => {
+        if (!active) return;
+        setStorage(storageValue);
+        setOperations(operationValue);
       })
       .catch(() => undefined);
     return () => {
       active = false;
     };
-  }, []);
-
-  useEffect(() => {
-    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [onClose]);
-
-  useEffect(() => {
-    previousFocusRef.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    return () => {
-      if (previousFocusRef.current?.isConnected)
-        previousFocusRef.current.focus();
-    };
-  }, []);
-
-  const keepFocusInside = (event: ReactKeyboardEvent<HTMLElement>) => {
-    if (event.key !== "Tab") return;
-    const focusable = Array.from(
-      sheetRef.current?.querySelectorAll<HTMLElement>(
-        "button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex='-1'])",
-      ) ?? [],
-    );
-    if (!focusable.length) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  };
+  }, [needsAttention.length, technicalOpen]);
 
   const activeProgress = pending
     .map((item) => ({ observation: item, entry: progress[item.id] }))
-    .filter((row) => row.entry);
-  const syncingCount = activeProgress.length;
-  const statusLabel = (status: SubmissionState): string =>
-    status === "ACTION_REQUIRED"
-      ? "Needs attention"
-      : status === "RETRYABLE_ERROR"
-        ? "Will retry"
-        : "Queued";
+    .filter(
+      (row): row is { observation: Observation; entry: SyncProgressEntry } =>
+        Boolean(row.entry),
+    );
   const errored = operations?.filter((operation) => operation.lastError) ?? [];
+  const lastSyncTitle = formatExactTime(lastSyncAt);
 
   return (
-    <div
-      className="sheet-backdrop"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
+    <ModalSurface
+      onClose={onClose}
+      labelledBy="sync-sheet-title"
+      describedBy="sync-sheet-copy"
     >
-      <section
-        ref={sheetRef}
-        className="bottom-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="sync-sheet-title"
-        aria-describedby="sync-sheet-copy"
-        onKeyDown={keepFocusInside}
-      >
-        <div className="sheet-handle" />
-        <div className="sheet-heading">
-          <div>
-            <span className="sheet-kicker">Sync</span>
-            <h2 id="sync-sheet-title">
-              {isSyncing && syncingCount
-                ? `Syncing ${syncingCount} of ${pending.length}…`
+      <div className="sheet-handle" />
+      <div className="sheet-heading">
+        <div>
+          <span className="sheet-kicker">Sync</span>
+          <h2 id="sync-sheet-title">
+            {isSyncing
+              ? "Sending observations…"
+              : needsAttention.length
+                ? "Sync needs attention"
                 : hasPending
-                  ? `${pending.length} waiting`
-                  : "Up to date"}
-            </h2>
-          </div>
-          <IconButton
-            label="Close sync status"
-            icon="x"
-            autoFocus
-            onClick={onClose}
-          />
+                  ? `${pending.length} waiting to send`
+                  : "Everything is up to date"}
+          </h2>
         </div>
+        <IconButton
+          label="Close sync status"
+          icon="x"
+          data-modal-autofocus
+          onClick={onClose}
+        />
+      </div>
 
-        <p className="sheet-copy" id="sync-sheet-copy">
-          {hasPending
-            ? "Saved on this device. Sync will continue when the server is reachable."
-            : "The server has acknowledged every complete observation."}
-        </p>
+      <p className="sheet-copy" id="sync-sheet-copy">
+        {needsAttention.length
+          ? "Your observations remain saved on this device. Collect will keep retrying automatically."
+          : hasPending
+            ? "They are safely stored here and will send automatically when the server is reachable."
+            : "The server has acknowledged every complete observation on this device."}
+      </p>
 
-        {activeProgress.length > 0 && (
-          <div className="sync-operation-list">
-            {activeProgress.map(({ observation, entry }) => (
-              <div className="sync-operation-row" key={observation.id}>
-                <span className="operation-number">
-                  {pending.findIndex((item) => item.id === observation.id) + 1}
+      {activeProgress.length > 0 && (
+        <div className="sync-operation-list" aria-label="Current sync progress">
+          {activeProgress.map(({ observation, entry }) => (
+            <div className="sync-operation-row" key={observation.id}>
+              <div className="sync-operation-copy">
+                <strong>
+                  {String(observation.values.site_code ?? "New observation")}
+                </strong>
+                <span>
+                  {entry.phase === "SYNCING_MEDIA"
+                    ? "Uploading media"
+                    : entry.phase === "FINALIZING"
+                      ? "Confirming server receipt"
+                      : "Sending record"}
                 </span>
-                <div className="sync-operation-copy">
-                  <strong>
-                    {String(observation.values.site_code ?? "New observation")}
-                  </strong>
-                  <span>
-                    {entry.phase === "SYNCING_MEDIA"
-                      ? "Uploading media…"
-                      : entry.phase === "FINALIZING"
-                        ? "Finalizing on server…"
-                        : "Sending metadata…"}
-                  </span>
-                  {entry.phase === "SYNCING_MEDIA" &&
-                    Object.entries(entry.media).map(([mediaId, percent]) => (
+                {entry.phase === "SYNCING_MEDIA" &&
+                  Object.entries(entry.media).map(([mediaId, percent]) => (
+                    <span className="media-progress" key={mediaId}>
                       <span
-                        className="media-progress"
-                        key={mediaId}
-                        aria-live="polite"
+                        className="media-progress-track"
+                        role="progressbar"
+                        aria-label={`Media upload ${percent}% complete`}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={percent}
                       >
-                        <span
-                          className="media-progress-track"
-                          role="progressbar"
-                          aria-label={`Media upload ${percent}% complete`}
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                          aria-valuenow={percent}
-                        >
-                          <span style={{ width: `${percent}%` }} />
-                        </span>
-                        <span>
-                          {percent < 100 ? `${percent}%` : "uploaded"}
-                        </span>
+                        <span style={{ width: `${percent}%` }} />
                       </span>
-                    ))}
-                </div>
-                <span className="operation-status">Syncing</span>
+                      <span>{percent}%</span>
+                    </span>
+                  ))}
               </div>
-            ))}
-          </div>
-        )}
-        {hasPending && activeProgress.length === 0 && (
-          <div className="sync-operation-list">
-            {pending.slice(0, 4).map((observation, index) => (
-              <div className="sync-operation-row" key={observation.id}>
-                <span className="operation-number">{index + 1}</span>
-                <div>
-                  <strong>
-                    {String(observation.values.site_code ?? "New observation")}
-                  </strong>
-                  <span>Structured data · media queued</span>
-                </div>
-                <span className="operation-status">
-                  {statusLabel(observation.status)}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="sync-facts">
-          <div>
-            <span>Last successful sync</span>
-            <strong>
-              {lastSyncAt
-                ? new Date(lastSyncAt).toLocaleString()
-                : "Not yet on this device"}
-            </strong>
-          </div>
-          <div>
-            <span>Device storage</span>
-            <strong>
-              {storage
-                ? `${formatBytes(storage.usage)} of ${formatBytes(storage.quota)} · ${storage.persisted ? "persistent" : "not persistent"}`
-                : "Checking…"}
-            </strong>
-          </div>
+            </div>
+          ))}
         </div>
+      )}
 
-        {errored.length > 0 && (
-          <details className="sync-details">
-            <summary>
-              <Icon name="info" size={15} /> Details
-            </summary>
-            <ul className="sync-details-list">
-              {errored.slice(0, 6).map((operation) => (
-                <li key={operation.id}>
-                  <strong>{operation.id}</strong>
-                  <span>{operation.lastError}</span>
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
+      {needsAttention.length > 0 && !isSyncing && (
+        <div className="sync-attention-note" role="status">
+          <Icon name="info" size={17} />
+          <span>
+            {needsAttention.length}{" "}
+            {needsAttention.length === 1 ? "record" : "records"} will retry.
+            Export a recovery copy below only if you need to move the data off
+            this device.
+          </span>
+        </div>
+      )}
 
+      <div className="sync-last-success">
+        <span>Last server receipt</span>
+        <strong title={lastSyncTitle}>
+          {lastSyncAt
+            ? formatRelativeTime(lastSyncAt)
+            : "None on this device yet"}
+        </strong>
+      </div>
+
+      {hasPending ? (
         <Button
           variant="primary"
           fullWidth
           icon="refresh"
           onClick={onSync}
-          disabled={isSyncing || !hasPending}
+          disabled={isSyncing}
           busy={isSyncing}
         >
-          {isSyncing ? "Syncing…" : hasPending ? "Sync now" : "Up to date"}
+          {isSyncing ? "Sending…" : "Try now"}
         </Button>
+      ) : (
+        <Button variant="primary" fullWidth onClick={onClose}>
+          Done
+        </Button>
+      )}
+
+      <details
+        className="sync-details sync-recovery-disclosure"
+        onToggle={(event) => setTechnicalOpen(event.currentTarget.open)}
+      >
+        <summary>
+          <Icon name="shield" size={15} /> Data recovery and device details
+        </summary>
+        <div className="sync-facts">
+          <div>
+            <span>Device storage</span>
+            <strong>
+              {storage
+                ? `${formatBytes(storage.usage)} of ${formatBytes(storage.quota)}`
+                : "Checking…"}
+            </strong>
+          </div>
+          <div>
+            <span>Storage protection</span>
+            <strong>
+              {storage
+                ? storage.persisted
+                  ? "Persistent"
+                  : "Browser managed"
+                : "Checking…"}
+            </strong>
+          </div>
+        </div>
+        {errored.length > 0 && (
+          <ul className="sync-details-list" aria-label="Technical sync errors">
+            {errored.slice(0, 6).map((operation) => (
+              <li key={operation.id}>
+                <strong>{operation.id}</strong>
+                <span>{operation.lastError}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         <button className="recovery-button" onClick={onRecoveryExport}>
-          <Icon name="download" size={15} /> Export unsynced recovery package
+          <Icon name="download" size={15} /> Export local recovery copy
         </button>
         <p className="sheet-footnote">
-          A recovery package contains locally saved records and their media if
-          the hosted service cannot be reached.
+          Use this only to preserve locally saved records and media outside
+          collect. It does not remove anything from this device.
         </p>
-      </section>
-    </div>
+      </details>
+    </ModalSurface>
   );
 }
