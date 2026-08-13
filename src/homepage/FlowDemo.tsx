@@ -4,7 +4,7 @@ import { ContributorHome } from "../components/ContributorHome";
 import { Button } from "../components/ui";
 import { Icon } from "../components/Icon";
 import { projectFields } from "../data/schemaFixtures";
-import { ATTENTION_FIELD_KEY } from "../data/attentionChecks";
+import { ATTENTION_CHECKS, ATTENTION_FIELD_KEY } from "../data/attentionChecks";
 import { extractAttentionResponse } from "../lib/attention";
 import type { Observation, Project } from "../types";
 
@@ -105,7 +105,10 @@ const NARRATION: Record<string, { title: string; body: string }> = {
 
 const labelToKey = new Map<string, string>();
 for (const field of demoFields) labelToKey.set(field.label, field.key);
-labelToKey.set("Quick check", ATTENTION_FIELD_KEY);
+// The attention step's title is the check prompt itself (the real bank).
+for (const check of ATTENTION_CHECKS) {
+  labelToKey.set(check.prompt, ATTENTION_FIELD_KEY);
+}
 
 const SYNC_PHASES = [
   { label: "Metadata", detail: "1 operation" },
@@ -260,7 +263,7 @@ export function FlowDemo() {
     setObservation({
       id: "demo-observation",
       projectId: demoProject.id,
-      createdAt: new Date().toLocaleString(),
+      createdAt: new Date().toISOString(),
       status: "SAVED_LOCAL",
       values,
       media: [],
@@ -390,6 +393,7 @@ export function FlowDemo() {
                 onOpenProject={reset}
                 onChooseProject={() => undefined}
                 onResumeObservation={reset}
+                onDiscardAndStartObservation={reset}
               />
             ) : null}
           </div>

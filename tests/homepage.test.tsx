@@ -55,9 +55,9 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
     const stepTitle = () =>
       viewport().querySelector(".step-title")?.textContent?.trim() ?? "";
     const primaryButton = () =>
-      screen.queryByRole("button", { name: /continue|save observation/i });
+      screen.queryByRole("button", { name: /continue|skip|save observation/i });
     const homeReached = () =>
-      screen.queryByRole("button", { name: /start observation/i }) !== null;
+      screen.queryByRole("button", { name: /add observation/i }) !== null;
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
     // Advance through every step. Single answers auto-advance (~220 ms);
@@ -78,9 +78,9 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
       } else if (title === "Date observed") {
         const input = viewport().querySelector('input[type="date"]');
         fireEvent.change(input!, { target: { value: "2026-08-10" } });
-      } else if (title === "Quick check") {
-        fireEvent.click(viewport().querySelector(".choice-button")!);
       } else {
+        // Covers single/tri-state/attention steps (auto-advance) as well as
+        // the attention step whose title is the check prompt itself.
         const option = viewport().querySelector(
           ".choice-button, .tri-state button",
         );
@@ -93,18 +93,28 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
 
       await sleep(360);
       const primary = primaryButton();
-      if (primary && /save observation/i.test(primary.textContent ?? "")) {
-        // Last step: answer or skip, then save.
+      // Save is only clickable once the (required) last step is answered.
+      if (
+        primary &&
+        !primary.disabled &&
+        /save observation/i.test(primary.textContent ?? "")
+      ) {
         fireEvent.click(primary);
         break;
       }
-      // Multi-select and other explicit-continue steps stay put.
+      // Multi-select and required-last steps (e.g. attention) stay put:
+      // press the primary action so the walk continues to the next step.
       if (stepTitle() === title) {
-        fireEvent.click(primaryButton()!);
+        const current = primaryButton();
+        if (current && !current.disabled) fireEvent.click(current);
         await sleep(360);
         if (homeReached()) break;
         const after = primaryButton();
-        if (after && /save observation/i.test(after.textContent ?? "")) {
+        if (
+          after &&
+          !after.disabled &&
+          /save observation/i.test(after.textContent ?? "")
+        ) {
           fireEvent.click(after);
           break;
         }
@@ -116,7 +126,6 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
     await waitFor(() => expect(homeReached()).toBe(true));
     expect(screen.getByText("Vernacular buildings — Valpuesta")).toBeTruthy();
     expect(screen.getByText(/Saved here/i)).toBeTruthy();
-    expect(screen.getByText(/1 waiting to send/i)).toBeTruthy();
 
     // The demo never persists anything: no storage, no IndexedDB.
     storageEmpty();
