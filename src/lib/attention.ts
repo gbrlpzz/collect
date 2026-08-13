@@ -11,17 +11,49 @@ export interface AttentionResponse {
   selectedValue: string;
 }
 
+export interface AttentionInsertion {
+  /** Array index immediately after the selected research field. */
+  index: number;
+  /** One-based research-field ordinal, independent of heading steps. */
+  afterField: number;
+}
+
 /**
- * Automatic attention verification: every observation gets ONE random check,
- * injected after the first couple of questions. The answer is collected as a
- * normal multiple-choice field, stripped from the research payload, and
- * recorded on the server where correctness is computed from the bank.
+ * Automatic attention verification: every observation gets ONE random check
+ * at a randomized question boundary. The answer is collected as a normal
+ * multiple-choice field, stripped from the research payload, and recorded on
+ * the server where correctness is computed from the bank.
  */
 export function pickAttentionCheck(excludeKeys: string[] = []): AttentionCheck {
   const available = ATTENTION_CHECKS.filter(
     (check) => !excludeKeys.includes(check.key),
   );
   const pool = available.length ? available : ATTENTION_CHECKS;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/**
+ * Pick a random boundary after a research field. The previous boundary can be
+ * excluded so consecutive observations do not train contributors to expect a
+ * check in the same place. Heading steps do not count as questions.
+ */
+export function pickAttentionInsertion(
+  steps: Array<{ kind: "heading" | "field" }>,
+  excludeAfterField?: number,
+): AttentionInsertion {
+  let fieldsSeen = 0;
+  const positions = steps.flatMap((step, index) => {
+    if (step.kind !== "field") return [];
+    fieldsSeen += 1;
+    return [
+      { index: index + 1, afterField: fieldsSeen } satisfies AttentionInsertion,
+    ];
+  });
+  if (!positions.length) return { index: steps.length, afterField: 0 };
+  const available = positions.filter(
+    (position) => position.afterField !== excludeAfterField,
+  );
+  const pool = available.length ? available : positions;
   return pool[Math.floor(Math.random() * pool.length)];
 }
 

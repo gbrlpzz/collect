@@ -106,10 +106,17 @@ describe("visual system contract", () => {
     expect(styles).not.toContain(".account-button-open");
   });
 
-  it("uses the shared floating command geometry for the mobile header", () => {
+  it("separates the mobile brand and profile into independent controls", () => {
     expect(geometry).toMatch(
-      /@media \(max-width: 680px\)[\s\S]*?\.topbar-inner\s*\{[^}]*border-radius:\s*var\(--control-radius\)[^}]*box-shadow:\s*var\(--floating-shadow\)/s,
+      /@media \(max-width: 680px\)[\s\S]*?\.topbar-home \.wordmark,[\s\S]*?border:\s*1px solid var\(--separator-light\)[\s\S]*?box-shadow:\s*var\(--floating-shadow\)/s,
     );
+  });
+
+  it("keeps creation chrome and the footer lockup minimal", () => {
+    expect(geometry).toMatch(
+      /@media \(max-width: 680px\)[\s\S]*?\.topbar-new-project\s*\{[^}]*display:\s*none/s,
+    );
+    expect(geometry).toMatch(/\.app-credit\s*\{[^}]*align-items:\s*baseline/s);
   });
 
   it("keeps resume and deliberate restart together in the mobile reach zone", () => {

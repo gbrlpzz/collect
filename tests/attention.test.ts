@@ -7,6 +7,7 @@ import {
   extractAttentionResponse,
   formatAttentionScore,
   pickAttentionCheck,
+  pickAttentionInsertion,
 } from "../src/lib/attention";
 
 describe("attention verification", () => {
@@ -55,6 +56,22 @@ describe("attention verification", () => {
     expect(ATTENTION_CHECKS.some((check) => check.key === first.key)).toBe(
       true,
     );
+  });
+
+  it("randomizes the insertion boundary and can avoid its last position", () => {
+    const steps = [
+      { kind: "field" as const },
+      { kind: "heading" as const },
+      { kind: "field" as const },
+      { kind: "field" as const },
+    ];
+    const first = pickAttentionInsertion(steps);
+    const second = pickAttentionInsertion(steps, first.afterField);
+    expect(first.afterField).toBeGreaterThanOrEqual(1);
+    expect(first.afterField).toBeLessThanOrEqual(3);
+    expect(second.afterField).not.toBe(first.afterField);
+    expect(steps[first.index - 1].kind).toBe("field");
+    expect(steps[second.index - 1].kind).toBe("field");
   });
 
   it("builds a single-choice field with shuffled options and embeds the check key", () => {

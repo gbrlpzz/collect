@@ -928,13 +928,50 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
     width: calc(100% - (2 * var(--page-gutter))) !important;
     height: 52px;
     margin: 8px var(--page-gutter) 0;
-    padding: 0 var(--space-1) 0 var(--space-4);
+    padding: 0;
+  }
+  .topbar-home .wordmark,
+  .topbar-project .wordmark,
+  .topbar-admin .wordmark,
+  .topbar-admin-project .wordmark,
+  .topbar-home .account-button,
+  .topbar-project .account-button,
+  .topbar-admin .account-button,
+  .topbar-admin-project .account-button {
     border: 1px solid var(--separator-light);
-    border-radius: var(--control-radius);
     background: var(--glass);
     box-shadow: var(--floating-shadow);
     -webkit-backdrop-filter: blur(22px) saturate(180%);
     backdrop-filter: blur(22px) saturate(180%);
+  }
+  .topbar-home .wordmark,
+  .topbar-project .wordmark,
+  .topbar-admin .wordmark,
+  .topbar-admin-project .wordmark {
+    padding: 0 var(--space-4);
+    border-radius: var(--control-radius);
+  }
+  .topbar-new-project {
+    display: none;
+  }
+  .app-shell[data-view="new-project"] .main-shell {
+    min-height: 100dvh;
+  }
+  .collector-topbar .back-button,
+  .wizard-back-button {
+    width: var(--control-height);
+    min-width: var(--control-height);
+    padding: 0;
+    justify-content: center;
+  }
+  .collector-topbar .back-button-label,
+  .wizard-back-button .back-button-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
   .main-shell {
     min-height: calc(100dvh - 68px - env(safe-area-inset-top));
@@ -1226,6 +1263,12 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
     background: transparent;
   }
   .topbar-inner {
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .topbar .wordmark,
+  .topbar .account-button {
     background: var(--paper);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -1443,12 +1486,16 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 .app-credit {
   min-height: var(--control-height);
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: center;
   gap: 5px;
   margin-top: var(--space-7);
   color: var(--tertiary);
   font-size: 0.6875rem;
+}
+.app-credit .collect-brand,
+.app-credit > span:last-child {
+  align-items: baseline;
 }
 .app-credit .collect-wordmark {
   color: var(--tertiary);

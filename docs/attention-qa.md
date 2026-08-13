@@ -9,7 +9,7 @@ The mechanism is intended to help a research team interpret possible inattention
 ```text
 select a random configured check
   → shuffle options
-  → render after the first two research fields when available
+  → choose a random position among the research fields
   → separate the synthetic answer from research values
   → commit the answer as provenance
   → validate against the server bank
@@ -40,9 +40,12 @@ An instruction can be simple without being accessible to every population. Deplo
 ## Injection
 
 - One check is selected randomly per observation.
+- Consecutive observations avoid repeating the same check when another is
+  available.
 - Options are shuffled for each presentation.
-- The check appears immediately after the first two research fields. A form
-  with only one field presents the check after that field.
+- The check appears after a randomly selected research field. Consecutive
+  observations avoid the same insertion boundary when another is available.
+  A form with only one field necessarily presents the check after that field.
 - The reserved field key is `_attention`.
 - The contributor sees the explicit label **Attention check** and the complete instruction.
 
