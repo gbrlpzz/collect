@@ -2,6 +2,7 @@ import type { Observation, Project } from "../types";
 import { formatExactTime, formatRelativeTime } from "../lib/formatTime";
 import { Icon } from "./Icon";
 import { Button } from "./ui";
+import { AppCredit } from "./AppCredit";
 
 interface ContributorHomeProps {
   projects: Project[];
@@ -181,6 +182,7 @@ export function ContributorHome({
           </span>
         </div>
       )}
+      <AppCredit />
     </main>
   );
 }

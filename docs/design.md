@@ -197,9 +197,12 @@ Profile consolidates infrequent personal and account information:
 - Add to Home Screen guidance;
 - device-link code generation;
 - privacy summary and local export;
+- app version, authorship, and feedback under **About collect**;
 - sign out.
 
 The attention score appears as a circular numeric indicator with a non-color label and explanatory disclosure. Color may reinforce range but cannot carry the meaning alone.
+
+The contributor Home surface ends with a quiet, non-card footer: the Collect wordmark in its existing typography followed by the gbrlpzz byline. It is identity, not navigation, and must never compete with the observation action dock.
 
 ## Privacy presentation
 

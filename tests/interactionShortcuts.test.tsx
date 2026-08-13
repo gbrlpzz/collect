@@ -7,6 +7,7 @@ import { ConsentScreen } from "../src/components/ConsentScreen";
 import { ContributorHome } from "../src/components/ContributorHome";
 import { DeviceLinkSheet } from "../src/components/DeviceLinkSheet";
 import { NewProjectWizard } from "../src/components/NewProjectWizard";
+import { ProfileSheet } from "../src/components/ProfileSheet";
 import { ProjectOverview } from "../src/components/ProjectOverview";
 import { TopBar } from "../src/components/TopBar";
 import { EmailPrompt } from "../src/components/ui";
@@ -238,6 +239,10 @@ describe("low-friction primary actions", () => {
     expect(
       screen.getByRole("heading", { name: /new observation/i }),
     ).toBeTruthy();
+    expect(screen.getByLabelText("collect by gbrlpzz")).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "gbrlpzz" }).getAttribute("href"),
+    ).toBe("https://gbrlpzz.com/");
     expect(screen.queryByRole("heading", { name: /^projects$/i })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /add observation/i }));
     expect(onStartObservation).toHaveBeenCalledWith(project);
@@ -335,6 +340,29 @@ describe("low-friction primary actions", () => {
       screen.getByRole("button", { name: /sign in another device/i }),
     );
     expect(onLinkDevice).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps app version and feedback inside the profile hierarchy", () => {
+    render(
+      <ProfileSheet
+        userEmail="field@example.com"
+        profile={null}
+        observations={[]}
+        lastSyncAt={null}
+        isAdmin={false}
+        isPreview={false}
+        onClose={() => undefined}
+      />,
+    );
+
+    const about = screen.getByText("About collect").closest("details")!;
+    expect(about.open).toBe(false);
+    fireEvent.click(screen.getByText("About collect"));
+    expect(about.open).toBe(true);
+    expect(screen.getByText(/Version 0\.1\.2/i)).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: /send feedback/i }).getAttribute("href"),
+    ).toContain("github.com/gbrlpzz/collect/issues/new");
   });
 
   it("shows the attention score in the account menu for a signed-in contributor", async () => {

@@ -1449,6 +1449,30 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 .collection-status .section-heading-row p {
   margin-top: 4px;
 }
+.app-credit {
+  min-height: var(--control-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: var(--space-7);
+  color: var(--tertiary);
+  font-size: 0.6875rem;
+}
+.app-credit .collect-wordmark {
+  color: var(--tertiary);
+  font-size: 0.8125rem;
+}
+.app-credit a {
+  min-height: var(--control-height);
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+.app-credit a:active {
+  opacity: 0.55;
+}
 
 /* Project privacy reads like a native settings disclosure, not legal fine
    print or a second scroll container. */
@@ -1935,6 +1959,33 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 .profile-privacy .button {
   width: calc(100% - var(--space-8));
   margin: 0 var(--space-4) var(--space-4);
+}
+.profile-about-content {
+  display: grid;
+  gap: var(--space-3);
+  padding: 0 var(--space-4) var(--space-4) calc(17px + var(--space-7));
+  color: var(--secondary);
+  font-size: var(--type-footnote);
+  line-height: 1.5;
+}
+.profile-about-identity {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.profile-about-identity .collect-wordmark {
+  color: var(--text);
+  font-size: 1rem;
+}
+.profile-about-content a:not(.profile-feedback) {
+  color: var(--text);
+}
+.profile-feedback {
+  justify-content: center;
+  color: var(--text);
+  text-decoration: none;
 }
 .profile-signout {
   width: 100%;
