@@ -173,6 +173,8 @@ Start with the [documentation index](docs/README.md). The main documents are:
 
 ```text
 src/                    React PWA and shared application code
+src/homepage/           marketing homepage (homepage.html entry) — reuses the app's real
+                        components in a live demo; built by the same `npm run build`
 src/app/                orchestration, local submission, synchronization, recovery
 src/components/         contributor and administrator surfaces
 src/components/ui/      shared accessible controls and modal primitives

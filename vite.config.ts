@@ -60,6 +60,8 @@ function socialMetadata(appUrl: string | undefined): Plugin {
 /**
  * Emits /precache-manifest.json with every hashed build asset so the service
  * worker can precache the exact production shell (index.html + JS/CSS/icons).
+ * The homepage entry (homepage.html + its chunks) is a separate surface and
+ * is deliberately excluded from the app shell's precache.
  */
 function precacheManifest(): Plugin {
   return {
@@ -67,12 +69,17 @@ function precacheManifest(): Plugin {
     apply: "build",
     generateBundle(_options, bundle) {
       const urls = Object.values(bundle)
-        .filter(
-          (item) =>
-            item.type === "chunk" ||
-            (item.type === "asset" && item.fileName.endsWith(".css")) ||
-            (item.type === "asset" && item.fileName.endsWith(".js")),
-        )
+        .filter((item) => {
+          if (
+            item.type !== "chunk" &&
+            !(
+              item.type === "asset" &&
+              (item.fileName.endsWith(".css") || item.fileName.endsWith(".js"))
+            )
+          )
+            return false;
+          return !item.fileName.includes("homepage");
+        })
         .map((item) => `/${item.fileName}`);
       const manifest = ["/index.html", ...new Set(urls)].sort();
       this.emitFile({
@@ -90,6 +97,16 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), socialMetadata(env.VITE_APP_URL), precacheManifest()],
     build: {
       target: "es2020",
+      rollupOptions: {
+        input: {
+          // The app shell (index.html) and the marketing homepage
+          // (homepage.html) share one bundle; the homepage imports the app's
+          // real components so frontend changes mirror into its live demo.
+          // Relative inputs resolve from the project root — no node imports.
+          app: "index.html",
+          homepage: "homepage.html",
+        },
+      },
     },
     test: {
       globals: true,
