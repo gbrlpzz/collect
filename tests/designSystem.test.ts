@@ -91,4 +91,13 @@ describe("visual system contract", () => {
       /\.(?:consent-record-note|sync-attention-note|attention-score-help)\b/,
     );
   });
+
+  it("keeps resume and deliberate restart together in the mobile reach zone", () => {
+    expect(geometry).toMatch(
+      /\.draft-restart-action\s*\{[^}]*min-height:\s*var\(--control-height\)[^}]*color:\s*var\(--destructive\)/s,
+    );
+    expect(geometry).toMatch(
+      /@media \(max-width: 680px\)[\s\S]*?\.primary-action-dock-draft\s*\{[^}]*border-radius:\s*28px/s,
+    );
+  });
 });

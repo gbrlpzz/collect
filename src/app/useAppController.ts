@@ -108,6 +108,8 @@ export function useAppController() {
     resolve: resolveConfirmation,
   } = useConfirmation();
   const syncOwnerRef = useRef(`sync-worker-${crypto.randomUUID()}`);
+  const stateRef = useRef(state);
+  stateRef.current = state;
   const syncNowRef = useRef<
     (options?: { silent?: boolean }) => Promise<boolean>
   >(() => Promise.resolve(false));
@@ -458,6 +460,64 @@ export function useAppController() {
     }));
   };
 
+  const discardDraftAndStart = async (project: AppState["project"]) => {
+    const confirmed = await requestConfirmation({
+      title: "Discard this draft?",
+      message:
+        "All answers and media in this unfinished observation will be permanently removed. This cannot be undone.",
+      confirmLabel: "Discard and start new",
+      cancelLabel: "Keep draft",
+      destructive: true,
+    });
+    if (!confirmed) return;
+
+    // Confirmation may stay open while background synchronization updates the
+    // controller. Read the latest state now, not the render that opened it.
+    const currentState = stateRef.current;
+    const mediaIds = Object.values(currentState.draft).flatMap((value) =>
+      Array.isArray(value)
+        ? value.flatMap((item) =>
+            typeof item === "object" &&
+            item !== null &&
+            "id" in item &&
+            typeof item.id === "string"
+              ? [item.id]
+              : [],
+          )
+        : [],
+    );
+    const nextState: AppState = {
+      ...currentState,
+      project,
+      draft: { observed_date: new Date().toISOString().slice(0, 10) },
+      lastSavedAt: null,
+      view: "collector",
+    };
+
+    // Write the empty draft immediately instead of relying on the debounced
+    // autosave. A force-quit after an explicit discard must not restore it.
+    setState(nextState);
+    try {
+      await saveAppState(nextState, localBackendKey);
+      if (mediaIds.length) await deleteDraftMedia(mediaIds);
+      setStorageError(null);
+      showToast("New observation started");
+    } catch {
+      // Preserve any receipt or readiness update that arrived during the
+      // failed write; restore only the draft and route we attempted to replace.
+      setState((latest) => ({
+        ...latest,
+        project: currentState.project,
+        draft: currentState.draft,
+        lastSavedAt: currentState.lastSavedAt,
+        view: "home",
+      }));
+      setStorageError(
+        "The draft could not be discarded safely. It remains available on this device.",
+      );
+    }
+  };
+
   const submitInFlightRef = useRef(false);
   const submitObservation = async (
     values: Record<string, unknown>,
@@ -765,6 +825,7 @@ export function useAppController() {
       selectProject,
       signOut,
       updateDraft,
+      discardDraftAndStart,
       submitObservation,
       openSyncSheetAndSync,
       closeSyncSheet,

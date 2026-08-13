@@ -69,6 +69,7 @@ A request start, metadata row, completed upload, or optimistic client state is n
 The local database contains projects, drafts, submissions, media blobs, outbox operations, receipts, and device state. Important properties:
 
 - Submission and media identifiers exist before network work.
+- Drafts stay outside the submission outbox and never upload; confirmed discard removes the local draft and its draft-scoped media.
 - Media blobs have one durable home rather than being copied into every application snapshot.
 - Submitted media cannot be overwritten by a late draft write.
 - A late autosave cannot downgrade a `SYNCED` submission.

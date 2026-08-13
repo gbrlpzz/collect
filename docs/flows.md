@@ -20,9 +20,11 @@ This document describes the primary workflows and the system transitions that su
 3. Complete one field at a time. Single-choice fields may advance automatically; text, number, media, and multiple-choice fields wait for an explicit action.
 4. Leave an optional field empty and tap **Skip**. Optional fields do not receive automatic keyboard focus.
 5. If the schema declares a location field, the client requires contextual location access before showing any questions; otherwise it never requests location.
-6. Tap **Save observation**.
-7. The client validates required fields and commits the submission, media, and outbox operations atomically.
-8. Only after that transaction succeeds does the interface show **Saved on this device**.
+6. At any point, tap **Home** to leave the flow while keeping the draft locally. From Home, **Resume observation** continues it; **Discard and start new** confirms deletion of the draft and its draft-scoped media.
+7. Drafts never enter the synchronization outbox and are never uploaded as observations.
+8. Tap **Save observation**.
+9. The client validates required fields and commits the submission, media, and outbox operations atomically.
+10. Only after that transaction succeeds does the interface show **Saved on this device**.
 
 ### Synchronize
 
@@ -93,11 +95,11 @@ This behavior is a product invariant because mobile is the primary interface.
 
 ## State summary
 
-| State                | Meaning                                                                              | User action                                       |
-| -------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------- |
-| Draft                | The observation is still editable and has not crossed the local submission boundary. | Continue or discard deliberately.                 |
-| Saved on this device | The local atomic commit succeeded. Server transfer may still be pending.             | Continue fieldwork; synchronization is automatic. |
-| Waiting to send      | Durable outbox work exists but no transfer is active.                                | Usually none.                                     |
-| Sending              | One synchronization owner is processing due work.                                    | Usually none.                                     |
-| Synced               | A matching server finalization receipt exists.                                       | None.                                             |
-| Action required      | A permanent conflict or missing local requirement prevents automatic completion.     | Open the record or recovery details.              |
+| State                | Meaning                                                                              | User action                                           |
+| -------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| Draft                | The observation is still editable and has not crossed the local submission boundary. | Return Home, continue later, or discard deliberately. |
+| Saved on this device | The local atomic commit succeeded. Server transfer may still be pending.             | Continue fieldwork; synchronization is automatic.     |
+| Waiting to send      | Durable outbox work exists but no transfer is active.                                | Usually none.                                         |
+| Sending              | One synchronization owner is processing due work.                                    | Usually none.                                         |
+| Synced               | A matching server finalization receipt exists.                                       | None.                                                 |
+| Action required      | A permanent conflict or missing local requirement prevents automatic completion.     | Open the record or recovery details.                  |

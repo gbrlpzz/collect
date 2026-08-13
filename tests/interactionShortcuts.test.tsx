@@ -231,6 +231,7 @@ describe("low-friction primary actions", () => {
         onOpenProject={() => undefined}
         onChooseProject={() => undefined}
         onResumeObservation={() => undefined}
+        onDiscardAndStartObservation={() => undefined}
       />,
     );
 
@@ -242,8 +243,9 @@ describe("low-friction primary actions", () => {
     expect(onStartObservation).toHaveBeenCalledWith(project);
   });
 
-  it("shows only the resume action when a draft already exists", () => {
+  it("resumes a draft or deliberately discards it to start fresh", () => {
     const onResumeObservation = vi.fn();
+    const onDiscardAndStartObservation = vi.fn();
     render(
       <ContributorHome
         projects={[project]}
@@ -254,6 +256,7 @@ describe("low-friction primary actions", () => {
         onOpenProject={() => undefined}
         onChooseProject={() => undefined}
         onResumeObservation={onResumeObservation}
+        onDiscardAndStartObservation={onDiscardAndStartObservation}
       />,
     );
 
@@ -264,6 +267,42 @@ describe("low-friction primary actions", () => {
       screen.getByRole("button", { name: /resume observation/i }),
     );
     expect(onResumeObservation).toHaveBeenCalledTimes(1);
+    fireEvent.click(
+      screen.getByRole("button", { name: /discard and start new/i }),
+    );
+    expect(onDiscardAndStartObservation).toHaveBeenCalledWith(project);
+  });
+
+  it("leaves collection for Home without discarding the draft", () => {
+    const onBack = vi.fn();
+    const fields: FieldDefinition[] = [
+      {
+        id: "notes",
+        key: "notes",
+        label: "Notes",
+        type: "long_text",
+        semantic_uri: null,
+      },
+    ];
+
+    render(
+      <Collector
+        project={{ ...project, fields }}
+        draft={{ notes: "Unfinished field note" }}
+        lastSavedAt="09:00"
+        onDraftChange={() => undefined}
+        onSubmit={() => undefined}
+        onBack={onBack}
+        isSaving={false}
+        attentionCheck={false}
+      />,
+    );
+
+    expect(screen.getByText("Notes")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: /save draft and return home/i }),
+    );
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it("keeps the contributor and admin surfaces separate", () => {

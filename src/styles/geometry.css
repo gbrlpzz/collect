@@ -275,6 +275,24 @@ h3 {
 .primary-action-dock {
   display: block;
 }
+.primary-action-dock-draft {
+  display: grid;
+  gap: 2px;
+}
+.draft-restart-action {
+  width: 100%;
+  min-height: var(--control-height);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--control-radius);
+  background: transparent;
+  color: var(--destructive);
+  font-size: var(--type-footnote);
+  font-weight: 600;
+}
+.draft-restart-action:disabled {
+  color: var(--tertiary);
+}
 .admin-context-actions {
   display: flex;
   gap: var(--space-2);
@@ -974,8 +992,11 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
     min-height: 52px;
     border-radius: 999px;
   }
-  .primary-action-dock .draft-note {
-    display: none;
+  .primary-action-dock-draft {
+    border-radius: 28px;
+  }
+  .primary-action-dock-draft .draft-restart-action {
+    min-height: var(--control-height);
   }
   .project-row,
   .list-row {
@@ -1421,12 +1442,6 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   width: 100%;
   max-width: none;
   background: var(--paper);
-}
-.draft-note {
-  margin-top: 8px;
-  color: var(--secondary);
-  font-size: 0.75rem;
-  text-align: center;
 }
 .collection-status .section-heading-row {
   align-items: flex-start;

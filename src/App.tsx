@@ -89,6 +89,7 @@ export default function App() {
       selectProject,
       signOut,
       updateDraft,
+      discardDraftAndStart,
       submitObservation,
       openSyncSheetAndSync,
       closeSyncSheet,
@@ -266,6 +267,7 @@ export default function App() {
               onOpenProject={(project) => selectProject(project, "project")}
               onChooseProject={(project) => selectProject(project, "home")}
               onResumeObservation={() => navigate("collector")}
+              onDiscardAndStartObservation={discardDraftAndStart}
             />
           )}
 
@@ -292,7 +294,7 @@ export default function App() {
               onBack={
                 collectorPreview
                   ? cancelContributorPreview
-                  : () => navigate("project")
+                  : () => navigate("home")
               }
               isSaving={isSaving}
               preview={collectorPreview}

@@ -116,6 +116,7 @@ The collection surface presents one field at a time.
 - Optional empty fields show **Skip**.
 - Long text and repeatable content may scroll within the field region; the primary page hierarchy remains stable.
 - Return-key behavior must not submit an incomplete or unintended answer.
+- A persistent **Home** action leaves any collection step in one tap and preserves the draft. Draft destruction is offered only from Home, remains secondary to **Resume observation**, and requires confirmation before a clean observation opens.
 
 ### Progress
 

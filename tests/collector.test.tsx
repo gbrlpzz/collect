@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from "vitest";
 import * as React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { Collector } from "../src/components/Collector";
 import { FieldRenderer } from "../src/components/FieldRenderer";
 import { SyncSheet } from "../src/components/SyncSheet";
@@ -382,15 +388,10 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
       fireEvent.click(continueButton());
       fireEvent.click(continueButton());
       expect(screen.getByText(/For this attention check, select/)).toBeTruthy();
-      const option = screen
-        .getAllByRole("button")
-        .find(
-          (button) =>
-            button.textContent &&
-            !/continue|skip|back/i.test(button.textContent),
-        );
-      expect(option).toBeTruthy();
-      fireEvent.click(option!);
+      const attentionOptions = within(
+        screen.getByRole("group", { name: /For this attention check/i }),
+      ).getAllByRole("button");
+      fireEvent.click(attentionOptions[0]);
       await waitFor(() =>
         expect(screen.getByText("People present")).toBeTruthy(),
       );
