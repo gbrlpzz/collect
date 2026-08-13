@@ -5,6 +5,10 @@
    token; the homepage only arranges sections and the iPhone mock-up.
    ========================================================================= */
 
+html {
+  scroll-behavior: smooth;
+}
+
 .hp-shell {
   min-height: 100dvh;
   background: var(--canvas);
