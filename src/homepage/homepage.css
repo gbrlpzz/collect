@@ -273,7 +273,7 @@ main [id] {
 }
 .hp-section-note {
   margin-top: 14px;
-  color: var(--tertiary);
+  color: var(--secondary);
   font-size: 0.8125rem;
 }
 .hp-section-note a {
@@ -1061,7 +1061,7 @@ main [id] {
   padding: 5px 10px;
   border-radius: 8px;
   background: rgba(118, 118, 128, 0.28);
-  color: rgba(235, 235, 245, 0.85);
+  color: #f5f5f7;
   font-size: 0.6875rem;
 }
 
@@ -1198,7 +1198,7 @@ main [id] {
   margin-top: 8px;
   padding-top: 22px;
   border-top: 1px solid var(--separator-light);
-  color: var(--tertiary);
+  color: var(--secondary);
   font-size: 0.75rem;
 }
 
