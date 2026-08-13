@@ -245,7 +245,12 @@ export function useAppController() {
   useEffect(() => {
     if (!supabase || !session) return;
     let active = true;
-    void Promise.all([loadAssignedProjects(), loadUserAdminAccess()])
+    // Invites are claimed before the project list loads: an already-registered
+    // contributor receives membership only through claim-invites, and the list
+    // must never read an empty roster ahead of that upsert.
+    void claimInvites()
+      .catch(() => undefined)
+      .then(() => Promise.all([loadAssignedProjects(), loadUserAdminAccess()]))
       .then(async ([remoteProjects, adminAccess]) => {
         if (!active) return;
         if (remoteProjects === null) return;
