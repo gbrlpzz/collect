@@ -122,14 +122,21 @@ export function Collector({
     const dataFields = baseSteps
       .filter((step) => step.kind === "field")
       .map((step) => step.field);
-    if (attentionCheck && baseSteps.length >= 3 && dataFields.length >= 2) {
+    if (attentionCheck && dataFields.length > 0) {
       const field = attentionFieldFor(
         pickAttentionCheck(dataFields.map((candidate) => candidate.key)),
       );
-      const index = Math.min(
-        baseSteps.length - 1,
-        Math.floor(2 + Math.random() * (baseSteps.length - 1)),
-      );
+      const questionsBeforeCheck = Math.min(2, dataFields.length);
+      let questionsSeen = 0;
+      let index = baseSteps.length;
+      for (const [stepIndex, step] of baseSteps.entries()) {
+        if (step.kind !== "field") continue;
+        questionsSeen += 1;
+        if (questionsSeen === questionsBeforeCheck) {
+          index = stepIndex + 1;
+          break;
+        }
+      }
       attentionPlanRef.current = { field, index };
     } else {
       attentionPlanRef.current = null;
@@ -700,11 +707,9 @@ export function Collector({
             <div className="step-question">
               <div className="step-label-row">
                 <h1 className="step-title">{current.field.label}</h1>
-                <span
-                  className={`step-required ${current.field.required ? "" : "step-optional"}`}
-                >
-                  {current.field.required ? "Required" : "Optional"}
-                </span>
+                {!current.field.required && (
+                  <span className="step-optional">Optional</span>
+                )}
               </div>
               {current.field.description && (
                 <p className="step-description">{current.field.description}</p>

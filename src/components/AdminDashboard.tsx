@@ -9,7 +9,6 @@ import {
   Eyebrow,
   IconButton,
   InfoDisclosure,
-  StatusBadge,
 } from "./ui";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
 import { formatExactTime, formatRelativeTime } from "../lib/formatTime";
@@ -78,16 +77,13 @@ export function AdminDashboard({
                       <h3>{candidate.name}</h3>
                     </div>
                     <p>
-                      {candidate.organization} · {candidate.completeSubmissions}{" "}
-                      received · {candidate.contributors} contributors
+                      {candidate.organization}
+                      {candidate.status === "closed" ? " · Closed" : ""} ·{" "}
+                      {candidate.completeSubmissions} received ·{" "}
+                      {candidate.contributors} contributors
                     </p>
                   </div>
                 </div>
-                <StatusBadge
-                  tone={candidate.status === "active" ? "dark" : "soft"}
-                >
-                  {candidate.status === "active" ? "Active" : "Closed"}
-                </StatusBadge>
                 <Icon name="chevron-right" size={19} />
               </button>
             ))}
@@ -150,10 +146,10 @@ export function AdminProject({
       <div className="admin-project-header">
         <div>
           <div className="admin-project-title-meta">
-            <Eyebrow>{project.organization}</Eyebrow>
-            <StatusBadge tone={project.status === "active" ? "dark" : "soft"}>
-              {project.status === "active" ? "Active" : "Closed"}
-            </StatusBadge>
+            <Eyebrow>
+              {project.organization}
+              {project.status === "closed" ? " · Closed" : ""}
+            </Eyebrow>
           </div>
           <h1>{project.name}</h1>
           <p className="lede">{project.description}</p>
@@ -619,9 +615,8 @@ function SchemaDraftEditor({
     <section className="admin-panel">
       <div className="panel-heading">
         <div>
-          <h2>Version {draft.version}</h2>
+          <h2>Version {draft.version} draft</h2>
         </div>
-        <StatusBadge tone="soft">Draft</StatusBadge>
       </div>
       <Divider />
       <div className="builder-list">
@@ -890,16 +885,12 @@ function ExportPanel({
   const ready = readiness?.filter((row) => row.ready).length ?? 0;
   const readinessKnown = !isSupabaseConfigured || readiness !== null;
   const percentage = total ? Math.round((ready / total) * 100) : 0;
-  const readyForFinal = readinessKnown && ready === total && total > 0;
   return (
     <section className="admin-panel export-panel">
       <div className="panel-heading">
         <div>
           <h2>Export checkpoint</h2>
         </div>
-        <StatusBadge tone={readyForFinal ? "dark" : "soft"}>
-          {readyForFinal ? "Ready for final export" : "Checkpoint available"}
-        </StatusBadge>
       </div>
       <div className="export-readiness">
         <div className="readiness-bar">

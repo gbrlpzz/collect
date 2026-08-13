@@ -90,8 +90,7 @@ button {
   height: var(--control-height);
 }
 .icon-button:hover,
-.account-button:hover,
-.account-button-open {
+.account-button:hover {
   background: var(--grouped);
   color: var(--text);
 }
@@ -1182,18 +1181,11 @@ h1 {
   justify-content: space-between;
   gap: 14px;
 }
-.step-required {
+.step-optional {
   flex: 0 0 auto;
   margin-top: 7px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--grouped);
-  color: var(--secondary);
   font-size: 0.75rem;
   font-weight: 600;
-}
-.step-optional {
-  background: transparent;
   color: var(--tertiary);
 }
 .step-description {

@@ -91,7 +91,10 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
       />,
     );
     expect(screen.getByText("Site code")).toBeTruthy();
-    expect(screen.getByText("Required")).toBeTruthy();
+    expect(screen.getByRole("textbox", { name: "Site code" })).toHaveProperty(
+      "required",
+      true,
+    );
     expect(continueButton()).toHaveProperty("disabled", true);
     fireEvent.click(continueButton());
     expect(onSubmit).not.toHaveBeenCalled();
@@ -370,7 +373,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
     }
     render(<StatefulHarness />);
     try {
-      // site_code → site_photos → field notes → attention check → people present
+      // site_code → site_photos → attention check → field notes → people present
       fireEvent.click(continueButton());
       const input = document.querySelector(
         'input[type="file"]',
@@ -386,12 +389,13 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         },
       });
       fireEvent.click(continueButton());
-      fireEvent.click(continueButton());
       expect(screen.getByText(/For this attention check, select/)).toBeTruthy();
       const attentionOptions = within(
         screen.getByRole("group", { name: /For this attention check/i }),
       ).getAllByRole("button");
       fireEvent.click(attentionOptions[0]);
+      await waitFor(() => expect(screen.getByText("Field notes")).toBeTruthy());
+      fireEvent.click(continueButton());
       await waitFor(() =>
         expect(screen.getByText("People present")).toBeTruthy(),
       );
@@ -412,14 +416,13 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
     }
   });
 
-  it("skips the quick check for very short forms", () => {
+  it("includes one attention check even in a short form", () => {
     const shortFields: FieldDefinition[] = [
       {
         id: "s1",
         key: "site_code",
         label: "Site code",
         type: "short_text",
-        required: true,
         semantic_uri: null,
       },
       {
@@ -441,7 +444,9 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         isSaving={false}
       />,
     );
-    expect(screen.queryByText("Quick check")).toBeNull();
+    fireEvent.click(continueButton());
+    fireEvent.click(continueButton());
+    expect(screen.getByText(/For this attention check, select/)).toBeTruthy();
   });
 
   it("auto-advances after a single answer", async () => {

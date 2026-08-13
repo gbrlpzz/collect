@@ -10,7 +10,5 @@ export {
   Eyebrow,
   InfoDisclosure,
   ModalSurface,
-  StatusBadge,
-  StatusDot,
 } from "./feedback";
 export type { ConfirmationDialogProps, EmailPromptProps } from "./feedback";

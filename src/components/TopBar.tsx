@@ -51,8 +51,6 @@ export function TopBar({
       active = false;
     };
   }, [isAdmin, userEmail]);
-  const surfaceLabel = isAdmin ? "Admin" : "Fieldwork";
-
   return (
     <>
       <header
@@ -60,20 +58,17 @@ export function TopBar({
         data-surface={mode}
       >
         <div className="topbar-inner">
-          <div className="topbar-brand">
-            <button
-              className="wordmark"
-              onClick={() => onNavigate(isAdmin ? "admin" : "home")}
-              aria-label={`collect ${surfaceLabel.toLowerCase()} home`}
-            >
-              <CollectBrand compact />
-            </button>
-            <span className="surface-label">{surfaceLabel}</span>
-          </div>
+          <button
+            className="wordmark"
+            onClick={() => onNavigate(isAdmin ? "admin" : "home")}
+            aria-label={`collect ${isAdmin ? "admin" : "contributor"} home`}
+          >
+            <CollectBrand compact />
+          </button>
 
           <div className="topbar-actions">
             <button
-              className={`account-button ${profileOpen ? "account-button-open" : ""}`}
+              className="account-button"
               aria-label={isPreview ? "Open preview profile" : "Open profile"}
               aria-expanded={profileOpen}
               aria-haspopup="dialog"

@@ -7,9 +7,9 @@ The mechanism is intended to help a research team interpret possible inattention
 ## End-to-end flow
 
 ```text
-select configured check
+select a random configured check
   → shuffle options
-  → render after at least two research fields
+  → render after the first two research fields when available
   → separate the synthetic answer from research values
   → commit the answer as provenance
   → validate against the server bank
@@ -39,10 +39,10 @@ An instruction can be simple without being accessible to every population. Deplo
 
 ## Injection
 
-- One check is selected per observation.
-- The previous key is avoided when possible.
+- One check is selected randomly per observation.
 - Options are shuffled for each presentation.
-- The check appears after at least two research fields.
+- The check appears immediately after the first two research fields. A form
+  with only one field presents the check after that field.
 - The reserved field key is `_attention`.
 - The contributor sees the explicit label **Attention check** and the complete instruction.
 
