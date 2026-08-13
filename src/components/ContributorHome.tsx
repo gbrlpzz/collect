@@ -96,22 +96,28 @@ export function ContributorHome({
             )}
           </section>
 
-          <Button
-            variant="primary"
-            fullWidth
-            icon={hasDraft ? undefined : "plus"}
-            onClick={
-              hasDraft ? onResumeObservation : () => onStartObservation(project)
-            }
-            disabled={isClosed}
-          >
-            {isClosed
-              ? "Collection closed"
-              : hasDraft
-                ? "Resume observation"
-                : "Start observation"}
-          </Button>
-          {hasDraft && <p className="draft-note">Draft saved on this device</p>}
+          <div className="primary-action-dock">
+            <Button
+              variant="primary"
+              fullWidth
+              icon={hasDraft ? undefined : "plus"}
+              onClick={
+                hasDraft
+                  ? onResumeObservation
+                  : () => onStartObservation(project)
+              }
+              disabled={isClosed}
+            >
+              {isClosed
+                ? "Collection closed"
+                : hasDraft
+                  ? "Resume observation"
+                  : "Add observation"}
+            </Button>
+            {hasDraft && (
+              <p className="draft-note">Draft saved on this device</p>
+            )}
+          </div>
 
           {recent.length > 0 && (
             <section

@@ -182,16 +182,14 @@ h3 {
   color: var(--text);
 }
 .account-button {
+  width: var(--control-height);
+  height: var(--control-height);
   min-height: var(--control-height);
-  max-width: min(260px, 45vw);
-  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
   color: var(--secondary);
-}
-.account-button > span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .account-button:hover,
 .account-button-open {
@@ -249,6 +247,22 @@ h3 {
 }
 .page-note {
   margin-top: var(--space-6);
+}
+.primary-action-dock {
+  display: block;
+}
+.admin-context-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.primary-action-dock > .button {
+  width: 100%;
+}
+.admin-context-actions > .button {
+  flex: 1 1 auto;
+}
+.admin-context-actions-single {
+  width: 100%;
 }
 .project-intro {
   margin-bottom: var(--space-6);
@@ -849,26 +863,41 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
     padding-right: max(var(--page-gutter), env(safe-area-inset-right));
     padding-left: max(var(--page-gutter), env(safe-area-inset-left));
   }
-  .account-button {
-    max-width: 150px;
-  }
-  .account-button > span {
-    max-width: 112px;
-  }
   .page {
     padding-top: 28px;
     padding-right: var(--page-gutter);
+    padding-bottom: calc(116px + env(safe-area-inset-bottom));
     padding-left: var(--page-gutter);
   }
   .page-wizard {
     width: 100%;
   }
   .admin-heading {
-    align-items: center;
+    display: block;
     gap: var(--space-4);
   }
-  .admin-heading .button {
-    flex: 0 0 auto;
+  .primary-action-dock,
+  .admin-context-actions {
+    position: fixed;
+    z-index: 18;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: var(--space-3) max(var(--page-gutter), env(safe-area-inset-right))
+      calc(var(--space-3) + env(safe-area-inset-bottom))
+      max(var(--page-gutter), env(safe-area-inset-left));
+    border-top: 1px solid var(--separator-light);
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+  }
+  .primary-action-dock .button,
+  .admin-context-actions .button {
+    min-height: 52px;
+  }
+  .primary-action-dock .draft-note {
+    display: none;
   }
   .project-row,
   .list-row {
@@ -916,8 +945,7 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
     display: block;
   }
   .panel-actions {
-    justify-content: flex-start;
-    margin-top: var(--space-4);
+    margin-top: 0;
   }
   .panel-actions .button {
     flex: 1 1 auto;
@@ -1071,6 +1099,8 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   .collector-topbar,
   .collector-action-bar,
   .flow-actions,
+  .primary-action-dock,
+  .admin-context-actions,
   .mobile-tabbar,
   .account-menu {
     background: var(--paper);
@@ -1635,6 +1665,9 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 
 .profile-sheet {
   width: min(520px, 100%);
+}
+.profile-sheet .sheet-heading {
+  margin-bottom: var(--space-5);
 }
 .profile-email {
   margin: var(--space-2) 0 var(--space-5);

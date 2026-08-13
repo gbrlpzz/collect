@@ -33,13 +33,14 @@ export function attentionFieldFor(check: AttentionCheck): FieldDefinition {
   return {
     id: `attention-${check.key}`,
     key: ATTENTION_FIELD_KEY,
-    label: "Quick check",
+    label: check.prompt,
     type: "single_choice",
-    description: "One quick question to keep the record verifiable.",
+    description: "Attention check · read the instruction before answering.",
     required: true,
     semantic_uri: null,
     config: {
       attentionCheckKey: check.key,
+      attentionCheck: true,
       guessProbability: check.guessProbability,
     },
     // Option ids embed "checkKey:value" so the collected answer is

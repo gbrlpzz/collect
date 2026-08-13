@@ -60,7 +60,7 @@ The application does not perform AI transformation in the collection path.
 
 ## Attention verification
 
-Attention metadata is separate from the research payload. The client removes the synthetic attention field before hashing and storing research values. The server stores the stable check key and selected value, derives correctness against its own bank, and updates an aggregate score.
+Attention metadata is separate from the research payload. The client removes the synthetic attention field before hashing and storing research values. The server stores the stable check key and selected value, derives explicit `correct` and `passed` values against its own bank, and updates an aggregate score.
 
 The score is advisory. It must not be interpreted as a clinical, employment, competence, or character assessment. The application does not automatically rank contributors, reject observations, or modify data based on the score. Deployments should review the question bank for language, education, culture, disability, and population suitability before use.
 

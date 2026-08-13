@@ -21,6 +21,7 @@ export type IconName =
   | "menu"
   | "more"
   | "play"
+  | "person"
   | "plus"
   | "refresh"
   | "send"
@@ -185,6 +186,13 @@ export function Icon({
       return (
         <svg {...common}>
           <path d="M8 5.5v13l11-6.5z" />
+        </svg>
+      );
+    case "person":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="8" r="3.25" />
+          <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
         </svg>
       );
     case "plus":
