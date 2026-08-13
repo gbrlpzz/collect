@@ -46,7 +46,6 @@ export function AuthScreen({
   const standalone = isStandaloneApp();
   const showInstallHint = isAppleMobileBrowser() && !standalone;
   const showLocalRedirectHint = configured && isLocalDevelopmentOrigin();
-  const showStandaloneNote = configured && standalone;
   const [entryMode, setEntryMode] = useState<EntryMode>(() =>
     standalone ? "device" : "link",
   );
@@ -378,15 +377,6 @@ export function AuthScreen({
                       : "Use the email address your administrator invited."
                 : "This deployment is not connected to an authentication service yet."}
             </p>
-            {showStandaloneNote && (
-              <p className="auth-config-note">
-                <Icon name="info" size={16} />
-                <span>
-                  This installed app keeps its own sign-in. If you signed in on
-                  the web, transfer that sign-in with the one-time code below.
-                </span>
-              </p>
-            )}
             {configured ? (
               entryMode === "password" ? (
                 <form
@@ -410,7 +400,6 @@ export function AuthScreen({
                         inputMode="email"
                         autoCapitalize="none"
                         spellCheck={false}
-                        autoFocus
                       />
                       {email && (
                         <ClearButton
@@ -498,7 +487,6 @@ export function AuthScreen({
                             void submitDeviceLink(nextCode);
                         }}
                         placeholder="AB2D9KQX"
-                        autoFocus
                         disabled={codeBusy}
                       />
                     </label>
@@ -559,7 +547,6 @@ export function AuthScreen({
                         inputMode="email"
                         autoCapitalize="none"
                         spellCheck={false}
-                        autoFocus
                       />
                       {email && (
                         <ClearButton

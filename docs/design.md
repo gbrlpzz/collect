@@ -116,6 +116,7 @@ The collection surface presents one field at a time.
 - Optional empty fields show **Skip**.
 - Long text and repeatable content may scroll within the field region; the primary page hierarchy remains stable.
 - Return-key behavior must not submit an incomplete or unintended answer.
+- A persistent **Home** action leaves any collection step in one tap and preserves the draft. Draft destruction is offered only from Home, remains secondary to **Resume observation**, and requires confirmation before a clean observation opens.
 
 ### Progress
 
@@ -161,6 +162,28 @@ Use text that states the proven system fact:
 
 Do not display a success check for request initiation or media upload alone. Use relative time in the interface and preserve the exact timestamp in an accessible title or detail.
 
+## Information disclosure
+
+The first reading pass contains only the information needed to understand the current state and take the next action. Supporting explanation uses the shared compact disclosure row and stays closed by default.
+
+Keep these visible:
+
+- errors and the action that resolves them;
+- permission requirements and blocked states;
+- local-save, transfer, and server-receipt status;
+- consequences of destructive or irreversible actions;
+- caveats that materially change how an export or result should be interpreted.
+
+Disclose these on request:
+
+- how a background mechanism works;
+- policy, scoring, or consent-recording methodology;
+- technical provenance and recovery detail;
+- reassurance already implied by a visible system state;
+- optional paths and uncommon configuration.
+
+Remove a message when it duplicates the heading, status, or adjacent summary. Do not move required instructions into a disclosure merely to make a screen look quieter. Disclosure summaries have a 44-point minimum target, a visible keyboard focus state, a text label, and a chevron whose motion respects Reduce Motion.
+
 ## Profile and secondary information
 
 Profile consolidates infrequent personal and account information:
@@ -174,9 +197,12 @@ Profile consolidates infrequent personal and account information:
 - Add to Home Screen guidance;
 - device-link code generation;
 - privacy summary and local export;
+- app version, authorship, and feedback under **About collect**;
 - sign out.
 
 The attention score appears as a circular numeric indicator with a non-color label and explanatory disclosure. Color may reinforce range but cannot carry the meaning alone.
+
+The contributor Home surface ends with a quiet, non-card footer: the Collect wordmark in its existing typography followed by the gbrlpzz byline. It is identity, not navigation, and must never compete with the observation action dock.
 
 ## Privacy presentation
 
@@ -211,19 +237,30 @@ Automated tests do not replace VoiceOver, keyboard, zoom, text-size, contrast, a
 
 The contributor app uses a stable light appearance for field legibility. The administrator app uses a distinct dark appearance to signal a different operational surface.
 
-| Token          | Contributor         | Administrator       |
-| -------------- | ------------------- | ------------------- |
-| Canvas         | `#f5f5f7`           | `#000000`           |
-| Paper          | `#ffffff`           | `#1c1c1e`           |
-| Primary text   | `#1d1d1f`           | `#f5f5f7`           |
-| Secondary text | neutral system gray | neutral system gray |
-| Accent         | black               | white               |
-| Accent text    | white               | black               |
-| Destructive    | semantic red        | semantic red        |
+| Token          | Contributor  | Administrator |
+| -------------- | ------------ | ------------- |
+| Canvas         | `#f5f5f7`    | `#000000`     |
+| Paper          | `#ffffff`    | `#1c1c1e`     |
+| Primary text   | `#1d1d1f`    | `#f5f5f7`     |
+| Secondary text | `#636366`    | `#aeaeb2`     |
+| Tertiary text  | `#707075`    | `#8e8e93`     |
+| Accent         | black        | white         |
+| Accent text    | white        | black         |
+| Destructive    | semantic red | semantic red  |
 
 The contributor interface uses black controls on white or soft-gray surfaces. Words, icons, checkmarks, shape, order, and accessible names carry state. The administrator surface inverts the same system, making an accidental surface switch immediately apparent without introducing a second visual language.
 
 The wordmark, headings, body copy, and controls use the normal platform system stack. Weight, scale, and spacing create hierarchy without introducing a separate display face.
+
+### Measured interface contract
+
+- Spacing uses the 4-point sequence `4, 8, 12, 16, 20, 24, 32, 40, 48`.
+- Standard controls retain a 44-point activation region; prominent mobile actions are 52 points high.
+- Standard rows are 68 points high unless their content requires additional space.
+- Compact, medium, and grouped surfaces use 12-, 16-, and 20-point radii. Commands use the capsule radius and icon-only commands remain circular.
+- Body, subheadline, footnote, and caption roles are 17, 15, 13, and 12 points respectively and scale from the root font size.
+- Small semantic text meets a 4.5:1 contrast ratio on its relevant canvas and paper surfaces.
+- A screen uses one content axis: brand, heading, form, supporting copy, and footnote align to the same measured width.
 
 ### Identity and app icons
 

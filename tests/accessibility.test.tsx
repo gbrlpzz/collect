@@ -66,6 +66,7 @@ describe("automated accessibility checks", () => {
       />,
     );
     fireEvent.click(screen.getByText("Data and privacy"));
+    fireEvent.click(screen.getByText("About collect"));
     await expectNoAccessibilityViolations(container);
   });
 

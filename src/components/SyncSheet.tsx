@@ -8,7 +8,7 @@ import {
 } from "../lib/localStore";
 import { formatExactTime, formatRelativeTime } from "../lib/formatTime";
 import { Icon } from "./Icon";
-import { Button, IconButton, ModalSurface } from "./ui";
+import { Button, IconButton, InfoDisclosure, ModalSurface } from "./ui";
 
 interface SyncSheetProps {
   observations: Observation[];
@@ -53,7 +53,7 @@ export function SyncSheet({
   const [operations, setOperations] = useState<OutboxOperation[] | null>(null);
 
   useEffect(() => {
-    if (!technicalOpen && needsAttention.length === 0) return;
+    if (!technicalOpen) return;
     let active = true;
     void Promise.all([estimateLocalStorage(), getOutboxOperations()])
       .then(([storageValue, operationValue]) => {
@@ -65,7 +65,7 @@ export function SyncSheet({
     return () => {
       active = false;
     };
-  }, [needsAttention.length, technicalOpen]);
+  }, [technicalOpen]);
 
   const activeProgress = pending
     .map((item) => ({ observation: item, entry: progress[item.id] }))
@@ -150,15 +150,17 @@ export function SyncSheet({
       )}
 
       {needsAttention.length > 0 && !isSyncing && (
-        <div className="sync-attention-note" role="status">
-          <Icon name="info" size={17} />
-          <span>
+        <InfoDisclosure
+          className="sync-attention-disclosure"
+          title="About automatic retries and recovery"
+        >
+          <p>
             {needsAttention.length}{" "}
             {needsAttention.length === 1 ? "record" : "records"} will retry.
             Export a recovery copy below only if you need to move the data off
             this device.
-          </span>
-        </div>
+          </p>
+        </InfoDisclosure>
       )}
 
       <div className="sync-last-success">

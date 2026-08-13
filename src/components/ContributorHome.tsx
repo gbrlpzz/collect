@@ -2,6 +2,7 @@ import type { Observation, Project } from "../types";
 import { formatExactTime, formatRelativeTime } from "../lib/formatTime";
 import { Icon } from "./Icon";
 import { Button } from "./ui";
+import { AppCredit } from "./AppCredit";
 
 interface ContributorHomeProps {
   projects: Project[];
@@ -12,6 +13,7 @@ interface ContributorHomeProps {
   onOpenProject: (project: Project) => void;
   onChooseProject: (project: Project) => void;
   onResumeObservation: () => void;
+  onDiscardAndStartObservation: (project: Project) => void;
 }
 
 /**
@@ -29,6 +31,7 @@ export function ContributorHome({
   onOpenProject,
   onChooseProject,
   onResumeObservation,
+  onDiscardAndStartObservation,
 }: ContributorHomeProps) {
   const project =
     projects.find((candidate) => candidate.id === activeProject.id) ??
@@ -96,7 +99,9 @@ export function ContributorHome({
             )}
           </section>
 
-          <div className="primary-action-dock">
+          <div
+            className={`primary-action-dock${hasDraft ? " primary-action-dock-draft" : ""}`}
+          >
             <Button
               variant="primary"
               fullWidth
@@ -115,7 +120,14 @@ export function ContributorHome({
                   : "Add observation"}
             </Button>
             {hasDraft && (
-              <p className="draft-note">Draft saved on this device</p>
+              <button
+                type="button"
+                className="draft-restart-action"
+                onClick={() => onDiscardAndStartObservation(project)}
+                disabled={isClosed}
+              >
+                Discard and start new
+              </button>
             )}
           </div>
 
@@ -170,6 +182,7 @@ export function ContributorHome({
           </span>
         </div>
       )}
+      <AppCredit />
     </main>
   );
 }

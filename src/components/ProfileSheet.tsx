@@ -7,7 +7,9 @@ import {
   formatRelativeTime,
 } from "../lib/formatTime";
 import { Icon } from "./Icon";
+import { CollectBrand } from "./CollectBrand";
 import { AttentionScoreRing, Button, IconButton, ModalSurface } from "./ui";
+import { APP_VERSION, FEEDBACK_URL } from "../lib/appMeta";
 
 interface ProfileSheetProps {
   userEmail?: string | null;
@@ -201,6 +203,43 @@ export function ProfileSheet({
             )}
           </details>
         )}
+
+        <details className="profile-disclosure profile-about">
+          <summary>
+            <Icon name="info" size={17} />
+            <span>
+              <strong>About collect</strong>
+              <span>Version and feedback</span>
+            </span>
+            <Icon name="chevron-down" size={15} />
+          </summary>
+          <div className="profile-about-content">
+            <div className="profile-about-identity">
+              <CollectBrand compact showMark={false} />
+              <span>Version {APP_VERSION}</span>
+            </div>
+            <p>
+              Offline-first field collection developed by{" "}
+              <a
+                href="https://gbrlpzz.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                gbrlpzz
+              </a>
+              .
+            </p>
+            <a
+              className="button button-secondary button-full profile-feedback"
+              href={FEEDBACK_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icon name="send" size={17} />
+              <span>Send feedback</span>
+            </a>
+          </div>
+        </details>
       </div>
 
       {onSignOut && (

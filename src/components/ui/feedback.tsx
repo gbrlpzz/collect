@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { Icon } from "../Icon";
+import type { IconName } from "../Icon";
 import { Button, ClearButton } from "./controls";
 
 const FOCUSABLE_SELECTOR =
@@ -250,6 +251,35 @@ export function Eyebrow({ children }: { children: ReactNode }) {
 
 export function Divider() {
   return <div className="divider" aria-hidden="true" />;
+}
+
+/** Supporting context that stays out of the primary reading path until asked
+ * for. Never use this for errors, required actions, or irreversible warnings. */
+export function InfoDisclosure({
+  title,
+  children,
+  icon = "info",
+  className = "",
+}: {
+  title: string;
+  children: ReactNode;
+  icon?: IconName;
+  className?: string;
+}) {
+  return (
+    <details className={`info-disclosure ${className}`.trim()}>
+      <summary>
+        <Icon name={icon} size={16} />
+        <span>{title}</span>
+        <Icon
+          className="info-disclosure-chevron"
+          name="chevron-down"
+          size={15}
+        />
+      </summary>
+      <div className="info-disclosure-content">{children}</div>
+    </details>
+  );
 }
 
 export function Avatar({

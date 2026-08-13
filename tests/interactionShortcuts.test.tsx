@@ -7,6 +7,7 @@ import { ConsentScreen } from "../src/components/ConsentScreen";
 import { ContributorHome } from "../src/components/ContributorHome";
 import { DeviceLinkSheet } from "../src/components/DeviceLinkSheet";
 import { NewProjectWizard } from "../src/components/NewProjectWizard";
+import { ProfileSheet } from "../src/components/ProfileSheet";
 import { ProjectOverview } from "../src/components/ProjectOverview";
 import { TopBar } from "../src/components/TopBar";
 import { EmailPrompt } from "../src/components/ui";
@@ -60,10 +61,11 @@ const project: Project = {
 };
 
 describe("low-friction primary actions", () => {
-  it("focuses the login email field as soon as the screen opens", () => {
+  it("leaves the entry keyboard closed until the person chooses a field", () => {
     render(<AuthScreen configured role="contributor" />);
 
-    expect(document.activeElement).toBe(screen.getByLabelText("Email address"));
+    expect(screen.getByLabelText("Email address")).toBeTruthy();
+    expect(document.activeElement).toBe(document.body);
   });
 
   it("signs in with email and password from the focused email field", async () => {
@@ -230,19 +232,25 @@ describe("low-friction primary actions", () => {
         onOpenProject={() => undefined}
         onChooseProject={() => undefined}
         onResumeObservation={() => undefined}
+        onDiscardAndStartObservation={() => undefined}
       />,
     );
 
     expect(
       screen.getByRole("heading", { name: /new observation/i }),
     ).toBeTruthy();
+    expect(screen.getByLabelText("collect by gbrlpzz")).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "gbrlpzz" }).getAttribute("href"),
+    ).toBe("https://gbrlpzz.com/");
     expect(screen.queryByRole("heading", { name: /^projects$/i })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /add observation/i }));
     expect(onStartObservation).toHaveBeenCalledWith(project);
   });
 
-  it("shows only the resume action when a draft already exists", () => {
+  it("resumes a draft or deliberately discards it to start fresh", () => {
     const onResumeObservation = vi.fn();
+    const onDiscardAndStartObservation = vi.fn();
     render(
       <ContributorHome
         projects={[project]}
@@ -253,6 +261,7 @@ describe("low-friction primary actions", () => {
         onOpenProject={() => undefined}
         onChooseProject={() => undefined}
         onResumeObservation={onResumeObservation}
+        onDiscardAndStartObservation={onDiscardAndStartObservation}
       />,
     );
 
@@ -263,6 +272,42 @@ describe("low-friction primary actions", () => {
       screen.getByRole("button", { name: /resume observation/i }),
     );
     expect(onResumeObservation).toHaveBeenCalledTimes(1);
+    fireEvent.click(
+      screen.getByRole("button", { name: /discard and start new/i }),
+    );
+    expect(onDiscardAndStartObservation).toHaveBeenCalledWith(project);
+  });
+
+  it("leaves collection for Home without discarding the draft", () => {
+    const onBack = vi.fn();
+    const fields: FieldDefinition[] = [
+      {
+        id: "notes",
+        key: "notes",
+        label: "Notes",
+        type: "long_text",
+        semantic_uri: null,
+      },
+    ];
+
+    render(
+      <Collector
+        project={{ ...project, fields }}
+        draft={{ notes: "Unfinished field note" }}
+        lastSavedAt="09:00"
+        onDraftChange={() => undefined}
+        onSubmit={() => undefined}
+        onBack={onBack}
+        isSaving={false}
+        attentionCheck={false}
+      />,
+    );
+
+    expect(screen.getByText("Notes")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: /save draft and return home/i }),
+    );
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it("keeps the contributor and admin surfaces separate", () => {
@@ -295,6 +340,29 @@ describe("low-friction primary actions", () => {
       screen.getByRole("button", { name: /sign in another device/i }),
     );
     expect(onLinkDevice).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps app version and feedback inside the profile hierarchy", () => {
+    render(
+      <ProfileSheet
+        userEmail="field@example.com"
+        profile={null}
+        observations={[]}
+        lastSyncAt={null}
+        isAdmin={false}
+        isPreview={false}
+        onClose={() => undefined}
+      />,
+    );
+
+    const about = screen.getByText("About collect").closest("details")!;
+    expect(about.open).toBe(false);
+    fireEvent.click(screen.getByText("About collect"));
+    expect(about.open).toBe(true);
+    expect(screen.getByText(/Version 0\.1\.2/i)).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: /send feedback/i }).getAttribute("href"),
+    ).toContain("github.com/gbrlpzz/collect/issues/new");
   });
 
   it("shows the attention score in the account menu for a signed-in contributor", async () => {
@@ -349,6 +417,12 @@ describe("low-friction primary actions", () => {
     );
 
     expect(screen.getByText("What is recorded")).toBeTruthy();
+    const agreementDetails = screen
+      .getByText("How your agreement is recorded")
+      .closest("details")!;
+    expect(agreementDetails.open).toBe(false);
+    fireEvent.click(screen.getByText("How your agreement is recorded"));
+    expect(agreementDetails.open).toBe(true);
     fireEvent.click(screen.getByText("Read the full consent statement"));
     expect(
       screen.getByRole("heading", { name: "Full statement" }),
@@ -610,6 +684,13 @@ describe("low-friction primary actions", () => {
     fireEvent.click(screen.getByRole("button", { name: /^continue$/i }));
 
     expect(screen.getByText("Step 3 of 3")).toBeTruthy();
+    expect(screen.queryByText("Invitation preview")).toBeNull();
+    const invitationDetails = screen
+      .getByText("How invitations work")
+      .closest("details")!;
+    expect(invitationDetails.open).toBe(false);
+    fireEvent.click(screen.getByText("How invitations work"));
+    expect(invitationDetails.open).toBe(true);
     expect(
       screen.getByRole("button", { name: /publish project/i }),
     ).toBeTruthy();

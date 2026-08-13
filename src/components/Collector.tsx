@@ -526,6 +526,10 @@ export function Collector({
     : skippingOptionalField
       ? "Skip"
       : "Continue";
+  const exitLabel = preview ? "Exit" : "Home";
+  const exitAccessibleLabel = preview
+    ? "Exit preview"
+    : "Save draft and return home";
 
   if (requiresLocationAccess && locationAccess !== "granted") {
     const isChecking =
@@ -551,8 +555,12 @@ export function Collector({
     return (
       <main className="collector-page collector-flow">
         <div className="collector-topbar">
-          <button className="back-button" onClick={onBack} aria-label="Back">
-            <Icon name="chevron-left" size={17} /> Project
+          <button
+            className="back-button"
+            onClick={onBack}
+            aria-label={exitAccessibleLabel}
+          >
+            <Icon name="x" size={17} /> {exitLabel}
           </button>
           <div className="collector-title">
             <strong>New observation</strong>
@@ -595,8 +603,12 @@ export function Collector({
     return (
       <main className="collector-page collector-flow">
         <div className="collector-topbar">
-          <button className="back-button" onClick={onBack} aria-label="Back">
-            <Icon name="chevron-left" size={17} /> Project
+          <button
+            className="back-button"
+            onClick={onBack}
+            aria-label={exitAccessibleLabel}
+          >
+            <Icon name="x" size={17} /> {exitLabel}
           </button>
           <div className="collector-title">
             <strong>New observation</strong>
@@ -619,9 +631,12 @@ export function Collector({
   return (
     <main className="collector-page collector-flow">
       <div className="collector-topbar">
-        <button className="back-button" onClick={goBack} aria-label="Back">
-          <Icon name="chevron-left" size={17} />{" "}
-          {stepIndex === 0 ? "Project" : "Back"}
+        <button
+          className="back-button"
+          onClick={onBack}
+          aria-label={exitAccessibleLabel}
+        >
+          <Icon name="x" size={17} /> {exitLabel}
         </button>
         <div className="collector-title">
           <strong>New observation</strong>
