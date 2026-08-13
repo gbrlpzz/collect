@@ -60,7 +60,8 @@ export function PackageBrowser() {
         <div className="hp-package-file-heading">
           <span>{active.path}</span>
           <span className="hp-package-meta">
-            {bytes(new TextEncoder().encode(active.content).length)}
+            {bytes(new TextEncoder().encode(active.content).length)} ·{" "}
+            {active.content.split("\n").length} lines
           </span>
         </div>
         <pre className="hp-package-code">

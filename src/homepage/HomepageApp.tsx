@@ -11,6 +11,14 @@ const ADMIN_URL = `${APP_URL}/?role=admin`;
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 const DOCS = (file: string) => `${GITHUB_URL}/blob/main/docs/${file}`;
 
+const NAV = [
+  { label: "Why collect", href: "#why" },
+  { label: "Features", href: "#features" },
+  { label: "Data formats", href: "#formats" },
+  { label: "Attention", href: "#attention" },
+  { label: "Research preview", href: "#preview" },
+];
+
 function TopBar() {
   return (
     <header className="hp-topbar">
@@ -18,7 +26,14 @@ function TopBar() {
         <a className="wordmark" href="#top">
           collect<span className="wordmark-dot">.</span>
         </a>
-        <nav className="hp-topbar-actions" aria-label="Primary">
+        <nav className="hp-nav" aria-label="Sections">
+          {NAV.map((item) => (
+            <a className="hp-nav-link" href={item.href} key={item.href}>
+              {item.label}
+            </a>
+          ))}
+        </nav>
+        <div className="hp-topbar-actions">
           <a
             className="hp-nav-link"
             href={GITHUB_URL}
@@ -27,28 +42,69 @@ function TopBar() {
           >
             GitHub
           </a>
-          <a
-            className="hp-nav-link"
-            href={APP_URL}
-            target="_blank"
-            rel="noopener"
-          >
-            Contributor sign-in
-          </a>
-          <a
-            className="hp-nav-link"
-            href={ADMIN_URL}
-            target="_blank"
-            rel="noopener"
-          >
-            Admin sign-in
-          </a>
+          <span className="hp-topbar-group" aria-label="Sign in">
+            <a
+              className="hp-nav-link"
+              href={APP_URL}
+              target="_blank"
+              rel="noopener"
+            >
+              Contributor
+            </a>
+            <a
+              className="hp-nav-link"
+              href={ADMIN_URL}
+              target="_blank"
+              rel="noopener"
+            >
+              Admin
+            </a>
+          </span>
           <a className="button button-primary button-small" href="#preview">
             Request access
           </a>
-        </nav>
+        </div>
       </div>
     </header>
+  );
+}
+
+function AppTiles() {
+  return (
+    <div className="hp-tiles" aria-label="The two installable apps">
+      <a className="hp-tile" href={APP_URL} target="_blank" rel="noopener">
+        <img
+          className="hp-tile-icon"
+          src="/icon.svg"
+          alt=""
+          width={56}
+          height={56}
+        />
+        <span className="hp-tile-copy">
+          <strong>collect</strong>
+          <span>Field app — contributor surface</span>
+        </span>
+        <span className="hp-tile-action">
+          Sign in <Icon name="arrow-right" size={14} />
+        </span>
+      </a>
+      <a className="hp-tile" href={ADMIN_URL} target="_blank" rel="noopener">
+        <img
+          className="hp-tile-icon hp-tile-icon-admin"
+          src="/icon-admin.svg"
+          alt=""
+          width={56}
+          height={56}
+        />
+        <span className="hp-tile-copy">
+          <strong>collect Admin</strong>
+          <span>Operations console — administrator surface</span>
+        </span>
+        <span className="hp-tile-action">
+          Sign in <Icon name="arrow-right" size={14} />
+        </span>
+      </a>
+    </div>
   );
 }
 
@@ -119,22 +175,19 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
           <span className="hp-hero-sep" aria-hidden="true" />
           <a
             className="text-button"
-            href={APP_URL}
+            href={GITHUB_URL}
             target="_blank"
             rel="noopener"
           >
-            Contributor sign-in
-          </a>
-          <span className="hp-hero-sep" aria-hidden="true" />
-          <a
-            className="text-button"
-            href={ADMIN_URL}
-            target="_blank"
-            rel="noopener"
-          >
-            Admin sign-in
+            Source on GitHub
           </a>
         </div>
+
+        <AppTiles />
+      </div>
+
+      <div className="hp-hero-demo" id="demo">
+        <FlowDemo />
       </div>
     </section>
   );
@@ -241,6 +294,21 @@ const FEATURES = [
   },
 ];
 
+const STEPS = [
+  {
+    title: "Define the form",
+    body: "A deliberately small set of strongly typed fields — text, numbers, choices, tri-state, date, location, photo, audio, repeatable groups. Publishing freezes an immutable schema version.",
+  },
+  {
+    title: "Invite the team",
+    body: "Accounts are invite-only. Contributors accept versioned consent at first sign-in, work fully offline, and every observation carries an automatic attention check.",
+  },
+  {
+    title: "Export the dataset",
+    body: "One reproducible checkpoint per cutoff: JSONL, CSV, GeoJSON, schema history, media originals, and the FAIR metadata a published dataset needs.",
+  },
+];
+
 const ADMIN_FEATURES = [
   {
     title: "FAIR by default",
@@ -249,7 +317,7 @@ const ADMIN_FEATURES = [
   },
   {
     title: "Immutable schemas",
-    body: "Forms are built from a deliberately small set of strongly typed fields — text, numbers, choices, tri-state, date, location, photo, audio, repeatable groups. Publishing freezes a version; history keeps its meaning.",
+    body: "Forms are built from a deliberately small set of strongly typed fields. Publishing freezes a version; history keeps its meaning.",
     chip: "schema/schema-v1.json",
   },
   {
@@ -259,20 +327,18 @@ const ADMIN_FEATURES = [
   },
   {
     title: "Consent, enforced",
-    body: "Contributors accept a versioned consent statement at first sign-in; the server refuses submissions without it, and the consent record travels in exports. Accounts are invite-only.",
+    body: "Contributors accept a versioned consent statement at first sign-in; the server refuses submissions without it, and the consent record travels in exports.",
     chip: "submissions.jsonl",
   },
 ];
 
 function Differentiators() {
   return (
-    <section className="hp-section" aria-labelledby="differentiators-title">
+    <section className="hp-section" id="why" aria-labelledby="why-title">
       <div className="hp-section-inner">
         <div className="section-heading">
           <p className="eyebrow">Why collect is different</p>
-          <h2 id="differentiators-title">
-            Built for the place generic tools fail.
-          </h2>
+          <h2 id="why-title">Built for the place generic tools fail.</h2>
           <p>
             Most survey software is a generic form builder or a fragile online
             tool. Fieldwork needs a different contract — and the difference is
@@ -366,6 +432,7 @@ function FeatureGrid() {
   return (
     <section
       className="hp-section hp-section-paper"
+      id="features"
       aria-labelledby="features-title"
     >
       <div className="hp-section-inner">
@@ -389,6 +456,30 @@ function FeatureGrid() {
   );
 }
 
+function HowItWorks() {
+  return (
+    <section className="hp-section" aria-labelledby="how-title">
+      <div className="hp-section-inner">
+        <div className="section-heading">
+          <p className="eyebrow">How it works</p>
+          <h2 id="how-title">From blank project to published dataset.</h2>
+        </div>
+        <ol className="hp-steps">
+          {STEPS.map((step, index) => (
+            <li className="hp-step" key={step.title}>
+              <span className="hp-step-index">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <h3>{step.title}</h3>
+              <p>{step.body}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
 function AdminSection() {
   return (
     <section
@@ -405,6 +496,14 @@ function AdminSection() {
             contributors, watch readiness and attention, and export reproducible
             checkpoints.
           </p>
+          <a
+            className="button button-primary button-small hp-admin-cta"
+            href={ADMIN_URL}
+            target="_blank"
+            rel="noopener"
+          >
+            Sign in to collect Admin
+          </a>
         </div>
         <div className="hp-admin-grid">
           {ADMIN_FEATURES.map((feature) => (
@@ -420,13 +519,25 @@ function AdminSection() {
   );
 }
 
+const PREVIEW_PERKS = [
+  "A running instance with your own schema",
+  "Invite-only access for your contributors",
+  "Automatic attention QA on every record",
+  "FAIR checkpoint exports for your dataset",
+  "Setup and onboarding support",
+];
+
 export function HomepageApp() {
   const [draftEmail, setDraftEmail] = useState("");
 
   const captureEmail = (email: string) => {
     setDraftEmail(email);
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     document.getElementById("preview")?.scrollIntoView({
-      behavior: "smooth",
+      behavior: reduceMotion ? "auto" : "smooth",
       block: "start",
     });
   };
@@ -438,19 +549,11 @@ export function HomepageApp() {
         <Hero onEmailSubmit={captureEmail} />
         <Differentiators />
         <FeatureGrid />
-
-        <section
-          className="hp-section hp-flow-section"
-          id="demo"
-          aria-labelledby="flow-title"
-        >
-          <div className="hp-section-inner">
-            <FlowDemo />
-          </div>
-        </section>
+        <HowItWorks />
 
         <section
           className="hp-section hp-section-paper"
+          id="formats"
           aria-labelledby="package-title"
         >
           <div className="hp-section-inner">
@@ -477,7 +580,11 @@ export function HomepageApp() {
           </div>
         </section>
 
-        <section className="hp-section" aria-labelledby="attention-title">
+        <section
+          className="hp-section"
+          id="attention"
+          aria-labelledby="attention-title"
+        >
           <div className="hp-section-inner hp-split">
             <div className="section-heading hp-sticky">
               <p className="eyebrow">Attention QA</p>
@@ -530,8 +637,8 @@ export function HomepageApp() {
           id="preview"
           aria-labelledby="preview-title"
         >
-          <div className="hp-section-inner hp-form-wrap">
-            <div className="section-heading">
+          <div className="hp-section-inner hp-preview-layout">
+            <div className="hp-preview-copy">
               <p className="eyebrow">The research preview</p>
               <h2 id="preview-title">Try it with your own fieldwork.</h2>
               <p>
@@ -539,8 +646,21 @@ export function HomepageApp() {
                 schema, your own contributors, and your own exports. Leave your
                 email and tell us what you collect — we read every request.
               </p>
+              <ul className="hp-perks">
+                {PREVIEW_PERKS.map((perk) => (
+                  <li key={perk}>
+                    <Icon name="check" size={15} /> {perk}
+                  </li>
+                ))}
+              </ul>
+              <p className="hp-preview-note">
+                No account is created by this form. Access stays invite-only — a
+                preview, not a signup.
+              </p>
             </div>
-            <PreviewForm initialEmail={draftEmail} />
+            <div className="hp-preview-card">
+              <PreviewForm initialEmail={draftEmail} />
+            </div>
           </div>
         </section>
       </main>
