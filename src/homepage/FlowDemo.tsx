@@ -354,8 +354,23 @@ export function FlowDemo() {
     const body = document.body;
     if (autoState === "playing") {
       // Align first, then freeze the document with the iOS-safe fixed-body
-      // pattern. The phone itself remains fully visible while the actions run.
-      phoneRef.current?.scrollIntoView({ block: "center", behavior: "auto" });
+      // pattern. Explicit coordinates are more reliable than scrollIntoView
+      // when the phone is scaled or the layout is stacked in landscape.
+      const phone = phoneRef.current;
+      if (phone) {
+        const phoneRect = phone.getBoundingClientRect();
+        const target = Math.max(
+          0,
+          window.scrollY +
+            phoneRect.top +
+            phoneRect.height / 2 -
+            window.innerHeight / 2,
+        );
+        const previousBehavior = root.style.scrollBehavior;
+        root.style.scrollBehavior = "auto";
+        window.scrollTo({ top: target, left: 0, behavior: "auto" });
+        root.style.scrollBehavior = previousBehavior;
+      }
       const scrollY = window.scrollY;
       root.classList.add("hp-lock");
       body.dataset.hpScrollY = String(scrollY);

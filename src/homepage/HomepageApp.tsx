@@ -102,8 +102,8 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
           where the signal ends.
         </h1>
         <p className="hp-hero-lede">
-          Save on the device. Sync on a server receipt. Export a FAIR dataset
-          with quality signals attached.
+          Capture structured observations where the network is unreliable. Save
+          locally, sync with proof, and return a dataset your team can use.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -224,29 +224,29 @@ function DemoSurface() {
 /** Generic tools vs collect — the differentiating factors. */
 const WHY_POINTS = [
   {
-    title: "Capture anywhere",
-    body: "Each observation is committed to the device before the network is involved.",
+    title: "Saved on the device",
+    body: "A local receipt confirms the observation before connectivity matters.",
     label: "Local receipt",
   },
   {
-    title: "Confirm delivery",
-    body: "Metadata, media, and finalization are resumable; synced means a server receipt.",
+    title: "Synced with proof",
+    body: "Metadata, media, and finalization complete in order; a server receipt closes the loop.",
     label: "Durable sync",
   },
   {
-    title: "Make quality visible",
+    title: "Quality you can defend",
     body: "One verified attention check per observation produces a contributor score.",
     label: "Attention QA",
   },
   {
-    title: "Preserve meaning",
-    body: "Published schemas stay versioned, so historical records keep their meaning.",
-    label: "Immutable history",
+    title: "Ready to reuse",
+    body: "Each checkpoint carries JSONL, CSV, GeoJSON, schema history, media, and FAIR metadata.",
+    label: "Portable export",
   },
   {
-    title: "Return a dataset",
-    body: "JSONL, CSV, GeoJSON, schema history, media, and FAIR metadata travel together.",
-    label: "Reusable export",
+    title: "Meaning preserved",
+    body: "Published schema versions and automatic provenance travel with every record.",
+    label: "Evidence history",
   },
 ];
 
@@ -257,7 +257,10 @@ function WhySection() {
         <div className="section-heading">
           <p className="eyebrow">The difference</p>
           <h2 id="why-title">A reliable path from observation to dataset.</h2>
-          <p>Every handoff has a receipt.</p>
+          <p>
+            The important difference is what happens between a tap and a
+            dataset.
+          </p>
         </div>
         <div className="hp-why-list">
           {WHY_POINTS.map((point, index) => (
@@ -288,10 +291,10 @@ function DataSection() {
       <div className="hp-section-inner">
         <div className="section-heading">
           <p className="eyebrow">The export</p>
-          <h2 id="formats-title">A research package, ready to reuse.</h2>
+          <h2 id="formats-title">Your dataset, ready to reuse.</h2>
           <p>
-            JSONL, CSV, GeoJSON, schema history, media originals, and FAIR
-            metadata in one checkpoint.
+            Every checkpoint carries the files and metadata your next tool
+            needs.
           </p>
         </div>
         <PackageBrowser />
@@ -316,7 +319,7 @@ function QualitySection() {
       <div className="hp-section-inner">
         <div className="section-heading">
           <p className="eyebrow">Quality &amp; provenance</p>
-          <h2 id="quality-title">Make quality visible.</h2>
+          <h2 id="quality-title">Quality you can defend.</h2>
           <p>
             Attention verification and device provenance travel with the record.
           </p>
@@ -356,8 +359,8 @@ function AdminBand() {
             />
             collect Admin
           </p>
-          <h2 id="admin-title">Bring the data home.</h2>
-          <p>Manage protocols, contributors, and exports from one surface.</p>
+          <h2 id="admin-title">Coordinate the study.</h2>
+          <p>Manage protocols, contributors, and exports from one place.</p>
         </div>
         <a
           className="button button-primary"
@@ -443,7 +446,7 @@ export function HomepageApp() {
           <div className="hp-section-inner hp-preview-layout">
             <div className="hp-preview-copy">
               <p className="eyebrow">Research preview</p>
-              <h2 id="preview-title">Put your protocol in the field.</h2>
+              <h2 id="preview-title">Bring your protocol to the field.</h2>
               <p>Request a preview with your schema and contributors.</p>
             </div>
             <div className="hp-preview-card">

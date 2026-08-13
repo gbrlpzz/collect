@@ -44,7 +44,7 @@ body.hp-lock-body {
   backdrop-filter: blur(22px) saturate(180%);
 }
 .hp-topbar-inner {
-  width: min(100%, 1200px);
+  width: min(100%, 1248px);
   height: 52px;
   margin: 0 auto;
   padding: 0 24px;

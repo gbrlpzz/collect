@@ -189,7 +189,7 @@ tests/                  unit, integration, interaction, migration, and accessibi
 
 ## Project principles
 
-1. Preserve fieldwork before optimizing transfer.
+1. Preserve collected data before optimizing transfer.
 2. State only what a receipt proves.
 3. Keep the contributor interface smaller than the infrastructure beneath it.
 4. Automate routine work; require explicit action for consent, publication, closure, invitation, and export.
