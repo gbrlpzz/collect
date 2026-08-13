@@ -216,7 +216,13 @@ export function useAppController() {
             // navigation surfaces are not interchangeable.
             mode: launchMode,
             view:
-              saved.mode === launchMode && saved.view ? saved.view : launchView,
+              saved.mode === launchMode &&
+              saved.view &&
+              // Legacy caches may hold the removed project-detail view;
+              // restore it onto the single home surface.
+              (saved.view as string) !== "project"
+                ? saved.view
+                : launchView,
             project: { ...current.project, ...(saved.project ?? {}) },
             projects:
               saved.projects ??
@@ -404,10 +410,8 @@ export function useAppController() {
   const navigate = (view: View) =>
     setState((current) => ({ ...current, view }));
 
-  const selectProject = (
-    project: AppState["project"],
-    view: View = "project",
-  ) => setState((current) => ({ ...current, project, view }));
+  const selectProject = (project: AppState["project"], view: View = "home") =>
+    setState((current) => ({ ...current, project, view }));
 
   const signOut = async () => {
     if (supabase) await supabase.auth.signOut().catch(() => undefined);

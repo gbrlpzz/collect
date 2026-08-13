@@ -1,7 +1,7 @@
 import type { Observation, Project } from "../types";
 import { formatExactTime, formatRelativeTime } from "../lib/formatTime";
 import { Icon } from "./Icon";
-import { Button } from "./ui";
+import { Button, Eyebrow } from "./ui";
 import { AppCredit } from "./AppCredit";
 
 interface ContributorHomeProps {
@@ -10,17 +10,20 @@ interface ContributorHomeProps {
   observations: Observation[];
   hasDraft: boolean;
   onStartObservation: (project: Project) => void;
-  onOpenProject: (project: Project) => void;
   onChooseProject: (project: Project) => void;
   onResumeObservation: () => void;
   onDiscardAndStartObservation: (project: Project) => void;
+  onOpenSync: () => void;
 }
 
 /**
- * The field surface starts with the contributor's frequent action, not with
- * routing. A single assigned project is context, not a choice. When several
- * projects are assigned, the native picker remains available as a secondary
- * control without competing with starting an observation.
+ * The field surface is a single screen: the project context, the frequent
+ * action, and the durable record. One assigned project is context, not a
+ * choice; when several projects are assigned, the native picker remains
+ * available as a secondary control without competing with starting an
+ * observation. Project detail (description, instructions, sync status,
+ * privacy) lives on the same page so there is no second, similar-looking
+ * screen to tell apart.
  */
 export function ContributorHome({
   projects,
@@ -28,10 +31,10 @@ export function ContributorHome({
   observations,
   hasDraft,
   onStartObservation,
-  onOpenProject,
   onChooseProject,
   onResumeObservation,
   onDiscardAndStartObservation,
+  onOpenSync,
 }: ContributorHomeProps) {
   const project =
     projects.find((candidate) => candidate.id === activeProject.id) ??
@@ -43,6 +46,13 @@ export function ContributorHome({
     : [];
   const recent = projectObservations.slice(-3).reverse();
   const isClosed = project?.status === "closed";
+  const waitingCount = projectObservations.filter(
+    (item) => item.status !== "SYNCED",
+  ).length;
+  const attentionCount = projectObservations.filter(
+    (item) => item.status === "ACTION_REQUIRED",
+  ).length;
+  const syncedCount = project?.completeSubmissions ?? 0;
 
   return (
     <main className="page page-contributor">
@@ -52,11 +62,11 @@ export function ContributorHome({
 
       {projects.length ? (
         <>
-          <section
-            className="collection-context"
-            aria-labelledby="project-context-title"
-          >
-            {projects.length > 1 ? (
+          {projects.length > 1 && (
+            <section
+              className="collection-context"
+              aria-labelledby="project-context-title"
+            >
               <label className="project-picker-label">
                 <span id="project-context-title">Project</span>
                 <select
@@ -76,18 +86,54 @@ export function ContributorHome({
                   ))}
                 </select>
               </label>
-            ) : (
-              <button
-                className="collection-project-row"
-                onClick={() => onOpenProject(project)}
-              >
+            </section>
+          )}
+
+          <section className="project-intro" aria-labelledby="project-name">
+            <div className="project-intro-copy">
+              <Eyebrow>{project.organization}</Eyebrow>
+              <h2 id="project-name">{project.name}</h2>
+              {project.description && <p>{project.description}</p>}
+            </div>
+          </section>
+
+          {project.instructions && (
+            <section
+              className="project-guidance"
+              aria-labelledby="instructions-title"
+            >
+              <h2 id="instructions-title">Instructions</h2>
+              <p className="project-instructions">{project.instructions}</p>
+            </section>
+          )}
+
+          <section
+            className="project-list project-list-detail"
+            aria-label="Project status"
+          >
+            <button
+              className="list-row"
+              onClick={onOpenSync}
+              aria-label="View sync status"
+            >
+              <span className="list-row-copy">
+                <strong>
+                  {attentionCount
+                    ? `${attentionCount} need attention`
+                    : waitingCount
+                      ? `${waitingCount} waiting to send`
+                      : "Up to date"}
+                </strong>
                 <span>
-                  <strong id="project-context-title">{project.name}</strong>
-                  <span>{project.organization}</span>
+                  {attentionCount
+                    ? "Open sync status to review"
+                    : waitingCount
+                      ? "Syncing automatically"
+                      : `${syncedCount} observations synced`}
                 </span>
-                <Icon name="chevron-right" size={17} />
-              </button>
-            )}
+              </span>
+              <Icon name="chevron-right" size={17} />
+            </button>
           </section>
 
           <div
@@ -155,6 +201,54 @@ export function ContributorHome({
               </div>
             </section>
           )}
+
+          <details className="privacy-disclosure">
+            <summary>
+              <Icon name="lock" size={17} />
+              <span className="privacy-summary-copy">
+                <strong>Data and privacy</strong>
+              </span>
+              <Icon name="chevron-down" size={16} />
+            </summary>
+            <dl className="privacy-facts">
+              <div>
+                <dt>Observation</dt>
+                <dd>Your answers, save time, timezone, and schema version.</dd>
+              </div>
+              <div>
+                <dt>Location</dt>
+                <dd>
+                  Coordinates, accuracy, and capture time. Projects that declare
+                  a location field require Location Services before collection.
+                </dd>
+              </div>
+              <div>
+                <dt>Device</dt>
+                <dd>
+                  A random install ID plus device, operating system, browser,
+                  screen, connection, battery, and language information used for
+                  provenance and recovery.
+                </dd>
+              </div>
+              <div>
+                <dt>Media</dt>
+                <dd>Original photos and audio you choose to add.</dd>
+              </div>
+              <div>
+                <dt>Access</dt>
+                <dd>
+                  Only the assigned project and its authorized administrators.
+                </dd>
+              </div>
+              <div>
+                <dt>Transfer</dt>
+                <dd>
+                  Data stays on this device until synchronization and goes only
+                  to this project&rsquo;s server.
+                </dd>
+              </div>
+            </dl>
+          </details>
         </>
       ) : (
         <div className="empty-list-state">

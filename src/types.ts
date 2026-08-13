@@ -1,6 +1,5 @@
 export type View =
   | "home"
-  | "project"
   | "collector"
   | "admin"
   | "admin-project"
