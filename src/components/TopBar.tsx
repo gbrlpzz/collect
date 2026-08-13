@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { AppMode, Observation, View } from "../types";
 import { getMyProfile, type ContributorProfile } from "../lib/consent";
+import { CollectBrand } from "./CollectBrand";
 import { Icon } from "./Icon";
 import { ProfileSheet } from "./ProfileSheet";
 
@@ -65,7 +66,7 @@ export function TopBar({
               onClick={() => onNavigate(isAdmin ? "admin" : "home")}
               aria-label={`collect ${surfaceLabel.toLowerCase()} home`}
             >
-              collect<span className="wordmark-dot">.</span>
+              <CollectBrand compact />
             </button>
             <span className="surface-label">{surfaceLabel}</span>
           </div>
@@ -85,6 +86,7 @@ export function TopBar({
       </header>
       {profileOpen && (
         <ProfileSheet
+          userEmail={userEmail}
           profile={profile}
           observations={observations}
           lastSyncAt={lastSyncAt}

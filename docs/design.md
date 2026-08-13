@@ -2,18 +2,21 @@
 
 `collect` is a mobile-first field application. The interface follows Apple Human Interface Guidelines where web platform capabilities permit, while preserving semantic HTML, browser interoperability, and the product’s evidence contract.
 
-The visual system is deliberately quiet: neutral surfaces, system typography, restrained chrome, large interaction regions, explicit text states, and progressive disclosure. Simplicity is a reliability feature because contributors may work in sunlight, gloves, stress, low bandwidth, or unfamiliar devices.
+The visual system is deliberately quiet: neutral surfaces, system typography, restrained chrome, large interaction regions, explicit text states, and progressive disclosure. The contributor app uses a light monochrome identity; the administrator app uses its dark inverse. Simplicity is a reliability feature because contributors may work in sunlight, gloves, stress, low bandwidth, or unfamiliar devices.
 
 Primary references:
 
 - [Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility)
+- [App icons](https://developer.apple.com/design/human-interface-guidelines/app-icons)
 - [Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons)
+- [Color](https://developer.apple.com/design/human-interface-guidelines/color)
 - [Entering data](https://developer.apple.com/design/human-interface-guidelines/entering-data)
 - [Feedback](https://developer.apple.com/design/human-interface-guidelines/feedback)
 - [Layout](https://developer.apple.com/design/human-interface-guidelines/layout)
 - [Lists and tables](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables)
 - [Modality](https://developer.apple.com/design/human-interface-guidelines/modality)
 - [Onboarding](https://developer.apple.com/design/human-interface-guidelines/onboarding)
+- [Typography](https://developer.apple.com/design/human-interface-guidelines/typography)
 
 ## Product hierarchy
 
@@ -29,7 +32,7 @@ The most frequent consequential action is the easiest to reach.
 
 The contributor surface does not expose database views, queue internals, administrator metrics, or persistent top-level navigation.
 
-On compact screens, the primary observation action stays in a safe-area-aware bottom dock within comfortable thumb reach. Identity is represented by one 44-point profile control; the email address is not repeated in navigation or profile chrome.
+On compact screens, the primary observation action stays in a safe-area-aware floating bottom capsule within comfortable thumb reach. Identity is represented by one 44-point profile control; the email address is kept out of navigation but remains visible inside Profile so people can distinguish accounts.
 
 ### Administrator hierarchy
 
@@ -41,12 +44,13 @@ On compact screens, the primary observation action stays in a safe-area-aware bo
 
 Rare project actions belong in a secondary action menu. Supporting configuration remains collapsed until requested.
 
-On compact screens, the current contextual action—create project, edit or preview form, add contributor, or export—uses the same bottom dock instead of competing with the page heading.
+On compact screens, the current contextual action—create project, edit or preview form, add contributor, or export—uses the same floating bottom capsule instead of competing with the page heading.
 
 ## Core principles
 
 - Use semantic HTML and native controls where possible.
 - Keep the primary action visually and spatially dominant.
+- Use solid monochrome contrast for the current primary action, focus, selection, and progress.
 - Use at least a 44-point interaction region.
 - Use plain labels rather than icon-only meaning.
 - Never use color as the only state cue.
@@ -56,6 +60,21 @@ On compact screens, the current contextual action—create project, edit or prev
 - Automate provenance, synchronization, retry, hashing, and readiness.
 - Require explicit action for consent, saving, publication, invitation, project closure, and export.
 - Respect text scaling, VoiceOver, keyboard navigation, reduced motion, increased contrast, safe areas, and system appearance.
+
+## Command geometry and materials
+
+Interactive geometry is consistent across contributor and administrator surfaces:
+
+- primary and secondary commands use capsule shapes;
+- icon-only commands use circles with explicit accessible names;
+- mutually exclusive modes use one rounded segmented capsule;
+- short states use compact labelled chips;
+- mobile bottom commands float inside the safe area instead of forming a full-width rectangular toolbar;
+- sheets, content groups, data rows, and long text fields retain distinct rounded-rectangle geometry so controls are identifiable by shape as well as color.
+
+The floating material is limited to navigation and commands. It uses an opaque-enough system-like material, a one-pixel boundary, and a restrained shadow. Research content never sits on translucent glass. Reduced Transparency replaces the material with the opaque paper token, and Increased Contrast strengthens its boundary.
+
+This language is influenced by current iOS command surfaces without attempting to reproduce private Apple components. It improves reachability and distinguishes actionable elements while preserving standard web semantics.
 
 ## Mobile viewport and software keyboard
 
@@ -146,6 +165,7 @@ Do not display a success check for request initiation or media upload alone. Use
 
 Profile consolidates infrequent personal and account information:
 
+- signed-in email address;
 - contribution count;
 - number saved locally;
 - last server receipt;
@@ -201,7 +221,15 @@ The contributor app uses a stable light appearance for field legibility. The adm
 | Accent text    | white               | black               |
 | Destructive    | semantic red        | semantic red        |
 
-Neutral color is a project-specific visual decision. Words, icons, shape, order, and accessible names carry state.
+The contributor interface uses black controls on white or soft-gray surfaces. Words, icons, checkmarks, shape, order, and accessible names carry state. The administrator surface inverts the same system, making an accidental surface switch immediately apparent without introducing a second visual language.
+
+The wordmark, headings, body copy, and controls use the normal platform system stack. Weight, scale, and spacing create hierarchy without introducing a separate display face.
+
+### Identity and app icons
+
+The field-frame mark places one observation point inside four open capture corners. It describes collection without implying a particular data type, and remains legible at favicon, Home Screen, and navigation-bar sizes. The contributor icon uses a black mark on soft gray; the administrator icon uses its white-on-black inverse. The icon label (**collect** or **collect Admin**) reinforces the distinction.
+
+The SVG source is canonical. PNG renditions at 180, 192, and 512 pixels support iOS Home Screen and web-app installation without shipping a runtime image dependency. The artwork fills the square; the platform applies its own icon mask.
 
 The surface identity is established before React paints so PWA chrome does not flash the wrong appearance.
 
@@ -211,9 +239,9 @@ The surface identity is established before React paints so PWA chrome does not f
 
 The collection task removes persistent top-level navigation. Back remains available, and the bottom reach zone is reserved for the current field action. This adaptation prioritizes uninterrupted capture over application browsing.
 
-### Monochrome custom accent
+### Monochrome identity
 
-The web implementation uses neutral custom tokens rather than a platform tint. Increased contrast, explicit labels, and non-color state indicators preserve accessibility.
+The web implementation uses neutral system-like tokens rather than a custom tint. Increased contrast, explicit labels, glyphs, and non-color state indicators preserve accessibility. Semantic red remains reserved for destructive actions.
 
 ### Web symbols and materials
 

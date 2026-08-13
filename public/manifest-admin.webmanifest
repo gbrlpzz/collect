@@ -1,10 +1,12 @@
 {
+  "id": "/?role=admin",
   "name": "collect Admin",
   "short_name": "collect Admin",
-  "description": "collect field operations console.",
+  "description": "Configure and monitor collect fieldwork.",
   "start_url": "/?role=admin",
   "scope": "/",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#000000",
   "theme_color": "#000000",
   "icons": [

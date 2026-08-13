@@ -10,6 +10,7 @@ import { Icon } from "./Icon";
 import { AttentionScoreRing, Button, IconButton, ModalSurface } from "./ui";
 
 interface ProfileSheetProps {
+  userEmail?: string | null;
   profile: ContributorProfile | null;
   observations: Observation[];
   lastSyncAt: string | null;
@@ -22,6 +23,7 @@ interface ProfileSheetProps {
 }
 
 export function ProfileSheet({
+  userEmail,
   profile,
   observations,
   lastSyncAt,
@@ -61,6 +63,12 @@ export function ProfileSheet({
           onClick={onClose}
         />
       </div>
+
+      <p className="profile-email">
+        {isPreview
+          ? "Preview session"
+          : (userEmail ?? "Account email unavailable")}
+      </p>
 
       {!isAdmin && (
         <>

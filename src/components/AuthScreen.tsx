@@ -10,6 +10,7 @@ import {
   verifySignInCode,
 } from "../lib/supabaseClient";
 import { Icon } from "./Icon";
+import { CollectBrand } from "./CollectBrand";
 import { Button, ClearButton, Eyebrow } from "./ui";
 import { isAppleMobileBrowser, isStandaloneApp } from "../lib/platform";
 
@@ -265,7 +266,7 @@ export function AuthScreen({
     return (
       <main className={`auth-page auth-page-${role}`}>
         <div className="auth-mark">
-          collect<span>.</span>
+          <CollectBrand />
         </div>
         <section className="auth-card" aria-labelledby="auth-password-title">
           <Eyebrow>One more step</Eyebrow>
@@ -345,7 +346,7 @@ export function AuthScreen({
   return (
     <main className={`auth-page auth-page-${role}`}>
       <div className="auth-mark">
-        collect<span>.</span>
+        <CollectBrand />
       </div>
       <section className="auth-card" aria-labelledby="auth-title">
         {!sent ? (

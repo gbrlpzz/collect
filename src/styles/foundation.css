@@ -15,6 +15,7 @@
   --separator-light: rgba(0, 0, 0, 0.08);
   --grouped: rgba(120, 120, 128, 0.12);
   --grouped-strong: #e5e5ea;
+  --brand: rgba(0, 0, 0, 0.9);
   --focus: rgba(0, 0, 0, 0.36);
   --error: rgba(0, 0, 0, 0.72);
   --glass: rgba(250, 250, 252, 0.82);
@@ -158,12 +159,47 @@ p {
   border: 0;
   background: transparent;
   color: var(--text);
-  font-size: 1.3125rem;
-  font-weight: 700;
-  letter-spacing: -0.065em;
 }
 .wordmark-dot {
   color: var(--tertiary);
+}
+.collect-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+.collect-mark {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  overflow: visible;
+  color: var(--brand);
+}
+.collect-mark path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+.collect-mark circle {
+  fill: currentColor;
+}
+.collect-wordmark {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.075em;
+}
+.collect-brand-compact {
+  gap: 6px;
+}
+.collect-brand-compact .collect-mark {
+  width: 22px;
+  height: 22px;
+}
+.collect-brand-compact .collect-wordmark {
+  font-size: 1.125rem;
 }
 .topbar-actions {
   position: relative;
@@ -1817,7 +1853,7 @@ p {
   font-weight: 700;
   letter-spacing: -0.07em;
 }
-.auth-mark span {
+.auth-mark .wordmark-dot {
   color: var(--tertiary);
 }
 .auth-card {
