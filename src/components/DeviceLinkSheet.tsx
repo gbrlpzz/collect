@@ -88,10 +88,7 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
     >
       <div className="sheet-handle" />
       <div className="sheet-heading">
-        <div>
-          <span className="sheet-kicker">Another device</span>
-          <h2 id="device-link-title">Sign in on another device</h2>
-        </div>
+        <h2 id="device-link-title">Sign in another device</h2>
         <IconButton
           label="Close"
           icon="x"
@@ -99,10 +96,6 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
           onClick={onClose}
         />
       </div>
-      <p className="sheet-copy">
-        In the installed collect app, paste this one-time code. It signs in the
-        app without a password or another email.
-      </p>
       {error && (
         <p className="field-help-error" role="alert">
           {error}
@@ -149,9 +142,6 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
           </div>
         </>
       ) : null}
-      <p className="sheet-footnote">
-        The code works once and expires after five minutes.
-      </p>
     </ModalSurface>
   );
 }

@@ -41,22 +41,13 @@ export function ContributorHome({
         (item) => !item.projectId || item.projectId === project.id,
       )
     : [];
-  const waitingCount = projectObservations.filter(
-    (item) => item.status !== "SYNCED",
-  ).length;
-  const attentionCount = projectObservations.filter(
-    (item) => item.status === "ACTION_REQUIRED",
-  ).length;
   const recent = projectObservations.slice(-3).reverse();
   const isClosed = project?.status === "closed";
 
   return (
     <main className="page page-contributor">
       <div className="page-heading page-heading-home">
-        <h1>New observation</h1>
-        <p className="page-lede">
-          Record what you see. It is saved on this device before it is sent.
-        </p>
+        <h1>Fieldwork</h1>
       </div>
 
       {projects.length ? (
@@ -137,16 +128,7 @@ export function ContributorHome({
               aria-label="Observation status"
             >
               <div className="section-heading-row">
-                <div>
-                  <h2>Recent observations</h2>
-                  <p>
-                    {attentionCount
-                      ? `${attentionCount} need attention`
-                      : waitingCount
-                        ? `${waitingCount} waiting to send`
-                        : "All saved"}
-                  </p>
-                </div>
+                <h2>Recent observations</h2>
               </div>
               <div className="recent-observation-list">
                 {recent.map((observation) => {

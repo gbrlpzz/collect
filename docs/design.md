@@ -24,7 +24,7 @@ The most frequent consequential action is the easiest to reach.
 
 ### Contributor hierarchy
 
-1. **New observation**
+1. **Add observation**
 2. Resume the current draft
 3. Project context
 4. Synchronization status when action is required
@@ -182,7 +182,7 @@ Disclose these on request:
 - reassurance already implied by a visible system state;
 - optional paths and uncommon configuration.
 
-Remove a message when it duplicates the heading, status, or adjacent summary. Do not move required instructions into a disclosure merely to make a screen look quieter. Disclosure summaries have a 44-point minimum target, a visible keyboard focus state, a text label, and a chevron whose motion respects Reduce Motion.
+Use one label or instruction for each concept. A heading must not restate an eyebrow, field labels must not repeat the lead paragraph, and list summaries must not repeat the state already shown by every visible row. Remove a message when it duplicates the heading, status, or adjacent summary. Do not move required instructions into a disclosure merely to make a screen look quieter. Disclosure summaries have a 44-point minimum target, a visible keyboard focus state, a text label, and a chevron whose motion respects Reduce Motion.
 
 ## Profile and secondary information
 

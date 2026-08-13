@@ -11,7 +11,7 @@ import {
 } from "../lib/supabaseClient";
 import { Icon } from "./Icon";
 import { CollectBrand } from "./CollectBrand";
-import { Button, ClearButton, Eyebrow } from "./ui";
+import { Button, ClearButton } from "./ui";
 import { isAppleMobileBrowser, isStandaloneApp } from "../lib/platform";
 
 interface AuthScreenProps {
@@ -268,12 +268,8 @@ export function AuthScreen({
           <CollectBrand />
         </div>
         <section className="auth-card" aria-labelledby="auth-password-title">
-          <Eyebrow>One more step</Eyebrow>
-          <h1 id="auth-password-title">Set a password.</h1>
-          <p>
-            Sign in on any device with your email and this password. Links and
-            codes stay available as fallbacks.
-          </p>
+          <h1 id="auth-password-title">Create a password.</h1>
+          <p>Use it to sign in on other devices.</p>
           <form
             className="auth-set-password"
             onSubmit={(event) => {
@@ -350,32 +346,23 @@ export function AuthScreen({
       <section className="auth-card" aria-labelledby="auth-title">
         {!sent ? (
           <>
-            <Eyebrow>
-              {isAdmin
-                ? "Admin workspace"
-                : callbackIssue
-                  ? "Sign in again"
-                  : "Sign in"}
-            </Eyebrow>
             <h1 id="auth-title">
               {callbackIssue
                 ? "Request a new link."
                 : entryMode === "device"
-                  ? "Sign in to this app."
+                  ? "Link this device."
                   : isAdmin
-                    ? "Sign in to collect Admin."
-                    : "Sign in to collect."}
+                    ? "Admin sign in."
+                    : "Sign in."}
             </h1>
             <p>
               {configured
                 ? callbackIssue
                   ? "Enter the invited email address and we’ll send a fresh one-time link."
                   : entryMode === "device"
-                    ? "In the signed-in browser, open your profile and choose “Sign in another device”, then enter the code here."
-                    : isAdmin
-                      ? "Use the administrator email you were invited with."
-                      : "Use the email address your administrator invited."
-                : "This deployment is not connected to an authentication service yet."}
+                    ? "Generate a code in Profile on a signed-in device."
+                    : "Use your invited email address."
+                : "Authentication is not configured for this deployment."}
             </p>
             {configured ? (
               entryMode === "password" ? (
@@ -462,7 +449,7 @@ export function AuthScreen({
                     }}
                   >
                     <label className="auth-label" htmlFor="auth-device-code">
-                      8-character code from the signed-in device
+                      8-character code
                       <input
                         ref={deviceCodeInputRef}
                         id="auth-device-code"
@@ -490,27 +477,26 @@ export function AuthScreen({
                         disabled={codeBusy}
                       />
                     </label>
-                    <p className="auth-config-note">
-                      <Icon name="info" size={16} />
-                      <span>
-                        On the signed-in device, open collect → Sign in on
-                        another device, copy the code, and paste it here.
-                      </span>
-                    </p>
                     {codeError && (
                       <p className="auth-error" role="alert">
                         {codeError}
                       </p>
                     )}
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      fullWidth
-                      disabled={codeBusy || code.length !== 8}
-                      busy={codeBusy}
-                    >
-                      {codeBusy ? "Linking…" : "Link this device"}
-                    </Button>
+                    {(code.length === 8 || codeBusy) && (
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        fullWidth
+                        disabled={codeBusy}
+                        busy={codeBusy}
+                      >
+                        {codeBusy
+                          ? "Linking…"
+                          : codeError
+                            ? "Try again"
+                            : "Link this device"}
+                      </Button>
+                    )}
                     <button
                       type="button"
                       className="text-button"
@@ -594,29 +580,7 @@ export function AuthScreen({
                   </button>
                 </form>
               )
-            ) : (
-              <>
-                <div className="auth-label">
-                  <label htmlFor={emailInputId}>Email address</label>
-                  <input
-                    id={emailInputId}
-                    className="field-input"
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="you@example.com"
-                    disabled
-                  />
-                </div>
-                <div className="auth-config-note">
-                  <Icon name="info" size={16} />
-                  <span>
-                    Sign-in will be available when the project’s Supabase
-                    connection is configured.
-                  </span>
-                </div>
-              </>
-            )}
+            ) : null}
             {configured && entryMode !== "device" && (
               <details className="auth-alternatives">
                 <summary>Other sign-in options</summary>
@@ -641,16 +605,10 @@ export function AuthScreen({
           </>
         ) : (
           <div className="auth-sent">
-            <Eyebrow>
-              {isAdmin ? "Admin workspace" : "Check your inbox"}
-            </Eyebrow>
-            <h1>Link sent.</h1>
+            <h1>Check your inbox.</h1>
             <p>
-              Open the newest link sent to <strong>{email}</strong> on this
-              device. Each link works once and then expires.
-            </p>
-            <p className="auth-sent-hint">
-              If you do not see it, check spam. Do not use an older message.
+              Open the newest link sent to <strong>{email}</strong>. If it is
+              missing, check spam.
             </p>
             {error && (
               <p className="auth-error" role="alert">
@@ -697,19 +655,21 @@ export function AuthScreen({
                       {codeError}
                     </p>
                   )}
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    fullWidth
-                    disabled={codeBusy || code.length !== 6}
-                    busy={codeBusy}
-                  >
-                    {codeBusy
-                      ? "Verifying…"
-                      : code.length === 6
-                        ? "Verify again"
-                        : "Verify code"}
-                  </Button>
+                  {(code.length === 6 || codeBusy) && (
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      fullWidth
+                      disabled={codeBusy}
+                      busy={codeBusy}
+                    >
+                      {codeBusy
+                        ? "Verifying…"
+                        : codeError
+                          ? "Try again"
+                          : "Verify code"}
+                    </Button>
+                  )}
                 </form>
                 <button
                   type="button"
@@ -772,9 +732,6 @@ export function AuthScreen({
               <Icon name="plus" size={16} /> Add collect to Home Screen
             </summary>
             <div className="auth-install-content">
-              <p>
-                For reliable offline fieldwork, install collect from Safari.
-              </p>
               <ol>
                 <li>
                   Tap <strong>Share</strong>.
@@ -786,18 +743,10 @@ export function AuthScreen({
                   Tap <strong>Add</strong>.
                 </li>
               </ol>
-              <p>
-                Open collect from the new icon when you are ready to work
-                offline.
-              </p>
             </div>
           </details>
         )}
       </section>
-      <p className="auth-footnote">
-        <Icon name="lock" size={14} /> Previously downloaded fieldwork remains
-        available offline.
-      </p>
     </main>
   );
 }

@@ -186,17 +186,17 @@ export default function App() {
     return (
       <main className="page page-contributor">
         <div className="page-heading page-heading-home">
-          <Eyebrow>Admin workspace</Eyebrow>
           <h1>
             {adminAccess === "checking"
               ? "Checking access…"
               : "Admin access is unavailable"}
           </h1>
-          <p className="page-lede">
-            {adminAccess === "checking"
-              ? "This normally takes only a moment."
-              : "Reconnect and reopen collect Admin. Your local data remains unchanged."}
-          </p>
+          {adminAccess === "unavailable" && (
+            <p className="page-lede">
+              Reconnect and reopen collect Admin. Your local data remains
+              unchanged.
+            </p>
+          )}
         </div>
         {adminAccess === "unavailable" && (
           <Button variant="secondary" onClick={() => window.location.reload()}>
@@ -211,7 +211,6 @@ export default function App() {
     return (
       <main className="page page-contributor">
         <div className="page-heading page-heading-home">
-          <Eyebrow>Admin workspace</Eyebrow>
           <h1>Administrator access required</h1>
           <p className="page-lede">
             This account is not an administrator. Sign in with an invited
@@ -315,7 +314,6 @@ export default function App() {
           {state.mode === "admin" && state.view === "admin-project" && (
             <AdminProject
               project={state.project}
-              observations={selectedObservations}
               onBack={() => navigate("admin")}
               onToast={showToast}
               onExport={() => void exportCheckpoint()}

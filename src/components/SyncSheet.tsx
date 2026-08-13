@@ -80,22 +80,19 @@ export function SyncSheet({
     <ModalSurface
       onClose={onClose}
       labelledBy="sync-sheet-title"
-      describedBy="sync-sheet-copy"
+      describedBy={hasPending ? "sync-sheet-copy" : undefined}
     >
       <div className="sheet-handle" />
       <div className="sheet-heading">
-        <div>
-          <span className="sheet-kicker">Sync</span>
-          <h2 id="sync-sheet-title">
-            {isSyncing
-              ? "Sending observations…"
-              : needsAttention.length
-                ? "Sync needs attention"
-                : hasPending
-                  ? `${pending.length} waiting to send`
-                  : "Everything is up to date"}
-          </h2>
-        </div>
+        <h2 id="sync-sheet-title">
+          {isSyncing
+            ? "Sending observations…"
+            : needsAttention.length
+              ? "Sync needs attention"
+              : hasPending
+                ? `${pending.length} waiting to send`
+                : "Everything is up to date"}
+        </h2>
         <IconButton
           label="Close sync status"
           icon="x"
@@ -104,13 +101,13 @@ export function SyncSheet({
         />
       </div>
 
-      <p className="sheet-copy" id="sync-sheet-copy">
-        {needsAttention.length
-          ? "Your observations remain saved on this device. Collect will keep retrying automatically."
-          : hasPending
-            ? "They are safely stored here and will send automatically when the server is reachable."
-            : "The server has acknowledged every complete observation on this device."}
-      </p>
+      {hasPending && (
+        <p className="sheet-copy" id="sync-sheet-copy">
+          {needsAttention.length
+            ? "Your observations remain saved here and will retry automatically."
+            : "They are saved here and will send automatically."}
+        </p>
+      )}
 
       {activeProgress.length > 0 && (
         <div className="sync-operation-list" aria-label="Current sync progress">

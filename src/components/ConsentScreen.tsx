@@ -54,12 +54,7 @@ export function ConsentScreen({
         className="auth-card consent-card"
         aria-labelledby="consent-title"
       >
-        <span className="sheet-kicker">Consent statement v{version}</span>
         <h1 id="consent-title">Review data collection</h1>
-        <p className="consent-lede">
-          Before contributing, review the small amount of data collect needs to
-          preserve and verify your fieldwork.
-        </p>
         <dl className="consent-summary" aria-label="Privacy summary">
           <div>
             <dt>What is recorded</dt>
@@ -109,7 +104,7 @@ export function ConsentScreen({
           icon="shield"
         >
           <p>
-            Accepting records this statement version and the time on your
+            Accepting records statement version {version} and the time on your
             contributor profile.
           </p>
         </InfoDisclosure>

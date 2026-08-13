@@ -50,14 +50,7 @@ export function ProfileSheet({
     >
       <div className="sheet-handle" />
       <div className="sheet-heading">
-        <div>
-          <span className="sheet-kicker">
-            {isPreview ? "Preview" : "Account"}
-          </span>
-          <h2 id="profile-sheet-title">
-            {isAdmin ? "Admin profile" : "Your profile"}
-          </h2>
-        </div>
+        <h2 id="profile-sheet-title">Profile</h2>
         <IconButton
           label="Close profile"
           icon="x"
@@ -128,7 +121,6 @@ export function ProfileSheet({
               <Icon name="plus" size={17} />
               <span>
                 <strong>Add collect to Home Screen</strong>
-                <span>Open fieldwork like an app</span>
               </span>
               <Icon name="chevron-down" size={15} />
             </summary>
@@ -164,7 +156,6 @@ export function ProfileSheet({
               <Icon name="lock" size={17} />
               <span>
                 <strong>Data and privacy</strong>
-                <span>What collect records and why</span>
               </span>
               <Icon name="chevron-down" size={15} />
             </summary>
@@ -209,7 +200,6 @@ export function ProfileSheet({
             <Icon name="info" size={17} />
             <span>
               <strong>About collect</strong>
-              <span>Version and feedback</span>
             </span>
             <Icon name="chevron-down" size={15} />
           </summary>

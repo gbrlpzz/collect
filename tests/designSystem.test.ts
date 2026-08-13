@@ -92,6 +92,12 @@ describe("visual system contract", () => {
     );
   });
 
+  it("does not preserve styling hooks for removed duplicate messages", () => {
+    expect(styles).not.toMatch(
+      /\.(?:auth-footnote|auth-sent-hint|permission-gate-note)\b/,
+    );
+  });
+
   it("keeps resume and deliberate restart together in the mobile reach zone", () => {
     expect(geometry).toMatch(
       /\.draft-restart-action\s*\{[^}]*min-height:\s*var\(--control-height\)[^}]*color:\s*var\(--destructive\)/s,

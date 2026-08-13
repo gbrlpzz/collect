@@ -144,9 +144,7 @@ describe("low-friction primary actions", () => {
         name: /use a code from a signed-in device/i,
       }),
     );
-    const codeInput = screen.getByLabelText(
-      /8-character code from the signed-in device/i,
-    );
+    const codeInput = screen.getByLabelText(/8-character code/i);
     fireEvent.change(codeInput, { target: { value: "ab2d9kqx" } });
 
     await waitFor(() =>
@@ -165,10 +163,13 @@ describe("low-friction primary actions", () => {
     });
     try {
       render(<AuthScreen configured role="contributor" />);
+      expect(screen.getByLabelText(/8-character code/i)).toBeTruthy();
+      expect(screen.getByText(/generate a code in profile/i)).toBeTruthy();
       expect(
-        screen.getByLabelText(/8-character code from the signed-in device/i),
-      ).toBeTruthy();
-      expect(screen.getByText(/open your profile/i)).toBeTruthy();
+        screen.queryByRole("button", { name: /link this device/i }),
+      ).toBeNull();
+      expect(screen.queryByText(/copy the code, and paste/i)).toBeNull();
+      expect(screen.queryByText(/previously downloaded fieldwork/i)).toBeNull();
     } finally {
       Object.defineProperty(navigator, "standalone", {
         configurable: true,
@@ -185,6 +186,8 @@ describe("low-friction primary actions", () => {
     );
     expect(screen.getByLabelText(/code AB2D9KQX/i)).toBeTruthy();
     expect(screen.getByText(/expires in/i)).toBeTruthy();
+    expect(screen.queryByText("Another device")).toBeNull();
+    expect(screen.queryByText(/works once and expires/i)).toBeNull();
   });
 
   it("focuses a modal email field without a second tap", () => {
@@ -236,9 +239,7 @@ describe("low-friction primary actions", () => {
       />,
     );
 
-    expect(
-      screen.getByRole("heading", { name: /new observation/i }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /fieldwork/i })).toBeTruthy();
     expect(screen.getByLabelText("collect by gbrlpzz")).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "gbrlpzz" }).getAttribute("href"),
@@ -657,11 +658,7 @@ describe("low-friction primary actions", () => {
       expect(screen.getByText("Allow location in Settings")).toBeTruthy(),
     );
     expect(screen.queryByRole("textbox", { name: "Notes" })).toBeNull();
-    expect(
-      screen.getByText(
-        "Collection remains locked until location access is available.",
-      ),
-    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
 
     Object.defineProperty(navigator, "geolocation", {
       configurable: true,
@@ -683,7 +680,9 @@ describe("low-friction primary actions", () => {
     expect(document.activeElement).toBe(fieldInputs[fieldInputs.length - 1]);
     fireEvent.click(screen.getByRole("button", { name: /^continue$/i }));
 
-    expect(screen.getByText("Step 3 of 3")).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Invite contributors" }),
+    ).toBeTruthy();
     expect(screen.queryByText("Invitation preview")).toBeNull();
     const invitationDetails = screen
       .getByText("How invitations work")

@@ -606,8 +606,7 @@ h3 {
 }
 .auth-brand,
 .auth-mark,
-.auth-card,
-.auth-footnote {
+.auth-card {
   width: min(100%, 420px);
   margin-right: auto;
   margin-left: auto;
@@ -651,10 +650,6 @@ h3 {
 .auth-label {
   margin-top: var(--space-6);
 }
-.auth-footnote {
-  justify-content: flex-start;
-}
-
 /* Shared controls */
 .button {
   min-height: var(--control-height);
