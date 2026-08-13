@@ -4,11 +4,11 @@
    The UI follows Apple's Human Interface Guidelines as the default language:
    system/grouped surfaces, a navigation bar, inset list rows, native controls,
    Dynamic Type-friendly rem units, 44 pt hit targets, and progressive
-   disclosure. Monochrome is intentional for field legibility and evidence
-   states; it is not a substitute for labels or shape.
+   disclosure. A single contributor accent creates recognition and hierarchy;
+   labels, shape, and position continue to carry every functional meaning.
    ------------------------------------------------------------------------- */
 :root {
-  /* House neutral greys (gbrlpzz/index · gbrlpzz/dispatch): monochrome, no tint. */
+  /* Neutral field surfaces keep the high-chroma identity accent legible. */
   --canvas: #f5f5f7;
   --paper: #ffffff;
   --text: rgba(0, 0, 0, 0.85);
@@ -18,14 +18,15 @@
   --separator-light: rgba(0, 0, 0, 0.09);
   --grouped: rgba(0, 0, 0, 0.07);
   --grouped-strong: rgba(0, 0, 0, 0.14);
-  --focus: rgba(0, 0, 0, 0.9);
-  --focus-ring: rgba(0, 0, 0, 0.14);
+  --brand: #d10074;
+  --focus: var(--brand);
+  --focus-ring: rgba(209, 0, 116, 0.2);
   --error: rgba(0, 0, 0, 0.84);
   --glass: rgba(245, 245, 247, 0.85);
-  --accent: #000000;
-  --accent-hover: #1c1c1e;
+  --accent: var(--brand);
+  --accent-hover: #b00062;
   --accent-text: #ffffff;
-  --selection-bg: rgba(0, 0, 0, 0.9);
+  --selection-bg: var(--brand);
   --radius: 10px;
   --radius-large: 14px;
   --control-height: 44px;
@@ -349,8 +350,8 @@ button {
   font-size: 0.875rem;
 }
 
-/* Choice rows mirror grouped iOS list rows. The checkmark is the visible
-   selection cue; monochrome contrast and aria-pressed cover non-colour users. */
+/* Choice rows mirror grouped iOS list rows. The checkmark, weight, and
+   aria-pressed state preserve selection meaning without relying on the tint. */
 .choice-grid {
   gap: 1px;
   overflow: hidden;
@@ -701,7 +702,13 @@ button {
   letter-spacing: -0.01em;
   font-size: 0.8125rem;
 }
+.app-shell[data-mode="contributor"] .eyebrow,
+.auth-page-contributor .eyebrow,
+.consent-page .sheet-kicker {
+  color: var(--brand);
+}
 .field-section-heading .eyebrow {
+  color: var(--secondary);
   text-transform: uppercase;
   letter-spacing: 0.02em;
   font-size: 0.75rem;

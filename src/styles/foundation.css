@@ -3,6 +3,9 @@
   font-family:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
     "Helvetica Neue", Arial, sans-serif;
+  --display-font:
+    ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont,
+    "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -15,13 +18,14 @@
   --separator-light: rgba(0, 0, 0, 0.08);
   --grouped: rgba(120, 120, 128, 0.12);
   --grouped-strong: #e5e5ea;
-  --focus: rgba(0, 0, 0, 0.36);
+  --brand: #d10074;
+  --focus: var(--brand);
   --error: rgba(0, 0, 0, 0.72);
   --glass: rgba(250, 250, 252, 0.82);
-  --accent: rgba(0, 0, 0, 0.9);
-  --accent-hover: #000;
+  --accent: var(--brand);
+  --accent-hover: #b00062;
   --accent-text: #fff;
-  --selection-bg: rgba(0, 0, 0, 0.9);
+  --selection-bg: var(--brand);
   --radius: 14px;
   --radius-large: 22px;
 }
@@ -80,6 +84,7 @@ p {
 h1,
 h2,
 h3 {
+  font-family: var(--display-font);
   letter-spacing: -0.03em;
 }
 h1 {
@@ -158,12 +163,49 @@ p {
   border: 0;
   background: transparent;
   color: var(--text);
-  font-size: 1.3125rem;
-  font-weight: 700;
-  letter-spacing: -0.065em;
+  font-family: var(--display-font);
 }
 .wordmark-dot {
-  color: var(--tertiary);
+  color: var(--brand);
+}
+.collect-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+.collect-mark {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  overflow: visible;
+  color: var(--brand);
+}
+.collect-mark path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+.collect-mark circle {
+  fill: currentColor;
+}
+.collect-wordmark {
+  font-family: var(--display-font);
+  font-size: 1.5rem;
+  font-weight: 760;
+  line-height: 1;
+  letter-spacing: -0.075em;
+}
+.collect-brand-compact {
+  gap: 6px;
+}
+.collect-brand-compact .collect-mark {
+  width: 22px;
+  height: 22px;
+}
+.collect-brand-compact .collect-wordmark {
+  font-size: 1.125rem;
 }
 .topbar-actions {
   position: relative;
@@ -1817,8 +1859,8 @@ p {
   font-weight: 700;
   letter-spacing: -0.07em;
 }
-.auth-mark span {
-  color: var(--tertiary);
+.auth-mark .wordmark-dot {
+  color: var(--brand);
 }
 .auth-card {
   width: min(100%, 400px);

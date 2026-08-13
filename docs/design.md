@@ -2,18 +2,21 @@
 
 `collect` is a mobile-first field application. The interface follows Apple Human Interface Guidelines where web platform capabilities permit, while preserving semantic HTML, browser interoperability, and the product’s evidence contract.
 
-The visual system is deliberately quiet: neutral surfaces, system typography, restrained chrome, large interaction regions, explicit text states, and progressive disclosure. Simplicity is a reliability feature because contributors may work in sunlight, gloves, stress, low bandwidth, or unfamiliar devices.
+The visual system is deliberately quiet: neutral surfaces, system typography, restrained chrome, large interaction regions, explicit text states, and progressive disclosure. The contributor app adds one high-recognition magenta accent and a capture mark; the administrator app remains black and white. Simplicity is a reliability feature because contributors may work in sunlight, gloves, stress, low bandwidth, or unfamiliar devices.
 
 Primary references:
 
 - [Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility)
+- [App icons](https://developer.apple.com/design/human-interface-guidelines/app-icons)
 - [Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons)
+- [Color](https://developer.apple.com/design/human-interface-guidelines/color)
 - [Entering data](https://developer.apple.com/design/human-interface-guidelines/entering-data)
 - [Feedback](https://developer.apple.com/design/human-interface-guidelines/feedback)
 - [Layout](https://developer.apple.com/design/human-interface-guidelines/layout)
 - [Lists and tables](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables)
 - [Modality](https://developer.apple.com/design/human-interface-guidelines/modality)
 - [Onboarding](https://developer.apple.com/design/human-interface-guidelines/onboarding)
+- [Typography](https://developer.apple.com/design/human-interface-guidelines/typography)
 
 ## Product hierarchy
 
@@ -47,6 +50,7 @@ On compact screens, the current contextual action—create project, edit or prev
 
 - Use semantic HTML and native controls where possible.
 - Keep the primary action visually and spatially dominant.
+- Reserve the contributor accent for identity, the current primary action, focus, selection, and progress.
 - Use at least a 44-point interaction region.
 - Use plain labels rather than icon-only meaning.
 - Never use color as the only state cue.
@@ -197,11 +201,19 @@ The contributor app uses a stable light appearance for field legibility. The adm
 | Paper          | `#ffffff`           | `#1c1c1e`           |
 | Primary text   | `#1d1d1f`           | `#f5f5f7`           |
 | Secondary text | neutral system gray | neutral system gray |
-| Accent         | black               | white               |
+| Accent         | magenta `#d10074`   | white               |
 | Accent text    | white               | black               |
 | Destructive    | semantic red        | semantic red        |
 
-Neutral color is a project-specific visual decision. Words, icons, shape, order, and accessible names carry state.
+The contributor accent is `#d10074`. It has a WCAG contrast ratio of 5.30:1 with white and 4.87:1 against the contributor canvas, clearing the 4.5:1 threshold used for normal text. It is never the only cue: words, icons, checkmarks, shape, order, and accessible names continue to carry state. The administrator surface deliberately does not inherit the accent, making an accidental surface switch immediately apparent.
+
+The display voice uses the platform rounded system face for the wordmark and headings, falling back through the normal system stack. Body copy and controls keep the standard system text face for maximum legibility and Dynamic Type compatibility.
+
+### Identity and app icons
+
+The capture mark combines a C-shaped collection boundary with one observation point. It is a simple geometric silhouette that remains recognizable at favicon, Home Screen, and navigation-bar sizes. The contributor icon uses the mark in white on magenta; the administrator icon uses the same mark in white on black. Color reinforces the distinction, while the icon label (**collect** or **collect Admin**) makes it independent of color perception.
+
+The SVG source is canonical. PNG renditions at 180, 192, and 512 pixels support iOS Home Screen and web-app installation without shipping a runtime image dependency. The artwork fills the square; the platform applies its own icon mask.
 
 The surface identity is established before React paints so PWA chrome does not flash the wrong appearance.
 
@@ -211,9 +223,9 @@ The surface identity is established before React paints so PWA chrome does not f
 
 The collection task removes persistent top-level navigation. Back remains available, and the bottom reach zone is reserved for the current field action. This adaptation prioritizes uninterrupted capture over application browsing.
 
-### Monochrome custom accent
+### Custom identity accent
 
-The web implementation uses neutral custom tokens rather than a platform tint. Increased contrast, explicit labels, and non-color state indicators preserve accessibility.
+The web implementation uses a contrast-validated custom tint on the contributor surface. Increased contrast, explicit labels, glyphs, and non-color state indicators preserve accessibility. The tint is not used for destructive actions or research-status meaning.
 
 ### Web symbols and materials
 

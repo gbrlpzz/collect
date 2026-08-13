@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CollectBrand } from "./CollectBrand";
 import { Icon } from "./Icon";
 import { Button } from "./ui";
 
@@ -47,7 +48,7 @@ export function ConsentScreen({
   return (
     <main className="auth-page consent-page">
       <div className="auth-mark">
-        collect<span>.</span>
+        <CollectBrand />
       </div>
       <section
         className="auth-card consent-card"

@@ -1,15 +1,19 @@
 // collect service worker: precached app shell + runtime cache-first assets.
 // The hashed asset list is emitted by the Vite build (precache-manifest.json)
 // so an installed app loads offline from the first launch.
-const CACHE = "collect-shell-v3";
+const CACHE = "collect-shell-v4";
 const CORE = [
   "/",
   "/manifest.webmanifest",
   "/manifest-admin.webmanifest",
   "/icon.svg",
   "/icon-admin.svg",
+  "/icon-192.png",
   "/icon-512.png",
+  "/icon-admin-192.png",
   "/icon-admin-512.png",
+  "/apple-touch-icon.png",
+  "/apple-touch-icon-admin.png",
 ];
 
 self.addEventListener("install", (event) => {
