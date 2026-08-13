@@ -1,7 +1,6 @@
--- Replace knowledge-based checks with internally consistent instruction checks.
--- Historical responses keep their referenced rows; inactive checks are no
--- longer accepted for new server-side interpretation.
-update public.attention_checks set active = false;
+-- Add internally consistent instruction checks. Keep historical checks active
+-- so observations created by older installed clients can still be interpreted
+-- when they eventually sync. Current clients select only from the keys below.
 
 insert into public.attention_checks (
   key, prompt, options, correct_value, guess_probability, active
