@@ -308,6 +308,71 @@ h3 {
   margin-top: var(--space-6);
 }
 
+/* Contributor roster actions and the administrator profile sheet */
+.contributor-row .admin-project-actions {
+  flex: 0 0 auto;
+}
+
+.admin-project-actions-menu .action-danger {
+  color: var(--destructive);
+}
+
+.profile-section {
+  margin-bottom: var(--space-5);
+}
+
+.profile-section h3 {
+  margin-bottom: var(--space-2);
+  color: var(--secondary);
+  font-size: var(--type-footnote);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.profile-attention-list {
+  border-top: 1px solid var(--separator-light);
+}
+
+.attention-row {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--separator-light);
+}
+
+.attention-row-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.attention-row-copy strong {
+  overflow: hidden;
+  font-size: var(--type-footnote);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attention-row-copy span {
+  color: var(--secondary);
+  font-size: var(--type-caption);
+}
+
+.attention-outcome {
+  flex: 0 0 auto;
+  font-size: var(--type-caption);
+  font-weight: 600;
+}
+
+.attention-outcome-failed {
+  color: var(--destructive);
+}
+
 /* Grouped rows: one separator per boundary, one gutter per group */
 .project-list,
 .recent-observation-list,

@@ -20,6 +20,7 @@ Deno.serve(async (request) => {
       .trim()
       .toLowerCase();
     const role = body.role === "admin" ? "admin" : "contributor";
+    const resend = body.resend === true;
     if (!projectId || !email || !email.includes("@")) {
       return json(
         { error: "Project and contributor email are required" },
@@ -36,6 +37,17 @@ Deno.serve(async (request) => {
           status: 403,
         },
       );
+    }
+
+    // An explicit resend supersedes any earlier pending invitation; the
+    // partial unique index only allows one pending invite per address.
+    if (resend) {
+      await service
+        .from("project_invites")
+        .update({ status: "revoked" })
+        .eq("project_id", projectId)
+        .eq("status", "pending")
+        .ilike("email", email);
     }
 
     const { data: existingInvite } = await service
@@ -86,6 +98,35 @@ Deno.serve(async (request) => {
         },
         { onConflict: "project_id,user_id" },
       );
+    } else {
+      // Already-registered users never receive the sign-up email. Send them a
+      // magic link through the public auth resend endpoint so the invitation
+      // is actually visible; membership is granted by claim-invites on the
+      // next sign-in.
+      const resendUrl = `${
+        Deno.env.get("SUPABASE_URL")?.replace(/\/$/, "") ?? ""
+      }/auth/v1/resend`;
+      const resendResult = await fetch(resendUrl, {
+        method: "POST",
+        headers: {
+          apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "magiclink",
+          email,
+          options: {
+            redirect_to: Deno.env.get("APP_URL") ??
+              "https://collect-tawny.vercel.app",
+          },
+        }),
+      });
+      if (!resendResult.ok && resendResult.status !== 429) {
+        return json(
+          { error: "The invitation link could not be sent" },
+          { status: 502 },
+        );
+      }
     }
     await service.from("audit_events").insert({
       organization_id: access.project.organization_id,
@@ -94,7 +135,11 @@ Deno.serve(async (request) => {
       action: "contributor_invited",
       metadata: { email, role },
     });
-    return json({ accepted: true, invited: true });
+    return json({
+      accepted: true,
+      invited: true,
+      resend: resend || !invitedUserId,
+    });
   } catch (error) {
     if (error instanceof Response) return error;
     return json({ error: errorMessage(error) }, { status: 500 });
