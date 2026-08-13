@@ -10,14 +10,15 @@
     "build": "npm run typecheck && vite build",
     "preview": "vite preview",
     "format": "npm run format:web && npm run format:edge",
-    "format:web": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" vite.config.ts index.html \"docs/*.md\" README.md package.json",
+    "format:web": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" \"scripts/**/*.mjs\" \".github/workflows/*.yml\" vite.config.ts index.html \"docs/**/*.{md,html}\" \"*.md\" package.json",
     "format:edge": "deno fmt supabase/functions",
     "format:check": "npm run format:web:check && npm run format:edge:check",
-    "format:web:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" vite.config.ts index.html \"docs/*.md\" README.md package.json",
+    "format:web:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" \"scripts/**/*.mjs\" \".github/workflows/*.yml\" vite.config.ts index.html \"docs/**/*.{md,html}\" \"*.md\" package.json",
     "format:edge:check": "deno fmt --check supabase/functions",
+    "docs:check": "node scripts/check-doc-links.mjs",
     "test": "vitest run",
     "test:a11y": "vitest run tests/accessibility.test.tsx",
-    "check": "npm run format:check && npm test && npm run build",
+    "check": "npm run format:check && npm run docs:check && npm test && npm run build",
     "provision": "node scripts/provision.mjs"
   },
   "dependencies": {

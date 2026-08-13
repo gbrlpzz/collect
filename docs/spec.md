@@ -1,10 +1,8 @@
-/goal # Field Data Collector
+# collect product and engineering specification
 
-## Product and Engineering Specification
+Version 0.1 — requirements baseline
 
-Version 0.1 — MVP
-
-### 1. Product definition
+## 1. Product definition
 
 Build an open-source, mobile-first, offline-first field data collection application for scientific research, territorial work, ecological monitoring, citizen science, surveys, inventories, and other forms of structured observation in environments where connectivity is unreliable.
 
@@ -24,14 +22,14 @@ The complexity belongs in the infrastructure, not in the contributor interface.
 
 ---
 
-> **Implementation deltas (2026-08-12).** This document is the requirements
+> **Implementation deltas (reviewed 2026-08-13).** This document is the requirements
 > baseline. Where the shipped product intentionally deviates, the deviation is
 > listed here so the spec is never read as a description of current behavior:
 >
 > - **Manual "Finish fieldwork" (§33/spec §1129) → automatic completion.** A
 >   contributor no longer confirms completion by hand. `fieldwork_complete` is
 >   derived by the client heartbeat when the durable outbox is empty and no
->   draft is in progress; admin readiness aggregates every device row.
+>   draft is in progress; administrator readiness aggregates every device row.
 > - **Location as a guided step → background provenance.** Location fields are
 >   excluded from the question flow; capture happens when the observation
 >   opens and is refreshed at save. A required failure surfaces a retry at the
@@ -42,18 +40,29 @@ The complexity belongs in the infrastructure, not in the contributor interface.
 >   observation"), with the project as secondary context; there is no
 >   project-selection or tab-bar navigation layer for a single assignment.
 > - **Fixed-role surfaces.** The role is bound to the installed app / entry
->   URL; the account menu no longer switches between contributor and admin.
+>   URL; the account menu no longer switches between contributor and
+>   administrator.
 > - **Automatic offline readiness.** Projects are marked ready after their
 >   metadata is persisted; the explicit "download for offline" step from the
 >   spec is superseded by whole-app state persistence.
+> - **Project setup.** The shipped wizard uses three stages (Project, Form,
+>   Team). Only the project name is required in the first stage; description,
+>   instructions, workspace, and dataset metadata use progressive disclosure.
+> - **Software keyboard.** The primary action follows the visual viewport
+>   across collection, authentication, setup, sheets, and dialogs. Optional
+>   empty fields do not receive automatic focus and expose a Skip action.
+> - **Profile and privacy.** Contribution statistics, consent, attention,
+>   installation, device linking, privacy, recovery export, and sign-out are
+>   consolidated in Profile. Privacy begins with a plain-language summary.
 > - **Additions beyond the MVP spec:** automatic attention QA, in-app consent
->   enforcement, and FAIR dataset metadata (see `docs/attention-qa.md`,
+>   enforcement, and FAIR-supporting dataset metadata (see
+>   `docs/attention-qa.md`, `docs/privacy.md`, and
 >   `docs/dataset-standards.md`).
 >
 > The remaining sections are the requirements baseline; `docs/PLAN.md` tracks
 > per-section implementation status.
 
-# 2. Core product promise
+## 2. Core product promise
 
 The engineering invariant is:
 
@@ -83,7 +92,7 @@ The application should request persistent storage using the browser Storage API 
 
 ---
 
-# 3. Product principles
+## 3. Product principles
 
 1. Local first.
 2. Network second.
@@ -103,9 +112,9 @@ The application should request persistent storage using the browser Storage API 
 
 ---
 
-# 4. Primary user roles
+## 4. Primary user roles
 
-## Administrator
+### Administrator
 
 An administrator creates and manages projects.
 
@@ -130,7 +139,7 @@ An administrator does not need a spreadsheet/database management interface in MV
 
 The administrative product should feel like a lightweight field-operations console.
 
-## Contributor
+### Contributor
 
 A contributor collects observations.
 
@@ -163,11 +172,11 @@ The contributor interface should be radically simple.
 
 ---
 
-# 5. Product surfaces
+## 5. Product surfaces
 
 There are effectively two interfaces sharing the same application.
 
-## Contributor interface
+### Contributor interface
 
 Mobile-first PWA.
 
@@ -177,7 +186,7 @@ Primary navigation:
 
 Everything else should appear as sheets or secondary actions.
 
-## Administrator interface
+### Administrator interface
 
 Desktop-friendly responsive web interface.
 
@@ -189,7 +198,7 @@ Do not build a complex global navigation system for MVP.
 
 ---
 
-# 6. Authentication and invitations
+## 6. Authentication and invitations
 
 Use Supabase Auth for MVP.
 
@@ -220,7 +229,7 @@ Authentication failure must never invalidate locally saved fieldwork.
 
 ---
 
-# 7. Organization model
+## 7. Organization model
 
 Create a lightweight organization/workspace object.
 
@@ -244,11 +253,11 @@ White-labeling beyond this is not required in MVP.
 
 ---
 
-# 8. Project creation
+## 8. Project creation
 
 Project creation should be a short wizard.
 
-## Step 1 — Identity
+### Step 1 — Identity
 
 Administrator defines:
 
@@ -262,11 +271,11 @@ Organization identity is inherited.
 
 Optional collection start/end dates.
 
-## Step 2 — Collection schema
+### Step 2 — Collection schema
 
 Administrator constructs the form.
 
-## Step 3 — Contributors
+### Step 3 — Contributors
 
 Administrator adds email addresses.
 
@@ -274,7 +283,7 @@ Existing accounts are immediately assigned.
 
 Unknown addresses receive invitations.
 
-## Step 4 — Publish
+### Step 4 — Publish
 
 Show:
 
@@ -294,7 +303,7 @@ Publishing makes the schema available to contributors.
 
 ---
 
-# 9. Form/schema philosophy
+## 9. Form/schema philosophy
 
 The system must use a deliberately small set of strongly typed input primitives.
 
@@ -330,7 +339,7 @@ Changing the visible label must not change the field identity.
 
 ---
 
-# 10. MVP input types
+## 10. MVP input types
 
 Support the following data primitives.
 
@@ -456,7 +465,7 @@ These have no response values.
 
 ---
 
-# 11. Explicitly excluded form functionality for MVP
+## 11. Explicitly excluded form functionality for MVP
 
 Do not implement:
 
@@ -476,7 +485,7 @@ Simple conditional visibility may be introduced later, but is not required for t
 
 ---
 
-# 12. Schema format
+## 12. Schema format
 
 Create an internal JSON schema format.
 
@@ -511,7 +520,7 @@ This provides a clean future connection to ontologies without making the collect
 
 ---
 
-# 13. Schema versioning
+## 13. Schema versioning
 
 This is mandatory.
 
@@ -539,7 +548,7 @@ Never reinterpret historical data according to the newest form.
 
 ---
 
-# 14. Contributor home
+## 14. Contributor home
 
 After login show:
 
@@ -569,7 +578,7 @@ If a contributor has only one active project, the application may take them dire
 
 ---
 
-# 15. Offline project preparation
+## 15. Offline project preparation
 
 The first time a project is opened online, download:
 
@@ -601,7 +610,7 @@ without requiring server contact.
 
 ---
 
-# 16. Observation experience
+## 16. Observation experience
 
 Project screen:
 
@@ -639,7 +648,7 @@ Avoid dashboard UI during collection.
 
 ---
 
-# 17. Draft autosave
+## 17. Draft autosave
 
 Every change to the form must be autosaved locally.
 
@@ -663,7 +672,7 @@ Draft restoration should be automatic.
 
 ---
 
-# 18. Submission semantics
+## 18. Submission semantics
 
 Pressing Submit creates a durable local submission.
 
@@ -689,7 +698,7 @@ Afterward, synchronization may start immediately.
 
 ---
 
-# 19. Submission identity
+## 19. Submission identity
 
 Every logical submission receives a client-generated UUID before attempting any network operation.
 
@@ -711,7 +720,7 @@ Server-side unique constraints make repeated synchronization idempotent.
 
 ---
 
-# 20. Local storage architecture
+## 20. Local storage architecture
 
 Use IndexedDB for the MVP local database.
 
@@ -739,7 +748,7 @@ Unsynced records must never be deleted automatically.
 
 ---
 
-# 21. Persistent storage
+## 21. Persistent storage
 
 On contributor onboarding / project preparation:
 
@@ -781,7 +790,7 @@ but this must never affect unsynced files.
 
 ---
 
-# 22. The outbox
+## 22. The outbox
 
 Implement synchronization as a durable outbox.
 
@@ -818,11 +827,11 @@ The queue itself must survive application termination.
 
 ---
 
-# 23. Submission synchronization protocol
+## 23. Submission synchronization protocol
 
 Synchronization should operate in phases.
 
-## Phase A — Metadata
+### Phase A — Metadata
 
 Send submission metadata and structured payload.
 
@@ -848,7 +857,7 @@ return an explicit conflict.
 
 Never overwrite silently.
 
-## Phase B — Media
+### Phase B — Media
 
 Upload each media object independently.
 
@@ -877,7 +886,7 @@ Photo 4 queued
 
 If the app terminates, resume remaining work on next launch.
 
-## Phase C — Finalization
+### Phase C — Finalization
 
 Once server metadata exists and every expected media object is confirmed uploaded:
 
@@ -902,7 +911,7 @@ Only after receiving this receipt may the local submission be marked:
 
 ---
 
-# 24. Submission state machine
+## 24. Submission state machine
 
 Minimum local states:
 
@@ -953,7 +962,7 @@ persistent authorization failure
 
 ---
 
-# 25. Retry policy
+## 25. Retry policy
 
 Use exponential backoff with jitter.
 
@@ -978,7 +987,7 @@ On platforms where it is not, the foreground sync engine performs the same queue
 
 ---
 
-# 26. Connectivity detection
+## 26. Connectivity detection
 
 Do not use `navigator.onLine` as the deciding signal.
 
@@ -1004,7 +1013,7 @@ Never convert connectivity failures into user-facing submission failures.
 
 ---
 
-# 27. App interruption handling
+## 27. App interruption handling
 
 The system must expect the application to disappear at any moment.
 
@@ -1023,7 +1032,7 @@ Every state transition must be recoverable.
 
 ---
 
-# 28. Media policy
+## 28. Media policy
 
 Original captured files should be preserved by default.
 
@@ -1052,7 +1061,7 @@ Never mutate the original media object in place.
 
 ---
 
-# 29. Media integrity
+## 29. Media integrity
 
 Where practical compute a SHA-256 checksum locally.
 
@@ -1069,7 +1078,7 @@ If checksum calculation is too expensive on a particular device/file, it may be 
 
 ---
 
-# 30. Location provenance
+## 30. Location provenance
 
 Location must never be represented as merely:
 
@@ -1091,7 +1100,7 @@ Never invent coordinates.
 
 ---
 
-# 31. Device identity
+## 31. Device identity
 
 Generate a stable per-installation device UUID.
 
@@ -1113,7 +1122,7 @@ This allows diagnostics without invasive tracking.
 
 ---
 
-# 32. Contributor sync interface
+## 32. Contributor sync interface
 
 Avoid a technical queue UI.
 
@@ -1151,7 +1160,7 @@ A submission must never disappear from the waiting count until server finalizati
 
 ---
 
-# 33. Contributor completion
+## 33. Contributor completion
 
 Add:
 
@@ -1175,7 +1184,7 @@ The contributor may later resume collection if the project remains open.
 
 ---
 
-# 34. Device heartbeat
+## 34. Device heartbeat
 
 Whenever connectivity exists, report lightweight project/device status.
 
@@ -1213,7 +1222,7 @@ This distinction is mandatory.
 
 ---
 
-# 35. Administrator project dashboard
+## 35. Administrator project dashboard
 
 Project dashboard should remain minimal.
 
@@ -1259,7 +1268,7 @@ Project-level:
 
 ---
 
-# 36. Ping contributor
+## 36. Ping contributor
 
 Administrator can send a lightweight email notification.
 
@@ -1277,7 +1286,7 @@ Do not make email delivery part of synchronization correctness.
 
 ---
 
-# 37. Export readiness
+## 37. Export readiness
 
 At the top of the export view show:
 
@@ -1305,7 +1314,7 @@ display:
 
 ---
 
-# 38. Checkpoint semantics
+## 38. Checkpoint semantics
 
 A checkpoint is an immutable snapshot of everything completely received by the server at a specific server timestamp.
 
@@ -1327,7 +1336,7 @@ This makes field datasets reproducible.
 
 ---
 
-# 39. Export package
+## 39. Export package
 
 Download a ZIP.
 
@@ -1377,7 +1386,7 @@ The package must remain intelligible without this application.
 
 ---
 
-# 40. Recovery export
+## 40. Recovery export
 
 This is a critical robustness feature.
 
@@ -1409,7 +1418,7 @@ This feature significantly strengthens the product's sovereignty claim.
 
 ---
 
-# 41. Backend architecture
+## 41. Backend architecture
 
 MVP canonical backend:
 
@@ -1452,7 +1461,7 @@ rather than compromising the reliability of canonical ingestion.
 
 ---
 
-# 42. Sovereignty / self-hosting
+## 42. Sovereignty / self-hosting
 
 The repository should make the entire system deployable against another Supabase project.
 
@@ -1478,7 +1487,7 @@ Do not tie the data model to a single hosted account.
 
 ---
 
-# 43. Suggested frontend stack
+## 43. Suggested frontend stack
 
 TypeScript
 
@@ -1512,7 +1521,7 @@ desktop browsers
 
 ---
 
-# 44. Service worker
+## 44. Service worker
 
 The service worker handles:
 
@@ -1531,7 +1540,7 @@ PWA offline patterns use service workers for request/resource handling while loc
 
 ---
 
-# 45. Application updates
+## 45. Application updates
 
 Never clear local storage as part of an update.
 
@@ -1553,7 +1562,7 @@ An application update must never be allowed to erase unsynced data.
 
 ---
 
-# 46. Database model
+## 46. Database model
 
 Minimum server tables:
 
@@ -1617,7 +1626,7 @@ created_at TIMESTAMPTZ
 
 ---
 
-# 47. Authorization
+## 47. Authorization
 
 Enable Postgres Row Level Security on all exposed tables.
 
@@ -1655,7 +1664,7 @@ No public media URLs.
 
 ---
 
-# 48. Logging and privacy
+## 48. Logging and privacy
 
 Do not log field payloads into console/error telemetry in production.
 
@@ -1684,7 +1693,7 @@ without collecting actual research content.
 
 ---
 
-# 49. Audit trail
+## 49. Audit trail
 
 Record important administrative actions:
 
@@ -1701,7 +1710,7 @@ Keep it in the database for provenance.
 
 ---
 
-# 50. Conflict philosophy
+## 50. Conflict philosophy
 
 There should be very few conflicts because field submissions are primarily append-only.
 
@@ -1721,7 +1730,7 @@ Schemas remain immutable once published.
 
 ---
 
-# 51. Editing submissions
+## 51. Editing submissions
 
 For MVP:
 
@@ -1745,7 +1754,7 @@ If this is too much for first build, disable correction UI but preserve the data
 
 ---
 
-# 52. Accessibility and field usability
+## 52. Accessibility and field usability
 
 Controls must have generous touch targets.
 
@@ -1772,7 +1781,7 @@ on old mobile networks
 
 ---
 
-# 53. Performance targets
+## 53. Performance targets
 
 Previously downloaded project should open offline without network dependency.
 
@@ -1790,7 +1799,7 @@ Media uploads should run with conservative concurrency, e.g. 2–3 simultaneous 
 
 ---
 
-# 54. Critical failure tests
+## 54. Critical failure tests
 
 The MVP is not production-ready until all of these are tested.
 
@@ -1906,7 +1915,7 @@ Store both client and server timestamps so these events remain diagnosable.
 
 ---
 
-# 55. Multi-tab / duplicate worker protection
+## 55. Multi-tab / duplicate worker protection
 
 The browser may have multiple tabs or PWA instances open.
 
@@ -1924,7 +1933,7 @@ Correctness must not depend on the local lock alone.
 
 ---
 
-# 56. Error UX
+## 56. Error UX
 
 Do not show generic red errors for normal connectivity loss.
 
@@ -1960,7 +1969,7 @@ Only say this if the local records have actually been verified present.
 
 ---
 
-# 57. Admin deletion rules
+## 57. Admin deletion rules
 
 A project containing data cannot be hard-deleted casually.
 
@@ -1980,7 +1989,7 @@ Never imply the server knows whether a currently offline contributor has additio
 
 ---
 
-# 58. Closing a project
+## 58. Closing a project
 
 Administrator can mark a project:
 
@@ -2008,7 +2017,7 @@ Data preservation takes precedence over enforcement.
 
 ---
 
-# 59. No AI in the collection path
+## 59. No AI in the collection path
 
 Do not initially:
 
@@ -2026,7 +2035,7 @@ The collector's job is to produce trustworthy training material.
 
 ---
 
-# 60. Future model-readiness
+## 60. Future model-readiness
 
 Every exported observation should contain enough provenance to answer:
 
@@ -2054,7 +2063,7 @@ This is more important than embedding explicit AI functionality now.
 
 ---
 
-# 61. Future ontology compatibility
+## 61. Future ontology compatibility
 
 The collector remains ontology-agnostic.
 
@@ -2080,7 +2089,7 @@ without modifying historical observations.
 
 ---
 
-# 62. Future backend compatibility
+## 62. Future backend compatibility
 
 Do not promise arbitrary database destinations in MVP.
 
@@ -2098,7 +2107,7 @@ But those destinations should receive already safely ingested data rather than b
 
 ---
 
-# 63. Open-source requirements
+## 63. Open-source requirements
 
 Repository should include:
 
@@ -2128,7 +2137,7 @@ Choose a permissive open-source license unless there is a specific strategic rea
 
 ---
 
-# 64. MVP non-goals
+## 64. MVP non-goals
 
 The first version is not:
 
@@ -2158,9 +2167,9 @@ The MVP does one thing exceptionally well:
 
 ---
 
-# 65. Build sequence
+## 65. Build sequence
 
-## Milestone 1 — Local collector
+### Milestone 1 — Local collector
 
 Implement:
 
@@ -2175,7 +2184,7 @@ local submission ledger
 
 Test completely offline before building cloud synchronization.
 
-## Milestone 2 — Sync engine
+### Milestone 2 — Sync engine
 
 Implement:
 
@@ -2191,7 +2200,7 @@ foreground sync
 
 Then deliberately destroy connectivity during every stage.
 
-## Milestone 3 — Team workflow
+### Milestone 3 — Team workflow
 
 Implement:
 
@@ -2203,13 +2212,13 @@ contributor project list
 device heartbeat
 administrator readiness status
 
-## Milestone 4 — Form builder
+### Milestone 4 — Form builder
 
 Implement the deliberately limited schema editor.
 
 Add immutable version publishing.
 
-## Milestone 5 — Exports
+### Milestone 5 — Exports
 
 Implement:
 
@@ -2220,7 +2229,7 @@ GeoJSON
 media package
 manifest
 
-## Milestone 6 — Recovery
+### Milestone 6 — Recovery
 
 Implement:
 
@@ -2228,7 +2237,7 @@ local unsynced recovery export
 storage-pressure handling
 migration recovery mode
 
-## Milestone 7 — Field hardening
+### Milestone 7 — Field hardening
 
 Test on real:
 
@@ -2244,7 +2253,7 @@ Do not call the application field-ready before this stage.
 
 ---
 
-# 66. Definition of done
+## 66. Definition of done
 
 The MVP is complete when the following demonstration can be performed reliably:
 
@@ -2310,7 +2319,7 @@ If this complete sequence works under deliberately bad network conditions, the c
 
 ---
 
-# 67. The final product standard
+## 67. The final product standard
 
 Do not optimize MVP success around number of features.
 

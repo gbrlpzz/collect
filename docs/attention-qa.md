@@ -1,172 +1,131 @@
-# Automatic attention QA
+# Attention verification
 
-Low-quality survey data is not a UI problem; it is a **data-quality problem**
-that corrupts every downstream analysis. `collect` embeds a lightweight,
-fully automatic attention verification in every observation — no extra taps,
-no visible "test", and nothing stored that could embarrass a contributor.
+`collect` can include one low-complexity verification question in each observation. The server validates the answer and maintains an advisory contributor-level summary.
 
-> Status: implemented and committed. Client bank `src/data/attentionChecks.ts`
-> must stay in sync with the server seed
-> `supabase/migrations/20260812140000_attention_checks.sql` (both files say so
-> in comments). The migration ships with `npm run provision`.
+The mechanism is intended to help a research team interpret possible inattention. It is not an automatic exclusion rule, competence assessment, or substitute for protocol-specific data-quality review.
 
----
-
-## 1. Why
-
-A tired, distracted, or rushed field worker produces noise. Classic quality
-controls are retrospective (outlier detection after the fact) or intrusive
-(interrupting the flow with "are you sure?" dialogs). Attention checks are the
-middle path used by survey science: **one trivial question that a careful
-respondent always gets right and a careless one may miss**. Because the answer
-is verifiable, every observation earns a per-contributor quality signal that
-is comparable across contributors and projects.
-
-## 2. How it works, end to end
+## End-to-end flow
 
 ```text
-collector opens
-  └─ pick 1 random check from the bank (per observation)
-       └─ options shuffled (memorized positions never help)
-            └─ injected as a normal single-choice question somewhere after question 2
-                 └─ contributor answers (auto-advances, like any choice)
-                      └─ answer travels as values["_attention"] = "checkKey:value"
-                           └─ submission.ts strips it from the research payload
-                                └─ server validates answer against ITS OWN bank
-                                     └─ records attention_responses (idempotent)
-                                          └─ recomputes the contributor's score
-                                               └─ score surfaces to contributor + admin + exports
+select configured check
+  → shuffle options
+  → render after at least two research fields
+  → separate the synthetic answer from research values
+  → commit the answer as provenance
+  → validate against the server bank
+  → record one idempotent result
+  → update the advisory summary
 ```
 
-### 2.1 The bank
+## Check bank
 
-Ten universally valid, culturally neutral four-option checks
-(`src/data/attentionChecks.ts`, mirrored by the server migration), each with a
-blind-guess probability of exactly **0.25**:
+The repository contains a default bank of four-option questions in:
 
-- "On a clear day, what color is the sky?" → Blue
-- "How many sides does a triangle have?" → 3
-- "What is 2 + 2?" → 4
-- "In which direction does the sun rise?" → East
-- "Which of these is a fruit?" → Apple
-- "Which month falls in winter in the northern hemisphere?" → December
-- "At sea level, what is the boiling point of water in degrees Celsius?" → 100
-- "How many days are in a week?" → 7
-- "What is 3 × 3?" → 9
-- "Which of these is a planet?" → Mars
+- `src/data/attentionChecks.ts` for offline rendering;
+- `supabase/migrations/20260812140000_attention_checks.sql` for server validation.
 
-Every question is valid for any literate adult, in any season, anywhere on
-Earth — deliberately designed so that **failure correlates with attention,
-never with knowledge, culture, or local conditions**.
+Each entry has a stable key, prompt, options, correct value, and blind-guess probability. Client and server entries must remain synchronized.
 
-### 2.2 Injection
+The default bank is illustrative rather than universally appropriate. Before deployment, review every question for:
 
-- One random check per **observation** (not per session), chosen with
-  `pickAttentionCheck`, avoiding the previous check's key when possible.
-- Inserted after at least the first two questions of the guided flow, while attention
-  is freshest (the flow already orders high-effort questions first).
-- Options are shuffled per presentation, so a memorized screen position never
-  helps.
-- The synthetic field uses the reserved key `_attention`, is required, and
-  auto-advances like any single-choice answer. The contributor sees a calm
-  "Quick check" question — nothing labels it as a test.
+- interface language and translation;
+- expected literacy and numeracy;
+- cultural and geographic assumptions;
+- disability and accessibility implications;
+- respondent age and education;
+- the research protocol’s ethics and consent requirements.
 
-### 2.3 Collection and stripping
+A question can be simple without being population-neutral. Deployments should replace or disable unsuitable entries.
 
-The selected option's id encodes the answer self-descriptively:
-`sky_color:blue`. It rides through the normal draft/save path as
-`values["_attention"]`, then `extractAttentionResponse` (submission.ts):
+## Injection
 
-- **removes** `_attention` from the research payload — the observation data
-  scientists receive never contains it, and the payload hash is computed on
-  the clean payload;
-- **carries** `{ checkKey, selectedValue }` separately on the observation and
-  the durable submission record, so it survives retries and restarts.
+- One check is selected per observation.
+- The previous key is avoided when possible.
+- Options are shuffled for each presentation.
+- The check appears after at least two research fields.
+- The reserved field key is `_attention`.
+- The contributor sees the neutral label **Quick check**.
 
-### 2.4 Server validation
+The administrator preview includes the same interaction, but preview responses are not persisted.
 
-`sync-submission` re-derives everything from its **own** bank:
+## Separation from research data
 
-1. looks up the check by key where `active = true`;
+The selected option identifier encodes `checkKey:selectedValue`. Before the research payload is hashed and stored, `extractAttentionResponse()`:
+
+1. removes `_attention` from the typed research values;
+2. carries `checkKey` and `selectedValue` separately on the durable submission.
+
+The prompt text is not copied into the observation payload, attention response row, or checkpoint data. The stable key remains in exports so a deployment can interpret the result against its documented bank.
+
+## Server validation
+
+`sync-submission`:
+
+1. selects the active server-side check by key;
 2. compares the selected value with `correct_value`;
-3. inserts into `attention_responses` (unique per `submission_id`, so retries
-   are idempotent);
-4. stores the binary flag `submissions.attention_failed` on the submission;
-5. calls `recompute_attention_score(user)` to refresh the profile.
+3. writes one `attention_responses` row per submission;
+4. sets `submissions.attention_failed`;
+5. calls `recompute_attention_score()`.
 
-The server never trusts the client's claim about correctness — the client
-doesn't even send one.
+The server does not trust a client-provided correctness flag. Retries are idempotent.
 
-### 2.5 The score
+## Score
 
-The per-contributor score is guess-adjusted:
+For checks with guess probability \(p\), the contributor-level score is:
 
-```
-score = (observed_correct − expected_by_chance) / (total − expected_by_chance)
-```
+\[
+\text{score} =
+\max\left(0,
+\frac{\text{observed correct} - \text{expected by chance}}
+{\text{total} - \text{expected by chance}}
+\right)
+\]
 
-clamped to [0, 1] and stored as 0–100 on `contributor_profiles.attention_score`.
+The stored value is clamped to 0–100. With four-option checks, \(p = 0.25\).
 
-| Scenario                                                       | Score       |
-| -------------------------------------------------------------- | ----------- |
-| Everything correct                                             | 100         |
-| Exactly what blind guessing predicts (e.g. 2 of 8 with p=0.25) | 0           |
-| Below chance                                                   | 0 (clamped) |
-| No checks yet                                                  | null        |
+| Result             | Interpretation                                                                |
+| ------------------ | ----------------------------------------------------------------------------- |
+| No checks          | No score; displayed as unavailable                                            |
+| 100                | Every recorded check was correct                                              |
+| 0                  | Performance does not exceed the configured chance baseline, or falls below it |
+| Intermediate value | Guess-adjusted proportion above chance                                        |
 
-A score of 0 therefore does **not** mean "this person is bad" — it means
-"indistinguishable from random clicking". A single miss barely moves it; the
-score only becomes meaningful as checks accumulate.
+Small samples are unstable. The interface and exports therefore include the number of checks as well as the score. A single value must not be used to rank contributors or discard observations automatically.
 
-### 2.6 Visibility
+## Visibility and export
 
-- **Contributor**: their own score (with the number of checks) in the account
-  menu — private to them.
-- **Administrator**: score and check count on every contributor row in the
-  readiness lists and the export panel.
-- **Exports**: `data/attention.csv` (per submission: check key, selected
-  value, correct, guess probability, timestamp) and the score columns in
-  `data/contributors.csv`.
+- Contributors see their score and count in Profile with an explanation.
+- Administrators can see the advisory summary while reviewing readiness.
+- `data/attention.csv` contains per-submission results.
+- `data/contributors.csv` contains aggregate score and count fields.
+- `submissions.attention_failed` provides a direct record-level flag.
 
-### 2.7 Privacy
+The application never changes, removes, or refuses a local observation because of an incorrect check. A missing or invalid response is advisory provenance rather than an ingestion gate.
 
-Only `check_key`, `selected_value`, and the derived flag are stored. The
-**question text is never persisted anywhere** — not in the payload, not in the
-database, not in exports. There is nothing in the dataset that could
-embarrass a contributor or reveal what the check was.
+## Invariants
 
----
+1. Correctness is derived by the server.
+2. `_attention` never remains in the research payload.
+3. One response row exists per submission.
+4. Retry cannot double-count a response.
+5. The score is explanatory metadata, not an automatic decision.
+6. Question suitability is a deployment responsibility.
 
-## 3. Invariants
+## Configure the bank
 
-1. **The server is the authority.** Correctness is computed server-side from
-   the server's bank; the client bank is only for offline rendering.
-2. **The payload stays clean.** `_attention` is stripped before hashing,
-   storage, or export of research data.
-3. **Idempotent.** One `attention_responses` row per submission; retries and
-   crash-recovery never double-record.
-4. **Non-blocking.** A missing or invalid check never blocks ingestion —
-   attention is advisory provenance, not a gate on the data path.
-5. **Never personal.** Questions are universally valid; no contributor data
-   is used to pick or personalize a check.
+To add or change a check:
 
----
+1. create a new migration rather than editing an applied migration;
+2. update the client bank with the same stable key and options;
+3. set the correct value and probability explicitly;
+4. add tests for rendering, stripping, and server interpretation;
+5. document the deployment-specific validation and translation process.
 
-## 4. Configuration and extension
+To stop server interpretation of an existing check, set its `active` value to `false` through an ordered migration.
 
-- Add a check: append an entry to `ATTENTION_CHECKS` **and** to the server
-  migration seed (same key, prompt, options, correct value, probability).
-  Keep the probability meaningful: 4 options ⇒ 0.25.
-- Disable: set `active = false` on the server row; the client still renders
-  its copy but the server ignores the answer (no response row is written).
-- Previewing a form: the admin **Preview flow** also shows the Quick check,
-  but preview answers never persist (see `docs/background-automation.md`).
+## Related documentation
 
----
-
-## 5. Related documentation
-
-- `docs/dataset-standards.md` — FAIR metadata and exports (attention data is
-  part of every checkpoint).
-- `docs/background-automation.md` — the automation suite this feature sits in.
-- `docs/export-format.md` — `data/attention.csv` specification.
+- [Privacy and data handling](privacy.md)
+- [Checkpoint export format](export-format.md)
+- [Background automation](background-automation.md)
+- [Architecture](architecture.md)

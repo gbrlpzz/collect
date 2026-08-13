@@ -1,19 +1,17 @@
-# FAIR dataset standards
+# FAIR-supporting dataset metadata
 
-Every checkpoint that `collect` produces is a small, self-contained research
-package. The **FAIR dataset standards** feature makes that package machine-
-readable, licensed, and reuse-ready: project administrators set dataset
-metadata once, and every export carries it in four places — the manifest,
-DataCite 4.4 metadata, a data dictionary, and a human-readable README.
+Every checkpoint is a self-contained research package. Project-level dataset
+metadata appears in the manifest, DataCite-compatible metadata, a data
+dictionary, and a human-readable README.
 
-> Status: implemented and committed (`d7f62af`). The database migration is in
-> the repository (`supabase/migrations/20260812180000_dataset_metadata.sql`)
-> and ships with `npm run provision`; it is **not yet applied** to the live
-> deployment.
+These files support findability, accessibility, interoperability, and reuse.
+They do not make a dataset FAIR automatically: FAIR assessment also depends on
+the repository, access policy, identifiers, domain standards, documentation,
+and stewardship practices selected by the operating organization.
 
 ---
 
-## 1. The four FAIR principles, mapped to collect
+## 1. FAIR principles mapped to collect
 
 | Principle             | What collect does                                                                                                                                                                                                                   | Where it lives in a checkpoint                                                          |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
@@ -22,16 +20,16 @@ DataCite 4.4 metadata, a data dictionary, and a human-readable README.
 | **I — Interoperable** | Data ships as JSONL (canonical), CSV, and GeoJSON; every published schema version is retained immutably; a data dictionary describes every field including an ontology mapping hook (`semantic_uri`), units, and option code lists. | `data/*`, `schema/*`, `dataset/data-dictionary.json`                                    |
 | **R — Reusable**      | License and dataset contact are set once on the project and embedded in every export; historical observations keep their schema version; consent, attention, and device provenance ride along.                                      | `manifest.json`, `dataset/datacite.json`, `data/contributors.csv`, `data/attention.csv` |
 
-There is no "FAIR checkbox" to tick — FAIR is an assessment process. What
-collect provides is the **metadata substrate** that makes assessment and
-registration straightforward.
+`collect` provides a metadata substrate for assessment, repository deposit,
+and later domain mapping.
 
 ---
 
 ## 2. What the administrator sets
 
-Dataset metadata is collected in the **New project** wizard, step 1
-(_Identity → Dataset metadata_), and stored on the project row.
+Dataset metadata is stored on the project row. During project creation it is
+available under **Workspace and dataset metadata**, an optional disclosure in
+the first step. Only the project name is required to continue.
 
 | Field              | Column                        | Example                  | Purpose                                                       |
 | ------------------ | ----------------------------- | ------------------------ | ------------------------------------------------------------- |
@@ -53,8 +51,8 @@ alter table public.projects
   add column if not exists dataset_identifier text;
 ```
 
-All columns are nullable and read defensively, so older projects and
-deployments that have not applied the migration keep working.
+All columns are nullable and read defensively. Every deployment must still
+apply ordered migrations before relying on the fields.
 
 ---
 
@@ -86,8 +84,8 @@ project-name_checkpoint-YYYY-MM-DD.zip
 
 ### 3.1 `dataset/datacite.json`
 
-DataCite 4.4 kernel metadata, ready to be handed to a DOI registration
-agency (Zenodo, OSF, Dataverse) or a repository's import API.
+DataCite 4.4-compatible kernel metadata suitable as a starting point for a DOI
+registration or repository-deposit workflow.
 
 ```json
 {
@@ -136,7 +134,7 @@ Notes:
 - `identifier` is emitted **only when** the project has a `dataset_identifier`.
 - `version` is the checkpoint id, so every export is a distinct, citable
   version of the dataset.
-- `creators` is the organization, not the individual admin — adjust at
+- `creators` is the organization, not the individual administrator — adjust at
   registration time if a person should be the creator.
 
 ### 3.2 `dataset/data-dictionary.json`
@@ -189,10 +187,10 @@ notes section and a pointer to this documentation.
 
 ## 4. Using the metadata in practice
 
-**Registering a DOI.** Export a checkpoint, upload the ZIP to Zenodo/OSF (or
-your institution's repository), and paste `dataset/datacite.json` into the
-metadata import. The record is already shaped like DataCite expects — only the
-final DOI assignment happens at the repository.
+**Preparing DOI registration.** Export a checkpoint and use
+`dataset/datacite.json` as the metadata source for a repository or
+registration workflow. Validate required fields against the selected
+repository before deposit; repository profiles and import capabilities differ.
 
 **Sharing with a collaborator.** Send the ZIP. They can read
 `dataset/README.md` for the license and contact, `dataset/datacite.json` for
@@ -218,7 +216,7 @@ JSONL and media CSV — an export can be proven to be the exact bytes described.
 
 ## 6. Related documentation
 
-- `docs/export-format.md` — full checkpoint package specification.
-- `docs/attention-qa.md` — automatic attention verification (the data-quality twin of this feature).
-- `docs/background-automation.md` — everything that happens automatically under the hood.
-- `docs/architecture.md` — reliability boundaries and backend contract.
+- [Checkpoint export format](export-format.md)
+- [Attention verification](attention-qa.md)
+- [Privacy and data handling](privacy.md)
+- [Architecture](architecture.md)

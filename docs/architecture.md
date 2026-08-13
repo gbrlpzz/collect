@@ -1,197 +1,228 @@
-# collect architecture notes
+# Architecture
 
-## Code boundaries
+This document describes the current implementation boundaries and the invariants that protect field evidence. The [product specification](spec.md) remains the requirements baseline; this page explains how the shipped system enforces it.
 
-The client is organized by responsibility rather than by the order in which
-features were added:
+## System context
 
-- `src/App.tsx` is the composition shell. It renders surfaces and wires their
-  callbacks; it does not own persistence or sync protocol details.
-- `src/app/useAppController.ts` owns session, workspace, and UI orchestration.
-  The local submission boundary, recovery export, storage persistence request,
-  transient feedback, confirmation flow, and sync engine live in their own
-  modules under `src/app/`.
-- `src/components/` contains feature surfaces. Shared controls and feedback
-  primitives live under `src/components/ui/` and are exposed from its index.
-- `src/data/` contains demo fixtures; `src/lib/schema.ts` contains schema
-  editing rules. Fixtures do not own editor behavior.
-- `src/lib/localDatabase.ts` owns IndexedDB names, stores, requests, and
-  transaction primitives. `localStore.ts` owns collect's durable records and
-  operations; features should not open stores directly.
-- `src/styles.css` is only the stylesheet entrypoint. The ordered layers in
-  `src/styles/` are foundation, native interaction language, and final
-  responsive geometry.
+`collect` consists of:
 
-The boundary is intentional: new features should add a domain module or a
-feature component without growing the application shell or app-wide CSS
-override chain.
+- a React and TypeScript progressive web application;
+- an IndexedDB local ledger scoped to the authenticated account;
+- a synchronization engine using health probes, durable outbox operations, leases, retries, and TUS media uploads;
+- Supabase Postgres with row-level security and immutable-record triggers;
+- private Supabase Storage buckets;
+- Edge Functions for privileged authorization, ingestion, invitations, device linking, readiness, reminders, and checkpoint export.
 
-Collector, project detail, sync, project creation, and administration are
-route-surface chunks. They load only when opened; contributor sign-in and the
-one-tap home action do not download administration code.
+The contributor interface is intentionally smaller than this infrastructure.
 
-## Local receipt boundary
+## Client code boundaries
 
-The contributor-facing promise is implemented around one boundary:
+| Path                          | Responsibility                                                         |
+| ----------------------------- | ---------------------------------------------------------------------- |
+| `src/App.tsx`                 | Composition shell, route-level lazy loading, and surface wiring        |
+| `src/app/useAppController.ts` | Session, workspace, and application orchestration                      |
+| `src/app/submission.ts`       | Local validation and atomic submission boundary                        |
+| `src/app/syncController.ts`   | Synchronization execution and per-item isolation                       |
+| `src/app/useSyncLifecycle.ts` | Automatic lifecycle triggers and single-flight coordination            |
+| `src/app/recovery.ts`         | Local recovery package creation                                        |
+| `src/components/`             | Contributor and administrator feature surfaces                         |
+| `src/components/ui/`          | Shared accessible controls, feedback, sheets, and dialogs              |
+| `src/lib/localDatabase.ts`    | IndexedDB names, stores, requests, and transaction primitives          |
+| `src/lib/localStore.ts`       | Domain records, media, outbox operations, receipts, migrations         |
+| `src/lib/syncProtocol.ts`     | Shared synchronization types and state transitions                     |
+| `src/styles/`                 | Ordered foundation, native interaction, and responsive geometry layers |
+
+Feature components do not open IndexedDB stores or call privileged backend endpoints directly. New behavior should enter through a domain module or application controller rather than expanding the composition shell.
+
+Collector, project detail, synchronization, project creation, and administration load as route-level chunks. Contributor sign-in and the capture-first home surface do not download administration code.
+
+## Receipt boundaries
+
+### Local receipt
 
 ```text
-form change → draft in IndexedDB
-submit      → submission + media + outbox in one transaction
-receipt     → “Saved on this device”
-sync        → metadata → media → finalization → server receipt
+draft change
+  → persist draft
+submit
+  → validate required values
+  → commit submission + media + outbox in one transaction
+  → show “Saved on this device”
 ```
 
-The no-credentials build uses an explicit local demo adapter for the last line. With Supabase configured, the adapter runs the real metadata → TUS media → finalization protocol without exposing backend calls in view components.
+The interface cannot show the local receipt before the transaction completes. A failed network request cannot invalidate that receipt because the network is outside the boundary.
 
-## Stable identity
+### Server receipt
 
-Every submission and media record gets a UUID before network work begins. Future remote object paths should be deterministic:
+```text
+health probe
+  → metadata ingestion
+  → media upload or confirmation
+  → server finalization
+  → validate matching receipt
+  → mark local submission SYNCED
+```
+
+A request start, metadata row, completed upload, or optimistic client state is not a server receipt.
+
+## Local ledger
+
+The local database contains projects, drafts, submissions, media blobs, outbox operations, receipts, and device state. Important properties:
+
+- Submission and media identifiers exist before network work.
+- Media blobs have one durable home rather than being copied into every application snapshot.
+- Submitted media cannot be overwritten by a late draft write.
+- A late autosave cannot downgrade a `SYNCED` submission.
+- Recovery reads durable stores directly and tolerates an unreadable individual blob.
+- Database upgrades snapshot source keys and values before opening a scoped write transaction.
+
+Do not await unrelated work while an IndexedDB write transaction is open. Browsers may auto-commit a transaction as soon as its request queue becomes empty.
+
+## Per-account and per-container storage
+
+Each authenticated account uses `collect-local-v1-<userId>`. Switching accounts on a shared device therefore does not mix drafts, media, or outbox operations. `migrateLegacyDatabase()` adopts legacy unscoped data into the first account that opens after upgrade.
+
+On iOS, Safari and an installed progressive web app use separate containers for sessions, IndexedDB, local storage, service workers, and caches. Consequences:
+
+- signing in to Safari does not sign in the installed app;
+- local drafts and media do not cross containers;
+- each container has its own device identifier and readiness row;
+- the server becomes the shared source of truth only after synchronization;
+- a device-link code creates a session in another container without copying local data.
+
+## Synchronization
+
+### Triggers
+
+Synchronization may start after a local save, application launch, foreground transition, browser `online` event, due-work scheduler tick, stale-lease recovery, manual retry, or supported Background Sync event.
+
+All triggers enter the same single-flight path. Background execution improves timeliness but is not required for eventual correctness after the application reopens.
+
+### Reachability and concurrency
+
+- The client probes the health Edge Function with a timeout. It never treats `navigator.onLine` as server reachability.
+- A durable lease permits one synchronization owner across tabs and windows.
+- Expired `IN_PROGRESS` work returns to the queue after a killed owner.
+- Media upload concurrency is bounded.
+- One failed submission does not block unrelated queued submissions.
+
+### Failure classification
+
+Transient failures use exponential backoff with jitter. Examples include timeouts and temporary server unavailability.
+
+Permanent failures become `ACTION_REQUIRED` and stop automatic retry. Examples include a revoked assignment, immutable-schema conflict, closed project, missing local media, or integrity mismatch.
+
+### Idempotency
+
+A reused submission identifier is accepted only when the project, contributor, schema, payload hash, declared media count, and media tuples match the existing record. Any same-identifier/different-content request is a conflict rather than an overwrite.
+
+The client confirms media server-first. If the server already acknowledges an object, the client does not upload it again. Finalization uses an atomic update and returns the stored receipt to concurrent or crash-recovery retries.
+
+## Stable identity and object paths
+
+Submission and media UUIDs are generated before transfer. Remote media paths are deterministic:
 
 ```text
 projects/{project_id}/submissions/{submission_id}/{media_id}
 ```
 
-The server must enforce unique IDs and reject same-ID/different-content conflicts rather than overwriting evidence.
+Stable identity supports safe retry, conflict detection, and recovery.
 
-## Schema history
+## Schema history and evidence immutability
 
-Published schema versions are immutable. Observations carry the schema version used at collection time. Future schema edits must clone a draft and publish a new version; historical records must never be silently reinterpreted.
+Published schema versions are immutable. Every observation records the schema version used during collection. Editing a published form creates a new draft version; it does not reinterpret historical submissions.
 
-## Backend contract
+Finalized submissions are protected from ordinary mutation. Corrections should create linked successor records rather than overwrite evidence.
 
-The Supabase migration enables RLS on every exposed table. Contributor authorization is derived from `organization_members` and `project_members`, never from client-controlled metadata. Published schemas are immutable through a database trigger. The ingestion Edge Function rejects same-ID/different-content requests and preserves observations collected after a remote project close with an explicit provenance flag.
+## Backend authorization
 
-The storage protocol is:
+Row-level security is enabled on exposed tables. Access derives from `organization_members` and `project_members`, never from client-controlled metadata or interface state.
 
-```text
-create_submission → confirm/upload each deterministic object path → finalize_submission
-```
+Privileged operations authenticate the bearer token through the shared Edge Function helper and then perform server-side membership checks. The service-role key remains inside Edge Functions.
 
-The client preflights media acknowledgement so an interruption after a completed TUS upload does not create a second object. Finalization verifies the expected media count and every media row before returning the durable receipt.
+Reference data and service-only remote procedure calls are protected by the hardening migrations. The client reads projects through the security-invoker `project_overviews` view so underlying row-level security remains active.
 
-Media SHA-256 values are computed in the background when selected and are
-guaranteed again at the local commit boundary. Background work is an
-optimization only; a fast select-and-submit race cannot create unhashed durable
-media.
+## Authentication
 
-Project boot reads `project_overviews`, a `security_invoker` view that keeps
-base-table RLS in force while returning organization, latest published schema,
-and RLS-visible counts in one request. Do not replace it with per-project
-hydration requests.
+Accounts are invite-only. The ordinary sign-in screen must not create unrestricted accounts.
 
-## Web vs installed app storage (iOS)
+| Path                    | Intended context      | Mechanism                                                                                                               |
+| ----------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Passwordless email link | Browser default       | Supabase one-time link returning to the canonical deployed origin                                                       |
+| Device-link code        | Installed iOS default | Signed-in session creates an eight-character, single-use code; the target container exchanges it through `link-session` |
+| Password                | Secondary path        | Password set after invitation or first link sign-in                                                                     |
+| Email code              | Configured fallback   | Six-digit token supplied by the authentication email template                                                           |
 
-On iOS, an installed PWA runs in its own storage container: Safari and the
-home-screen app do **not** share cookies, localStorage, or IndexedDB. The
-same is true for the service worker cache. Android and desktop Chrome share
-storage with the browser, so this section only matters on iOS.
+Device-link codes are stored only as SHA-256 digests. Creation and atomic consumption use service-only remote procedure calls; browser roles cannot read or execute the underlying private operations directly.
 
-Consequences and behavior:
+## Consent
 
-- A session created in Safari is invisible to the installed app, and vice
-  versa. Each container keeps its own persisted session after its own
-  sign-in; there is no cross-container storage API on iOS.
-- Local drafts, media, and the outbox are per-container. The **server is the
-  shared source of truth**: once submissions sync, every container sees the
-  same cloud data, and idempotent client IDs make duplication impossible.
-- Sign-in bridges the containers through the mailbox: the magic link and the
-  six-digit email code both work from any container. The code is recommended
-  inside an installed app because it does not depend on where the email link
-  opens.
-- `isStandalonePwa()` (src/lib/supabaseClient.ts) lets the UI adapt copy and
-  offer the code path when running installed.
+The client presents the current `consent_versions` record after first sign-in. `contributor_profiles` stores the accepted version and timestamps. `sync-submission` refuses server ingestion when consent is missing or revoked.
 
-## Authentication model
-
-Accounts are invite-only: the sign-in screen never creates accounts, and the
-Supabase project has sign-ups disabled. An administrator creates accounts
-through two Edge Functions:
-
-- `send-project-invite` — any address, as a project contributor (or project
-  administrator when `role: "admin"` is passed).
-- `send-admin-invite` — workspace administrators only, restricted to the
-  allow-list (`ALLOWED_EMAIL_PATTERNS` secret or the
-  `private.allowed_admin_patterns` table).
-
-Sign-in has three interchangeable paths. The browser leads with the email link
-and the installed iOS app leads with the device-link code so the default always
-matches the current container:
-
-1. **Magic link** (browser default) — the deployed origin is the only allowed redirect
-   (`site_url` + `uri_allow_list`); the client refuses to send links that
-   would return to localhost.
-2. **Device-link code** (installed iOS default) — a signed-in web session mints a short-lived,
-   single-use code (`requestDeviceLinkCode`); the installed app enters it
-   (`linkDeviceSession`) and the `link-session` Edge Function hands back a
-   one-time magic-link token that the current container verifies itself.
-   This bridges the iOS web/PWA storage split without email.
-3. **Password** (secondary) — set once after the first magic-link/invitation
-   sign-in; then `email + password` works everywhere without an email round-trip.
-
-Device-link codes are stored only as SHA-256 digests. Creation and atomic
-single-use consumption go through service-role-only security-definer RPCs;
-anonymous and authenticated Data API roles cannot execute those functions.
-
-## Collection consent
-
-On first sign-in every user accepts the current versioned consent statement
-(`consent_versions`); the acceptance (version + timestamp) is stored in
-`contributor_profiles`. `sync-submission` refuses submissions from profiles
-without a granted, non-revoked consent. The consent record is part of the
-contributor profile and of every checkpoint export, so the in-app consent
-replaces a separate paper form.
+This is a technical enforcement boundary. Deployments remain responsible for appropriate consent language, legal basis, institutional review, withdrawal, and retention procedures. See [Privacy and data handling](privacy.md).
 
 ## Attention verification
 
-Every observation includes one random attention check from a fixed bank of
-universally valid, four-option multiple-choice questions (25% blind-guess
-probability). The Collector injects it after at least the first two questions with the
-options shuffled per presentation; the answer rides in a synthetic field
-(`_attention`, encoded as `checkKey:value`) and is stripped from the research
-payload before the submission is committed. The server:
+The collector injects one configured quick check after at least two research fields. The selected synthetic value is separated before the research payload is hashed and committed.
 
-- validates the answer against its own copy of the bank,
-- records `attention_responses` (one per submission, idempotent),
-- sets the binary `submissions.attention_failed` flag (the easy filter),
-- recomputes the contributor's guess-adjusted score:
-  `score = (correct − expected_by_chance) / (total − expected_by_chance)`,
-  clamped to 0..100, where 0 means indistinguishable from blind guessing.
+The server:
 
-The score and totals live on `contributor_profiles` and are shown to the
-contributor and the administrator, and exported in `data/attention.csv` plus
-the `contributors.csv` columns. The question text is never stored.
+1. looks up the active check by stable key;
+2. derives correctness against its own bank;
+3. writes one idempotent response per submission;
+4. sets `submissions.attention_failed`;
+5. recomputes the contributor’s guess-adjusted summary.
 
-## Field ordering
+The score and totals are advisory metadata. They are visible with an explanation and included in checkpoints; they do not change or remove research data. See [Attention verification](attention-qa.md).
 
-The collection flow orders questions by effort: the key identifier first (a
-field marked `config.keyIdentifier`, or a ref/code-style key), then
-highest-effort first — photo/audio, location, repeatable groups, long text,
-choices, dates, numbers, short text. Open datasets without an explicit
-identifier lead with the media field. See `src/lib/fieldOrdering.ts`.
+## Provenance
 
-## Automatic provenance
+When platform capabilities and permissions allow, each observation records:
 
-Location is captured automatically (permission requested once per container;
-a fresh fix at collector open and again at submit) and never blocks the save.
-`collectEnvironment()` records device model (including the iOS model family,
-derived from screen size × pixel density × OS version), OS, browser, screen,
-orientation, connection type, battery, timezone, and language with every
-submission (`submissions.environment` JSONB plus device columns). Heartbeats
-carry the same device provenance.
+- contributor and installation-scoped device identifiers;
+- schema and application versions;
+- client timestamps, timezone, and language;
+- location, accuracy, capture time, and source;
+- device family, operating system, browser, screen, and orientation;
+- connection and battery context.
 
-## Per-account local storage
+Location capture runs when the collector opens and refreshes at save. A missing optional value cannot block a local receipt. A missing required value produces an actionable validation state.
 
-IndexedDB is scoped per authenticated account (`collect-local-v1-<userId>`),
-so switching people on a shared device never mixes drafts, media, or the
-outbox. `migrateLegacyDatabase()` adopts pre-scoping data into the first
-account that boots after an upgrade. The device id is per install (per user
-per container) and the server maps it to the contributor.
+## Readiness
 
-Legacy migration snapshots values and original keys from every source store
-before opening the scoped write transaction. Never await unrelated work while
-an IndexedDB write transaction is open: browsers may auto-commit it as soon as
-its request queue becomes empty.
+Device heartbeats derive counts from the durable outbox rather than in-memory state. They are coalesced, omitted from administrator-only surfaces, and sent when appropriate.
 
-## What the browser cannot promise
+`fieldwork_complete` is derived when the durable outbox is empty and no draft is in progress. Administrator readiness aggregates every known device for the contributor. It cannot describe a device that has never reported or work that remains only on an offline device.
 
-The browser cannot guarantee survival after physical device destruction, manual site-data clearing, or browser removal. Persistent storage is requested and quota is monitored, but it remains under browser control. The contributor recovery ZIP is the explicit escape hatch for unsynced data.
+## Checkpoints and recovery exports
+
+A checkpoint is created from complete server submissions at a cutoff timestamp. It records schema versions, record and media counts, readiness at cutoff, and package integrity metadata.
+
+A recovery export is created from one local container and may include unsynced drafts or submissions. It is an escape hatch, not a canonical dataset.
+
+See [Checkpoint export format](export-format.md) for the package contract.
+
+## Application shell and updates
+
+The build emits a precache manifest for the hashed application shell. The service worker caches the shell and runtime assets while ensuring navigation fallback is not applied to arbitrary asset requests.
+
+Cache version changes replace prior shell versions deliberately. Application updates must not erase or migrate local evidence without a forward-compatible local migration.
+
+## Browser limitations
+
+The browser cannot guarantee survival after physical device destruction, manual site-data clearing, browser removal, or all operating-system storage eviction. Persistent-storage requests and quota monitoring reduce risk but do not remove platform control.
+
+The architecture therefore combines:
+
+- explicit local receipt semantics;
+- automatic server transfer when reachable;
+- local recovery export;
+- server checkpoints;
+- honest interface language about what each boundary proves.
+
+## Related documentation
+
+- [User and system flows](flows.md)
+- [Privacy and data handling](privacy.md)
+- [Background automation](background-automation.md)
+- [Deployment](deployment.md)
+- [Product specification](spec.md)

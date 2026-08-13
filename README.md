@@ -1,134 +1,202 @@
 # collect
 
-**Offline-first field data collection for scientific fieldwork.**
+**Offline-first field data collection for research and operational fieldwork.**
 
-`collect` is a mobile-first, offline-first field data collector for scientific research, ecological monitoring, territorial work, surveys, inventories, and structured observation — built for places where connectivity is unreliable.
+`collect` is a mobile-first progressive web application for structured observations, media, and location data in environments where connectivity is intermittent or unavailable. It combines a deliberately small contributor interface with a durable local ledger, resumable synchronization, immutable schema versions, and portable research exports.
 
-The interface is calm and radically simple. The infrastructure is the opposite: a durable local ledger, a resumable synchronization protocol, and server receipts that mean exactly what they say. That combination is the product: **you can trust it with three days of fieldwork in a place with no signal.**
+The central contract is precise:
 
-```text
-Contributor:   Open → Observe → Submit
-Administrator: Create → Define → Assign → Monitor → Export
+- **Saved on this device** means the observation, media, and synchronization operations were committed to IndexedDB.
+- **Synced** means the server finalized the complete observation and returned a durable receipt.
+- No pending observation is intentionally removed before that server receipt exists.
+
+This is the main difference between `collect` and a conventional online form.
+
+## Why collect is different
+
+| Requirement                    | `collect` approach                                                                                                                                                                            |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Work without a usable network  | Collection, drafts, media, and the outbox remain available locally. Connectivity affects transfer speed, not capture.                                                                         |
+| Make status trustworthy        | Local and server receipts represent different facts and use different language throughout the interface.                                                                                      |
+| Survive interruption           | Stable identifiers, durable outbox operations, resumable media uploads, idempotent server endpoints, and a cross-tab lease support retry after closure or failure.                            |
+| Preserve interpretation        | Every observation references the immutable schema version used to collect it. Finalized evidence cannot be silently rewritten.                                                                |
+| Produce reusable data          | Checkpoints contain canonical JSONL, CSV, GeoJSON, schema history, original media, integrity metadata, a data dictionary, and DataCite-compatible metadata.                                   |
+| Keep quality signals auditable | Advisory attention-verification results and contributor-level summaries are server-validated, explained in the interface, and included in exports. They never modify or delete research data. |
+| Avoid platform lock-in         | The Apache-2.0 core is self-hostable. Checkpoint packages remain understandable without the application.                                                                                      |
+
+## Intended use cases
+
+`collect` is designed for work in which a lost or ambiguous record is materially more costly than a delayed upload.
+
+| Use case                                          | Relevant capabilities                                                                                             |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Ecological and environmental monitoring           | Offline transects, automatic location provenance, photos and audio, immutable protocols, repository-ready exports |
+| Territorial, building, and infrastructure surveys | Multiple contributors and devices, typed observations, shared-device account isolation, reproducible checkpoints  |
+| Humanitarian and rapid assessments                | Hostile connectivity, durable local receipts, recovery exports, explicit synchronization state                    |
+| Citizen-science and distributed research          | Invite-based access, simple guided capture, background transfer, standardized datasets                            |
+| Institutional field operations                    | Self-hosting, row-level authorization, private media storage, audit events, administrator readiness views         |
+
+The application is not intended to replace a general-purpose database, a spreadsheet interface, or a highly customizable survey-design suite. Its priority is reliable evidence capture with a narrow operational surface.
+
+## Product flows
+
+### Contributor
+
+1. Open the installed app and sign in.
+2. Review the project and start **New observation**.
+3. Complete one clearly labelled field at a time. Optional fields can be skipped without dismissing the keyboard.
+4. Tap **Save observation**. The app creates a local receipt before showing success.
+5. Continue working. Synchronization, retries, media transfer, integrity hashing, and readiness reporting run in the background.
+6. Open Sync only when a record needs attention or a local recovery copy is required.
+
+### Administrator
+
+1. Create a project and name it. Add context and dataset metadata only when needed.
+2. Define a small, typed collection schema and preview the contributor flow.
+3. Publish the immutable schema version and invite contributors.
+4. Monitor readiness, pending work, and advisory attention summaries without asking contributors to report completion manually.
+5. Export an immutable checkpoint at any time, or close the project and create the final package when all known devices are ready.
+
+### iOS sign-in
+
+Safari and an installed iOS web app use separate storage containers. `collect` handles that platform boundary explicitly:
+
+- Safari uses a passwordless email link by default.
+- The installed app uses a short-lived, single-use device code by default.
+- A signed-in browser creates the code from **Profile → Sign in another device**.
+- Password and email-code sign-in remain available as configured fallbacks.
+
+## Data lifecycle
+
+```mermaid
+flowchart TD
+  A[Capture observation] --> B[Atomic local commit]
+  B --> C[Local receipt]
+  C --> D[Resumable background transfer]
+  D --> E[Server finalization]
+  E --> F[Server receipt and checkpoint eligibility]
 ```
 
-> **The value in one line:** the dataset you export is the fieldwork you
-> actually did — every observation saved on-device before anything is
-> promised, synced only on a durable server receipt, verified by automatic
-> attention QA, and packaged with the FAIR metadata a published dataset
-> needs. See [`docs/value.md`](docs/value.md) for the full case.
+The transfer protocol is metadata → media → finalization. Each phase is idempotent and resumable. `navigator.onLine` is never treated as proof that the server is reachable, and background execution is an optimization rather than a correctness dependency.
 
-## Why collect exists
+## Capabilities
 
-Most survey software is either a generic form builder or a fragile online tool. Fieldwork needs a different contract:
+- Guided, one-question-at-a-time collection optimized for mobile use, large touch targets, assistive technologies, reduced motion, and the iOS software keyboard.
+- Typed fields for text, numbers, choices, tri-state answers, dates, location, photos, audio, and repeatable groups.
+- Automatic draft persistence and atomic local submission receipts.
+- Per-account IndexedDB databases, durable media storage, storage-pressure reporting, and unsynced-data recovery export.
+- Resumable TUS media uploads with deterministic identifiers and SHA-256 metadata.
+- Immutable published schemas and finalized observations.
+- Invite-only authentication, administrator allow-lists, passwordless email links, passwords, email codes, and single-use device-link codes.
+- Versioned, server-enforced collection consent with plain-language privacy disclosure. Deployments remain responsible for their own legal and ethics requirements.
+- Automatic device, time, location, application, and environment provenance when the platform permits it.
+- Advisory attention verification with server-side validation and transparent score semantics.
+- Administrator readiness aggregated across every known device.
+- Self-contained checkpoint exports with canonical data, original media, schema history, manifests, FAIR-supporting metadata, and integrity hashes.
+- Two installable surfaces from one codebase: the contributor app and the administrator console.
 
-- **Saved means saved.** A submission and its media commit to on-device storage _before_ the app says anything. A "Saved on this device" receipt never depends on the network.
-- **Synced means synced.** Only a durable server finalization receipt moves a record to synced. Metadata, media, finalization: three phases, each resumable, none skippable.
-- **Kill the app, drop the connection, wait a week.** The queue, drafts, media, and receipts all survive. Nothing is discarded until the server acknowledges it.
-- **Evidence stays honest.** Published schemas are immutable; finalized observations are immutable; conflicts are explicit, never silently overwritten; every record carries full provenance (who, what schema, which device, when, where, which app version).
-- **The dataset is yours.** Checkpoint exports produce a plain ZIP — JSONL, CSV, GeoJSON, schema history, media, manifest — readable without this application. Each package also carries **FAIR dataset metadata**: DataCite 4.4 (`dataset/datacite.json`), a data dictionary with semantic mapping hooks, license, dataset contact, and optional DOI — set once on the project, embedded in every export.
-- **The quality is measurable.** Every observation carries an automatic attention check, and every contributor carries a guess-adjusted attention score — exported with the dataset, so trust is quantified, not assumed.
+## Architecture at a glance
 
-## Key features
+| Layer                  | Responsibility                                                                                                          |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| React + TypeScript PWA | Contributor and administrator surfaces, schema rendering, accessible interaction, offline application shell             |
+| IndexedDB local ledger | Drafts, observations, media blobs, outbox operations, receipts, project cache, device state                             |
+| Synchronization engine | Health probes, leases, retries, TUS uploads, receipt validation, state transitions                                      |
+| Supabase Postgres      | Organizations, projects, immutable schemas, finalized submissions, consent, quality metadata, checkpoints, audit events |
+| Supabase Storage       | Private original media and generated checkpoint packages                                                                |
+| Edge Functions         | Authorization, invitations, device linking, ingestion, finalization, readiness, reminders, and checkpoint export        |
 
-| Feature                                   | What it means for your science                                                                                                                                                                                                    | Doc                                                              |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| **FAIR dataset standards**                | Every export is a self-contained, licensed, machine-readable research package: DataCite 4.4 metadata, data dictionary with ontology hooks, license/contact/DOI set once on the project.                                           | [`docs/dataset-standards.md`](docs/dataset-standards.md)         |
-| **Automatic attention QA**                | One random, universally valid quick check per observation — options shuffled, answer stripped from the data, verified server-side, guess-adjusted score per contributor, shown to contributor + admin, exported with the dataset. | [`docs/attention-qa.md`](docs/attention-qa.md)                   |
-| **Background automation**                 | Sync, heartbeats, readiness, media integrity, receipts, and recovery all run automatically and invisibly; nothing asks the contributor to babysit the machine.                                                                    | [`docs/background-automation.md`](docs/background-automation.md) |
-| **Consent that is enforced, not assumed** | Versioned in-app consent at first sign-in; the server refuses submissions without it; consent record travels in exports.                                                                                                          | `docs/PLAN.md` (Consent + profiles)                              |
-| **Provenance on every record**            | Who, what schema, which device, when, where, which app version — plus environment and location, captured silently.                                                                                                                | [`docs/background-automation.md`](docs/background-automation.md) |
-| **Durable offline contract**              | Saved means saved (atomic local receipt), synced means synced (server finalization receipt), nothing discarded before the server acknowledges it.                                                                                 | [`docs/architecture.md`](docs/architecture.md)                   |
-
-## What's inside
-
-**Automatic attention verification.** Every observation quietly includes one random multiple-choice check (a universally valid question, options shuffled, inserted after at least the first two questions). The question text is never stored; the check key, the selected answer, and a binary pass/fail flag are recorded server-side, and every contributor gets a guess-adjusted attention score (0 = indistinguishable from blind guessing, 100 = perfect). The score is shown to the contributor and to the administrator, and it rides along in every export.
-
-**In-app collection consent.** On first sign-in, contributors accept a versioned consent statement that replaces a paper form. The server refuses submissions without it, and the consent record (version + timestamp) is part of the contributor profile and the exports.
-
-**Question order that respects attention.** The form presents the key identifier first (a reference code, or the leading photo in open datasets), then the highest-effort questions first — photos and audio before long text, choices, and short fields — while the contributor is freshest.
-
-**Everything recorded automatically.** Location is captured with every observation after one permission grant (no tapping, no consent prompts per survey). Device model (down to the iPhone/iPad generation), operating system, browser, screen, connection, battery, timezone, and language are recorded silently with every record as provenance. No collection capability ever blocks the save.
-
-**Sign-in that works everywhere.** Browser sign-in starts with a passwordless email link, while the installed iOS app starts with a device-link code because Safari and Home Screen apps keep separate sessions. Password sign-in remains available as a secondary option. Accounts are invite-only: only administrators can invite administrators (optionally restricted to an allow-list), and administrators invite contributors freely.
-
-**Two installable apps, one codebase.** The white-tile **collect** app is the contributor surface. The black-tile **collect Admin** app opens straight into the operations console. Both install from Safari on iPhone.
-
-## What it feels like
-
-**Contributors** sign in (password, link, or code), accept consent once, and see **New observation** first. The assigned project is quiet context (it only becomes a picker when there is more than one). Photos and location work fully offline; location is captured automatically in the background. The outbox syncs in the background and the sync sheet is available only for status, retry, and recovery. Server readiness follows durable receipts automatically — contributors do not announce that syncing is complete.
-
-**Administrators** create a workspace, define the form from a deliberately small set of strongly typed fields, publish immutable schema versions, invite contributors by email, watch device-reported readiness _and_ each contributor's attention score, ping stragglers, and export reproducible checkpoints — or a final dataset once every contributor is confirmed.
-
-## Technology
-
-- **Client** — React 19 + TypeScript + Vite PWA, installable on iPhone/Android/desktop. IndexedDB local ledger (drafts, submissions, media, outbox, receipts, device state) with a durable multi-tab sync lease. Local data is scoped per account, so switching people on a shared device never mixes fieldwork.
-- **Sync** — metadata → TUS resumable media upload → server finalization. Exponential backoff with jitter, health-probe gating, retry on launch/foreground/online/schedule.
-- **Backend** — Supabase: Postgres with row-level security on every table, private storage buckets, Edge Functions for all privileged ingestion and export. No service credentials ever reach the browser.
-- **Design** — Apple HIG-inspired, monochrome, system typography, dark/light appearance, text-first states, generous touch targets.
+Read [Architecture](docs/architecture.md) for invariants and trust boundaries, and [Product specification](docs/spec.md) for the normative requirements baseline.
 
 ## Run locally
 
+Requirements:
+
+- Node.js 22
+- npm
+- Deno 2 for Edge Function checking and formatting
+
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-Without Supabase credentials the app opens a clearly labeled local interface preview (no server receipts). The real contract needs a Supabase project:
+Without Supabase environment variables, the app opens a clearly labelled local interface preview. The preview demonstrates interaction only; it does not provide server receipts or validate a deployment.
+
+Run the full local verification suite before publishing changes:
 
 ```bash
 npm run check
+git diff --check
 ```
 
-`npm run check` runs the formatter check, the full test suite, and the production build.
+`npm run check` verifies formatting, runs the full Vitest suite including automated accessibility checks, typechecks the client, and builds the production bundle. CI additionally typechecks every Edge Function.
 
-## Deploy your own instance
+## Deploy
 
-The repository is designed to be redeployed against any Supabase project and any Vercel project — no dependency on a hosted account. Configuration lives in environment variables; migrations, Edge Functions, and provisioning are all in-repo.
+`collect` can be deployed against a new Supabase project and a Vercel project. Configuration is supplied through environment variables; ordered migrations, Edge Functions, authentication configuration, and provisioning logic remain in the repository.
 
 ```bash
-export SUPABASE_ACCESS_TOKEN=...          # Supabase account token; keep it private
-export SUPABASE_PROJECT_REF=...           # for example lrqlrufwrytpwhgclmyo
-export APP_URL=https://your-collect.vercel.app
+export SUPABASE_ACCESS_TOKEN=...
+export SUPABASE_PROJECT_REF=...
+export APP_URL=https://your-collect.example.org
 export BOOTSTRAP_ADMIN_EMAIL=admin@example.org
-export VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+export VITE_SUPABASE_PUBLISHABLE_KEY=...
 
 npm run provision -- --issue-magic-link
 ```
 
-`npm run provision` configures Auth (redirect URLs, magic-link template), applies the ordered migrations, deploys every Edge Function, and can request the first administrator's sign-in link. It never prints or stores one-time tokens, and the service-role key stays inside Edge Functions. The included **Deploy collect** GitHub Actions workflow runs the same path end-to-end (tests → provision → build → deploy).
+Never expose a database password, Supabase access token, or service-role key through a `VITE_` variable. Read [Deployment](docs/deployment.md) before provisioning an instance.
 
-Read [`docs/value.md`](docs/value.md) for the case for the product, `docs/architecture.md` for the reliability boundaries and backend contract, `docs/export-format.md` for the checkpoint package specification, `docs/dataset-standards.md` for the FAIR dataset metadata, `docs/attention-qa.md` for the automatic attention verification, `docs/background-automation.md` for the automation suite, `docs/deployment.md` for the full self-hosting guide, and `docs/design.md` for the interface baseline.
+## Documentation
+
+Start with the [documentation index](docs/README.md). The main documents are:
+
+| Document                                               | Audience and purpose                                                         |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| [Product value](docs/value.md)                         | Decision-makers evaluating fit and differentiators                           |
+| [User and system flows](docs/flows.md)                 | Contributors, administrators, operators, and implementers                    |
+| [Privacy and data handling](docs/privacy.md)           | Data categories, purposes, access, retention boundaries, and operator duties |
+| [Architecture](docs/architecture.md)                   | Developers working on durability, synchronization, authorization, or storage |
+| [Interface baseline](docs/design.md)                   | Product and frontend contributors applying the mobile interaction contract   |
+| [Deployment](docs/deployment.md)                       | Operators provisioning and maintaining an instance                           |
+| [Checkpoint format](docs/export-format.md)             | Analysts and repository operators consuming exports                          |
+| [FAIR-supporting metadata](docs/dataset-standards.md)  | Research data stewards preparing reuse and publication workflows             |
+| [Attention verification](docs/attention-qa.md)         | Researchers interpreting or configuring the advisory quality signal          |
+| [Background automation](docs/background-automation.md) | Developers and operators reviewing automated lifecycle behavior              |
+| [Product specification](docs/spec.md)                  | Normative requirements and original design constraints                       |
+| [Implementation status](docs/PLAN.md)                  | Current coverage, known limitations, and verification state                  |
 
 ## Repository layout
 
 ```text
-src/                    React PWA — contributor + administrator surfaces
-src/app/                application orchestration, local submission, sync, recovery
-src/components/         surface components and the guided collection flow
-src/components/ui/      shared controls and feedback primitives
-src/data/               demo fixtures, sample schemas, attention-check bank
-src/lib/                local ledger, sync adapter, consent, attention, field ordering
-src/styles/             ordered CSS layers: foundation, native, geometry
-supabase/migrations/    canonical Postgres/RLS/storage schema (immutable history)
-supabase/functions/     Edge Functions: ingestion, finalization, invites, export
-scripts/                provisioning and deploy helpers
-docs/                   architecture, design, deployment, export format, plan
-tests/                  vitest suites (ledger, sync, attention, ordering, components)
+src/                    React PWA and shared application code
+src/app/                orchestration, local submission, synchronization, recovery
+src/components/         contributor and administrator surfaces
+src/components/ui/      shared accessible controls and modal primitives
+src/lib/                ledger, backend adapters, schemas, auth, provenance, utilities
+src/styles/             ordered foundation, native interaction, and geometry layers
+supabase/migrations/    ordered database, RLS, storage, and RPC history
+supabase/functions/     privileged server operations and shared helpers
+scripts/                repeatable provisioning and deployment helpers
+docs/                   product, architecture, operations, data, and design documentation
+tests/                  unit, integration, interaction, migration, and accessibility tests
 ```
 
-## License and business model
+## Project principles
 
-`collect` is licensed under the **Apache License 2.0**. Copyright © 2026 **Gabriele Pizzi**. See `LICENSE` and `NOTICE`.
-
-How the project stays sustainable:
-
-- **Hosted service** — a managed deployment for organizations that want SLAs, backups, data-residency, and one-click provisioning (the software is open; the operated service is the product).
-- **Support and implementation** — deployment, training, and field-program support for institutions.
-- **Enterprise features (open core)** — future advanced features ship under a separate commercial license, never weakening the Apache core.
-- **Trademarks** — the `collect` name and logos are not granted by the license.
-
-The core collection path — the part that must earn a researcher's trust — remains open forever.
+1. Preserve fieldwork before optimizing transfer.
+2. State only what a receipt proves.
+3. Keep the contributor interface smaller than the infrastructure beneath it.
+4. Automate routine work; require explicit action for consent, publication, closure, invitation, and export.
+5. Preserve immutable evidence and make conflicts explicit.
+6. Keep research data portable and understandable outside the application.
+7. Keep AI transformation out of the collection path.
 
 ## Contributing
 
-Read `AGENTS.md` for the product principles and the invariants every change must preserve (local receipts before UI promises, server receipts before `SYNCED`, immutable schemas and evidence, consent enforcement, service-role confinement, no AI in the collection path). Run `npm run check` and `git diff --check` before opening a change.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and `AGENTS.md` before changing the data path. Changes that affect local persistence, synchronization, authorization, schema history, or exports must preserve the documented invariants and include failure-oriented tests.
+
+## License and sustainability
+
+The core is licensed under the [Apache License 2.0](LICENSE). Copyright © 2026 Gabriele Pizzi. The open core can be self-hosted; managed hosting, deployment support, training, and institution-specific implementation can sustain the project without weakening the portable collection path.

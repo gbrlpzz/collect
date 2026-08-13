@@ -7,6 +7,8 @@ const FUNCTIONS = [
   "health",
   "claim-invites",
   "device-status",
+  "link-session",
+  "send-admin-invite",
   "send-project-invite",
   "send-project-ping",
   "export-checkpoint",
@@ -44,7 +46,9 @@ provisioning. The token is never printed or stored by this script.`);
 function required(name) {
   const value = process.env[name]?.trim();
   if (!value) {
-    throw new Error(`Missing ${name}. Run with --help for the provisioning inputs.`);
+    throw new Error(
+      `Missing ${name}. Run with --help for the provisioning inputs.`,
+    );
   }
   return value;
 }
@@ -57,12 +61,18 @@ function normalizeAppUrl(value) {
     throw new Error(`APP_URL must be a valid URL: ${value}`);
   }
 
-  if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
+  if (
+    url.protocol !== "https:" &&
+    url.hostname !== "localhost" &&
+    url.hostname !== "127.0.0.1"
+  ) {
     throw new Error("APP_URL must use HTTPS outside localhost development.");
   }
 
   if (url.pathname !== "/" || url.search || url.hash) {
-    throw new Error("APP_URL must be the app origin without a path, query, or hash.");
+    throw new Error(
+      "APP_URL must be the app origin without a path, query, or hash.",
+    );
   }
 
   return url.origin;
@@ -86,11 +96,18 @@ function runSupabase(cli, cliArgs, env) {
   }
 
   if (result.status !== 0) {
-    throw new Error(`Supabase CLI failed with exit code ${result.status ?? "unknown"}.`);
+    throw new Error(
+      `Supabase CLI failed with exit code ${result.status ?? "unknown"}.`,
+    );
   }
 }
 
-async function updateAuthConfig({ projectRef, accessToken, appUrl, redirectUrls }) {
+async function updateAuthConfig({
+  projectRef,
+  accessToken,
+  appUrl,
+  redirectUrls,
+}) {
   const baseBody = {
     site_url: appUrl,
     uri_allow_list: redirectUrls.join(","),
@@ -103,43 +120,60 @@ async function updateAuthConfig({ projectRef, accessToken, appUrl, redirectUrls 
   };
 
   async function patch(body) {
-    return fetch(`https://api.supabase.com/v1/projects/${projectRef}/config/auth`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
+    return fetch(
+      `https://api.supabase.com/v1/projects/${projectRef}/config/auth`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
       },
-      body: JSON.stringify(body),
-    });
+    );
   }
 
   let response = await patch(baseBody);
-  if (response.status === 400 && /template|smtp|provider/i.test(await response.text())) {
+  if (
+    response.status === 400 &&
+    /template|smtp|provider/i.test(await response.text())
+  ) {
     // Free tier: retry without the custom mailer template.
-    const { mailer_subjects_magic_link, mailer_templates_magic_link_content, ...urlsOnly } = baseBody;
-    console.warn("Free tier: custom magic-link email template not applied (requires a paid plan or custom SMTP). URLs configured only.");
+    const {
+      mailer_subjects_magic_link,
+      mailer_templates_magic_link_content,
+      ...urlsOnly
+    } = baseBody;
+    console.warn(
+      "Free tier: custom magic-link email template not applied (requires a paid plan or custom SMTP). URLs configured only.",
+    );
     response = await patch(urlsOnly);
   }
 
   if (!response.ok) {
-    throw new Error(`Supabase Auth configuration failed with HTTP ${response.status}.`);
+    throw new Error(
+      `Supabase Auth configuration failed with HTTP ${response.status}.`,
+    );
   }
 }
 
 async function issueMagicLink({ projectRef, publishableKey, appUrl, email }) {
   const supabaseUrl = `https://${projectRef}.supabase.co`;
-  const response = await fetch(`${supabaseUrl}/auth/v1/otp?redirect_to=${encodeURIComponent(appUrl)}`, {
-    method: "POST",
-    headers: {
-      apikey: publishableKey,
-      Authorization: `Bearer ${publishableKey}`,
-      "Content-Type": "application/json",
+  const response = await fetch(
+    `${supabaseUrl}/auth/v1/otp?redirect_to=${encodeURIComponent(appUrl)}`,
+    {
+      method: "POST",
+      headers: {
+        apikey: publishableKey,
+        Authorization: `Bearer ${publishableKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        create_user: true,
+      }),
     },
-    body: JSON.stringify({
-      email,
-      create_user: true,
-    }),
-  });
+  );
 
   if (!response.ok) {
     throw new Error(`Magic-link request failed with HTTP ${response.status}.`);
@@ -157,8 +191,7 @@ async function main() {
   }
 
   const redirectUrls = [appUrl];
-  const extraRedirectUrls = process.env.SUPABASE_REDIRECT_URLS
-    ?.split(",")
+  const extraRedirectUrls = process.env.SUPABASE_REDIRECT_URLS?.split(",")
     .map((value) => value.trim())
     .filter(Boolean);
   if (extraRedirectUrls) {
@@ -173,7 +206,9 @@ async function main() {
 
   console.log(`Configuring Supabase Auth for ${appUrl}…`);
   await updateAuthConfig({ projectRef, accessToken, appUrl, redirectUrls });
-  console.log("Auth URL, redirect allow-list, and magic-link template configured.");
+  console.log(
+    "Auth URL, redirect allow-list, and magic-link template configured.",
+  );
 
   console.log("Linking the local Supabase directory to the target project…");
   runSupabase(cli, ["link", "--project-ref", projectRef], cliEnv);
@@ -198,25 +233,41 @@ async function main() {
 
   for (const functionName of FUNCTIONS) {
     console.log(`Deploying Edge Function ${functionName}…`);
-    runSupabase(cli, ["functions", "deploy", functionName, "--project-ref", projectRef], cliEnv);
+    runSupabase(
+      cli,
+      ["functions", "deploy", functionName, "--project-ref", projectRef],
+      cliEnv,
+    );
   }
 
   if (args.has("--issue-magic-link")) {
     const publishableKey =
-      process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_ANON_KEY?.trim();
+      process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() ||
+      process.env.VITE_SUPABASE_ANON_KEY?.trim();
     if (!publishableKey) {
-      throw new Error("--issue-magic-link requires VITE_SUPABASE_PUBLISHABLE_KEY (or VITE_SUPABASE_ANON_KEY).");
+      throw new Error(
+        "--issue-magic-link requires VITE_SUPABASE_PUBLISHABLE_KEY (or VITE_SUPABASE_ANON_KEY).",
+      );
     }
 
     console.log(`Requesting a magic link for ${adminEmail}…`);
-    await issueMagicLink({ projectRef, publishableKey, appUrl, email: adminEmail });
-    console.log("Magic link requested. Check the inbox for the newest message; the token was not printed or stored.");
+    await issueMagicLink({
+      projectRef,
+      publishableKey,
+      appUrl,
+      email: adminEmail,
+    });
+    console.log(
+      "Magic link requested. Check the inbox for the newest message; the token was not printed or stored.",
+    );
   }
 
   console.log(`Provisioning complete. App: ${appUrl}`);
 }
 
 main().catch((error) => {
-  console.error(`Provisioning stopped: ${error instanceof Error ? error.message : "unknown error"}`);
+  console.error(
+    `Provisioning stopped: ${error instanceof Error ? error.message : "unknown error"}`,
+  );
   process.exitCode = 1;
 });

@@ -1,250 +1,242 @@
 # Interface baseline
 
-The MVP uses a deliberately monochrome, Apple HIG-inspired baseline: a `#f5f5f7` soft-gray canvas, white paper surfaces, neutral black/gray text, system typography, minimal chrome, generous spacing, and text-first state communication. This is a design foundation, not a reimplementation of Apple-owned visual assets.
+`collect` is a mobile-first field application. The interface follows Apple Human Interface Guidelines where web platform capabilities permit, while preserving semantic HTML, browser interoperability, and the product’s evidence contract.
 
-This is also a data-quality decision. A contributor working in sunlight, gloves, stress, low bandwidth, or an unfamiliar device needs accessible controls and unambiguous state feedback. Ease of use is part of collection reliability, not decoration around it.
+The visual system is deliberately quiet: neutral surfaces, system typography, restrained chrome, large interaction regions, explicit text states, and progressive disclosure. Simplicity is a reliability feature because contributors may work in sunlight, gloves, stress, low bandwidth, or unfamiliar devices.
 
-Reference the official guidance when making UI decisions:
+Primary references:
 
-- [Materials — Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/materials)
-- [Accessibility — Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/accessibility)
-
-## Decisions
-
-- Use semantic HTML and native controls wherever possible.
-- Keep touch targets comfortable and labels explicit; never make color the only signal.
-- Keep the visual language monochrome: neutral grays only, with state communicated through words, weight, position, and shape.
-- Establish hierarchy with typography, spacing, and alignment before adding containers or decoration.
-- Use sheets, concise secondary actions, and progressive disclosure for supporting detail.
-- Use the shared modal surface for every sheet and dialog so Escape dismissal,
-  focus containment, and focus return remain consistent.
-- Keep the active collection surface focused on the observation, not queue internals or admin metrics.
-- Make local-save, waiting, syncing, and synced states visible in words.
-- Put the frequent, consequential action first: the contributor opens on **New observation**, while project context and sync details remain secondary. A sync-status tap may start a retry, but normal synchronization is automatic.
-- Focus the first meaningful editable control when a screen, step, or dialog opens; prefilled context fields do not steal focus from the first field the user needs to enter.
-- Respect system font scaling, light/dark appearance, reduced motion, keyboard navigation, and focus visibility.
-- Treat the software keyboard as part of the mobile viewport: sheets, dialogs,
-  authentication, and persistent task actions follow `visualViewport`, and an
-  optional input never summons the keyboard before the contributor chooses it.
-- Avoid animation that delays data entry or obscures whether a write completed.
-- Treat offline and error states as normal product states with factual copy, not alarming decoration.
+- [Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility)
+- [Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons)
+- [Entering data](https://developer.apple.com/design/human-interface-guidelines/entering-data)
+- [Feedback](https://developer.apple.com/design/human-interface-guidelines/feedback)
+- [Layout](https://developer.apple.com/design/human-interface-guidelines/layout)
+- [Lists and tables](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables)
+- [Modality](https://developer.apple.com/design/human-interface-guidelines/modality)
+- [Onboarding](https://developer.apple.com/design/human-interface-guidelines/onboarding)
 
 ## Product hierarchy
 
-The two installable identities are separate surfaces:
+The most frequent consequential action is the easiest to reach.
 
-- **collect** is the contributor app. Its launch surface is capture-first: start
-  or resume an observation, with project context below it.
-- **collect Admin** is the operations app. Its launch surface is project and
-  readiness management.
+### Contributor hierarchy
 
-The role is fixed by the app entry URL (`?role=admin` for the admin manifest) and
-is not a control in the account menu. An administrator can preview a contributor
-form from the schema editor, but that temporary preview is not a workspace
-switch. Local state may travel between the installs for recovery; it cannot
-change the active surface.
+1. **New observation**
+2. Resume the current draft
+3. Project context
+4. Synchronization status when action is required
+5. Profile, privacy, installation, recovery, and account actions
 
-Synchronization is an implementation detail. The contributor sees factual status
-near the project and can open a secondary sheet for details or recovery, while
-health probes, retries, and server readiness happen automatically.
+The contributor surface does not expose database views, queue internals, administrator metrics, or persistent top-level navigation.
 
-The account control opens one profile sheet. Contributor statistics, the
-numeric attention ring, consent status, installation guidance, device transfer,
-privacy, and local export live there. Technical sync and recovery detail remains
-collapsed unless a person asks for it or a record needs attention.
+### Administrator hierarchy
 
-## Native iOS interaction contract
+1. Project or contributor requiring action
+2. Create a project
+3. Open an active project
+4. Readiness and export
+5. Schema details, identifiers, and technical recovery information
 
-The default is Apple's Human Interface Guidelines. We deviate only when the
-fieldwork reliability contract requires a different behavior, and each
-exception must be explainable in terms of data preservation or offline use.
-These are the official references used for the current interface system:
+Rare project actions belong in a secondary action menu. Supporting configuration remains collapsed until requested.
 
-- [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines) — the primary reference.
-- [Layout](https://developer.apple.com/design/human-interface-guidelines/layout) — hierarchy, margins, safe areas, and adaptation.
-- [Typography](https://developer.apple.com/design/human-interface-guidelines/typography) — system typography and Dynamic Type.
-- [Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility) — legibility, assistive technologies, and non-colour state communication.
-- [Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons) — immediate, clearly labelled actions.
-- [Lists and tables](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables) — grouped rows for related content and settings-like navigation.
-- [Tab bars](https://developer.apple.com/design/human-interface-guidelines/tab-bars) — top-level navigation only, never a replacement for an action button.
-- [Toolbars](https://developer.apple.com/design/human-interface-guidelines/toolbars) — compact navigation and contextual actions.
-- [Action sheets](https://developer.apple.com/design/human-interface-guidelines/action-sheets) — progressive disclosure for sync and recovery actions.
-- [Materials](https://developer.apple.com/design/human-interface-guidelines/materials) — translucent chrome only; collected evidence stays on opaque surfaces.
-- [Selection and input](https://developer.apple.com/design/human-interface-guidelines/selection-and-input) — native input and selection behavior.
+## Core principles
 
-### How the contract appears in collect
+- Use semantic HTML and native controls where possible.
+- Keep the primary action visually and spatially dominant.
+- Use at least a 44-point interaction region.
+- Use plain labels rather than icon-only meaning.
+- Never use color as the only state cue.
+- Establish hierarchy with type, spacing, alignment, and grouping before adding containers.
+- Keep healthy background systems quiet.
+- Surface errors at the point where a person can act.
+- Automate provenance, synchronization, retry, hashing, and readiness.
+- Require explicit action for consent, saving, publication, invitation, project closure, and export.
+- Respect text scaling, VoiceOver, keyboard navigation, reduced motion, increased contrast, safe areas, and system appearance.
 
-| HIG principle                 | collect implementation                                                                                                                                                   |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| One clear hierarchy           | A navigation bar identifies the current surface; the observation screen has one primary action: **Save observation**.                                                    |
-| Comfortable touch interaction | Interactive controls use a 44 px minimum target, with larger rows for repeated field choices.                                                                            |
-| Native input behavior         | Semantic HTML inputs (`date`, `datetime-local`, numeric input, file picker), system keyboard hints, visible labels, and browser focus are preferred over custom widgets. |
-| Group related content         | Field definitions are rendered as inset grouped sections and list rows, not a generic form-builder canvas.                                                               |
-| Progressive disclosure        | Sync details, privacy detail, and recovery actions live in sheets or disclosures instead of competing with collection.                                                   |
-| Accessible state              | Words, checkmarks, selection shape, focus, and live status text communicate state; colour is never the only signal.                                                      |
-| Respect system settings       | System font stacks, rem-based type, light/dark appearance, safe-area insets, keyboard navigation, and reduced motion are supported.                                      |
-| Preserve the task             | Offline receipts are explicit and factual. The interface never turns a request start or upload completion into a server receipt.                                         |
+## Mobile viewport and software keyboard
 
-### Deliberate deviations
+The software keyboard is part of the primary viewport, not an overlay the user must manage.
 
-- The collection action is a persistent bottom action because a contributor must
-  be able to finish an observation with one reachable thumb action while moving
-  through a site. It is not used for navigation.
-- The interface remains monochrome rather than adopting semantic iOS tint
-  colours. Research observations need strong, calm contrast in sunlight and
-  under uncertainty; words and shape carry state instead.
-- A saved local draft is visible while typing. This is more prominent than a
-  typical native form because the local receipt boundary is a product promise,
-  not decorative status.
+The application-level `visualViewport` controller publishes the visible height and offset. Authentication, forms, sheets, dialogs, and persistent action bars use those values to remain inside the visible region.
 
-## HIG audit — 2026-08-11
+Required behavior:
 
-The interface was re-audited against the locally cached Apple HIG pages for
-[Designing for iOS](https://developer.apple.com/design/human-interface-guidelines/designing-for-ios),
-[Typography](https://developer.apple.com/design/human-interface-guidelines/typography),
-[Layout](https://developer.apple.com/design/human-interface-guidelines/layout),
-[Color](https://developer.apple.com/design/human-interface-guidelines/color),
-[Materials](https://developer.apple.com/design/human-interface-guidelines/materials),
-[Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility),
-[Dark Mode](https://developer.apple.com/design/human-interface-guidelines/dark-mode),
-[Motion](https://developer.apple.com/design/human-interface-guidelines/motion),
-[Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons),
-[Tab bars](https://developer.apple.com/design/human-interface-guidelines/tab-bars),
-[Sheets](https://developer.apple.com/design/human-interface-guidelines/sheets),
-[Text fields](https://developer.apple.com/design/human-interface-guidelines/text-fields),
-[Progress indicators](https://developer.apple.com/design/human-interface-guidelines/progress-indicators),
-[Toolbars](https://developer.apple.com/design/human-interface-guidelines/toolbars), and
-[Lists and tables](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables).
+- The primary action remains reachable above the keyboard.
+- A user never needs to dismiss the keyboard before continuing or skipping.
+- Optional empty text and number fields do not receive automatic focus.
+- The action label is **Skip** when an optional field is empty.
+- Required editable fields may receive focus when that reduces a real step.
+- Secondary navigation is reduced while typing.
+- Content uses the visible viewport without trapping the entire page in unstable fixed positioning.
+- Bottom actions include the device safe-area inset.
 
-The audit focuses on the collection path first: 17 pt primary input text,
-44 pt hit regions, logical keyboard input, clear text actions, semantic state,
-system-adaptive contrast, and native-style sheets/dialogs. The app uses
-Liquid Glass-like translucency only for navigation and action chrome; grouped
-content surfaces stay opaque.
+This behavior is covered by interaction tests and must be verified on iOS Safari and the installed app after material changes.
 
-### Explicit deviation records
+## Guided observation flow
 
-These are the few intentional deviations from platform guidance. Every other
-screen and control follows the HIG defaults above.
+The collection surface presents one field at a time.
 
-#### Full-screen observation task
+### Structure
 
-- **HIG rule:** [Tab bars](https://developer.apple.com/design/human-interface-guidelines/tab-bars) should remain visible while navigating between top-level sections; full-screen task presentations can temporarily cover navigation.
-- **Why this is better here:** An observation is a focused, field-site task. Keeping the tab bar out of the collection surface prevents accidental navigation and leaves the bottom reach zone for the one required completion action. The contributor app went further: navigation between top-level areas was removed entirely (there are no top-level sections to navigate between), so the tab bar no longer exists anywhere in the contributor surface.
-- **Scope:** The whole contributor app. The capture-first home screen is the only top-level surface; project details are reached by secondary navigation and the observation screen has one primary action.
-- **Risk check:** Back remains available in the navigation bar, the task has one labelled primary action, and no screen navigates between top-level areas.
+- A compact project label and progress indicator provide context.
+- The current question is the only dominant content.
+- The bottom action area contains Back and one primary action.
+- The final action is **Save observation**.
+- Location fields usually remain background provenance rather than visible steps.
+- Section headings become short transitional steps only when they improve comprehension.
 
-#### Monochrome accent
+### Interaction
 
-- **HIG rule:** Prefer semantic system colors and use color consistently for status and hierarchy.
-- **Why this is better here:** Field evidence status must remain readable in bright sunlight and under uncertainty; words, checkmarks, grouping, and shape communicate state without assigning red/green meaning to observations.
-- **Scope:** Collect’s custom accent and state tokens only; system appearance and increased-contrast variants are still supplied.
-- **Risk check:** Color is never the sole state cue; contrast is tested in both appearances and the increased-contrast media query strengthens tokens.
+- Single-choice, tri-state, date, and date-time answers may advance automatically after completion.
+- Multiple-choice, text, number, media, and repeatable-group fields wait for an explicit action.
+- Required fields prevent continuation and show an inline explanation.
+- Optional empty fields show **Skip**.
+- Long text and repeatable content may scroll within the field region; the primary page hierarchy remains stable.
+- Return-key behavior must not submit an incomplete or unintended answer.
 
-#### Web PWA symbol/material approximation
+### Progress
 
-- **HIG rule:** Use SF Symbols and system-provided materials for native controls and navigation.
-- **Why this is better here:** This is a source-available web PWA, not a signed UIKit/SwiftUI bundle. The implementation uses a small, consistent SVG symbol set and CSS material approximation while preserving the same semantic roles, sizing, and visual hierarchy.
-- **Scope:** `src/components/Icon.tsx` and browser CSS chrome only; no custom symbol treatment is used to replace text labels or accessibility names.
-- **Risk check:** Icons remain secondary to labels, use consistent stroke weight, and all interactive elements retain text or accessible labels and 44 pt hit regions.
+Use a thin determinate indicator and concise step text. Avoid decorative dots or secondary summaries that compete with the question.
 
-## Guided observation flow (one question at a time)
+## Forms and project creation
 
-The contributor collection surface is a **guided flow**, not a scrolling form:
-one question per screen, a page that never moves, and a single primary action
-at thumb reach. This is the pattern Apple uses for setup, onboarding, and
-checkout flows (see [Onboarding](https://developer.apple.com/design/human-interface-guidelines/onboarding),
-[Page controls](https://developer.apple.com/design/human-interface-guidelines/page-controls),
-[Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons)).
+Project setup uses progressive disclosure:
 
-### Why one question per screen
+- Project name is the only required identity input.
+- Description, instructions, workspace name, license, contact, and identifier remain under optional disclosure.
+- Field labels and types are primary.
+- Machine keys and less common configuration remain under **Advanced**.
+- Contributor invitations are optional during creation and can happen later.
 
-Survey-methodology and form-design research consistently supports the pattern:
+Do not force users to complete metadata that can be safely defaulted or deferred.
 
-- Reducing per-screen cognitive load improves response quality and completion
-  (Nielsen Norman Group, _4 Principles to Reduce Cognitive Load in Forms_).
-- "Ask one thing at a time" is a standard survey best practice (Qualtrics, _UX
-  Survey Best Practices_).
-- Concise, interactive questionnaires reduce survey fatigue and abandonment
-  (Maptionnaire, _12 Best Practices in Survey Design_).
+## Sheets and dialogs
 
-A field worker in sunlight, gloves, or stress should never have to _parse_ a
-form — only answer the visible question and tap the obvious next action.
+Every sheet and dialog uses the shared modal surface:
 
-### How the flow behaves
+- semantic dialog role;
+- labelled title;
+- focus containment;
+- Escape dismissal where safe;
+- focus return to the trigger;
+- safe-area and visual-viewport positioning;
+- one obvious completion or dismissal action.
 
-- **Sequential steps.** Each visible data question is one screen. Section headings
-  become brief full-screen section intros. Location fields are excluded from the
-  sequence: they are provenance captured automatically when an observation opens
-  and refreshed at save.
-- **No page movement.** The screen height is fixed; content is centered and the
-  page never scrolls (long text and repeatable rows scroll inside their step).
-- **Capsule geometry.** Answers and actions use fully rounded capsules
-  (56 pt), segmented controls for tri-state, native date pickers, a stepper
-  beside numeric fields, and large thumbnails for media.
-- **Auto-advance.** A single answer (choice, tri-state, date, or datetime)
-  advances automatically after ~200 ms. Multi-select, text, number, and media
-  wait for an explicit **Continue**. Location never becomes a contributor step;
-  the browser permission request and capture stay in the background. A problem
-  is surfaced only at the save boundary when the schema requires coordinates.
-- **One primary action.** The bottom bar holds **Back** (chevron) and a single
-  prominent capsule **Continue**; the final step becomes **Save observation**.
-- **Required clarity.** Required steps disable Continue until answered, with a
-  "Required" chip next to the title; errors appear inline with the control.
-- **Progress.** A thin determinate bar plus the step position ("Step 3 of 12")
-  keeps people oriented without the distraction of per-step dots.
-- **Keyboard-friendly.** Text steps autofocus; the return key continues; the
-  flow is a single `<form>`.
-- **Accessible.** Each control is labelled by its question, `aria-required` and
-  `aria-invalid` follow state, reduced motion disables the step transition,
-  and VoiceOver hears the question title before the control.
+Use a sheet for supporting tasks that preserve context. Use an alert-style confirmation only for consequential actions. Do not nest modals.
 
-### Admin reflection
+## Status and feedback
 
-- The admin schema panel gains **Preview flow**, which opens the exact
-  contributor experience for the current schema without persisting anything.
-- Admin surfaces share the same primitives (capsule buttons, grouped lists,
-  sheets, dialogs) so the system stays one system.
+Use text that states the proven system fact:
 
-### Deviations (additions to the records above)
+| State                      | Preferred copy       |
+| -------------------------- | -------------------- |
+| Local transaction complete | Saved on this device |
+| Durable work pending       | Waiting to send      |
+| Transfer active            | Sending observations |
+| Server receipt stored      | Synced               |
+| Permanent conflict         | Action required      |
 
-- **Auto-advance on complete answers** deviates from a strict "press Continue"
-  convention. It is better here because a field worker's dominant hand may be
-  occupied; a completed answer should carry them forward, and Back is always
-  one tap away. Scope: single-choice, tri-state, date, and datetime steps.
-- **Capsule answers instead of list rows** keep the Apple geometry while giving
-  options a 56 pt target — larger than the 44 pt minimum — for glove use.
-- **Invisible provenance instead of a location step** deviates from treating every
-  schema field as an interactive page. This is better for fieldwork because
-  coordinates are device context, not an observation the contributor should
-  manually navigate to. Scope: contributor collection only; required failures
-  remain actionable at save and optional failures do not interrupt capture. Risk
-  check: the app records the capture timestamp and accuracy, and never hides a
-  required failure behind a successful local receipt.
+Do not display a success check for request initiation or media upload alone. Use relative time in the interface and preserve the exact timestamp in an accessible title or detail.
 
-## Colour: the house neutral greys
+## Profile and secondary information
 
-collect uses the **house monochrome palette** rooted in
-[gbrlpzz/index](https://github.com/gbrlpzz/index) and
-[gbrlpzz/dispatch](https://github.com/gbrlpzz/dispatch) — no colour tint
-anywhere. The two installable surfaces are locked to distinct appearances so
-the field surface is stable in sunlight and the operations console reads as a
-different tool:
+Profile consolidates infrequent personal and account information:
 
-| Token                | Contributor (light)                 | Admin (dark)                    |
-| -------------------- | ----------------------------------- | ------------------------------- |
-| Canvas               | `#f5f5f7`                           | `#000000`                       |
-| Paper                | `#ffffff`                           | `#1c1c1e`                       |
-| Ink (text)           | `#1d1d1f`                           | `#f5f5f7`                       |
-| Dim (secondary)      | `rgba(60,60,67,.60)`                | `rgba(235,235,245,.60)`         |
-| Tertiary             | `rgba(60,60,67,.42)`                | `rgba(235,235,245,.36)`         |
-| Separator / light    | `rgba(60,60,67,.29)` / `.18`        | `rgba(235,235,245,.28)` / `.16` |
-| Fill / fill-strong   | `rgba(118,118,128,.12)` / `#e5e5ea` | `rgba(118,118,128,.28)` / `.46` |
-| Chrome (nav/glass)   | `rgba(245,245,247,.86)`             | `rgba(28,28,30,.86)`            |
-| Accent / accent text | `#000` / `#fff`                     | `#fff` / `#000`                 |
-| Destructive          | `#d70015`                           | `#ff6961`                       |
+- contribution count;
+- number saved locally;
+- last server receipt;
+- consent status;
+- advisory attention score and explanation;
+- Add to Home Screen guidance;
+- device-link code generation;
+- privacy summary and local export;
+- sign out.
 
-The surface is fixed before first paint (`data-collect-surface` on `<html>`,
-theme-color and status-bar metadata included) so the installed PWA chrome
-never flashes a mismatched appearance. `prefers-contrast: more` strengthens
-dim/tertiary tokens on both surfaces for accessibility settings.
+The attention score appears as a circular numeric indicator with a non-color label and explanatory disclosure. Color may reinforce range but cannot carry the meaning alone.
+
+## Privacy presentation
+
+Privacy is presented in plain language before technical or legal detail:
+
+1. what the contributor provides;
+2. what the application records automatically;
+3. why those data are needed;
+4. who can access the project;
+5. how local and server transfer differ;
+6. how to export local data.
+
+The consent screen begins with a scannable summary and leaves the full statement under disclosure. The interface must not imply that a configured in-app step automatically satisfies a deployment’s legal or ethics obligations.
+
+## Accessibility contract
+
+- All controls have programmatic names.
+- Questions label their inputs.
+- Required and invalid state use semantic attributes and visible text.
+- Focus order follows reading order.
+- Focus indicators remain visible in both appearances.
+- Touch targets remain comfortable under text scaling.
+- Motion is optional and disabled by `prefers-reduced-motion`.
+- Contrast strengthens under `prefers-contrast: more`.
+- Dialogs trap focus and return it on close.
+- Status changes use appropriate live regions without excessive announcements.
+- Automated Axe checks cover representative consent, project setup, profile, and synchronization surfaces.
+
+Automated tests do not replace VoiceOver, keyboard, zoom, text-size, contrast, and real-device review.
+
+## Visual language
+
+The contributor app uses a stable light appearance for field legibility. The administrator app uses a distinct dark appearance to signal a different operational surface.
+
+| Token          | Contributor         | Administrator       |
+| -------------- | ------------------- | ------------------- |
+| Canvas         | `#f5f5f7`           | `#000000`           |
+| Paper          | `#ffffff`           | `#1c1c1e`           |
+| Primary text   | `#1d1d1f`           | `#f5f5f7`           |
+| Secondary text | neutral system gray | neutral system gray |
+| Accent         | black               | white               |
+| Accent text    | white               | black               |
+| Destructive    | semantic red        | semantic red        |
+
+Neutral color is a project-specific visual decision. Words, icons, shape, order, and accessible names carry state.
+
+The surface identity is established before React paints so PWA chrome does not flash the wrong appearance.
+
+## Intentional platform adaptations
+
+### Focused full-screen collection
+
+The collection task removes persistent top-level navigation. Back remains available, and the bottom reach zone is reserved for the current field action. This adaptation prioritizes uninterrupted capture over application browsing.
+
+### Monochrome custom accent
+
+The web implementation uses neutral custom tokens rather than a platform tint. Increased contrast, explicit labels, and non-color state indicators preserve accessibility.
+
+### Web symbols and materials
+
+The PWA cannot use native SF Symbols or UIKit materials directly. A small SVG symbol set and CSS material approximation preserve semantic roles, consistent sizing, and accessible names. Icons never replace necessary text.
+
+### Auto-advance
+
+Completed single-value fields may advance without an extra tap. Back remains one action away, motion is brief and reducible, and fields that can be partially complete never auto-advance.
+
+## Review checklist
+
+Before merging an interface change:
+
+1. identify the primary action;
+2. remove duplicate or non-actionable information;
+3. move supporting configuration behind disclosure;
+4. verify the software keyboard cannot cover the action;
+5. test a 320-pixel-wide viewport and large text;
+6. test keyboard navigation and focus return;
+7. run automated accessibility checks;
+8. verify light contributor and dark administrator appearances;
+9. confirm status copy matches the receipt boundary;
+10. inspect the affected flow on iOS Safari or the installed app.
+
+## Related documentation
+
+- [User and system flows](flows.md)
+- [Privacy and data handling](privacy.md)
+- [Architecture](architecture.md)
+- [Contributing](../CONTRIBUTING.md)

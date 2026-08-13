@@ -1,165 +1,142 @@
 # Background automation
 
-`collect` treats automation as a reliability feature: **anything that can
-happen automatically and invisibly does**, and the few things that stay manual
-are exactly the ones that need a human decision (drafting, saving, consent,
-publishing, exporting). This document is the map of everything the system does
-on its own — and the rules that keep it honest.
+`collect` automates routine work that does not require a human decision. Automation reduces field friction, but no background capability is required for correctness after the application reopens.
 
-The governing principle, in the project's own words: _saved means saved,
-synced means synced, and the contributor never has to babysit the machine._
+The system keeps consequential actions explicit: consent, saving an observation, publishing a schema, inviting a person, closing a project, and exporting data.
 
----
+## Automation map
 
-## 1. Local durability (no user action required)
+| Area              | Automatic behavior                                                          | Visible only when                           |
+| ----------------- | --------------------------------------------------------------------------- | ------------------------------------------- |
+| Drafts            | Debounced persistence and lifecycle flush                                   | Persistence fails or storage is unavailable |
+| Media             | Immediate blob persistence, metadata capture, SHA-256 calculation           | A required file is missing or invalid       |
+| Location          | Capture at collector open and refresh at save                               | Permission or required capture fails        |
+| Synchronization   | Health probe, lease acquisition, retry, TUS transfer, finalization          | Work is active, delayed, or requires action |
+| Readiness         | Durable outbox counts, coalesced heartbeat, multi-device aggregation        | Administrator reviews project status        |
+| Application shell | Build-time precache manifest and service-worker caching                     | An update or cache failure needs attention  |
+| Recovery          | Direct durable-store packaging and asynchronous compression                 | The user requests a local recovery copy     |
+| Profile context   | Relative receipt time, consent state, contribution count, attention summary | The user opens Profile                      |
 
-| What                   | How                                                                                                                                                                  |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Draft autosave         | Debounced 400 ms after the last change + flush on `pagehide`/visibility loss; a force-kill loses at most the last keystrokes.                                        |
-| Media persistence      | Photos/audio write to IndexedDB `MEDIA_STORE` **immediately on selection** — before any autosave — and are deleted when removed from the draft.                      |
-| Blob hygiene           | App-state and submission mirrors store metadata only; blobs live once in `MEDIA_STORE` and are reattached on reload. Large media is never re-serialized by autosave. |
-| Stale-write protection | A late autosave can never downgrade a `SYNCED` row; a late draft-media write can never clobber a submitted media row.                                                |
-| Per-account isolation  | Each account gets its own IndexedDB database; switching people on a shared device never mixes fieldwork.                                                             |
+## Local durability
 
-## 2. Synchronization
+- Drafts persist after a short debounce and flush on `pagehide` or visibility loss.
+- Selected photo and audio blobs enter the media store immediately rather than waiting for draft serialization.
+- Application snapshots store media metadata, not duplicate blobs.
+- Removing draft media removes its unsubmitted blob.
+- Stale draft or autosave writes cannot overwrite submitted media or downgrade `SYNCED` state.
+- Each account uses a separate local database.
 
-### 2.1 Triggers (all automatic)
+A force-close can still lose keystrokes that occur before the latest draft transaction. The stronger local receipt begins only when the user deliberately saves the observation.
 
-- On save (any pending work exists and the server is reachable).
-- On launch, on returning to the foreground, and on `online` events.
-- On a 30-second scheduler that checks the **durable outbox** for due
-  operations (respecting exponential backoff).
-- On `IN_PROGRESS` rows left by a killed tab, once the lease has expired.
-- Via **Background Sync** (when the browser supports it): the app registers
-  the `collect-sync` tag while work is pending; the service worker wakes open
-  windows and the same silent sync path runs.
+## Synchronization triggers
 
-### 2.2 Discipline
+The same single-flight synchronization path may run:
 
-- **Health probe first.** Sync is gated by an Edge Function health check with
-  an 8-second timeout — `navigator.onLine` is never trusted.
-- **Single-flight.** A manual tap and a background trigger in the same tick
-  share one run instead of racing for the lease.
-- **Silent.** Background runs show no toasts; manual taps keep feedback.
-- **Per-item isolation.** One failing observation never blocks the rest of the
-  queue; partial sync reports "some synced, the rest will keep retrying".
-- **Classification.** Transient failures retry with exponential backoff
-  - jitter; permanent ones (schema mismatch, revoked assignment, media
-    integrity, closed project) become `ACTION_REQUIRED` and stop retrying.
-- **Lease.** One owner at a time across tabs/windows; the lease expires and
-  hands over automatically.
+- after saving when due work exists;
+- at application launch;
+- after returning to the foreground;
+- after a browser `online` event;
+- on the due-work scheduler;
+- after stale lease recovery;
+- after a supported Background Sync event;
+- after a manual retry.
 
-### 2.3 Media uploads
+Multiple triggers do not create concurrent synchronization owners.
 
-- Server-first confirm: if the object is already acknowledged, nothing is
-  re-uploaded — even when the local blob was cleaned up.
-- TUS resumable uploads with deterministic fingerprints; a stale/expired
-  stored upload is retried once with a fresh session.
-- Bounded parallelism (2 at a time) with durable per-media progress;
-  failures abort the batch, never the queue.
-- Every media row carries a **SHA-256 computed automatically in the
-  background** while the file is selected; size is verified server-side at
-  confirm time.
+## Synchronization discipline
 
-### 2.4 Receipts
+- A timed health probe gates transfer; `navigator.onLine` is advisory only.
+- One durable lease coordinates tabs and windows.
+- One failing submission does not block the rest of the outbox.
+- Transient failures retry with exponential backoff and jitter.
+- Permanent conflicts become `ACTION_REQUIRED` and stop automatic retry.
+- Lifecycle runs remain quiet when healthy; manual requests provide feedback.
+- The receipt must name the exact submission before local pending state is cleared.
+- Server timestamps, rather than client estimates, represent receipt and finalization time.
 
-- `SYNCED` is only ever set after a durable server finalization receipt.
-- The receipt must name **exactly** the submission being cleared.
-- Server timestamps (`server_received_at`, `finalized_at`) are persisted
-  locally, not the client clock.
-- Crash-after-finalize retries are idempotent: completion counts never
-  double-count.
+## Media transfer
 
-## 3. Device status and readiness
+- The client asks the server whether an object is already acknowledged before uploading.
+- TUS uploads resume through deterministic fingerprints.
+- An expired upload session can restart without changing media identity.
+- Upload concurrency is bounded.
+- Progress persists per media item.
+- SHA-256 metadata is calculated in the background and guaranteed again at the local commit boundary.
+- The server confirms declared size and media completeness before finalization.
 
-- **Counts from the durable outbox**, not memory: unique submission IDs plus
-  per-media rows; acknowledged media never reappears as pending.
-- **Coalesced**: heartbeats are debounced 10 s and skip hidden tabs.
-- **Contributor surface only** — admin sessions never appear in the roster.
-- **`fieldwork_complete` is derived automatically**: the outbox is empty
-  _and_ there is no in-progress draft. Contributors never press a "finished
-  syncing" button (see the design decision in `docs/design.md`).
-- **Multi-device readiness**: Safari and the installed PWA are separate
-  containers with separate device rows; a contributor is Ready only when
-  _every_ known device reports clean + complete.
-- **Admin surfaces auto-poll** every 30 s and refresh on focus/visibility —
-  no manual refresh button.
+Original media is not recompressed by the application.
 
-## 4. Provenance (recorded silently with every observation)
+## Device status and readiness
 
-- **Location** — captured automatically when the observation opens (one
-  permission grant) and refreshed at save; written to the schema's actual
-  field keys; a required failure shows a retry, never a silent save.
-- **Environment** — device model (down to iPhone/iPad generation), OS,
-  browser, screen, orientation, connection, battery, timezone, language.
-- **Identity** — stable per-install device id, schema version, app version,
-  client timestamps with timezone.
-- **Attention** — one automatic Quick check per observation
-  (see `docs/attention-qa.md`).
-- **Consent** — versioned, server-enforced, recorded in the profile
-  (see `docs/attention-qa.md` for the data-quality twin; consent itself is
-  granted once, up front, as an explicit human act).
+Heartbeat values derive from durable stores:
 
-## 5. Invites, sign-in, and linking
+- unique pending submission identifiers;
+- pending, unacknowledged media operations;
+- last successful server receipt;
+- current draft presence;
+- installation-scoped device provenance.
 
-- **Invite flag survives URL cleanup.** The one-time password-setup screen
-  appears after an invite sign-in for both token-hash and PKCE callback
-  shapes.
-- **Password setup** is a one-time step after an invite; afterwards,
-  password sign-in works identically in every container.
-- **Device link** transfers a signed-in web session to the installed app
-  with an 8-character code that matches the server alphabet exactly.
+`fieldwork_complete` is derived when no durable outbox work and no active draft remain. Contributors do not press a manual completion button.
 
-## 6. Recovery
+Administrator readiness aggregates every known device. An offline or never-reported device remains an epistemic boundary: the server cannot claim that unseen local work does not exist.
 
-- **Recovery mode** is reachable _before_ the auth gate, so an offline device
-  with an unreadable database can still export its unsynced records.
-- The recovery ZIP is built from the **durable stores directly**
-  (submissions, media, outbox, receipts, drafts, projects) and filters synced
-  rows; a corrupt single blob cannot abort the export.
-- Zipping runs off the main thread (fflate async worker pool); object URLs
-  are revoked late so Safari doesn't cancel the download.
+## Provenance
 
-## 7. Offline shell
+When platform access permits, the client records:
 
-- The build emits `precache-manifest.json` (hashed JS/CSS/index); the service
-  worker precaches the exact production shell so a first install opens
-  offline.
-- Runtime assets are cached cache-first; asset misses are never answered
-  with the HTML shell (only navigations fall back to the cached index).
-- The shell version is bumped deliberately (`collect-shell-v3`), so app
-  updates replace the old cache cleanly.
+- location, accuracy, capture time, and source;
+- device family, operating system, and browser;
+- screen, orientation, connection, and battery context;
+- timezone, language, application version, schema version, and client time;
+- stable contributor and installation identifiers.
 
-## 8. Edge Function hardening (server side)
+Automatic provenance is described in the privacy and consent surfaces. A failed optional capture cannot block local save.
 
-- **Atomic finalize** — `update … returning` means concurrent finalizers
-  return the stored receipt instead of minting their own timestamps.
-- **Idempotency** — a reused submission id is accepted only when
-  project, contributor, **schema id**, payload hash, media count, and media
-  tuples all match; otherwise it is a conflict, never an overwrite.
-- **Checksum semantics** — declared SHA-256 is recorded with every media row
-  (client-computed); size is verified at confirm; byte-level verification is
-  performed by checkpoint consumers so it never doubles upload bandwidth.
-- **Export snapshots** — every checkpoint manifest records the contributor
-  readiness at the cutoff timestamp, so "who was ready when" is auditable.
+## Authentication and device linking
 
-## 9. What is deliberately NOT automatic
+- Invitation state survives authentication callback cleanup.
+- New invited accounts can set a password after their first link sign-in.
+- Browser sign-in leads with a passwordless email link.
+- Installed iOS sign-in leads with an eight-character device-link code.
+- Codes are normalized to the server alphabet, expire, and can be consumed once.
 
-| Action                         | Why manual                                                                                                |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| Saving an observation          | The local receipt is the product's core promise; it is a deliberate human act.                            |
-| Publishing a schema version    | Immutable, consequential, irreversible.                                                                   |
-| Closing/reopening a project    | A governance decision with a confirmation dialog.                                                         |
-| Exporting checkpoints/recovery | Produces artifacts that leave the system; the user chooses when.                                          |
-| Consent                        | One explicit human decision at the start (internal deployments may pre-grant; the server still enforces). |
-| Inviting people                | Email is sent to real people.                                                                             |
+## Recovery
 
----
+Recovery mode is available before the normal authentication gate when local database initialization fails.
 
-## 10. Related documentation
+The recovery package reads durable stores directly and can include projects, drafts, submissions, media, outbox operations, and receipts. It excludes records already known to be synchronized where possible. Compression runs asynchronously, and one unreadable blob does not abort the entire package.
 
-- `docs/dataset-standards.md` — FAIR metadata in exports (readiness,
-  attention, and consent data are part of every package).
-- `docs/attention-qa.md` — automatic attention verification.
-- `docs/architecture.md` — reliability boundaries and the sync protocol.
-- `docs/export-format.md` — checkpoint package specification.
+## Application shell
+
+The production build creates `precache-manifest.json` for the hashed application shell. The service worker:
+
+- precaches the production shell;
+- uses cache-first behavior for immutable assets;
+- applies navigation fallback only to navigation requests;
+- replaces old shell caches through explicit version changes.
+
+## Server-side automation
+
+- Atomic finalization returns the stored receipt to concurrent callers.
+- Same-identifier retries compare project, contributor, schema, payload hash, media count, and media tuples.
+- Checkpoint generation records the server cutoff and contributor-readiness snapshot.
+- Invitation and reminder delivery use privileged functions.
+- Reference data and device-link code operations use restricted server-side procedures.
+
+## Deliberately manual actions
+
+| Action                                  | Reason                                            |
+| --------------------------------------- | ------------------------------------------------- |
+| Save an observation                     | Creates the contributor’s local evidence boundary |
+| Accept or decline consent               | Requires an explicit human decision               |
+| Publish a schema                        | Creates an immutable interpretation contract      |
+| Invite a person                         | Sends communication and grants access             |
+| Close or reopen a project               | Changes operational governance                    |
+| Export a checkpoint or recovery package | Creates an artifact outside the application       |
+
+## Related documentation
+
+- [User and system flows](flows.md)
+- [Architecture](architecture.md)
+- [Privacy and data handling](privacy.md)
+- [Attention verification](attention-qa.md)

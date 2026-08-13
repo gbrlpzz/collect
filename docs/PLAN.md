@@ -1,219 +1,100 @@
-# collect — MVP implementation plan (living document)
+# Implementation status
 
-Source of truth: `docs/spec.md` (67-section Field Data Collector spec). Status legend: ✅ done · 🟡 partial · ❌ missing · ➖ not applicable.
+This document records current product coverage and known limitations. It is not the requirements source of truth; see the [product specification](spec.md).
 
-## Status summary
+Last reviewed: 2026-08-13.
 
-| Area                              | Status | Notes                                                                                            |
-| --------------------------------- | ------ | ------------------------------------------------------------------------------------------------ |
-| Local collector (M1)              | ✅     | atomic local commit, durable outbox, autosave, media, location                                   |
-| Sync engine (M2)                  | ✅     | metadata→TUS media→finalization, idempotent, receipts, retry scheduler, lease                    |
-| Team workflow (M3)                | ✅     | orgs, projects, invites, assignments, heartbeats, readiness, ping                                |
-| Form builder (M4)                 | ✅     | typed fields, draft→immutable version publishing, semantic_uri hook                              |
-| Exports (M5)                      | ✅     | checkpoints, JSONL/CSV/GeoJSON/media/manifest ZIP, recovery package                              |
-| Recovery (M6)                     | ✅     | recovery mode on DB failure, stored-data recovery export, storage pressure                       |
-| Field hardening (M7)              | ✅     | live E2E 20/20 + §54 test suites (23 tests)                                                      |
-| License → Apache-2.0              | ✅     | LICENSE/NOTICE swapped, README rewritten, holder Gabriele Pizzi                                  |
-| Backend security audit (G1–G7)    | ✅     | migration 20260810120000 + function hardening deployed                                           |
-| Issue #18 privacy disclosure      | ✅     | "What collect records on this device" in project view                                            |
-| §54 critical failure tests        | ✅     | 23 tests: ledger survival, lease, recovery, validation, sync sheet                               |
-| Export-format docs + demo dataset | ✅     | docs/export-format.md + docs/demo-dataset                                                        |
-| CI: Deno check for edge functions | ✅     | deno check + fmt in ci.yml                                                                       |
-| Live E2E verification             | ✅     | 20/20 checks against lrqlrufwrytpwhgclmyo (create→TUS→confirm→finalize→heartbeat→checkpoint ZIP) |
+## Status legend
 
-## Spec coverage checklist
+| Symbol | Meaning                                                                        |
+| ------ | ------------------------------------------------------------------------------ |
+| ✅     | Implemented and covered by current verification                                |
+| 🟡     | Implemented with a documented limitation or remaining operational verification |
+| ⬜     | Planned or intentionally deferred                                              |
 
-| §   | Requirement                             | Status | Evidence / gap |
-| --- | --------------------------------------- | ------ | -------------- |
-| 1   | Product definition                      | 🟡     | audit pending  |
-| 2   | Core product promise                    | 🟡     | audit pending  |
-| 3   | Product principles                      | 🟡     | audit pending  |
-| 4   | Primary user roles                      | 🟡     | audit pending  |
-| 5   | Product surfaces                        | 🟡     | audit pending  |
-| 6   | Authentication and invitations          | 🟡     | audit pending  |
-| 7   | Organization model                      | 🟡     | audit pending  |
-| 8   | Project creation                        | 🟡     | audit pending  |
-| 9   | Form/schema philosophy                  | 🟡     | audit pending  |
-| 10  | MVP input types                         | 🟡     | audit pending  |
-| 11  | Excluded form functionality             | 🟡     | audit pending  |
-| 12  | Schema format                           | 🟡     | audit pending  |
-| 13  | Schema versioning                       | 🟡     | audit pending  |
-| 14  | Contributor home                        | 🟡     | audit pending  |
-| 15  | Offline project preparation             | 🟡     | audit pending  |
-| 16  | Observation experience                  | 🟡     | audit pending  |
-| 17  | Draft autosave                          | 🟡     | audit pending  |
-| 18  | Submission semantics                    | 🟡     | audit pending  |
-| 19  | Submission identity                     | 🟡     | audit pending  |
-| 20  | Local storage architecture              | 🟡     | audit pending  |
-| 21  | Persistent storage                      | 🟡     | audit pending  |
-| 22  | The outbox                              | 🟡     | audit pending  |
-| 23  | Submission synchronization protocol     | 🟡     | audit pending  |
-| 24  | Submission state machine                | 🟡     | audit pending  |
-| 25  | Retry policy                            | 🟡     | audit pending  |
-| 26  | Connectivity detection                  | 🟡     | audit pending  |
-| 27  | App interruption handling               | 🟡     | audit pending  |
-| 28  | Media policy                            | 🟡     | audit pending  |
-| 29  | Media integrity                         | 🟡     | audit pending  |
-| 30  | Location provenance                     | 🟡     | audit pending  |
-| 31  | Device identity                         | 🟡     | audit pending  |
-| 32  | Contributor sync interface              | 🟡     | audit pending  |
-| 33  | Contributor completion                  | 🟡     | audit pending  |
-| 34  | Device heartbeat                        | 🟡     | audit pending  |
-| 35  | Admin project dashboard                 | 🟡     | audit pending  |
-| 36  | Ping contributor                        | 🟡     | audit pending  |
-| 37  | Export readiness                        | 🟡     | audit pending  |
-| 38  | Checkpoint semantics                    | 🟡     | audit pending  |
-| 39  | Export package                          | 🟡     | audit pending  |
-| 40  | Recovery export                         | 🟡     | audit pending  |
-| 41  | Backend architecture                    | 🟡     | audit pending  |
-| 42  | Sovereignty / self-hosting              | 🟡     | audit pending  |
-| 43  | Suggested frontend stack                | 🟡     | audit pending  |
-| 44  | Service worker                          | 🟡     | audit pending  |
-| 45  | Application updates                     | 🟡     | audit pending  |
-| 46  | Database model                          | 🟡     | audit pending  |
-| 47  | Authorization                           | 🟡     | audit pending  |
-| 48  | Logging and privacy                     | 🟡     | audit pending  |
-| 49  | Audit trail                             | 🟡     | audit pending  |
-| 50  | Conflict philosophy                     | 🟡     | audit pending  |
-| 51  | Editing submissions                     | 🟡     | audit pending  |
-| 52  | Accessibility and field usability       | 🟡     | audit pending  |
-| 53  | Performance targets                     | 🟡     | audit pending  |
-| 54  | Critical failure tests                  | 🟡     | audit pending  |
-| 55  | Multi-tab / duplicate worker protection | 🟡     | audit pending  |
-| 56  | Error UX                                | 🟡     | audit pending  |
-| 57  | Admin deletion rules                    | 🟡     | audit pending  |
-| 58  | Closing a project                       | 🟡     | audit pending  |
-| 59  | No AI in the collection path            | 🟡     | audit pending  |
-| 60  | Future model-readiness                  | 🟡     | audit pending  |
-| 61  | Future ontology compatibility           | 🟡     | audit pending  |
-| 62  | Future backend compatibility            | 🟡     | audit pending  |
-| 63  | Open-source requirements                | 🟡     | audit pending  |
-| 64  | MVP non-goals                           | 🟡     | audit pending  |
-| 65  | Build sequence                          | 🟡     | audit pending  |
-| 66  | Definition of done                      | 🟡     | audit pending  |
-| 67  | The final product standard              | 🟡     | audit pending  |
+## Product coverage
 
-## Multi-user pass (2026-08-11)
+| Area                      | Status | Current implementation                                                                                                                               |
+| ------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mobile contributor flow   | ✅     | Capture-first home, one field per step, optional-field Skip, keyboard-aware actions, local receipt                                                   |
+| Local durability          | ✅     | Per-account IndexedDB, draft persistence, atomic submission/media/outbox commit, stale-write protection                                              |
+| Synchronization           | ✅     | Health-gated metadata → TUS media → finalization, durable receipt, lease, retry, permanent-failure classification                                    |
+| Recovery                  | ✅     | Pre-auth recovery path and local unsynced-data package from durable stores                                                                           |
+| Project administration    | ✅     | Project creation, typed schema builder, preview, immutable publication, contributor management                                                       |
+| Multi-user authorization  | ✅     | Organizations, projects, invite-only accounts, row-level security, administrator allow-list                                                          |
+| iOS authentication        | ✅     | Browser email-link default, installed-app device-code default, password and email-code fallbacks                                                     |
+| Consent                   | ✅     | Versioned interface, contributor profile record, server ingestion enforcement, checkpoint fields                                                     |
+| Attention verification    | 🟡     | Server-validated advisory signal and exports; deployment-specific bank validation and localization remain operator duties                            |
+| Provenance                | ✅     | Location and environment capture when permitted, schema/app/device/time identity                                                                     |
+| Readiness                 | ✅     | Durable counts, automatic completion, multi-device aggregation, administrator polling                                                                |
+| Checkpoint export         | ✅     | JSONL, CSV, GeoJSON, original media, schemas, contributor data, manifests, hashes                                                                    |
+| FAIR-supporting metadata  | ✅     | DataCite-compatible metadata, data dictionary, dataset README, license/contact/identifier                                                            |
+| Accessibility             | 🟡     | Semantic controls, shared modal behavior, reduced motion, contrast modes, Axe coverage; real-device assistive-technology review remains release work |
+| Offline application shell | ✅     | Build-time precache manifest and service-worker shell caching                                                                                        |
+| Self-hosting              | 🟡     | Automated Supabase/Vercel path documented; every target deployment still requires end-to-end operational verification                                |
 
-| Item                               | Status | Notes                                                                                                                                                                                                         |
-| ---------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Invite-only accounts               | ✅     | `shouldCreateUser:false`; platform signups disabled; accounts via invites only                                                                                                                                |
-| Administrator invitations          | ✅     | `send-admin-invite` function + adminBackend.inviteAdministrator (UI pending)                                                                                                                                  |
-| Project-admin role invites         | ✅     | `send-project-invite` accepts role; `loadUserAdminAccess` includes project admins                                                                                                                             |
-| Per-account local databases        | ✅     | IndexedDB scoped by user id; account switch reloads; isolation test                                                                                                                                           |
-| Dual PWA identity                  | ✅     | `/` white contributor PWA · `/?role=admin` black Admin PWA; icons/manifests/apple-touch                                                                                                                       |
-| Magic links return to deployed app | ✅     | `VITE_APP_URL` set locally + documented; Supabase project Auth config patched 2026-08-12 (`site_url` + redirect allow-list = `https://collect-tawny.vercel.app`); verified by reading a real magic-link email |
-| App.tsx role entry + scope wiring  | ✅     | 78f8f06; deployed with the UI pass                                                                                                                                                                            |
+## Reliability invariants
 
-## Auto-provenance pass (2026-08-12)
+These behaviors are complete and must not regress:
 
-| Item                               | Status | Notes                                                                                                      |
-| ---------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------- |
-| Email-code sign-in (PWA bridge)    | ✅     | verifySignInCode + AuthScreen code UI (2a5de00); needs {{ .Token }} in the magic-link template             |
-| Localhost link refusal             | ✅     | deployed; broken links can't be created from local instances                                               |
-| Automatic location                 | ✅     | permission probe once per container; capture on collector open + silent refresh at submit                  |
-| Environment provenance             | ✅     | device model (incl. iOS family), OS, browser, screen, orientation, connection, battery, timezone, language |
-| Device columns + environment JSONB | ✅     | migration 20260811180000 applied; functions v6/v3/v4 deployed                                              |
-| Legacy data migration              | ✅     | collect-local-v1 adopted into the first account's scoped DB after upgrade                                  |
-| Media upload assurance             | ✅     | missing blob -> ACTION_REQUIRED; TUS resume; size verification at confirm                                  |
-| Minimal UI contract                | ✅     | handed to UI agent: invisible provenance, problem-only prompts, location-off notice                        |
+1. The interface shows **Saved on this device** only after the local atomic transaction succeeds.
+2. The client sets `SYNCED` only after validating a matching server finalization receipt.
+3. Submission and media identifiers remain stable across retries and restarts.
+4. Published schemas and finalized evidence are immutable through ordinary application paths.
+5. Synchronization correctness does not depend on `navigator.onLine` or Background Sync.
+6. Unsynced local work remains recoverable.
+7. Accounts and iOS containers do not share local databases implicitly.
+8. Service-role credentials remain inside Edge Functions.
+9. Consent is enforced by the server.
+10. Attention data remains separate from the research payload and advisory in interpretation.
 
-## Auth architecture: password + device-link (2026-08-12)
+## Current limitations
 
-| Item                                         | Status | Notes                                                                                                        |
-| -------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
-| Password sign-in (every container)           | ✅     | signInWithPassword; setPassword; solves iOS PWA/Safari double-login at the root                              |
-| Device-link bridge                           | ✅     | requestDeviceLinkCode / linkDeviceSession; link-session function + private.session_link_codes migration live |
-| Invite → set-password flow                   | 🟡     | App-side contract handed to UI agent (pendingPasswordRequired)                                               |
-| AuthScreen password tab + device-link panels | 🟡     | UI agent in progress (contract delivered)                                                                    |
-| Email codes                                  | ⚠️     | implemented; emails cannot carry {{ .Token }} on free tier (Pro/SMTP needed)                                 |
+| Limitation                                          | Consequence                                                                                               | Mitigation                                                                        |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Browser-managed storage                             | Local data can be lost through device destruction, manual deletion, browser removal, or platform eviction | Persistent-storage request, automatic transfer, quota visibility, recovery export |
+| Offline devices are invisible to the server         | A checkpoint cannot prove that no unseen local work exists                                                | Readiness language states only server-visible device status                       |
+| Email capabilities vary by provider and plan        | Email codes or custom templates may not be available                                                      | Device-link and password paths; verify Auth and SMTP before fieldwork             |
+| Attention bank is not universally valid             | Default prompts may be unsuitable for a language or population                                            | Deployment review, translation, replacement, or deactivation                      |
+| In-app consent is not a full governance system      | Technical enforcement does not satisfy every legal or ethics process                                      | Deployment-specific consent, withdrawal, retention, and review procedures         |
+| No contributor-side finalized-record editing        | Corrections require a linked successor workflow or administrator process                                  | Preserve original evidence and use `corrects_submission_id` semantics             |
+| No guaranteed background execution on every browser | Transfer may wait until the app reopens                                                                   | Durable outbox and lifecycle retry make foreground recovery sufficient            |
 
-## Consent + profiles (2026-08-12)
+## Deferred capabilities
 
-| Item                        | Status | Notes                                                   |
-| --------------------------- | ------ | ------------------------------------------------------- |
-| Versioned consent statement | ✅     | consent_versions seeded; ConsentScreen at first sign-in |
-| Contributor profiles        | ✅     | consent, quality_score, attention score; RLS self/admin |
-| Server enforcement          | ✅     | sync-submission rejects without granted consent         |
-| Exports carry consent       | ✅     | contributors.csv columns                                |
+- domain-specific schema packages such as Darwin Core, Ecological Metadata Language, or Data Documentation Initiative;
+- repository-specific deposit and DOI-minting integrations;
+- audited correction and deletion workflows;
+- organization-level policy and retention configuration;
+- advanced hosted-service operations, observability, and service-level agreements;
+- downstream ontology mapping and model-training workflows;
+- non-Supabase backend adapters.
 
-## Attention verification (2026-08-12) — see [docs/attention-qa.md](attention-qa.md)
+These items must not weaken the core collection path.
 
-| Item                           | Status | Notes                                                                                                          |
-| ------------------------------ | ------ | -------------------------------------------------------------------------------------------------------------- |
-| Attention-check bank           | ✅     | 10 universally valid 4-option checks; client copy for offline; server validates                                |
-| Random injection               | ✅     | Collector injects one check after at least the first two questions (f0d34c6); options shuffle per presentation |
-| Binary filter flag             | ✅     | submissions.attention_failed; question text never stored (only check key + answer)                             |
-| Score visibility               | ✅     | contributor (getMyProfile) + admin (readiness + exports)                                                       |
-| Guess-adjusted score           | ✅     | (correct − expected)/(total − expected), clamped; per-contributor on profile                                   |
-| Server recording               | ✅     | attention_responses (idempotent per submission) + recompute_attention_score                                    |
-| Visibility                     | ✅     | profile (contributor + admin), readiness data, exports (data/attention.csv + contributors.csv)                 |
-| Environment payload regression | ✅     | re-added observation.environment to sync payload                                                               |
+## Verification baseline
 
-## Background automation pass (2026-08-12) — see [docs/background-automation.md](background-automation.md)
+The current repository baseline includes:
 
-| Item                                    | Status | Notes                                                                                        |
-| --------------------------------------- | ------ | -------------------------------------------------------------------------------------------- |
-| Sync: no artificial delay               | ✅     | 1.2s sleep removed; single-flight prevents duplicate runs                                    |
-| Sync: silent background runs            | ✅     | lifecycle syncs are toast-free; manual taps keep feedback                                    |
-| Sync: per-item isolation                | ✅     | one failed observation never blocks the rest; partial-sync copy                              |
-| Sync: ACTION_REQUIRED classification    | ✅     | media integrity/checksum/revoked/closed errors stop retrying                                 |
-| Heartbeat: durable outbox counts        | ✅     | unique submission IDs + per-media rows; acknowledged media excluded                          |
-| Heartbeat: coalesced + visibility-gated | ✅     | 10s debounce; hidden tabs skip; contributor surface only                                     |
-| Fieldwork completion: automatic         | ✅     | outbox empty AND no in-progress draft → fieldwork_complete                                   |
-| Readiness: multi-device aggregation     | ✅     | every device row must be clean + complete; admin auto-polls 30s                              |
-| Draft/media: immediate blob persistence | ✅     | MEDIA_STORE write on pick; deletes on remove; no blob duplication in app-state               |
-| Stale autosave protection               | ✅     | SYNCED rows never downgraded; draft write can't clobber submitted rows                       |
-| Media integrity                         | ✅     | client computes SHA-256 in background; server stores it; size verified at confirm            |
-| TUS resilience                          | ✅     | server-first confirm, fresh retry on stale upload, bounded 2-way parallelism, health timeout |
-| Receipt binding                         | ✅     | receipt.submission_id validated before local clear; server timestamps persisted              |
-| Idempotent completion counts            | ✅     | durable receipt check prevents double-counting after crash-retry                             |
-| Background Sync                         | ✅     | sw.js sync event wakes the app; pending work registers the tag                               |
-| Service worker precache                 | ✅     | Vite emits precache-manifest.json; hashed shell precached for offline first load             |
-| Recovery: durable stores                | ✅     | export includes outbox/receipts/drafts/projects/media; async zip off main thread             |
-| Recovery UI                             | ✅     | reachable before auth gate; corrupt blobs tolerated; deferred URL revoke                     |
-| Invite password setup                   | ✅     | flag survives URL cleanup (token-hash + PKCE); gate fixed; no double set                     |
-| Device-link codes                       | ✅     | 8-character alphanumeric input matching the server alphabet                                  |
-| Location provenance                     | ✅     | captured on open + refreshed at save; written to actual field keys; retry affordance         |
-| Admin preview isolation                 | ✅     | preview never writes drafts/media; revoked users lose cached project                         |
-| Schema builder config                   | ✅     | options/other, number min/max/unit/integer, text length/placeholder, media counts/multiple   |
-| Edge: finalize race                     | ✅     | atomic update ... returning; concurrent finalize returns stored receipt                      |
-| Edge: idempotency                       | ✅     | schema_id added to same-ID conflict comparison                                               |
-| Export manifest                         | ✅     | contributor readiness snapshot at cutoff included                                            |
+- 13 Vitest files and 81 tests;
+- automated Axe checks for representative consent, project setup, profile, and synchronization surfaces;
+- client TypeScript checking;
+- production Vite build;
+- Deno typechecking and formatting for Edge Functions in CI;
+- formatting and whitespace checks;
+- preview deployment verification.
 
-## Efficiency + refactoring pass (2026-08-12)
+Before release, also verify:
 
-| Item                             | Status | Notes                                                                                                    |
-| -------------------------------- | ------ | -------------------------------------------------------------------------------------------------------- |
-| Shared function invocation       | ✅     | functionError.ts: readFunctionErrorBody + invokeFunction; 5 duplicate unwrap blocks removed (~100 lines) |
-| Snapshot write cost              | ✅     | media blobs stripped from app-state snapshots (MEDIA_STORE is the single blob home); reattached on load  |
-| Dead code / TODOs / console logs | ✅     | none found                                                                                               |
-| Types                            | ✅     | strict mode; zod schemas on function responses                                                           |
-| Bundle                           | ✅     | 462 KB JS / ~121 KB gzip, offline-first (must be cached anyway)                                          |
-| Concurrency                      | ✅     | bounded media parallelism + health timeout landed with the media-uploads unit                            |
+- browser and installed-iOS authentication;
+- offline save, close, reopen, and resume;
+- structured and media synchronization;
+- matching server receipt behavior;
+- administrator multi-device readiness;
+- checkpoint generation and package inspection;
+- local recovery export;
+- accessibility on a physical mobile device.
 
-## FAIR dataset standards (2026-08-12) — see [docs/dataset-standards.md](dataset-standards.md)
+## Documentation maintenance
 
-| Item                         | Status | Notes                                                                                                     |
-| ---------------------------- | ------ | --------------------------------------------------------------------------------------------------------- |
-| Dataset metadata on projects | ✅     | license (SPDX), contact_email, dataset_identifier (DOI/URL) via migration 20260812180000                  |
-| Wizard collects metadata     | ✅     | license presets + custom, contact email, identifier in step 1                                             |
-| DataCite 4.4 metadata        | ✅     | dataset/datacite.json in every checkpoint (DOI-ready)                                                     |
-| Data dictionary              | ✅     | dataset/data-dictionary.json: type, required, description, semantic_uri, unit, options per schema version |
-| Dataset README               | ✅     | dataset/README.md with license/contact/identifier + FAIR notes                                            |
-| Manifest carries metadata    | ✅     | manifest.dataset { license, contact_email, dataset_identifier }                                           |
-| Docs                         | ✅     | docs/export-format.md FAIR mapping table; README summary                                                  |
-
-## Value narrative — see [docs/value.md](value.md)
-
-## Gap work queue
-
-_(filled from audits)_
-
-## Verification
-
-- [ ] `npm test` green
-- [ ] `npm run build` green
-- [ ] `git diff --check` clean
-- [ ] End-to-end field scenario (spec §66) works against live deployment
-- [ ] Deployment committed and pushed
+Update this page when a planned capability becomes implemented, a limitation changes, or the verification baseline changes. Do not add commit hashes, private project identifiers, production URLs, or one-time deployment observations; those belong in release notes or operational records.

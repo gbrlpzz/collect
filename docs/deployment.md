@@ -1,247 +1,285 @@
-# Deploying a collect instance
+# Deployment
 
-`collect` is designed to be redeployed against a **new Supabase project** and a
-**new Vercel project**. No service-role secret belongs in the browser; every
-privileged operation runs inside an Edge Function.
+This guide provisions a new `collect` instance with Supabase and deploys the frontend to Vercel. Equivalent hosting is possible, but the included automation targets this stack.
 
-## One-command provisioning
+## Deployment model
 
-For a repeatable setup, install the Supabase CLI and export the deployment
-inputs below. `npm run provision` configures the hosted Auth URL and
-magic-link template through the Supabase Management API, applies the ordered
-migrations, sets the server-side bootstrap guard, deploys every Edge Function,
-and can request the first administrator's link.
+| Component      | Service                                       | Contents                                                                      |
+| -------------- | --------------------------------------------- | ----------------------------------------------------------------------------- |
+| Frontend       | Vercel or compatible static host              | Public PWA bundle and service worker                                          |
+| Database       | Supabase Postgres                             | Organizations, projects, schemas, submissions, consent, readiness, audit data |
+| Object storage | Supabase Storage                              | Private original media and checkpoint packages                                |
+| Privileged API | Supabase Edge Functions                       | Authenticated ingestion, invitations, device linking, reminders, export       |
+| Email          | Supabase Auth and optional Resend integration | Authentication links/codes, invitations, reminders                            |
+
+No service-role secret belongs in the frontend bundle.
+
+## Prerequisites
+
+- Node.js 22 and npm
+- Deno 2
+- Supabase CLI
+- Supabase project and access token
+- Vercel project and token, or an equivalent static-host deployment
+- Canonical HTTPS application origin
+- Initial administrator email address
+
+Review the current Supabase and email-provider plan limits before production use. Authentication template, sending-rate, and custom SMTP capabilities can change independently of this repository.
+
+## Provision in one command
+
+Export the required values:
 
 ```bash
-export SUPABASE_ACCESS_TOKEN=...          # Supabase account token; keep it private
-export SUPABASE_PROJECT_REF=...           # for example lrqlrufwrytpwhgclmyo
-export APP_URL=https://your-collect.vercel.app
+export SUPABASE_ACCESS_TOKEN=...
+export SUPABASE_PROJECT_REF=...
+export APP_URL=https://your-collect.example.org
 export BOOTSTRAP_ADMIN_EMAIL=admin@example.org
-export VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+export VITE_SUPABASE_PUBLISHABLE_KEY=...
 
-# Add SUPABASE_DB_PASSWORD only if the CLI asks for the database password.
+# Supply only when the CLI requires it.
+export SUPABASE_DB_PASSWORD=...
+
 npm run provision -- --issue-magic-link
 ```
 
-The last flag is intentionally explicit because it sends an email. The script
-never prints or stores the one-time token, and it only uses the publishable
-browser key for the Auth request. `SUPABASE_ACCESS_TOKEN`, database
-credentials, and the service-role key never enter the frontend bundle. Add
-local development or preview URLs only when needed with
-`SUPABASE_REDIRECT_URLS`, as a comma-separated list.
+`npm run provision`:
 
-This command provisions a project that already exists; it does not create a
-Supabase or Vercel account.
+1. validates the canonical application origin;
+2. configures the Supabase Auth site URL, redirect allow-list, and supported email template;
+3. links the local Supabase directory;
+4. applies ordered database migrations;
+5. sets `APP_URL` and `BOOTSTRAP_ADMIN_EMAIL` as Edge Function secrets;
+6. deploys every application Edge Function listed in `scripts/provision.mjs`;
+7. optionally requests one authentication link for the bootstrap administrator.
 
-## Manual steps
+The `--issue-magic-link` flag is explicit because it sends an email. The script does not print or store the one-time token.
 
-### 1. Create Supabase
+Optional inputs:
 
-Create a Supabase project in the region appropriate for the field
-organization, then apply the migrations in filename order:
+| Variable                 | Purpose                                                                                      |
+| ------------------------ | -------------------------------------------------------------------------------------------- |
+| `SUPABASE_REDIRECT_URLS` | Comma-separated additional allowed Auth origins for controlled previews or local development |
+| `VITE_SUPABASE_ANON_KEY` | Legacy fallback for the publishable browser key                                              |
+| `SUPABASE_CLI_COMMAND`   | Alternative Supabase CLI executable                                                          |
+
+## Manual provisioning
+
+### Apply migrations
 
 ```bash
 supabase link --project-ref "$SUPABASE_PROJECT_REF"
 supabase db push --linked
 ```
 
-The migrations create Postgres tables, RLS policies, private Storage buckets,
-immutable-schema/submission protections, and the race-safe first-workspace
-function.
+Migrations create and harden:
 
-Deploy the Edge Functions with JWT verification disabled (every function
-authenticates its own bearer token; the anonymous `health` probe must stay
-reachable):
+- organizations, memberships, projects, invitations, and immutable schemas;
+- submissions, original-media metadata, devices, readiness, checkpoints, and audit events;
+- versioned consent and contributor profiles;
+- attention-check reference data and responses;
+- private device-link codes and administrator allow-list patterns;
+- private media and checkpoint storage buckets;
+- row-level security, security-invoker views, triggers, and restricted remote procedure calls.
+
+Never edit and reapply a migration that may already exist in a target database. Add a new ordered migration.
+
+### Deploy Edge Functions
+
+The source directories under `supabase/functions/` define the deployable functions. `supabase/config.toml` disables platform JWT verification for these endpoints because each function performs its own bearer-token and authorization checks; the health endpoint must remain anonymous.
 
 ```bash
-for function in health claim-invites device-status send-project-invite send-project-ping export-checkpoint sync-submission bootstrap-workspace; do
-  supabase functions deploy "$function" --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+for function in \
+  health \
+  claim-invites \
+  device-status \
+  link-session \
+  send-admin-invite \
+  send-project-invite \
+  send-project-ping \
+  export-checkpoint \
+  sync-submission \
+  bootstrap-workspace
+do
+  supabase functions deploy "$function" \
+    --project-ref "$SUPABASE_PROJECT_REF"
 done
 ```
 
-The service-role key is used only inside Edge Functions.
+Keep this list synchronized with `scripts/provision.mjs`.
 
-### 2. Configure Auth before the first login
-
-In Supabase **Authentication → URL Configuration**:
-
-- set **Site URL** to the deployed app origin, for example `https://your-collect.vercel.app`;
-- add the deployed origin and local development origin to **Additional Redirect URLs**;
-- configure the **Magic Link template** to use collect's clean token-hash callback:
-  `<a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email">Open collect</a>`;
-  never hard-code `http://localhost:3000` in the template; include the code
-  for installed-app sign-in by adding
-  `<p>Or enter this code in the app: <strong>{{ .Token }}</strong></p>`;
-- configure a trusted SMTP provider for production email delivery.
-
-Magic links are one-time links and expire. The token-hash callback avoids
-leaving an access-token fragment in the address bar; the client still accepts
-Supabase's default fragment callback for compatibility. `collect` detects an
-expired callback, preserves the last email address in the current browser
-session, and offers **Send a new link** from the same screen. If an email
-security scanner consumes a link first, request another link rather than
-reusing the old one. Set `VITE_APP_URL` to the canonical deployed origin so
-links generated from a preview or local development page still return to the
-real app. Also set the Supabase **Site URL** to that same origin and add it to the
-**redirect allow-list**; the email template's redirect must not be a localhost
-URL. `npm run provision` applies both automatically (site_url + uri_allow_list).
-Note: on the **free tier** the platform rejects custom mailer templates with
-HTTP 400 — provisioning retries with the URL settings only, and the default
-template is used, which is sufficient once the allow-list contains the app
-origin. Applied to the production project on 2026-08-12 (site_url and
-allow-list = `https://collect-tawny.vercel.app`).
-
-### 3. Establish the first administrator
-
-For a fresh deployment, set the optional bootstrap guard before the first
-sign-in:
+### Configure function secrets
 
 ```bash
 supabase secrets set \
-  APP_URL=https://your-collect.vercel.app \
+  APP_URL=https://your-collect.example.org \
   BOOTSTRAP_ADMIN_EMAIL=admin@example.org \
   --project-ref "$SUPABASE_PROJECT_REF"
 ```
 
-Open the app, request a magic link for that exact address, and sign in. On an
-empty deployment the first successful bootstrap is routed directly to the
-Admin workspace; there is no separate admin password. The
-`bootstrap-workspace` function creates the organization and its initial admin
-membership atomically, and only while the database has no organization yet. If
-`BOOTSTRAP_ADMIN_EMAIL` is omitted, the first authenticated user can bootstrap
-an empty database; setting it is recommended.
-
-To add another administrator after they have authenticated once, run this
-intentionally explicit SQL in the Supabase SQL editor:
-
-```sql
-insert into public.organization_members (organization_id, user_id, role)
-select 'YOUR_ORGANIZATION_UUID', id, 'admin'
-from auth.users
-where lower(email) = lower('another-admin@example.org')
-on conflict (organization_id, user_id)
-do update set role = 'admin';
-```
-
-Contributor invitations remain project-scoped and never grant administrator
-access.
-
-### 4. Deploy the frontend
-
-Set these environment variables for the frontend build (Vercel project env or
-your build pipeline):
-
-```text
-VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-VITE_APP_VERSION=0.1.2
-VITE_APP_URL=https://your-collect.vercel.app
-VITE_ORGANIZATION_NAME=Your organization
-```
-
-`VITE_SUPABASE_ANON_KEY` is accepted as a legacy fallback. Never use
-`SUPABASE_SERVICE_ROLE_KEY` as a `VITE_` variable.
-
-Then deploy:
-
-```bash
-npm run build
-vercel --prod
-```
-
-For a fully automated deployment, connect the GitHub repository to Vercel and
-enable production deployments from `main`, or use the **Deploy collect**
-GitHub Actions workflow with these repository secrets:
-`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`,
-`APP_URL`, `BOOTSTRAP_ADMIN_EMAIL`, `VITE_SUPABASE_PUBLISHABLE_KEY`,
-`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`. The workflow runs tests,
-provisions Supabase, builds, and deploys the production bundle. Its
-magic-link option is off by default and must be deliberately selected to send
-an email. Keep database migrations and function deployments in the deployment
-checklist; a frontend-only deploy must not be treated as a backend migration.
-
-### 4a. Email delivery limits and customization
-
-Supabase's **free tier** locks email configuration: custom SMTP, custom email
-templates, and rate-limit changes are silently ignored (HTTP 200 but not
-applied). Concretely the free tier caps `rate_limit_email_sent` at **2 emails
-per hour** project-wide and always uses the stock magic-link template (link
-only, **no 6-digit code**).
-
-Unlocking codes + sane limits requires either:
-
-- **Upgrade to Pro** (custom SMTP/templates/limits become available), then
-  apply `docs/magic-link-email-template.html` (token-hash link + code) via
-  the dashboard or `PATCH /config/auth`, and raise the rate limit; or
-- **Custom SMTP on Pro** (e.g. Resend — set `smtp_host=smtp.resend.com`,
-  `smtp_port=465`, user/pass = the Resend API key, and a verified sender
-  domain).
-
-Until then the magic-link (fragment-flow) sign-in works and is correctly
-redirected to the deployed origin; the email-code path is implemented in the
-app but the email cannot yet carry a code on the free tier.
-
-### 4b. What the migrations create
-
-`supabase db push` applies every migration in order and creates the full
-backend in one pass:
-
-- **Tenant model**: organizations, organization_members, projects,
-  project_members, project_invites, project_schemas (immutable versions),
-  devices, device_project_status, checkpoints, audit_events.
-- **Evidence**: submissions (with payload hash, environment provenance,
-  device model/OS/browser, attention_failed flag, collected-after-close
-  provenance), submission_media, and immutable triggers on published
-  schemas and finalized submissions.
-- **People**: contributor_profiles (consent version/timestamps, quality
-  score, attention score and totals), consent_versions (seeded statement),
-  attention_checks (seeded bank) and attention_responses.
-- **Auth support**: private.session_link_codes (device-link sign-in bridge)
-  and private.allowed_admin_patterns (administrator allow-list).
-- **Storage**: private `collect-media` and `collect-exports` buckets with
-  ownership-checked policies.
-
-### 4c. Administrator allow-list
-
-By default any address can be invited as a workspace administrator. To
-restrict who may _become_ an admin (contributor invitations stay open to any
-address), configure allow-list patterns — exact emails and/or `@domain`
-suffixes. Two equivalent sources, checked in order:
-
-1. The `ALLOWED_EMAIL_PATTERNS` secret (takes precedence when set):
+Optional reminder delivery:
 
 ```bash
 supabase secrets set \
-  ALLOWED_EMAIL_PATTERNS='info@gabrielepizzi.com,@fieldteam.org' \
+  RESEND_API_KEY=re_... \
+  MAIL_FROM='Collect <fieldwork@example.org>' \
   --project-ref "$SUPABASE_PROJECT_REF"
 ```
 
-2. Otherwise the `private.allowed_admin_patterns` table (manageable via SQL):
-
-```sql
-insert into private.allowed_admin_patterns (pattern) values
-  ('info@gabrielepizzi.com'),
-  ('@fieldteam.org');
-```
-
-Administrator invitations are rejected with 403 unless the address matches a
-pattern; contributors can always be invited to projects without restriction.
-
-### 5. Optional reminder email
-
-Contributor pings use a provider-abstracted mail helper. With Resend:
+Optional administrator allow-list:
 
 ```bash
-supabase secrets set RESEND_API_KEY=re_... MAIL_FROM='Collect <fieldwork@example.org>' --project-ref "$SUPABASE_PROJECT_REF"
+supabase secrets set \
+  ALLOWED_EMAIL_PATTERNS='admin@example.org,@research.example.org' \
+  --project-ref "$SUPABASE_PROJECT_REF"
 ```
 
-Email delivery is provider-backed and never part of synchronization
-correctness.
+`ALLOWED_EMAIL_PATTERNS` accepts exact email addresses and `@domain` suffixes. It limits administrator invitations only; project contributor invitations remain independent.
+
+If the secret is absent, the server reads `private.allowed_admin_patterns`. Manage table entries through an ordered migration or a controlled database-administration procedure.
+
+## Configure authentication
+
+Set the Supabase Auth **Site URL** to the canonical HTTPS application origin. Add only controlled origins to the redirect allow-list.
+
+The passwordless email template should return through the token-hash callback:
+
+```html
+<a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email">
+  Open collect
+</a>
+```
+
+If the provider and plan support an email one-time token, include:
+
+```html
+<p>Or enter this code in the app: <strong>{{ .Token }}</strong></p>
+```
+
+Use [`magic-link-email-template.html`](magic-link-email-template.html) as the maintained template source. Do not hard-code a localhost origin.
+
+`VITE_APP_URL`, the Supabase Site URL, the function `APP_URL` secret, and the production host must refer to the same canonical origin. Mismatches cause broken return links or cross-origin failures.
+
+Email security scanners may consume one-time links. The interface supports requesting a fresh link and, when configured, entering the token directly.
+
+## Bootstrap the first administrator
+
+On an empty database, the authenticated address matching `BOOTSTRAP_ADMIN_EMAIL` can call `bootstrap-workspace`. The function creates the organization and initial administrator membership atomically.
+
+1. Provision the instance with the bootstrap email.
+2. Open the canonical application origin.
+3. Request the newest passwordless email link for that exact address.
+4. Complete authentication and password setup.
+5. Open the administrator surface at `/?role=admin`.
+
+After an organization exists, ordinary users cannot bootstrap another one. Invite later administrators through the administrator interface and configure the allow-list when required.
+
+## Frontend environment
+
+Set:
+
+```dotenv
+VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=...
+VITE_APP_URL=https://your-collect.example.org
+VITE_APP_VERSION=0.1.2
+VITE_ORGANIZATION_NAME=Your organization
+```
+
+`VITE_SUPABASE_ANON_KEY` remains a legacy fallback. Never create a `VITE_` variable containing:
+
+- `SUPABASE_SERVICE_ROLE_KEY`;
+- `SUPABASE_ACCESS_TOKEN`;
+- a database password;
+- a Vercel token;
+- an SMTP or Resend credential.
+
+Build and deploy:
+
+```bash
+npm ci
+npm run check
+vercel --prod
+```
+
+## GitHub Actions deployment
+
+The **Deploy collect** workflow provisions Supabase, builds the Vercel bundle, and deploys production. Configure these repository secrets:
+
+| Secret                          | Purpose                                         |
+| ------------------------------- | ----------------------------------------------- |
+| `SUPABASE_ACCESS_TOKEN`         | Supabase Management API and CLI authentication  |
+| `SUPABASE_PROJECT_REF`          | Target project                                  |
+| `SUPABASE_DB_PASSWORD`          | Database migration authentication when required |
+| `APP_URL`                       | Canonical application origin                    |
+| `BOOTSTRAP_ADMIN_EMAIL`         | First-administrator guard                       |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Browser-safe Supabase key                       |
+| `VERCEL_TOKEN`                  | Vercel deployment authentication                |
+| `VERCEL_ORG_ID`                 | Vercel account or team                          |
+| `VERCEL_PROJECT_ID`             | Vercel project                                  |
+
+The workflow’s `issue_magic_link` input defaults to false. Enable it only when a new bootstrap email should be sent.
+
+Database migrations and Edge Function deployments are part of the release. A frontend-only deployment does not apply backend changes.
 
 ## Install on iPhone
 
-Open the deployed app in Safari, tap **Share**, choose **Add to Home Screen**,
-then tap **Add**. Open `collect` from the new Home Screen icon before
-fieldwork; the installed PWA keeps the application shell available when the
-connection disappears. The sign-in screen repeats these steps on iPhone when
-the app is not already installed.
+1. Open the canonical contributor URL in Safari.
+2. Tap **Share**.
+3. Choose **Add to Home Screen**.
+4. Open the new icon.
+5. From a signed-in browser or device, open **Profile → Sign in another device**.
+6. Enter the generated eight-character code in the installed app.
+
+Install the administrator surface separately from `/?role=admin` when required. The contributor and administrator manifests use distinct names, icons, and appearances.
+
+## Release verification
+
+Before declaring an instance ready:
+
+1. confirm the production URL returns the expected PWA shell;
+2. sign in through the browser path;
+3. link an installed iOS container with a device code;
+4. create, save, close, and reopen an offline observation;
+5. synchronize structured data and at least one media object;
+6. confirm the local state changes only after a matching server receipt;
+7. verify administrator readiness;
+8. export and inspect a checkpoint ZIP;
+9. create and inspect a local recovery export;
+10. review browser and function logs for sensitive data.
+
+A green frontend build does not verify synchronization, authorization, email, storage, or checkpoint generation.
+
+## Upgrades
+
+For every release:
+
+1. back up the database according to the deployment’s operational policy;
+2. review new migrations and Edge Functions;
+3. run CI and a preview deployment;
+4. apply migrations in order;
+5. deploy every changed Edge Function;
+6. deploy the frontend;
+7. execute the affected end-to-end flows;
+8. retain the prior deploy as a rollback candidate.
+
+Do not roll the frontend back across an incompatible local-database or server migration without an explicit compatibility plan.
+
+## Common failures
+
+| Symptom                                           | Check                                                                                                         |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Email link returns to localhost or a preview      | Align `VITE_APP_URL`, Auth Site URL, redirect allow-list, and `APP_URL`                                       |
+| Installed iOS app is signed out                   | Expected separate container; use a device-link code or another configured sign-in path                        |
+| Device code is rejected                           | Confirm `link-session` is deployed, migrations are applied, and the code is current                           |
+| Administrator invitation returns 403              | Review `ALLOWED_EMAIL_PATTERNS` or `private.allowed_admin_patterns`                                           |
+| Health works but synchronization fails            | Inspect Edge Function deployment, membership, consent, schema version, storage policy, and media completeness |
+| Frontend works but new backend behavior is absent | Apply migrations and deploy the corresponding Edge Functions                                                  |
+| Authentication email has no code                  | Review the current Supabase Auth template, SMTP configuration, and plan capabilities                          |
+
+## Related documentation
+
+- [Architecture](architecture.md)
+- [User and system flows](flows.md)
+- [Privacy and data handling](privacy.md)
+- [Contributing](../CONTRIBUTING.md)

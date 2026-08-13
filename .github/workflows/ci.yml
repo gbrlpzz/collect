@@ -21,6 +21,10 @@ jobs:
         with:
           deno-version: v2.x
       - run: npm ci
+      - name: Check web and documentation formatting
+        run: npm run format:web:check
+      - name: Check documentation links
+        run: npm run docs:check
       - run: npm test
       - run: npm run build
       - name: Typecheck Edge Functions
