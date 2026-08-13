@@ -81,7 +81,7 @@ const NARRATION: Record<string, { title: string; body: string }> = {
   },
   building_occupancy: {
     title: "Uncertainty is data",
-    body: "Yes / No / Unknown — \u201cUnknown\u201d is an honest answer, not a missing value.",
+    body: "Yes / No / Unknown — “Unknown” is an honest answer, not a missing value.",
   },
   provenance_section: {
     title: "Recorded, never asked",
@@ -239,27 +239,11 @@ function StatusBar() {
 function IPhone({ children }: { children: React.ReactNode }) {
   return (
     <div className="hp-iphone">
-      <div
-        className="hp-iphone-buttons hp-iphone-buttons-left"
-        aria-hidden="true"
-      >
-        <span className="hp-btn hp-btn-mute" />
-        <span className="hp-btn hp-btn-vol-up" />
-        <span className="hp-btn hp-btn-vol-down" />
-      </div>
-      <div
-        className="hp-iphone-buttons hp-iphone-buttons-right"
-        aria-hidden="true"
-      >
-        <span className="hp-btn hp-btn-power" />
-      </div>
-      <div className="hp-iphone-frame">
-        <div className="hp-iphone-screen">
-          <div className="hp-dynamic-island" aria-hidden="true" />
-          <StatusBar />
-          {children}
-          <div className="hp-home-indicator" aria-hidden="true" />
-        </div>
+      <div className="hp-iphone-screen">
+        <div className="hp-dynamic-island" aria-hidden="true" />
+        <StatusBar />
+        {children}
+        <div className="hp-home-indicator" aria-hidden="true" />
       </div>
     </div>
   );
@@ -313,8 +297,8 @@ export function FlowDemo() {
     setAutoState((state) => (state === "playing" ? "idle" : state));
   };
 
-  // The automaton drives the real UI. It stops the moment the visitor
-  // touches the phone (or presses a key), handing over control.
+  // The automaton drives the real UI without hijacking page scroll. It stops
+  // the moment the visitor touches the phone (or presses a key), handing over control.
   useEffect(() => {
     if (autoState !== "playing") return;
     const root = screenRef.current;
@@ -354,7 +338,7 @@ export function FlowDemo() {
           setAutoState("playing");
         }
       },
-      { threshold: 0.35 },
+      { threshold: 0.3 },
     );
     observer.observe(frame);
     return () => observer.disconnect();
@@ -398,7 +382,6 @@ export function FlowDemo() {
   const handleSubmit = (values: Record<string, unknown>) => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
-    setAutoState("done");
     setSavedValues(values);
     setObservation({
       id: "demo-observation",
@@ -415,6 +398,7 @@ export function FlowDemo() {
       timersRef.current.push(
         window.setTimeout(() => {
           setSyncStage(3);
+          setAutoState("done");
           setObservation((current) =>
             current ? { ...current, status: "SYNCED" } : current,
           );
@@ -427,6 +411,7 @@ export function FlowDemo() {
       window.setTimeout(() => setSyncStage(2), 3400),
       window.setTimeout(() => {
         setSyncStage(3);
+        setAutoState("done");
         setObservation((current) =>
           current ? { ...current, status: "SYNCED" } : current,
         );
@@ -441,11 +426,11 @@ export function FlowDemo() {
     <div className="hp-flow-layout" ref={frameRef}>
       <div className="hp-flow-copy">
         <div className="section-heading">
-          <p className="eyebrow">Try it</p>
+          <p className="eyebrow">Interactive field preview</p>
           <h2>The collection flow, one question at a time.</h2>
           <p>
-            The app's real frontend. Watch it fill itself, or take over —
-            nothing is recorded anywhere.
+            The app's real frontend. Watch it fill itself, or tap anywhere to
+            take over — nothing is recorded anywhere.
           </p>
         </div>
 
@@ -519,7 +504,7 @@ export function FlowDemo() {
         </div>
 
         <p className="hp-demo-note">
-          Live app frontend · no permission asked · nothing is recorded
+          Live app frontend · zero permission asked · nothing is recorded
         </p>
       </div>
 
@@ -546,10 +531,10 @@ export function FlowDemo() {
                 observations={[observation]}
                 hasDraft={false}
                 onStartObservation={reset}
-                onOpenProject={reset}
                 onChooseProject={() => undefined}
                 onResumeObservation={reset}
                 onDiscardAndStartObservation={reset}
+                onOpenSync={() => undefined}
               />
             ) : null}
           </div>

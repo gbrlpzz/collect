@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
-import { Icon } from "../components/Icon";
-import { SegmentedControl } from "../components/ui";
+import { useState } from "react";
 import { FlowDemo } from "./FlowDemo";
-import { AttentionDemo } from "./AttentionDemo";
 import { PackageBrowser } from "./PackageBrowser";
-import { ProvenanceCard } from "./ProvenanceCard";
 import { PreviewForm } from "./PreviewForm";
+import { AdminWalkthrough } from "./AdminWalkthrough";
+import { AttentionDemo } from "./AttentionDemo";
+import { ProvenanceCard } from "./ProvenanceCard";
 
 const APP_URL = "https://collect-tawny.vercel.app";
 const ADMIN_URL = `${APP_URL}/?role=admin`;
@@ -13,23 +12,24 @@ const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 const DOCS = (file: string) => `${GITHUB_URL}/blob/main/docs/${file}`;
 
 const NAV = [
-  { label: "Why", href: "#why" },
-  { label: "Data", href: "#formats" },
-  { label: "Quality", href: "#quality" },
-  { label: "Preview", href: "#preview" },
+  { label: "1. Schema & Setup", href: "#admin" },
+  { label: "2. Collection", href: "#collection" },
+  { label: "3. Integrity", href: "#integrity" },
+  { label: "4. Data Package", href: "#data" },
+  { label: "Request Access", href: "#preview" },
 ];
 
 function TopBar() {
   return (
     <header className="hp-topbar">
       <div className="hp-topbar-inner">
-        <a className="hp-brand" href="#top">
+        <a className="hp-brand" href="#top" aria-label="collect home">
           <img
             className="hp-logo"
             src="/icon.svg"
             alt=""
-            width={26}
-            height={26}
+            width={24}
+            height={24}
           />
           <span className="wordmark">
             collect<span className="wordmark-dot">.</span>
@@ -44,7 +44,7 @@ function TopBar() {
         </nav>
         <div className="hp-topbar-actions">
           <a
-            className="hp-nav-link"
+            className="hp-nav-link hp-nav-app-link"
             href={APP_URL}
             target="_blank"
             rel="noopener"
@@ -52,7 +52,7 @@ function TopBar() {
             Contributor
           </a>
           <a
-            className="hp-nav-link"
+            className="hp-nav-link hp-nav-app-link"
             href={ADMIN_URL}
             target="_blank"
             rel="noopener"
@@ -85,25 +85,16 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
   return (
     <section className="hp-hero" id="top" aria-labelledby="hero-title">
       <div className="hp-hero-inner">
-        <img
-          className="hp-hero-logo"
-          src="/icon.svg"
-          alt="collect"
-          width={64}
-          height={64}
-        />
-        <p className="eyebrow">
-          Offline-first field data collection · research preview
-        </p>
+        <p className="eyebrow">Infrastructure for trustworthy field evidence</p>
         <h1 id="hero-title">
-          Fieldwork you can trust,
+          Collect structured field observations.
           <br />
-          where the signal ends.
+          100% offline.
         </h1>
         <p className="hp-hero-lede">
-          collect saves every observation on the device before promising
-          anything, syncs only on a durable server receipt, and exports a FAIR
-          dataset with attention quality measured per contributor.
+          Design custom observation schemas, capture structured evidence and
+          uncompressed media with zero signal, and export complete,
+          publication-ready research datasets.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -127,249 +118,12 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
             {error}
           </p>
         )}
-        <p className="hp-capture-note">
-          The research preview is invite-only. Leave your email — we read every
-          request.
-        </p>
 
         <div className="hp-hero-actions">
-          <a className="text-button" href="#demo">
-            See it in action
-            <Icon name="chevron-down" size={15} />
-          </a>
-          <span className="hp-hero-sep" aria-hidden="true" />
-          <a
-            className="text-button"
-            href={APP_URL}
-            target="_blank"
-            rel="noopener"
-          >
-            Contributor sign-in
-          </a>
-          <span className="hp-hero-sep" aria-hidden="true" />
-          <a
-            className="text-button"
-            href={ADMIN_URL}
-            target="_blank"
-            rel="noopener"
-          >
-            Admin sign-in
+          <a className="text-button" href="#admin">
+            Explore workflow ↓
           </a>
         </div>
-
-        <ul className="hp-hero-stats">
-          <li>Three resumable sync phases</li>
-          <li>Guess-adjusted attention scores</li>
-          <li>DataCite 4.4 exports</li>
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-/** Generic tools vs collect — the differentiating factors. */
-const COMPARISON: Array<{
-  factor: string;
-  generic: string;
-  collect: React.ReactNode;
-}> = [
-  {
-    factor: "What “saved” means",
-    generic: "“Saved” can mean the request was sent",
-    collect: (
-      <>
-        Saved means <strong>committed to the device</strong> in one local
-        transaction, before the interface says anything
-      </>
-    ),
-  },
-  {
-    factor: "What “synced” means",
-    generic: "“Synced” can mean the upload finished",
-    collect: (
-      <>
-        Synced means the server's <strong>durable finalization receipt</strong>{" "}
-        — metadata, media, finalization, each resumable
-      </>
-    ),
-  },
-  {
-    factor: "Quality signal",
-    generic: "No way to tell careful records from rushed ones",
-    collect: (
-      <>
-        <strong>Automatic attention QA</strong> on every observation — a
-        guess-adjusted score per contributor, exported with the data
-      </>
-    ),
-  },
-  {
-    factor: "The dataset",
-    generic: "A folder of exports nobody can reuse",
-    collect: (
-      <>
-        A <strong>FAIR research package</strong>: JSONL + CSV + GeoJSON,
-        DataCite 4.4 metadata, data dictionary, media originals
-      </>
-    ),
-  },
-  {
-    factor: "Schemas",
-    generic: "The form can change mid-project",
-    collect: (
-      <>
-        <strong>Immutable schema versions</strong> — historical observations
-        keep their meaning
-      </>
-    ),
-  },
-  {
-    factor: "Provenance",
-    generic: "Manual fields contributors forget",
-    collect: (
-      <>
-        <strong>Recorded automatically</strong> — who, what schema, which
-        device, when, where, which app version, plus location and environment
-      </>
-    ),
-  },
-];
-
-function WhySection() {
-  return (
-    <section className="hp-section" id="why" aria-labelledby="why-title">
-      <div className="hp-section-inner">
-        <div className="section-heading">
-          <p className="eyebrow">Why collect is different</p>
-          <h2 id="why-title">Built for the place generic tools fail.</h2>
-        </div>
-        <div
-          className="hp-compare"
-          role="table"
-          aria-label="collect vs generic survey tools"
-        >
-          <div className="hp-compare-head" role="row">
-            <span role="columnheader" />
-            <span role="columnheader">Generic survey tool</span>
-            <span role="columnheader">collect</span>
-          </div>
-          {COMPARISON.map((row) => (
-            <div className="hp-compare-row" role="row" key={row.factor}>
-              <span className="hp-compare-factor" role="rowheader">
-                {row.factor}
-              </span>
-              <span className="hp-compare-generic" role="cell">
-                {row.generic}
-              </span>
-              <span className="hp-compare-collect" role="cell">
-                {row.collect}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function DataSection() {
-  return (
-    <section
-      className="hp-section hp-section-paper"
-      id="formats"
-      aria-labelledby="formats-title"
-    >
-      <div className="hp-section-inner">
-        <div className="section-heading">
-          <p className="eyebrow">The data you get</p>
-          <h2 id="formats-title">A dataset, not a folder.</h2>
-          <p>
-            Every checkpoint is a self-contained, machine-readable research
-            package.
-          </p>
-        </div>
-        <PackageBrowser />
-        <p className="hp-section-note">
-          Demo rows from <code>docs/demo-dataset</code>. The package format is
-          specified in{" "}
-          <a href={DOCS("export-format.md")} target="_blank" rel="noopener">
-            docs/export-format.md
-          </a>
-          .
-        </p>
-      </div>
-    </section>
-  );
-}
-
-const QUALITY_TABS = [
-  { value: "attention", label: "Attention QA" },
-  { value: "provenance", label: "Provenance" },
-];
-
-function QualitySection() {
-  const [tab, setTab] = useState("attention");
-  return (
-    <section
-      className="hp-section"
-      id="quality"
-      aria-labelledby="quality-title"
-    >
-      <div className="hp-section-inner">
-        <div className="section-heading">
-          <p className="eyebrow">Quality &amp; provenance</p>
-          <h2 id="quality-title">Measured, not assumed.</h2>
-          <p>
-            Verifiable quality signals and full device provenance, exported with
-            the dataset.
-          </p>
-        </div>
-        <div className="hp-quality">
-          <SegmentedControl
-            className="hp-quality-tabs"
-            label="Quality topic"
-            options={QUALITY_TABS}
-            value={tab}
-            onChange={setTab}
-          />
-          <div className="hp-quality-panel" key={tab}>
-            {tab === "attention" ? <AttentionDemo /> : <ProvenanceCard />}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function AdminBand() {
-  return (
-    <section
-      className="hp-section hp-section-dark"
-      aria-labelledby="admin-title"
-    >
-      <div className="hp-section-inner hp-admin-band">
-        <div>
-          <p className="eyebrow">
-            <img
-              className="hp-logo hp-logo-dark"
-              src="/icon-admin.svg"
-              alt=""
-              width={22}
-              height={22}
-            />
-            collect Admin
-          </p>
-          <h2 id="admin-title">The operations surface.</h2>
-          <p>Define the form, invite contributors, export the dataset.</p>
-        </div>
-        <a
-          className="button button-primary"
-          href={ADMIN_URL}
-          target="_blank"
-          rel="noopener"
-        >
-          Sign in to collect Admin
-        </a>
       </div>
     </section>
   );
@@ -377,28 +131,6 @@ function AdminBand() {
 
 export function HomepageApp() {
   const [draftEmail, setDraftEmail] = useState("");
-
-  // Scroll-based reveals: sections appear as they enter the viewport.
-  useEffect(() => {
-    const elements = document.querySelectorAll(".hp-reveal");
-    if (typeof IntersectionObserver === "undefined") {
-      elements.forEach((element) => element.classList.add("hp-in"));
-      return;
-    }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("hp-in");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.12 },
-    );
-    elements.forEach((element) => observer.observe(element));
-    return () => observer.disconnect();
-  }, []);
 
   const captureEmail = (email: string) => {
     setDraftEmail(email);
@@ -418,42 +150,134 @@ export function HomepageApp() {
       <main id="main">
         <Hero onEmailSubmit={captureEmail} />
 
-        <section className="hp-section hp-hero-demo" id="demo">
+        {/* Step 1: Real Admin Project Dashboard */}
+        <section
+          className="hp-section hp-section-dark"
+          id="admin"
+          aria-labelledby="admin-title"
+        >
           <div className="hp-section-inner">
-            <div className="hp-reveal">
-              <FlowDemo />
+            <div className="section-heading hp-admin-heading">
+              <p className="eyebrow">Step 1 · Setup & Operations</p>
+              <h2 id="admin-title">
+                Define immutable schemas and pair field devices.
+              </h2>
+              <p>
+                Author versioned questions, generate single-use device pairing
+                codes without passwords, monitor contributor readiness, and
+                trigger research snapshots.
+              </p>
+            </div>
+            <AdminWalkthrough />
+          </div>
+        </section>
+
+        {/* Step 2: Real Field Collection inside iPhone Mockup */}
+        <section
+          className="hp-section hp-section-paper"
+          id="collection"
+          aria-labelledby="collection-title"
+        >
+          <div className="hp-section-inner">
+            <div className="section-heading">
+              <p className="eyebrow">Step 2 · Field Collection</p>
+              <h2 id="collection-title">
+                Single-question focus. Built for the field.
+              </h2>
+              <p>
+                One question at a time, comfortable touch targets, uncompressed
+                photos, and atomic local receipts that guarantee no saved
+                observation is lost when offline.
+              </p>
+            </div>
+            <FlowDemo />
+          </div>
+        </section>
+
+        {/* Step 3: Differentiating Integrity & Provenance */}
+        <section
+          className="hp-section"
+          id="integrity"
+          aria-labelledby="integrity-title"
+        >
+          <div className="hp-section-inner">
+            <div className="section-heading">
+              <p className="eyebrow">Step 3 · Provenance & Quality</p>
+              <h2 id="integrity-title">
+                Trustworthy provenance without research payload bias.
+              </h2>
+              <p>
+                Cognitive attention verification is stripped before commit to
+                prevent data dictionary contamination, while device telemetry
+                and cryptographic hashes are captured automatically.
+              </p>
+            </div>
+            <div className="hp-integrity-grid">
+              <div className="hp-integrity-card">
+                <div className="hp-integrity-card-header">
+                  <h3>Attention Verification QA</h3>
+                  <p>
+                    Question never enters schema · Answer stripped before commit
+                  </p>
+                </div>
+                <AttentionDemo />
+              </div>
+              <div className="hp-integrity-card">
+                <div className="hp-integrity-card-header">
+                  <h3>Hardware & Environment Provenance</h3>
+                  <p>
+                    Automatic telemetry · Never blocks local submission receipt
+                  </p>
+                </div>
+                <ProvenanceCard />
+              </div>
             </div>
           </div>
         </section>
 
-        <div className="hp-reveal">
-          <WhySection />
-        </div>
-
-        <div className="hp-reveal">
-          <DataSection />
-        </div>
-
-        <div className="hp-reveal">
-          <QualitySection />
-        </div>
-
-        <div className="hp-reveal">
-          <AdminBand />
-        </div>
-
+        {/* Step 4: Real Data Package Checkpoint Explorer */}
         <section
           className="hp-section hp-section-paper"
+          id="data"
+          aria-labelledby="data-title"
+        >
+          <div className="hp-section-inner">
+            <div className="section-heading">
+              <p className="eyebrow">Step 4 · Archival & Export</p>
+              <h2 id="data-title">
+                A complete, self-contained research package.
+              </h2>
+              <p>
+                Every checkpoint archive includes canonical JSONL, CSV, GeoJSON,
+                DataCite 4.4 kernel metadata, machine-readable data dictionary,
+                and byte-for-byte original media with SHA-256 integrity hashes.
+              </p>
+            </div>
+            <PackageBrowser />
+            <p className="hp-section-note">
+              Live checkpoint inspection from <code>docs/demo-dataset</code>.
+              Specified in{" "}
+              <a href={DOCS("export-format.md")} target="_blank" rel="noopener">
+                docs/export-format.md
+              </a>
+              .
+            </p>
+          </div>
+        </section>
+
+        {/* Request Access / Deploy */}
+        <section
+          className="hp-section"
           id="preview"
           aria-labelledby="preview-title"
         >
           <div className="hp-section-inner hp-preview-layout">
             <div className="hp-preview-copy">
-              <p className="eyebrow">The research preview</p>
-              <h2 id="preview-title">Try it with your own fieldwork.</h2>
+              <p className="eyebrow">Get Started</p>
+              <h2 id="preview-title">Deploy collect for your research team.</h2>
               <p>
-                A running instance with your schema and contributors. Tell us
-                what you collect.
+                A hosted instance provisioned with your survey fields, team
+                invitations, and export requirements. Tell us what you collect.
               </p>
             </div>
             <div className="hp-preview-card">
@@ -466,33 +290,45 @@ export function HomepageApp() {
       <footer className="hp-footer">
         <div className="hp-footer-inner">
           <div className="hp-footer-brand">
-            <a className="hp-brand" href="#top">
+            <a className="hp-brand" href="#top" aria-label="collect home">
               <img
                 className="hp-logo"
                 src="/icon.svg"
                 alt=""
-                width={28}
-                height={28}
+                width={24}
+                height={24}
               />
               <span className="wordmark">
                 collect<span className="wordmark-dot">.</span>
               </span>
             </a>
-            <p>Fieldwork, ready offline. Source available under Apache-2.0.</p>
+            <p>
+              Infrastructure for trustworthy field evidence. Open source under
+              Apache-2.0.
+            </p>
           </div>
           <nav className="hp-footer-links" aria-label="Footer">
             <div>
-              <span className="hp-footer-heading">Access</span>
-              <a href="#preview">Research preview</a>
-              <a href="#demo">Live demo</a>
-              <a href={APP_URL} target="_blank" rel="noopener">
-                Contributor sign-in
-              </a>
-              <a href={ADMIN_URL} target="_blank" rel="noopener">
-                Admin sign-in
-              </a>
+              <span className="hp-footer-heading">Lifecycle</span>
+              <a href="#admin">1. Schema & Setup</a>
+              <a href="#collection">2. Field Collection</a>
+              <a href="#integrity">3. Integrity & QA</a>
+              <a href="#data">4. Data Package</a>
+              <a href="#preview">Request access</a>
+            </div>
+            <div>
+              <span className="hp-footer-heading">Documentation</span>
               <a href={GITHUB_URL} target="_blank" rel="noopener">
-                GitHub
+                GitHub repository
+              </a>
+              <a href={DOCS("export-format.md")} target="_blank" rel="noopener">
+                Export format spec
+              </a>
+              <a href={DOCS("architecture.md")} target="_blank" rel="noopener">
+                Architecture guide
+              </a>
+              <a href={DOCS("design.md")} target="_blank" rel="noopener">
+                Design baseline
               </a>
             </div>
           </nav>

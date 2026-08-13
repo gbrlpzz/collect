@@ -174,7 +174,9 @@ describe("AttentionDemo — real bank and real strip logic", () => {
 describe("PackageBrowser — derived from the canonical demo dataset", () => {
   it("defaults to manifest.json and shows derived files", () => {
     render(<PackageBrowser />);
-    expect(screen.getByText("manifest.json")).toBeTruthy();
+    expect(screen.getAllByText("manifest.json").length).toBeGreaterThanOrEqual(
+      1,
+    );
     expect(screen.getByText(/export_format_version/i)).toBeTruthy();
 
     fireEvent.click(screen.getByText("submissions.jsonl"));

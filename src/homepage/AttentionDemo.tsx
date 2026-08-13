@@ -78,8 +78,13 @@ export function AttentionDemo() {
   return (
     <div className="hp-attention">
       {!answered ? (
-        <>
-          <span className="chip">Quick check</span>
+        <div className="hp-attention-question">
+          <div className="hp-attention-header">
+            <span className="chip">Quick check</span>
+            <span className="hp-attention-hint">
+              Answer to see the QA proof
+            </span>
+          </div>
           <h3>{check.prompt}</h3>
           <div className="hp-attention-options">
             {options.map((option) => (
@@ -94,22 +99,52 @@ export function AttentionDemo() {
               </button>
             ))}
           </div>
-        </>
+        </div>
       ) : (
         stored && (
           <div className="hp-attention-result">
-            <div className="hp-record">
-              <p className="record-label">What the dataset stores</p>
-              <pre className="record-json">
-                {JSON.stringify(stored.record, null, 2)}
-              </pre>
+            <div className="hp-attention-banner">
+              <span
+                className={`hp-attention-status-badge ${answered.correct ? "hp-status-correct" : "hp-status-incorrect"}`}
+              >
+                <Icon name={answered.correct ? "check" : "x"} size={16} />
+                <span>
+                  {answered.correct
+                    ? "Verified correct against collect's bank"
+                    : "Missed check — recorded as failed"}
+                </span>
+              </span>
+              <div className="hp-score-badge">
+                <span className="hp-score-label">Guess-adjusted score</span>
+                <strong className="hp-score-value">
+                  {stored.score === null
+                    ? "no score yet"
+                    : `${Math.round(stored.score * 100)}/100`}
+                </strong>
+              </div>
             </div>
-            <div className="hp-record">
-              <p className="record-label">What never enters the payload</p>
-              <pre className="record-json record-stripped">
-                {JSON.stringify(stored.stripped, null, 2)}
-              </pre>
+
+            <div className="hp-record-grid">
+              <div className="hp-record">
+                <div className="record-header">
+                  <span className="record-dot record-dot-stored" />
+                  <p className="record-label">What the dataset stores</p>
+                </div>
+                <pre className="record-json">
+                  {JSON.stringify(stored.record, null, 2)}
+                </pre>
+              </div>
+              <div className="hp-record">
+                <div className="record-header">
+                  <span className="record-dot record-dot-stripped" />
+                  <p className="record-label">What never enters the payload</p>
+                </div>
+                <pre className="record-json record-stripped">
+                  {JSON.stringify(stored.stripped, null, 2)}
+                </pre>
+              </div>
             </div>
+
             <p className="muted">
               {answered.correct
                 ? "Correct — verified server-side against collect's own bank. This observation contributes one correct answer to the contributor's guess-adjusted attention score:"
@@ -122,9 +157,12 @@ export function AttentionDemo() {
               (0 = indistinguishable from blind guessing, 100 = perfect). The
               score is exported with the dataset.
             </p>
-            <Button variant="secondary" onClick={runAnother}>
-              <Icon name="refresh" size={15} /> Run another check
-            </Button>
+
+            <div className="hp-attention-actions">
+              <Button variant="secondary" onClick={runAnother}>
+                <Icon name="refresh" size={15} /> Run another check
+              </Button>
+            </div>
           </div>
         )
       )}

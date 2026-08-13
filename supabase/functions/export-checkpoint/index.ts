@@ -5,7 +5,9 @@ import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
 import { canonicalJson, sha256 } from "../_shared/hash.ts";
 
 function csvCell(value: unknown): string {
-  const text = typeof value === "string" ? value : JSON.stringify(value ?? "");
+  if (value === null || value === undefined) return '""';
+  const rawText = typeof value === "string" ? value : JSON.stringify(value);
+  const text = /^[=+\-@\t\r]/.test(rawText) ? `'${rawText}` : rawText;
   return `"${text.replaceAll('"', '""')}"`;
 }
 
