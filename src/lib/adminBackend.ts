@@ -32,6 +32,8 @@ export interface ContributorReadiness {
   attentionChecksTotal: number | null;
   attentionCorrectTotal: number | null;
   consentGranted: boolean;
+  /** Row represents a pending invitation the contributor has not claimed. */
+  invitedOnly?: boolean;
 }
 
 import { invokeFunction, readFunctionErrorBody } from "./functionError";
@@ -387,12 +389,25 @@ export async function sendProjectInvite(
   projectId: string,
   email: string,
   role: "contributor" | "admin" = "contributor",
+  resend = false,
 ): Promise<void> {
   const client = requireClient();
   await invokeFunction(client, "send-project-invite", {
     project_id: projectId,
     email,
     role,
+    resend,
+  });
+}
+
+export async function removeProjectContributor(
+  projectId: string,
+  email: string,
+): Promise<void> {
+  const client = requireClient();
+  await invokeFunction(client, "remove-project-contributor", {
+    project_id: projectId,
+    email,
   });
 }
 
@@ -419,53 +434,53 @@ export async function updateProjectStatus(
   if (error) throw error;
 }
 
-export async function loadProjectReadiness(
-  projectId: string,
-): Promise<ContributorReadiness[]> {
-  const client = requireClient();
-  const [{ data: members }, { data: invites }, { data: statuses }] =
-    await Promise.all([
-      client
-        .from("project_members")
-        .select("user_id")
-        .eq("project_id", projectId),
-      client
-        .from("project_invites")
-        .select("email,invited_user_id,status")
-        .eq("project_id", projectId),
-      client
-        .from("device_project_status")
-        .select(
-          "contributor_id,last_seen_at,last_sync_success_at,pending_submissions,pending_media,fieldwork_complete",
-        )
-        .eq("project_id", projectId)
-        .order("last_seen_at", { ascending: false }),
-    ]);
-  const memberIds = (members ?? []).map(
-    (member: { user_id: string }) => member.user_id,
-  );
-  const { data: profiles } = memberIds.length
-    ? await client
-        .from("contributor_profiles")
-        .select(
-          "user_id,attention_score,attention_checks_total,attention_correct_total,consent_granted_at,consent_revoked_at",
-        )
-        .in("user_id", memberIds)
-    : { data: [] };
-  return (members ?? []).map((member: { user_id: string }) => {
+interface ReadinessRowInputs {
+  members: Array<{ user_id: string }>;
+  invites: Array<{
+    id: string;
+    email: string;
+    invited_user_id: string | null;
+    status: string;
+  }>;
+  statuses: Array<{
+    contributor_id: string;
+    last_seen_at: string | null;
+    last_sync_success_at: string | null;
+    pending_submissions: number | null;
+    pending_media: number | null;
+    fieldwork_complete: boolean | null;
+  }>;
+  profiles: Array<{
+    user_id: string;
+    attention_score: number | null;
+    attention_checks_total: number | null;
+    attention_correct_total: number | null;
+    consent_granted_at: string | null;
+    consent_revoked_at: string | null;
+  }>;
+}
+
+/**
+ * Pure roster assembly: members first (with their device readiness), then
+ * still-pending invitations the contributor has not claimed, so an admin can
+ * resend or revoke an invite that has not produced a member yet.
+ */
+export function buildReadinessRows(
+  inputs: ReadinessRowInputs,
+): ContributorReadiness[] {
+  const { members, invites, statuses, profiles } = inputs;
+  const rows: ContributorReadiness[] = members.map((member) => {
     const invite = (invites ?? []).find(
-      (candidate: { invited_user_id: string | null }) =>
-        candidate.invited_user_id === member.user_id,
+      (candidate) => candidate.invited_user_id === member.user_id,
     );
     const profile = (profiles ?? []).find(
-      (candidate: { user_id: string }) => candidate.user_id === member.user_id,
+      (candidate) => candidate.user_id === member.user_id,
     );
     // A contributor can run the web app and an installed PWA on the same
     // phone, each with its own device row. Readiness must hold across every
     // device: one empty device must not mask pending work on another.
     const devices = (statuses ?? []).filter(
-      (candidate: { contributor_id: string }) =>
-        candidate.contributor_id === member.user_id,
+      (candidate) => candidate.contributor_id === member.user_id,
     );
     const pending = devices.reduce(
       (total, device) =>
@@ -515,4 +530,151 @@ export async function loadProjectReadiness(
         : false,
     };
   });
+  const memberEmails = new Set(rows.map((row) => row.email.toLowerCase()));
+  for (const invite of invites ?? []) {
+    if (invite.status !== "pending") continue;
+    if (invite.invited_user_id) {
+      if (members.some((member) => member.user_id === invite.invited_user_id))
+        continue;
+    } else if (memberEmails.has(invite.email.trim().toLowerCase())) {
+      continue;
+    }
+    rows.push({
+      id: `invite:${invite.id}`,
+      email: invite.email,
+      status: "Invitation pending",
+      ready: false,
+      pending: 0,
+      lastSeen: null,
+      received: 0,
+      attentionScore: null,
+      attentionChecksTotal: null,
+      attentionCorrectTotal: null,
+      consentGranted: false,
+      invitedOnly: true,
+    });
+  }
+  return rows;
+}
+
+export async function loadProjectReadiness(
+  projectId: string,
+): Promise<ContributorReadiness[]> {
+  const client = requireClient();
+  const [{ data: members }, { data: invites }, { data: statuses }] =
+    await Promise.all([
+      client
+        .from("project_members")
+        .select("user_id")
+        .eq("project_id", projectId),
+      client
+        .from("project_invites")
+        .select("id,email,invited_user_id,status")
+        .eq("project_id", projectId),
+      client
+        .from("device_project_status")
+        .select(
+          "contributor_id,last_seen_at,last_sync_success_at,pending_submissions,pending_media,fieldwork_complete",
+        )
+        .eq("project_id", projectId)
+        .order("last_seen_at", { ascending: false }),
+    ]);
+  const memberIds = (members ?? []).map(
+    (member: { user_id: string }) => member.user_id,
+  );
+  const { data: profiles } = memberIds.length
+    ? await client
+        .from("contributor_profiles")
+        .select(
+          "user_id,attention_score,attention_checks_total,attention_correct_total,consent_granted_at,consent_revoked_at",
+        )
+        .in("user_id", memberIds)
+    : { data: [] };
+  return buildReadinessRows({
+    members: (members ?? []) as ReadinessRowInputs["members"],
+    invites: (invites ?? []) as ReadinessRowInputs["invites"],
+    statuses: (statuses ?? []) as ReadinessRowInputs["statuses"],
+    profiles: (profiles ?? []) as ReadinessRowInputs["profiles"],
+  });
+}
+
+export interface ContributorProfileDetails {
+  submissions: Array<{
+    id: string;
+    status: string;
+    clientCreatedAt: string | null;
+    serverReceivedAt: string | null;
+  }>;
+  devices: Array<{
+    id: string;
+    lastSeenAt: string | null;
+    pending: number;
+    fieldworkComplete: boolean;
+  }>;
+  attention: Array<{
+    checkKey: string;
+    selectedValue: string;
+    correct: boolean | null;
+    passed: boolean | null;
+    guessProbability: number | null;
+    createdAt: string;
+  }>;
+}
+
+/** Admin-only detail view for one contributor: research records are read via
+ * RLS (project/organization administrator), never through a service role. */
+export async function loadContributorProfileDetails(
+  projectId: string,
+  contributorId: string,
+): Promise<ContributorProfileDetails> {
+  const client = requireClient();
+  const [{ data: submissions }, { data: statuses }, { data: attention }] =
+    await Promise.all([
+      client
+        .from("submissions")
+        .select("id,status,client_created_at,server_received_at")
+        .eq("project_id", projectId)
+        .eq("contributor_id", contributorId)
+        .order("server_received_at", { ascending: false })
+        .limit(50),
+      client
+        .from("device_project_status")
+        .select(
+          "device_id,last_seen_at,last_sync_success_at,pending_submissions,pending_media,fieldwork_complete",
+        )
+        .eq("project_id", projectId)
+        .eq("contributor_id", contributorId),
+      client
+        .from("attention_responses")
+        .select(
+          "check_key,selected_value,correct,passed,guess_probability,created_at",
+        )
+        .eq("project_id", projectId)
+        .eq("contributor_id", contributorId)
+        .order("created_at", { ascending: false })
+        .limit(8),
+    ]);
+  return {
+    submissions: (submissions ?? []).map((row) => ({
+      id: String(row.id),
+      status: String(row.status),
+      clientCreatedAt: row.client_created_at,
+      serverReceivedAt: row.server_received_at,
+    })),
+    devices: (statuses ?? []).map((row) => ({
+      id: String(row.device_id),
+      lastSeenAt: row.last_seen_at,
+      pending:
+        Number(row.pending_submissions ?? 0) + Number(row.pending_media ?? 0),
+      fieldworkComplete: Boolean(row.fieldwork_complete),
+    })),
+    attention: (attention ?? []).map((row) => ({
+      checkKey: String(row.check_key),
+      selectedValue: String(row.selected_value),
+      correct: row.correct ?? null,
+      passed: row.passed ?? null,
+      guessProbability: row.guess_probability ?? null,
+      createdAt: String(row.created_at),
+    })),
+  };
 }

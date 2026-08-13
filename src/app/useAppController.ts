@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { isSubmissionPending } from "../types";
-import type { AppMode, AppState, SyncProgressEntry, View } from "../types";
+import type {
+  AppMode,
+  AppState,
+  Project,
+  SyncProgressEntry,
+  View,
+} from "../types";
 import type { MediaAsset } from "../types";
 import { emptyProject, initialState } from "../data/demoState";
 import {
@@ -245,6 +251,47 @@ export function useAppController() {
   useEffect(() => {
     if (!supabase || !session) return;
     let active = true;
+    const applyRemoteProjects = async (
+      remoteProjects: Project[],
+      adminAccess: boolean,
+    ) => {
+      let hasAdminAccess = adminAccess;
+      // On a fresh deployment the first authenticated person should land in
+      // setup, not in an empty contributor surface. The Edge Function remains
+      // the authority: it only succeeds for the configured bootstrap email or
+      // for the first empty database when no guard is set.
+      if (!hasAdminAccess && remoteProjects.length === 0) {
+        try {
+          await bootstrapWorkspace(defaultOrganizationName);
+          hasAdminAccess = true;
+        } catch {
+          // A contributor on an existing deployment may have no assignment.
+          // Keep them in the contributor surface; the server has denied setup.
+        }
+      }
+      if (!active) return;
+      setAdminAccess(hasAdminAccess ? "allowed" : "denied");
+      if (remoteProjects.length)
+        setState((current) => ({
+          ...current,
+          projects: remoteProjects,
+          project:
+            remoteProjects.find(
+              (candidate) => candidate.id === current.project.id,
+            ) ?? remoteProjects[0],
+        }));
+      else
+        setState((current) => ({
+          ...current,
+          projects: [],
+          // Confirmed empty assignment: hide the cached project so a
+          // revoked contributor cannot keep collecting offline into
+          // ACTION_REQUIRED records.
+          project: emptyProject,
+          mode: current.mode,
+          view: current.mode === "admin" ? "admin" : "home",
+        }));
+    };
     // Invites are claimed before the project list loads: an already-registered
     // contributor receives membership only through claim-invites, and the list
     // must never read an empty roster ahead of that upsert.
@@ -253,43 +300,29 @@ export function useAppController() {
       .then(() => Promise.all([loadAssignedProjects(), loadUserAdminAccess()]))
       .then(async ([remoteProjects, adminAccess]) => {
         if (!active) return;
-        if (remoteProjects === null) return;
-        let hasAdminAccess = adminAccess;
-        // On a fresh deployment the first authenticated person should land in
-        // setup, not in an empty contributor surface. The Edge Function remains
-        // the authority: it only succeeds for the configured bootstrap email or
-        // for the first empty database when no guard is set.
-        if (!hasAdminAccess && remoteProjects.length === 0) {
-          try {
-            await bootstrapWorkspace(defaultOrganizationName);
-            hasAdminAccess = true;
-          } catch {
-            // A contributor on an existing deployment may have no assignment.
-            // Keep them in the contributor surface; the server has denied setup.
+        if (remoteProjects === null) {
+          // A failed roster read must never look like "no projects assigned".
+          // Retry with backoff; keep whatever the device already knew.
+          for (const delay of [2000, 4000, 8000]) {
+            if (!active) return;
+            await new Promise((resolve) => window.setTimeout(resolve, delay));
+            if (!active) return;
+            const retried = await loadAssignedProjects();
+            if (!active) return;
+            if (retried !== null) {
+              const adminAccessRetry = await loadUserAdminAccess();
+              if (!active) return;
+              await applyRemoteProjects(retried, adminAccessRetry);
+              return;
+            }
           }
+          if (active)
+            showToast(
+              "Could not load your projects. Check your connection and reopen the app.",
+            );
+          return;
         }
-        if (!active) return;
-        setAdminAccess(hasAdminAccess ? "allowed" : "denied");
-        if (remoteProjects.length)
-          setState((current) => ({
-            ...current,
-            projects: remoteProjects,
-            project:
-              remoteProjects.find(
-                (candidate) => candidate.id === current.project.id,
-              ) ?? remoteProjects[0],
-          }));
-        else
-          setState((current) => ({
-            ...current,
-            projects: [],
-            // Confirmed empty assignment: hide the cached project so a
-            // revoked contributor cannot keep collecting offline into
-            // ACTION_REQUIRED records.
-            project: emptyProject,
-            mode: current.mode,
-            view: current.mode === "admin" ? "admin" : "home",
-          }));
+        await applyRemoteProjects(remoteProjects, adminAccess);
       })
       .catch(() => {
         setAdminAccess((current) =>

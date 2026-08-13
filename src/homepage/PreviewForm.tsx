@@ -58,9 +58,13 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       setSent(true);
-    } catch {
+    } catch (error) {
+      const status =
+        error instanceof Error ? Number(error.message.replace(/\D/g, "")) : 0;
       setError(
-        "Couldn't reach the server right now. Please try again in a moment.",
+        status === 409 || status === 42501
+          ? "This address is already on the preview list — we'll be in touch."
+          : "Couldn't reach the server right now. Please try again in a moment.",
       );
     } finally {
       setSending(false);
