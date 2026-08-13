@@ -337,7 +337,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("injects a quick check after the first two questions and saves its self-describing answer", async () => {
+  it("injects an attention check after the first two questions and saves its self-describing answer", async () => {
     const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.5);
     const onSubmitted = vi.fn();
     const initialDraft = {
@@ -364,7 +364,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
     }
     render(<StatefulHarness />);
     try {
-      // site_code → site_photos → field notes → quick check → people present
+      // site_code → site_photos → field notes → attention check → people present
       fireEvent.click(continueButton());
       const input = document.querySelector(
         'input[type="file"]',
@@ -381,7 +381,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
       });
       fireEvent.click(continueButton());
       fireEvent.click(continueButton());
-      expect(screen.getByText("Quick check")).toBeTruthy();
+      expect(screen.getByText(/For this attention check, select/)).toBeTruthy();
       const option = screen
         .getAllByRole("button")
         .find(

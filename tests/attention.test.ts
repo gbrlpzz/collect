@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
 import { ATTENTION_CHECKS } from "../src/data/attentionChecks";
 import {
   attentionFieldFor,
@@ -9,14 +10,41 @@ import {
 } from "../src/lib/attention";
 
 describe("attention verification", () => {
-  it("bank questions are universally valid multiple choice with a 25% guess probability", () => {
+  it("keeps every prompt and answer internally consistent", () => {
     expect(ATTENTION_CHECKS.length).toBeGreaterThanOrEqual(8);
+    expect(new Set(ATTENTION_CHECKS.map((check) => check.key)).size).toBe(
+      ATTENTION_CHECKS.length,
+    );
     for (const check of ATTENTION_CHECKS) {
       expect(check.options.length).toBe(4);
       expect(check.guessProbability).toBe(0.25);
-      expect(
-        check.options.some((option) => option.value === check.correctValue),
-      ).toBe(true);
+      expect(new Set(check.options.map((option) => option.value)).size).toBe(4);
+      expect(new Set(check.options.map((option) => option.label)).size).toBe(4);
+      const correctOptions = check.options.filter(
+        (option) => option.value === check.correctValue,
+      );
+      expect(correctOptions).toHaveLength(1);
+      expect(check.prompt).toContain(`“${correctOptions[0].label}”`);
+    }
+  });
+
+  it("keeps the client bank synchronized with the server migration", () => {
+    const migration = readFileSync(
+      new URL(
+        "../supabase/migrations/20260813073000_curate_attention_checks.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    for (const check of ATTENTION_CHECKS) {
+      const correct = check.options.find(
+        (option) => option.value === check.correctValue,
+      )!;
+      expect(migration).toContain(`'${check.key}'`);
+      expect(migration).toContain(check.prompt);
+      expect(migration).toContain(
+        `{"value":"${correct.value}","label":"${correct.label}"}`,
+      );
     }
   });
 
@@ -33,7 +61,9 @@ describe("attention verification", () => {
     const check = ATTENTION_CHECKS[0];
     const field = attentionFieldFor(check);
     expect(field.type).toBe("single_choice");
+    expect(field.label).toBe(check.prompt);
     expect(field.config?.attentionCheckKey).toBe(check.key);
+    expect(field.config?.attentionCheck).toBe(true);
     expect(field.options).toHaveLength(4);
     // option ids embed "checkKey:value" so the answer is self-describing;
     // the presentation order is shuffled, so compare as sets.
@@ -43,9 +73,12 @@ describe("attention verification", () => {
   });
 
   it("extracts the answer and keeps the payload clean", () => {
-    const values = { site_code: "VA-001", _attention: "sky_color:blue" };
+    const values = { site_code: "VA-001", _attention: "select_blue:blue" };
     const { values: cleaned, response } = extractAttentionResponse(values);
-    expect(response).toEqual({ checkKey: "sky_color", selectedValue: "blue" });
+    expect(response).toEqual({
+      checkKey: "select_blue",
+      selectedValue: "blue",
+    });
     expect(cleaned).toEqual({ site_code: "VA-001" });
     expect("_attention" in cleaned).toBe(false);
     expect(

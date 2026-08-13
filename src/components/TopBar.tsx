@@ -50,7 +50,6 @@ export function TopBar({
       active = false;
     };
   }, [isAdmin, userEmail]);
-  const accountLabel = isPreview ? "Preview" : (userEmail ?? "Account");
   const surfaceLabel = isAdmin ? "Admin" : "Fieldwork";
 
   return (
@@ -74,19 +73,18 @@ export function TopBar({
           <div className="topbar-actions">
             <button
               className={`account-button ${profileOpen ? "account-button-open" : ""}`}
+              aria-label={isPreview ? "Open preview profile" : "Open profile"}
               aria-expanded={profileOpen}
               aria-haspopup="dialog"
               onClick={() => setProfileOpen(true)}
             >
-              <span>{accountLabel}</span>
-              <Icon name="chevron-down" size={14} />
+              <Icon name="person" size={20} />
             </button>
           </div>
         </div>
       </header>
       {profileOpen && (
         <ProfileSheet
-          userEmail={userEmail}
           profile={profile}
           observations={observations}
           lastSyncAt={lastSyncAt}

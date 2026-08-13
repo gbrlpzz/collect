@@ -155,6 +155,10 @@ without losing structure. JSONL remains canonical.
 
 One row per submission that contained an attention check:
 
+- `passed` is the explicit server-derived pass/fail result;
+- `correct` is retained as the canonical historical field and always matches `passed`;
+- `check_key` and `selected_value` make the result auditable against the versioned check bank.
+
 ```text
 submission_id, contributor_id, project_id, check_key, selected_value, correct, guess_probability, created_at
 ```

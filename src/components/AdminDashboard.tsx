@@ -54,13 +54,15 @@ export function AdminDashboard({
     <main className="page page-admin">
       <div className="page-heading admin-heading">
         <h1>Projects</h1>
-        <Button
-          variant="primary"
-          icon="plus"
-          onClick={() => onNavigate("new-project")}
-        >
-          New project
-        </Button>
+        <div className="primary-action-dock">
+          <Button
+            variant="primary"
+            icon="plus"
+            onClick={() => onNavigate("new-project")}
+          >
+            New project
+          </Button>
+        </div>
       </div>
 
       <section className="admin-section">
@@ -101,13 +103,6 @@ export function AdminDashboard({
             <span>
               Create a project, define its schema, and invite contributors.
             </span>
-            <Button
-              variant="secondary"
-              icon="plus"
-              onClick={() => onNavigate("new-project")}
-            >
-              Create project
-            </Button>
           </div>
         )}
       </section>
@@ -199,7 +194,7 @@ export function AdminProject({
       </div>
       <div className="admin-metrics">
         <div>
-          <span>Complete submissions</span>
+          <span>Received</span>
           <strong>{receivedCount}</strong>
         </div>
         <div>
@@ -349,7 +344,7 @@ function SchemaPanel({
             {dataFields.length === 1 ? "question" : "questions"}
           </p>
         </div>
-        <div className="panel-actions">
+        <div className="panel-actions admin-context-actions">
           {onPreview && (
             <Button variant="secondary" icon="play" onClick={onPreview}>
               Preview
@@ -802,14 +797,16 @@ function ContributorsPanel({
             <h2>Contributors</h2>
             <p>{rows.length} assigned · status updates automatically</p>
           </div>
-          <Button
-            variant="secondary"
-            icon="plus"
-            onClick={() => setInviteOpen(true)}
-            disabled={inviting}
-          >
-            Add contributor
-          </Button>
+          <div className="admin-context-actions">
+            <Button
+              variant="secondary"
+              icon="plus"
+              onClick={() => setInviteOpen(true)}
+              disabled={inviting}
+            >
+              Add contributor
+            </Button>
+          </div>
         </div>
         <div className="contributor-list">
           {rows.length ? (
@@ -892,9 +889,11 @@ function ContributorsPanel({
           <h2>Preview roster</h2>
           <p>Preview data is not connected to a live contributor roster.</p>
         </div>
-        <Button variant="secondary" icon="plus" onClick={inviteUnavailable}>
-          Add contributor
-        </Button>
+        <div className="admin-context-actions">
+          <Button variant="secondary" icon="plus" onClick={inviteUnavailable}>
+            Add contributor
+          </Button>
+        </div>
       </div>
       <Divider />
       <div className="empty-list-state">
@@ -944,9 +943,11 @@ function ExportPanel({
           <strong>{receivedCount} complete submissions · media included</strong>
         </div>
       </div>
-      <Button variant="primary" icon="download" onClick={onExport} fullWidth>
-        Export checkpoint
-      </Button>
+      <div className="admin-context-actions admin-context-actions-single">
+        <Button variant="primary" icon="download" onClick={onExport} fullWidth>
+          Export checkpoint
+        </Button>
+      </div>
       <p className="export-note">
         <Icon name="info" size={15} /> Export is a snapshot, not a claim that
         offline devices have no unseen data.

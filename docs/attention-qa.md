@@ -1,6 +1,6 @@
 # Attention verification
 
-`collect` can include one low-complexity verification question in each observation. The server validates the answer and maintains an advisory contributor-level summary.
+`collect` includes one low-complexity instruction check in each observation. The server validates the answer, stores an explicit pass/fail result, and maintains an advisory contributor-level summary.
 
 The mechanism is intended to help a research team interpret possible inattention. It is not an automatic exclusion rule, competence assessment, or substitute for protocol-specific data-quality review.
 
@@ -24,18 +24,18 @@ The repository contains a default bank of four-option questions in:
 - `src/data/attentionChecks.ts` for offline rendering;
 - `supabase/migrations/20260812140000_attention_checks.sql` for server validation.
 
-Each entry has a stable key, prompt, options, correct value, and blind-guess probability. Client and server entries must remain synchronized.
+Each entry has a stable key, prompt, options, correct value, and blind-guess probability. Client and server entries must remain synchronized. The default prompts are generated from their correct option, for example, “For this attention check, select ‘Blue’.” This construction makes the instruction and answer internally consistent.
 
-The default bank is illustrative rather than universally appropriate. Before deployment, review every question for:
+The default bank uses literal selection instructions rather than knowledge questions. It therefore avoids geographic, seasonal, scientific, and personal assumptions. Before translating or replacing it, review every check for:
 
 - interface language and translation;
 - expected literacy and numeracy;
-- cultural and geographic assumptions;
+- prompt-answer consistency;
 - disability and accessibility implications;
 - respondent age and education;
 - the research protocol’s ethics and consent requirements.
 
-A question can be simple without being population-neutral. Deployments should replace or disable unsuitable entries.
+An instruction can be simple without being accessible to every population. Deployments should replace or disable unsuitable entries.
 
 ## Injection
 
@@ -44,7 +44,7 @@ A question can be simple without being population-neutral. Deployments should re
 - Options are shuffled for each presentation.
 - The check appears after at least two research fields.
 - The reserved field key is `_attention`.
-- The contributor sees the neutral label **Quick check**.
+- The contributor sees the explicit label **Attention check** and the complete instruction.
 
 The administrator preview includes the same interaction, but preview responses are not persisted.
 
@@ -63,7 +63,7 @@ The prompt text is not copied into the observation payload, attention response r
 
 1. selects the active server-side check by key;
 2. compares the selected value with `correct_value`;
-3. writes one `attention_responses` row per submission;
+3. writes one `attention_responses` row per submission with server-derived `correct` and `passed` values;
 4. sets `submissions.attention_failed`;
 5. calls `recompute_attention_score()`.
 
@@ -96,7 +96,7 @@ Small samples are unstable. The interface and exports therefore include the numb
 
 - Contributors see their score and count in Profile with an explanation.
 - Administrators can see the advisory summary while reviewing readiness.
-- `data/attention.csv` contains per-submission results.
+- `data/attention.csv` contains per-submission `correct` and `passed` results.
 - `data/contributors.csv` contains aggregate score and count fields.
 - `submissions.attention_failed` provides a direct record-level flag.
 
@@ -109,7 +109,8 @@ The application never changes, removes, or refuses a local observation because o
 3. One response row exists per submission.
 4. Retry cannot double-count a response.
 5. The score is explanatory metadata, not an automatic decision.
-6. Question suitability is a deployment responsibility.
+6. Every prompt names exactly one option, and that option is the configured correct value.
+7. Question suitability remains a deployment responsibility.
 
 ## Configure the bank
 

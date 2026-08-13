@@ -29,6 +29,8 @@ The most frequent consequential action is the easiest to reach.
 
 The contributor surface does not expose database views, queue internals, administrator metrics, or persistent top-level navigation.
 
+On compact screens, the primary observation action stays in a safe-area-aware bottom dock within comfortable thumb reach. Identity is represented by one 44-point profile control; the email address is not repeated in navigation or profile chrome.
+
 ### Administrator hierarchy
 
 1. Project or contributor requiring action
@@ -38,6 +40,8 @@ The contributor surface does not expose database views, queue internals, adminis
 5. Schema details, identifiers, and technical recovery information
 
 Rare project actions belong in a secondary action menu. Supporting configuration remains collapsed until requested.
+
+On compact screens, the current contextual action—create project, edit or preview form, add contributor, or export—uses the same bottom dock instead of competing with the page heading.
 
 ## Core principles
 

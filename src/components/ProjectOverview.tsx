@@ -49,15 +49,19 @@ export function ProjectOverview({
         </section>
       )}
 
-      <Button
-        variant="primary"
-        fullWidth
-        icon="plus"
-        onClick={() => onNavigate("collector")}
-        disabled={project.status === "closed"}
-      >
-        {project.status === "closed" ? "Collection closed" : "Add observation"}
-      </Button>
+      <div className="primary-action-dock">
+        <Button
+          variant="primary"
+          fullWidth
+          icon="plus"
+          onClick={() => onNavigate("collector")}
+          disabled={project.status === "closed"}
+        >
+          {project.status === "closed"
+            ? "Collection closed"
+            : "Add observation"}
+        </Button>
+      </div>
 
       <section
         className="project-list project-list-detail"

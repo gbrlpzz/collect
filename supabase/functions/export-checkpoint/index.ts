@@ -148,7 +148,7 @@ async function buildExport(
     ? await service
       .from("attention_responses")
       .select(
-        "submission_id,contributor_id,project_id,check_key,selected_value,correct,guess_probability,created_at",
+        "submission_id,contributor_id,project_id,check_key,selected_value,correct,passed,guess_probability,created_at",
       )
       .in("submission_id", submissionIds)
       .order("created_at", {
@@ -323,6 +323,7 @@ async function buildExport(
       "check_key",
       "selected_value",
       "correct",
+      "passed",
       "guess_probability",
       "created_at",
     ]),
@@ -334,6 +335,7 @@ async function buildExport(
         row.check_key,
         row.selected_value,
         row.correct,
+        row.passed,
         row.guess_probability,
         row.created_at,
       ])

@@ -237,7 +237,7 @@ describe("low-friction primary actions", () => {
       screen.getByRole("heading", { name: /new observation/i }),
     ).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /^projects$/i })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /start observation/i }));
+    fireEvent.click(screen.getByRole("button", { name: /add observation/i }));
     expect(onStartObservation).toHaveBeenCalledWith(project);
   });
 
@@ -257,7 +257,7 @@ describe("low-friction primary actions", () => {
     );
 
     expect(
-      screen.queryByRole("button", { name: /start observation/i }),
+      screen.queryByRole("button", { name: /add observation/i }),
     ).toBeNull();
     fireEvent.click(
       screen.getByRole("button", { name: /resume observation/i }),
@@ -273,7 +273,7 @@ describe("low-friction primary actions", () => {
     expect(
       screen.queryByRole("button", { name: /switch to admin/i }),
     ).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Account" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open profile" }));
     expect(screen.queryByRole("menuitem", { name: /admin/i })).toBeNull();
   });
 
@@ -289,7 +289,8 @@ describe("low-friction primary actions", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "field@example.com" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open profile" }));
+    expect(screen.queryByText("field@example.com")).toBeNull();
     fireEvent.click(
       screen.getByRole("button", { name: /sign in another device/i }),
     );
@@ -317,7 +318,7 @@ describe("low-friction primary actions", () => {
         onNavigate={() => undefined}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "field@example.com" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open profile" }));
 
     await waitFor(() =>
       expect(

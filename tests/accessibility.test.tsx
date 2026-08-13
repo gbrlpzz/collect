@@ -44,7 +44,6 @@ describe("automated accessibility checks", () => {
   it("keeps profile privacy and statistics semantically valid", async () => {
     const { container } = render(
       <ProfileSheet
-        userEmail="field@example.com"
         profile={{
           userId: "u1",
           consentVersion: 1,
