@@ -236,9 +236,15 @@ function StatusBar() {
   );
 }
 
-function IPhone({ children }: { children: React.ReactNode }) {
+function IPhone({
+  children,
+  zoom,
+}: {
+  children: React.ReactNode;
+  zoom?: number | null;
+}) {
   return (
-    <div className="hp-iphone">
+    <div className="hp-iphone" style={zoom ? { zoom } : undefined}>
       <div
         className="hp-iphone-buttons hp-iphone-buttons-left"
         aria-hidden="true"
@@ -265,6 +271,8 @@ function IPhone({ children }: { children: React.ReactNode }) {
   );
 }
 
+const PHONE_HEIGHT = 868;
+
 export function FlowDemo() {
   const [round, setRound] = useState(0);
   const [phase, setPhase] = useState<Phase>("collecting");
@@ -277,6 +285,7 @@ export function FlowDemo() {
   const [narrativeKey, setNarrativeKey] = useState<string>("site_section");
   const [syncStage, setSyncStage] = useState<SyncStage>(0);
   const [autoState, setAutoState] = useState<AutoState>("idle");
+  const [fitZoom, setFitZoom] = useState<number | null>(null);
   const timersRef = useRef<number[]>([]);
   const screenRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -307,6 +316,45 @@ export function FlowDemo() {
 
   useEffect(() => () => timersRef.current.forEach(clearTimeout), []);
 
+  // The phone stays within the viewport height: scale it down on short
+  // screens (desktop only; the CSS media queries handle phones).
+  useEffect(() => {
+    const compute = () => {
+      if (typeof window === "undefined" || window.innerWidth < 900) {
+        setFitZoom(null);
+        return;
+      }
+      const available = window.innerHeight - 150;
+      setFitZoom(available < PHONE_HEIGHT ? available / PHONE_HEIGHT : null);
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    return () => window.removeEventListener("resize", compute);
+  }, []);
+
+  // While the demo plays itself, the page stands still: scroll is locked
+  // and the phone is centered in the viewport. Scroll resumes after the
+  // walk has gone through every action (save + finalization), or the
+  // moment the visitor takes over. A safety timer prevents a trap.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (autoState === "playing") {
+      root.classList.add("hp-lock");
+      frameRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+      const safety = window.setTimeout(() => {
+        root.classList.remove("hp-lock");
+      }, 45000);
+      return () => {
+        window.clearTimeout(safety);
+        root.classList.remove("hp-lock");
+      };
+    }
+    if (autoState === "done" && syncStage === 3) {
+      root.classList.remove("hp-lock");
+    }
+    return undefined;
+  }, [autoState, syncStage]);
+
   const stopAuto = () => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
@@ -314,25 +362,28 @@ export function FlowDemo() {
   };
 
   // The automaton drives the real UI. It stops the moment the visitor
-  // touches the phone (or presses a key), handing over control.
+  // touches the phone (or presses a key), handing over control. The tick
+  // loop owns a single chained timer so stopping it never touches the sync
+  // timers; the "done" state is set by the sync completion instead.
   useEffect(() => {
-    if (autoState !== "playing") return;
+    if (autoState !== "playing" || phase !== "collecting") return;
     const root = screenRef.current;
     if (!root) return;
+    let tickTimer = 0;
     const tick = () => {
       const next = autoStep(root, lastTitleRef.current);
       lastTitleRef.current =
         root
           .querySelector<HTMLElement>(".flow-body .step-title")
           ?.textContent?.trim() ?? "";
-      if (next === "done" || phase === "home") {
+      if (next === "done") {
         setAutoState("done");
         return;
       }
-      timersRef.current.push(window.setTimeout(tick, 1250));
+      tickTimer = window.setTimeout(tick, 1250);
     };
-    timersRef.current.push(window.setTimeout(tick, 900));
-    return stopAuto;
+    tickTimer = window.setTimeout(tick, 900);
+    return () => window.clearTimeout(tickTimer);
   }, [autoState, phase, round]);
 
   // Start the self-play once the demo scrolls into view — unless the
@@ -398,7 +449,6 @@ export function FlowDemo() {
   const handleSubmit = (values: Record<string, unknown>) => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
-    setAutoState("done");
     setSavedValues(values);
     setObservation({
       id: "demo-observation",
@@ -415,6 +465,7 @@ export function FlowDemo() {
       timersRef.current.push(
         window.setTimeout(() => {
           setSyncStage(3);
+          setAutoState("done");
           setObservation((current) =>
             current ? { ...current, status: "SYNCED" } : current,
           );
@@ -427,6 +478,7 @@ export function FlowDemo() {
       window.setTimeout(() => setSyncStage(2), 3400),
       window.setTimeout(() => {
         setSyncStage(3);
+        setAutoState("done");
         setObservation((current) =>
           current ? { ...current, status: "SYNCED" } : current,
         );
@@ -524,7 +576,7 @@ export function FlowDemo() {
       </div>
 
       <div className="hp-iphone-wrap">
-        <IPhone>
+        <IPhone zoom={fitZoom}>
           <div className="hp-app-viewport" ref={screenRef}>
             {phase === "collecting" ? (
               <Collector

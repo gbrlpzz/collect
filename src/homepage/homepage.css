@@ -8,6 +8,11 @@
 
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}
+/* The demo plays with the page standing still. */
+html.hp-lock {
+  overflow: hidden;
 }
 
 .hp-shell {
