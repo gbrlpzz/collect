@@ -47,8 +47,8 @@
   --flow-content-max: 520px;
   --control-height: 44px;
   --row-height: 68px;
-  --control-radius: 11px;
-  --group-radius: 16px;
+  --control-radius: 999px;
+  --group-radius: 20px;
   --radius: 12px;
   --radius-large: 16px;
 }
@@ -444,12 +444,32 @@ h3 {
   padding: 17px 0;
 }
 .admin-tabs {
-  gap: var(--space-6);
+  width: fit-content;
+  max-width: 100%;
+  gap: var(--space-1);
   min-height: var(--control-height);
   margin-bottom: var(--space-6);
+  padding: var(--space-1);
+  overflow-x: auto;
+  border: 1px solid var(--separator-light);
+  border-radius: 999px;
+  background: var(--grouped);
+  scrollbar-width: none;
+}
+.admin-tabs::-webkit-scrollbar {
+  display: none;
 }
 .admin-tabs button {
   min-height: var(--control-height);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.admin-tabs button.tab-active {
+  border: 0;
+  background: var(--paper);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
 }
 .panel-heading {
   gap: var(--space-6);
@@ -605,6 +625,19 @@ h3 {
   padding-right: var(--space-4);
   padding-left: var(--space-4);
 }
+.status-badge {
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--separator-light);
+  border-radius: 999px;
+  background: var(--grouped);
+}
+.collector-topbar .back-button {
+  width: fit-content;
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  background: var(--grouped);
+}
 .text-button,
 .back-button,
 .recovery-button {
@@ -618,6 +651,9 @@ h3 {
   border-radius: var(--control-radius);
   background: var(--paper);
   color: var(--text);
+}
+.field-textarea {
+  border-radius: 18px;
 }
 .choice-button > span:first-child,
 .capture-copy,
@@ -888,21 +924,22 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   .admin-context-actions {
     position: fixed;
     z-index: 18;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: var(--space-3) max(var(--page-gutter), env(safe-area-inset-right))
-      calc(var(--space-3) + env(safe-area-inset-bottom))
-      max(var(--page-gutter), env(safe-area-inset-left));
-    border-top: 1px solid var(--separator-light);
+    right: max(var(--space-3), env(safe-area-inset-right));
+    bottom: max(var(--space-2), env(safe-area-inset-bottom));
+    left: max(var(--space-3), env(safe-area-inset-left));
+    width: auto;
+    padding: 6px;
+    border: 1px solid var(--separator-light);
+    border-radius: 999px;
     background: var(--glass);
     -webkit-backdrop-filter: blur(22px) saturate(180%);
     backdrop-filter: blur(22px) saturate(180%);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
   }
   .primary-action-dock .button,
   .admin-context-actions .button {
     min-height: 52px;
+    border-radius: 999px;
   }
   .primary-action-dock .draft-note {
     display: none;
@@ -1307,8 +1344,9 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--separator-light);
-  border-radius: var(--group-radius);
+  border-radius: 999px;
   background: var(--paper);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.045);
   text-align: left;
 }
 .collection-project-row > span {
@@ -1678,7 +1716,7 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   margin-bottom: var(--space-5);
 }
 .profile-email {
-  margin: var(--space-2) 0 var(--space-5);
+  margin: calc(var(--space-5) * -1 + var(--space-2)) 0 var(--space-5);
   overflow: hidden;
   color: var(--secondary);
   font-size: 0.875rem;
@@ -1758,9 +1796,10 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   text-align: right;
 }
 .profile-actions-list {
-  overflow: hidden;
-  border: 1px solid var(--separator-light);
-  border-radius: var(--radius-medium);
+  display: grid;
+  gap: var(--space-2);
+  overflow: visible;
+  border: 0;
 }
 .profile-action-row {
   width: 100%;
@@ -1770,11 +1809,16 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border: 0;
-  border-top: 1px solid var(--separator-light);
+  border: 1px solid var(--separator-light);
+  border-radius: 18px;
   background: var(--paper);
   color: var(--text);
   text-align: left;
+}
+.profile-actions-list .profile-disclosure {
+  border: 1px solid var(--separator-light);
+  border-radius: 18px;
+  background: var(--paper);
 }
 .profile-disclosure > summary {
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -1899,6 +1943,28 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 }
 
 @media (max-width: 680px) {
+  .flow-actions {
+    width: calc(100% - 24px);
+    margin: 0 12px max(8px, env(safe-area-inset-bottom));
+    padding: 6px;
+    border: 1px solid var(--separator-light);
+    border-radius: 999px;
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+  }
+  .flow-back {
+    background: var(--grouped);
+  }
+  .flow-continue {
+    border-radius: 999px;
+  }
+  html[data-keyboard-open="true"] .flow-actions {
+    width: calc(100% - 16px);
+    margin: 0 8px 4px;
+    padding: 4px;
+  }
   .admin-project-card {
     grid-template-columns: minmax(0, 1fr) auto auto;
   }
@@ -1944,5 +2010,25 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
     height: 1px;
     overflow: hidden;
     clip: rect(0 0 0 0);
+  }
+}
+
+@media (max-width: 680px) {
+  .mobile-tabbar {
+    right: max(var(--space-3), env(safe-area-inset-right));
+    bottom: max(var(--space-2), env(safe-area-inset-bottom));
+    left: max(var(--space-3), env(safe-area-inset-left));
+    min-height: 58px;
+    padding: 4px;
+    border: 1px solid var(--separator-light);
+    border-radius: 999px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+  }
+  .mobile-tabbar button {
+    min-height: 48px;
+    border-radius: 999px;
+  }
+  .mobile-tabbar button.mobile-tab-active {
+    background: var(--grouped);
   }
 }

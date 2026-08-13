@@ -290,7 +290,7 @@ describe("low-friction primary actions", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Open profile" }));
-    expect(screen.queryByText("field@example.com")).toBeNull();
+    expect(screen.getByText("field@example.com")).toBeTruthy();
     fireEvent.click(
       screen.getByRole("button", { name: /sign in another device/i }),
     );

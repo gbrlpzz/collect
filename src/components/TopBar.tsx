@@ -86,6 +86,7 @@ export function TopBar({
       </header>
       {profileOpen && (
         <ProfileSheet
+          userEmail={userEmail}
           profile={profile}
           observations={observations}
           lastSyncAt={lastSyncAt}

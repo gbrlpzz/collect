@@ -32,7 +32,7 @@ The most frequent consequential action is the easiest to reach.
 
 The contributor surface does not expose database views, queue internals, administrator metrics, or persistent top-level navigation.
 
-On compact screens, the primary observation action stays in a safe-area-aware bottom dock within comfortable thumb reach. Identity is represented by one 44-point profile control; the email address is not repeated in navigation or profile chrome.
+On compact screens, the primary observation action stays in a safe-area-aware floating bottom capsule within comfortable thumb reach. Identity is represented by one 44-point profile control; the email address is kept out of navigation but remains visible inside Profile so people can distinguish accounts.
 
 ### Administrator hierarchy
 
@@ -44,7 +44,7 @@ On compact screens, the primary observation action stays in a safe-area-aware bo
 
 Rare project actions belong in a secondary action menu. Supporting configuration remains collapsed until requested.
 
-On compact screens, the current contextual action—create project, edit or preview form, add contributor, or export—uses the same bottom dock instead of competing with the page heading.
+On compact screens, the current contextual action—create project, edit or preview form, add contributor, or export—uses the same floating bottom capsule instead of competing with the page heading.
 
 ## Core principles
 
@@ -60,6 +60,21 @@ On compact screens, the current contextual action—create project, edit or prev
 - Automate provenance, synchronization, retry, hashing, and readiness.
 - Require explicit action for consent, saving, publication, invitation, project closure, and export.
 - Respect text scaling, VoiceOver, keyboard navigation, reduced motion, increased contrast, safe areas, and system appearance.
+
+## Command geometry and materials
+
+Interactive geometry is consistent across contributor and administrator surfaces:
+
+- primary and secondary commands use capsule shapes;
+- icon-only commands use circles with explicit accessible names;
+- mutually exclusive modes use one rounded segmented capsule;
+- short states use compact labelled chips;
+- mobile bottom commands float inside the safe area instead of forming a full-width rectangular toolbar;
+- sheets, content groups, data rows, and long text fields retain distinct rounded-rectangle geometry so controls are identifiable by shape as well as color.
+
+The floating material is limited to navigation and commands. It uses an opaque-enough system-like material, a one-pixel boundary, and a restrained shadow. Research content never sits on translucent glass. Reduced Transparency replaces the material with the opaque paper token, and Increased Contrast strengthens its boundary.
+
+This language is influenced by current iOS command surfaces without attempting to reproduce private Apple components. It improves reachability and distinguishes actionable elements while preserving standard web semantics.
 
 ## Mobile viewport and software keyboard
 
@@ -150,6 +165,7 @@ Do not display a success check for request initiation or media upload alone. Use
 
 Profile consolidates infrequent personal and account information:
 
+- signed-in email address;
 - contribution count;
 - number saved locally;
 - last server receipt;
