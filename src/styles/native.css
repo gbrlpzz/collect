@@ -1126,14 +1126,10 @@ h1 {
   line-height: 1.08;
   letter-spacing: -0.035em;
 }
-.permission-gate-copy p,
-.permission-gate-note {
+.permission-gate-copy p {
   margin: 0;
   color: var(--secondary);
   line-height: 1.5;
-}
-.permission-gate-note {
-  font-size: 0.8125rem;
 }
 .flow-step {
   width: min(100%, 560px);

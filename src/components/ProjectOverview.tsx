@@ -97,7 +97,6 @@ export function ProjectOverview({
           <Icon name="lock" size={17} />
           <span className="privacy-summary-copy">
             <strong>Data and privacy</strong>
-            <span>What is recorded, why, and who can access it</span>
           </span>
           <Icon name="chevron-down" size={16} />
         </summary>

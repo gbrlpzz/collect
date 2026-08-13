@@ -1,13 +1,6 @@
 import { useState } from "react";
 import { Icon } from "./Icon";
-import {
-  Button,
-  Divider,
-  Eyebrow,
-  IconButton,
-  InfoDisclosure,
-  StatusBadge,
-} from "./ui";
+import { Button, Divider, IconButton, InfoDisclosure } from "./ui";
 import { projectFields } from "../data/schemaFixtures";
 import {
   cloneFieldDefinitions,
@@ -113,16 +106,11 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
     <main className="page page-wizard">
       <div className="back-row">
         <button className="back-button" onClick={onBack}>
-          <Icon name="chevron-left" size={17} /> Admin workspace
+          <Icon name="chevron-left" size={17} /> Projects
         </button>
-        <StatusBadge tone="soft">New project</StatusBadge>
       </div>
       <div className="wizard-heading">
-        <Eyebrow>Project setup</Eyebrow>
-        <h1>Start a field project.</h1>
-        <p className="lede">
-          A short setup path for a reliable collection surface.
-        </p>
+        <h1>New project</h1>
       </div>
       <div className="wizard-steps" aria-label="Project setup progress">
         {wizardSteps.map((label, index) => (
@@ -153,9 +141,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
         {step === 1 && (
           <div className="wizard-form">
             <div>
-              <Eyebrow>Step 1 of {wizardSteps.length}</Eyebrow>
-              <h2>Name the project.</h2>
-              <p>This is the only information required to begin.</p>
+              <h2>Name the project</h2>
             </div>
             <label>
               Project name
@@ -270,11 +256,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
         {step === 2 && (
           <div className="wizard-form">
             <div>
-              <Eyebrow>Step 2 of {wizardSteps.length}</Eyebrow>
-              <h2>Define what gets observed.</h2>
-              <p>
-                Start with a small set of predictable, strongly typed fields.
-              </p>
+              <h2>Build the form</h2>
             </div>
             <div className="builder-list">
               {fields
@@ -362,21 +344,12 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
             <button type="button" className="add-field-row" onClick={addField}>
               <Icon name="plus" size={17} /> Add field
             </button>
-            <div className="schema-builder-note">
-              <Icon name="shield" size={17} />
-              <span>
-                Published schemas are immutable. Editing later creates a new
-                version.
-              </span>
-            </div>
           </div>
         )}
         {step === 3 && (
           <div className="wizard-form">
             <div>
-              <Eyebrow>Step 3 of 3</Eyebrow>
-              <h2>Invite the field team.</h2>
-              <p>Add people now, or leave this empty and invite them later.</p>
+              <h2>Invite contributors</h2>
             </div>
             <label>
               Contributor email addresses{" "}
@@ -417,19 +390,12 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
                   invitations
                 </strong>
               </div>
-              <div>
-                <span>Schema version</span>
-                <strong>v1</strong>
-              </div>
             </div>
             <div className="publish-receipt">
               <Icon name="shield" size={21} />
               <div>
-                <strong>Safe to publish</strong>
-                <span>
-                  Once published, this version cannot be edited. A later change
-                  creates a new draft.
-                </span>
+                <strong>Publishing locks this version</strong>
+                <span>Later changes create a new version.</span>
               </div>
             </div>
           </div>

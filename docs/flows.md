@@ -15,7 +15,7 @@ This document describes the primary workflows and the system transitions that su
 
 ### Collect an observation
 
-1. Tap **New observation**.
+1. Tap **Add observation**.
 2. The client creates or resumes a durable draft.
 3. Complete one field at a time. Single-choice fields may advance automatically; text, number, media, and multiple-choice fields wait for an explicit action.
 4. Leave an optional field empty and tap **Skip**. Optional fields do not receive automatic keyboard focus.

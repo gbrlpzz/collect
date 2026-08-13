@@ -563,8 +563,7 @@ export function Collector({
             <Icon name="x" size={17} /> {exitLabel}
           </button>
           <div className="collector-title">
-            <strong>New observation</strong>
-            <span>{project.name}</span>
+            <strong>{project.name}</strong>
           </div>
           <span className="collector-save-state" />
         </div>
@@ -591,9 +590,6 @@ export function Collector({
                   : "Try again"}
             </Button>
           )}
-          <p className="permission-gate-note">
-            Collection remains locked until location access is available.
-          </p>
         </div>
       </main>
     );
@@ -611,8 +607,7 @@ export function Collector({
             <Icon name="x" size={17} /> {exitLabel}
           </button>
           <div className="collector-title">
-            <strong>New observation</strong>
-            <span>{project.name}</span>
+            <strong>{project.name}</strong>
           </div>
           <span className="collector-save-state" />
         </div>
@@ -639,8 +634,7 @@ export function Collector({
           <Icon name="x" size={17} /> {exitLabel}
         </button>
         <div className="collector-title">
-          <strong>New observation</strong>
-          <span>{project.name}</span>
+          <strong>{project.name}</strong>
         </div>
         <span className="collector-save-state" aria-live="polite">
           {lastSavedAt ? (

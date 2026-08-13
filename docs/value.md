@@ -41,7 +41,7 @@ A checkpoint is a self-contained server snapshot containing canonical JSONL, CSV
 
 ## Value for contributors
 
-- The primary action is always **New observation**.
+- The primary action is always **Add observation**.
 - The guided flow presents one field at a time and keeps the completion action reachable above the mobile keyboard.
 - Optional fields can be skipped without unnecessary keyboard dismissal or navigation.
 - Draft persistence, location capture, media hashing, synchronization, retry, and readiness reporting are automated.

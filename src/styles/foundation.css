@@ -1921,11 +1921,6 @@ p {
 .auth-sent h1 {
   margin-top: 3px;
 }
-.auth-sent-hint {
-  margin-top: 10px;
-  color: var(--tertiary) !important;
-  font-size: 0.8125rem !important;
-}
 .auth-sent .text-button {
   margin-top: 20px;
 }
@@ -1970,10 +1965,6 @@ p {
   padding: 2px 0 4px;
   font-size: 0.8125rem;
 }
-.auth-install-content p {
-  color: var(--secondary);
-  font-size: 0.8125rem;
-}
 .auth-install-content ol {
   display: grid;
   gap: 7px;
@@ -1983,15 +1974,6 @@ p {
 .auth-install-content li {
   padding-left: 3px;
 }
-.auth-footnote {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 18px;
-  color: var(--tertiary);
-  font-size: 0.75rem;
-}
-
 .mobile-tabbar {
   display: none;
 }

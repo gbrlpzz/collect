@@ -65,6 +65,8 @@ describe("automated accessibility checks", () => {
         onSignOut={() => undefined}
       />,
     );
+    expect(screen.queryByText("What collect records and why")).toBeNull();
+    expect(screen.queryByText("Version and feedback")).toBeNull();
     fireEvent.click(screen.getByText("Data and privacy"));
     fireEvent.click(screen.getByText("About collect"));
     await expectNoAccessibilityViolations(container);
@@ -82,6 +84,7 @@ describe("automated accessibility checks", () => {
         onRecoveryExport={() => undefined}
       />,
     );
+    expect(screen.queryByText(/server has acknowledged/i)).toBeNull();
     await expectNoAccessibilityViolations(container);
   });
 });

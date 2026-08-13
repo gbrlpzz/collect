@@ -1,11 +1,5 @@
 import { useRef, useState } from "react";
-import type {
-  FieldDefinition,
-  FieldOption,
-  Observation,
-  Project,
-  View,
-} from "../types";
+import type { FieldDefinition, FieldOption, Project, View } from "../types";
 import { Icon } from "./Icon";
 import {
   AttentionScoreRing,
@@ -120,7 +114,6 @@ function fieldTypeLabel(type: FieldDefinition["type"]): string {
 
 interface AdminProjectProps {
   project: Project;
-  observations: Observation[];
   onBack: () => void;
   onToast: (message: string) => void;
   onExport: () => void;
@@ -131,7 +124,6 @@ interface AdminProjectProps {
 
 export function AdminProject({
   project,
-  observations,
   onBack,
   onToast,
   onExport,
@@ -141,9 +133,6 @@ export function AdminProject({
 }: AdminProjectProps) {
   const [tab, setTab] = useState<AdminTab>("setup");
   const receivedCount = project.completeSubmissions;
-  const waitingCount = observations.filter(
-    (item) => item.status !== "SYNCED",
-  ).length;
   const projectActionsRef = useRef<HTMLDetailsElement>(null);
   const {
     readiness,
@@ -271,7 +260,6 @@ export function AdminProject({
         >
           <ContributorsPanel
             projectId={project.id}
-            waitingCount={waitingCount}
             onToast={onToast}
             rows={readiness}
             error={readinessError}
@@ -631,9 +619,7 @@ function SchemaDraftEditor({
     <section className="admin-panel">
       <div className="panel-heading">
         <div>
-          <Eyebrow>Schema draft</Eyebrow>
           <h2>Version {draft.version}</h2>
-          <p>Review the draft, then publish an immutable version.</p>
         </div>
         <StatusBadge tone="soft">Draft</StatusBadge>
       </div>
@@ -747,14 +733,12 @@ function SchemaDraftEditor({
 
 function ContributorsPanel({
   projectId,
-  waitingCount,
   onToast,
   rows,
   error,
   refresh,
 }: {
   projectId: string;
-  waitingCount: number;
   onToast: (message: string) => void;
   rows: ContributorReadiness[] | null;
   error: boolean;
@@ -795,8 +779,9 @@ function ContributorsPanel({
       <section className="admin-panel">
         <div className="panel-heading">
           <div>
-            <h2>Contributors</h2>
-            <p>{rows.length} assigned · status updates automatically</p>
+            <h2>
+              {rows.length} {rows.length === 1 ? "contributor" : "contributors"}
+            </h2>
           </div>
           <div className="admin-context-actions">
             <Button
@@ -865,15 +850,10 @@ function ContributorsPanel({
       <section className="admin-panel">
         <div className="panel-heading">
           <div>
-            <Eyebrow>Assigned contributors</Eyebrow>
             <h2>
               {error ? "Roster temporarily unavailable" : "Checking the roster"}
             </h2>
-            <p>
-              {error
-                ? "It will refresh automatically when the connection returns."
-                : "Readiness is based on the last status reported by each device."}
-            </p>
+            {error && <p>It will retry automatically.</p>}
           </div>
         </div>
       </section>
@@ -883,19 +863,13 @@ function ContributorsPanel({
     <section className="admin-panel">
       <div className="panel-heading">
         <div>
-          <Eyebrow>Assigned contributors</Eyebrow>
-          <h2>Preview roster</h2>
-          <p>Preview data is not connected to a live contributor roster.</p>
+          <h2>Contributors unavailable in preview</h2>
         </div>
         <div className="admin-context-actions">
           <Button variant="secondary" icon="plus" onClick={inviteUnavailable}>
             Add contributor
           </Button>
         </div>
-      </div>
-      <Divider />
-      <div className="empty-list-state">
-        <span>{waitingCount} local observations waiting in preview.</span>
       </div>
     </section>
   );
@@ -922,7 +896,6 @@ function ExportPanel({
       <div className="panel-heading">
         <div>
           <h2>Export checkpoint</h2>
-          <p>Download everything completely received by the server.</p>
         </div>
         <StatusBadge tone={readyForFinal ? "dark" : "soft"}>
           {readyForFinal ? "Ready for final export" : "Checkpoint available"}
@@ -946,10 +919,12 @@ function ExportPanel({
           Export checkpoint
         </Button>
       </div>
-      <p className="export-note">
-        <Icon name="info" size={15} /> Export is a snapshot, not a claim that
-        offline devices have no unseen data.
-      </p>
+      <InfoDisclosure title="Checkpoint coverage">
+        <p>
+          A checkpoint includes data received by the server. Offline devices may
+          still hold unseen work.
+        </p>
+      </InfoDisclosure>
     </section>
   );
 }
