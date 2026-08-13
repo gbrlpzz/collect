@@ -238,11 +238,12 @@ Automated tests do not replace VoiceOver, keyboard, zoom, text-size, contrast, a
 
 The contributor app uses a stable light appearance for field legibility. The administrator app uses a distinct dark appearance to signal a different operational surface.
 
-The global header contains only the Collect home control and Profile. It does
-not repeat the surface name or show a selected-state treatment after Profile
-opens. Ordinary project state is silent: do not use decorative status dots,
-chips, or “Active” badges. Put exceptional state such as **Closed** in the
-nearest contextual text.
+The global header contains only the Collect home control and Profile. At mobile
+widths it uses the same floating capsule, continuous radius, material, border,
+and shadow as the reachable command system. It does not repeat the surface name
+or show a selected-state treatment after Profile opens. Ordinary project state
+is silent: do not use decorative status dots, chips, or “Active” badges. Put
+exceptional state such as **Closed** in the nearest contextual text.
 
 | Token          | Contributor  | Administrator |
 | -------------- | ------------ | ------------- |
