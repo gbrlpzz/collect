@@ -105,8 +105,13 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
   return (
     <main className="page page-wizard">
       <div className="back-row">
-        <button className="back-button" onClick={onBack}>
-          <Icon name="chevron-left" size={17} /> Projects
+        <button
+          className="back-button wizard-back-button"
+          onClick={onBack}
+          aria-label="Back to projects"
+        >
+          <Icon name="chevron-left" size={17} />
+          <span className="back-button-label">Projects</span>
         </button>
       </div>
       <div className="wizard-heading">

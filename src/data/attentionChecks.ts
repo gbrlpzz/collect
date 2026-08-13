@@ -90,6 +90,106 @@ export const ATTENTION_CHECKS: AttentionCheck[] = [
     { value: "third", label: "Third" },
     { value: "fourth", label: "Fourth" },
   ]),
+  selectionCheck("select_orange", { value: "orange", label: "Orange" }, [
+    { value: "purple", label: "Purple" },
+    { value: "brown", label: "Brown" },
+    { value: "gray", label: "Gray" },
+  ]),
+  selectionCheck("select_seven", { value: "seven", label: "7" }, [
+    { value: "six", label: "6" },
+    { value: "eight", label: "8" },
+    { value: "nine", label: "9" },
+  ]),
+  selectionCheck("select_triangle", { value: "triangle", label: "Triangle" }, [
+    { value: "oval", label: "Oval" },
+    { value: "diamond", label: "Diamond" },
+    { value: "star", label: "Star" },
+  ]),
+  selectionCheck("select_river", { value: "river", label: "River" }, [
+    { value: "road", label: "Road" },
+    { value: "roof", label: "Roof" },
+    { value: "room", label: "Room" },
+  ]),
+  selectionCheck("select_olive", { value: "olive", label: "Olive" }, [
+    { value: "oak", label: "Oak" },
+    { value: "pine", label: "Pine" },
+    { value: "willow", label: "Willow" },
+  ]),
+  selectionCheck("select_friday", { value: "friday", label: "Friday" }, [
+    { value: "wednesday", label: "Wednesday" },
+    { value: "sunday", label: "Sunday" },
+    { value: "monday", label: "Monday" },
+  ]),
+  selectionCheck("select_large", { value: "large", label: "Large" }, [
+    { value: "small", label: "Small" },
+    { value: "narrow", label: "Narrow" },
+    { value: "short", label: "Short" },
+  ]),
+  selectionCheck("select_c", { value: "c", label: "C" }, [
+    { value: "a", label: "A" },
+    { value: "b", label: "B" },
+    { value: "d", label: "D" },
+  ]),
+  selectionCheck("select_third", { value: "third", label: "Third" }, [
+    { value: "first", label: "First" },
+    { value: "second", label: "Second" },
+    { value: "fourth", label: "Fourth" },
+  ]),
+  selectionCheck("select_left", { value: "left", label: "Left" }, [
+    { value: "right", label: "Right" },
+    { value: "up", label: "Up" },
+    { value: "down", label: "Down" },
+  ]),
+  selectionCheck("select_closed", { value: "closed", label: "Closed" }, [
+    { value: "open", label: "Open" },
+    { value: "paused", label: "Paused" },
+    { value: "unknown", label: "Unknown" },
+  ]),
+  selectionCheck("select_tree", { value: "tree", label: "Tree" }, [
+    { value: "stone", label: "Stone" },
+    { value: "water", label: "Water" },
+    { value: "house", label: "House" },
+  ]),
+  selectionCheck("select_stone", { value: "stone", label: "Stone" }, [
+    { value: "soil", label: "Soil" },
+    { value: "sand", label: "Sand" },
+    { value: "steel", label: "Steel" },
+  ]),
+  selectionCheck("select_water", { value: "water", label: "Water" }, [
+    { value: "wood", label: "Wood" },
+    { value: "window", label: "Window" },
+    { value: "wall", label: "Wall" },
+  ]),
+  selectionCheck("select_house", { value: "house", label: "House" }, [
+    { value: "field", label: "Field" },
+    { value: "road", label: "Road" },
+    { value: "river", label: "River" },
+  ]),
+  selectionCheck("select_zero", { value: "zero", label: "0" }, [
+    { value: "one", label: "1" },
+    { value: "five", label: "5" },
+    { value: "ten", label: "10" },
+  ]),
+  selectionCheck("select_hexagon", { value: "hexagon", label: "Hexagon" }, [
+    { value: "pentagon", label: "Pentagon" },
+    { value: "octagon", label: "Octagon" },
+    { value: "oval", label: "Oval" },
+  ]),
+  selectionCheck("select_white", { value: "white", label: "White" }, [
+    { value: "black", label: "Black" },
+    { value: "gray", label: "Gray" },
+    { value: "beige", label: "Beige" },
+  ]),
+  selectionCheck("select_true", { value: "true", label: "True" }, [
+    { value: "false", label: "False" },
+    { value: "maybe", label: "Maybe" },
+    { value: "unknown", label: "Unknown" },
+  ]),
+  selectionCheck("select_middle", { value: "middle", label: "Middle" }, [
+    { value: "start", label: "Start" },
+    { value: "end", label: "End" },
+    { value: "edge", label: "Edge" },
+  ]),
 ];
 
 /** The synthetic payload key used for the attention answer. */

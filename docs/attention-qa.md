@@ -9,7 +9,7 @@ The mechanism is intended to help a research team interpret possible inattention
 ```text
 select a random configured check
   → shuffle options
-  → render after the first two research fields when available
+  → choose a random position among the research fields
   → separate the synthetic answer from research values
   → commit the answer as provenance
   → validate against the server bank
@@ -19,7 +19,7 @@ select a random configured check
 
 ## Check bank
 
-The repository contains a default bank of four-option questions in:
+The repository contains a default bank of 30 four-option questions in:
 
 - `src/data/attentionChecks.ts` for offline rendering;
 - `supabase/migrations/20260812140000_attention_checks.sql` for server validation.
@@ -40,9 +40,13 @@ An instruction can be simple without being accessible to every population. Deplo
 ## Injection
 
 - One check is selected randomly per observation.
+- A short rolling history excludes the five most recent checks when alternatives
+  are available.
 - Options are shuffled for each presentation.
-- The check appears immediately after the first two research fields. A form
-  with only one field presents the check after that field.
+- The check appears after a randomly selected research field. A short rolling
+  history excludes the three most recent insertion boundaries when alternatives
+  are available. A form with only one field necessarily presents the check
+  after that field.
 - The reserved field key is `_attention`.
 - The contributor sees the explicit label **Attention check** and the complete instruction.
 

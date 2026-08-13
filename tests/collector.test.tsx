@@ -346,8 +346,8 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("injects an attention check after the first two questions and saves its self-describing answer", async () => {
-    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.5);
+  it("injects a randomized attention check and saves its self-describing answer", async () => {
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.25);
     const onSubmitted = vi.fn();
     const initialDraft = {
       observed_date: "2026-08-10",

@@ -4,7 +4,12 @@ import type { FieldDefinition, MediaAsset, Project } from "../types";
 import { Icon } from "./Icon";
 import { Button } from "./ui";
 import { FieldRenderer } from "./FieldRenderer";
-import { attentionFieldFor, pickAttentionCheck } from "../lib/attention";
+import {
+  attentionFieldFor,
+  pickAttentionCheck,
+  pickAttentionInsertion,
+} from "../lib/attention";
+import { ATTENTION_CHECKS, ATTENTION_FIELD_KEY } from "../data/attentionChecks";
 import { orderFieldsForCollection } from "../lib/fieldOrdering";
 import { sha256Blob } from "../lib/mediaIntegrity";
 
@@ -38,6 +43,24 @@ type LocationAccessState =
   | "denied"
   | "unavailable"
   | "error";
+
+const recentAttentionPlans = new Map<
+  string,
+  { checkKeys: string[]; afterFields: number[] }
+>();
+
+function insertionAfterField(steps: Step[], afterField: number) {
+  let fieldsSeen = 0;
+  const stepIndex = steps.findIndex((step) => {
+    if (step.kind !== "field") return false;
+    fieldsSeen += 1;
+    return fieldsSeen === afterField;
+  });
+  return {
+    index: stepIndex < 0 ? steps.length : stepIndex + 1,
+    afterField,
+  };
+}
 
 function isAutoAdvanceType(type: FieldDefinition["type"]): boolean {
   return (
@@ -100,8 +123,8 @@ export function Collector({
   // then the highest-effort questions (photos/audio, location, long text)
   // while attention is fresh. Location stays background provenance: it never
   // becomes a step, only a silent capture at the save boundary.
-  // Attention verification: one random check rides quietly in the flow after
-  // the first two questions. It is provenance, not a schema field — the
+  // Attention verification: one random check rides quietly at a randomized
+  // boundary in the flow. It is provenance, not a schema field — the
   // answer travels in values._attention and submission.ts strips it from the
   // research payload while the server computes correctness from its own bank.
   const baseSteps = useMemo<Step[]>(
@@ -116,32 +139,63 @@ export function Collector({
     [project.fields],
   );
   const attentionPlanRef = useRef<
-    { field: FieldDefinition; index: number } | null | undefined
+    | {
+        field: FieldDefinition;
+        index: number;
+        checkKey: string;
+        afterField: number;
+      }
+    | null
+    | undefined
   >(undefined);
   if (attentionPlanRef.current === undefined) {
-    const dataFields = baseSteps
-      .filter((step) => step.kind === "field")
-      .map((step) => step.field);
-    if (attentionCheck && dataFields.length > 0) {
-      const field = attentionFieldFor(
-        pickAttentionCheck(dataFields.map((candidate) => candidate.key)),
+    const dataFieldCount = baseSteps.filter(
+      (step) => step.kind === "field",
+    ).length;
+    if (attentionCheck && dataFieldCount > 0) {
+      const previous = recentAttentionPlans.get(project.id);
+      const existingAnswer = draft[ATTENTION_FIELD_KEY];
+      const separator =
+        typeof existingAnswer === "string" ? existingAnswer.indexOf(":") : -1;
+      const existingKey =
+        typeof existingAnswer === "string" && separator > 0
+          ? existingAnswer.slice(0, separator)
+          : "";
+      const existingCheck = ATTENTION_CHECKS.find(
+        (check) => check.key === existingKey,
       );
-      const questionsBeforeCheck = Math.min(2, dataFields.length);
-      let questionsSeen = 0;
-      let index = baseSteps.length;
-      for (const [stepIndex, step] of baseSteps.entries()) {
-        if (step.kind !== "field") continue;
-        questionsSeen += 1;
-        if (questionsSeen === questionsBeforeCheck) {
-          index = stepIndex + 1;
-          break;
-        }
-      }
-      attentionPlanRef.current = { field, index };
+      const check = existingCheck ?? pickAttentionCheck(previous?.checkKeys);
+      const insertion =
+        existingCheck && previous?.checkKeys[0] === existingCheck.key
+          ? insertionAfterField(baseSteps, previous.afterFields[0])
+          : pickAttentionInsertion(baseSteps, previous?.afterFields);
+      attentionPlanRef.current = {
+        field: attentionFieldFor(check),
+        index: insertion.index,
+        checkKey: check.key,
+        afterField: insertion.afterField,
+      };
     } else {
       attentionPlanRef.current = null;
     }
   }
+  useEffect(() => {
+    const plan = attentionPlanRef.current;
+    if (!plan) return;
+    const previous = recentAttentionPlans.get(project.id);
+    recentAttentionPlans.set(project.id, {
+      checkKeys: [
+        plan.checkKey,
+        ...(previous?.checkKeys.filter((key) => key !== plan.checkKey) ?? []),
+      ].slice(0, 5),
+      afterFields: [
+        plan.afterField,
+        ...(previous?.afterFields.filter(
+          (afterField) => afterField !== plan.afterField,
+        ) ?? []),
+      ].slice(0, 3),
+    });
+  }, [project.id]);
   const steps = useMemo<Step[]>(() => {
     const plan = attentionPlanRef.current;
     if (!plan) return baseSteps;
@@ -567,7 +621,8 @@ export function Collector({
             onClick={onBack}
             aria-label={exitAccessibleLabel}
           >
-            <Icon name="x" size={17} /> {exitLabel}
+            <Icon name="x" size={17} />
+            <span className="back-button-label">{exitLabel}</span>
           </button>
           <div className="collector-title">
             <strong>{project.name}</strong>
@@ -611,7 +666,8 @@ export function Collector({
             onClick={onBack}
             aria-label={exitAccessibleLabel}
           >
-            <Icon name="x" size={17} /> {exitLabel}
+            <Icon name="x" size={17} />
+            <span className="back-button-label">{exitLabel}</span>
           </button>
           <div className="collector-title">
             <strong>{project.name}</strong>
@@ -638,7 +694,8 @@ export function Collector({
           onClick={onBack}
           aria-label={exitAccessibleLabel}
         >
-          <Icon name="x" size={17} /> {exitLabel}
+          <Icon name="x" size={17} />
+          <span className="back-button-label">{exitLabel}</span>
         </button>
         <div className="collector-title">
           <strong>{project.name}</strong>

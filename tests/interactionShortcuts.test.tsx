@@ -498,6 +498,7 @@ describe("low-friction primary actions", () => {
         onSubmit={() => undefined}
         onBack={() => undefined}
         isSaving={false}
+        attentionCheck={false}
       />,
     );
 
