@@ -39,7 +39,7 @@ export function pickAttentionCheck(excludeKeys: string[] = []): AttentionCheck {
  */
 export function pickAttentionInsertion(
   steps: Array<{ kind: "heading" | "field" }>,
-  excludeAfterField?: number,
+  excludeAfterFields: number[] = [],
 ): AttentionInsertion {
   let fieldsSeen = 0;
   const positions = steps.flatMap((step, index) => {
@@ -51,7 +51,7 @@ export function pickAttentionInsertion(
   });
   if (!positions.length) return { index: steps.length, afterField: 0 };
   const available = positions.filter(
-    (position) => position.afterField !== excludeAfterField,
+    (position) => !excludeAfterFields.includes(position.afterField),
   );
   const pool = available.length ? available : positions;
   return pool[Math.floor(Math.random() * pool.length)];

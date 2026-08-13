@@ -12,7 +12,7 @@ import {
 
 describe("attention verification", () => {
   it("keeps every prompt and answer internally consistent", () => {
-    expect(ATTENTION_CHECKS.length).toBeGreaterThanOrEqual(8);
+    expect(ATTENTION_CHECKS.length).toBeGreaterThanOrEqual(30);
     expect(new Set(ATTENTION_CHECKS.map((check) => check.key)).size).toBe(
       ATTENTION_CHECKS.length,
     );
@@ -30,13 +30,17 @@ describe("attention verification", () => {
   });
 
   it("keeps the client bank synchronized with the server migration", () => {
-    const migration = readFileSync(
-      new URL(
-        "../supabase/migrations/20260813073000_curate_attention_checks.sql",
-        import.meta.url,
-      ),
-      "utf8",
-    );
+    const migration = [
+      "20260813073000_curate_attention_checks.sql",
+      "20260813141020_expand_attention_check_bank.sql",
+    ]
+      .map((file) =>
+        readFileSync(
+          new URL(`../supabase/migrations/${file}`, import.meta.url),
+          "utf8",
+        ),
+      )
+      .join("\n");
     for (const check of ATTENTION_CHECKS) {
       const correct = check.options.find(
         (option) => option.value === check.correctValue,
@@ -66,7 +70,7 @@ describe("attention verification", () => {
       { kind: "field" as const },
     ];
     const first = pickAttentionInsertion(steps);
-    const second = pickAttentionInsertion(steps, first.afterField);
+    const second = pickAttentionInsertion(steps, [first.afterField]);
     expect(first.afterField).toBeGreaterThanOrEqual(1);
     expect(first.afterField).toBeLessThanOrEqual(3);
     expect(second.afterField).not.toBe(first.afterField);

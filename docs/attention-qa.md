@@ -19,7 +19,7 @@ select a random configured check
 
 ## Check bank
 
-The repository contains a default bank of four-option questions in:
+The repository contains a default bank of 30 four-option questions in:
 
 - `src/data/attentionChecks.ts` for offline rendering;
 - `supabase/migrations/20260812140000_attention_checks.sql` for server validation.
@@ -40,12 +40,13 @@ An instruction can be simple without being accessible to every population. Deplo
 ## Injection
 
 - One check is selected randomly per observation.
-- Consecutive observations avoid repeating the same check when another is
-  available.
+- A short rolling history excludes the five most recent checks when alternatives
+  are available.
 - Options are shuffled for each presentation.
-- The check appears after a randomly selected research field. Consecutive
-  observations avoid the same insertion boundary when another is available.
-  A form with only one field necessarily presents the check after that field.
+- The check appears after a randomly selected research field. A short rolling
+  history excludes the three most recent insertion boundaries when alternatives
+  are available. A form with only one field necessarily presents the check
+  after that field.
 - The reserved field key is `_attention`.
 - The contributor sees the explicit label **Attention check** and the complete instruction.
 

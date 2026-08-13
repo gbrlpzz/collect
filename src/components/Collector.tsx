@@ -46,7 +46,7 @@ type LocationAccessState =
 
 const recentAttentionPlans = new Map<
   string,
-  { checkKey: string; afterField: number }
+  { checkKeys: string[]; afterFields: number[] }
 >();
 
 function insertionAfterField(steps: Step[], afterField: number) {
@@ -164,13 +164,11 @@ export function Collector({
       const existingCheck = ATTENTION_CHECKS.find(
         (check) => check.key === existingKey,
       );
-      const check =
-        existingCheck ??
-        pickAttentionCheck(previous ? [previous.checkKey] : undefined);
+      const check = existingCheck ?? pickAttentionCheck(previous?.checkKeys);
       const insertion =
-        existingCheck && previous?.checkKey === existingCheck.key
-          ? insertionAfterField(baseSteps, previous.afterField)
-          : pickAttentionInsertion(baseSteps, previous?.afterField);
+        existingCheck && previous?.checkKeys[0] === existingCheck.key
+          ? insertionAfterField(baseSteps, previous.afterFields[0])
+          : pickAttentionInsertion(baseSteps, previous?.afterFields);
       attentionPlanRef.current = {
         field: attentionFieldFor(check),
         index: insertion.index,
@@ -184,9 +182,18 @@ export function Collector({
   useEffect(() => {
     const plan = attentionPlanRef.current;
     if (!plan) return;
+    const previous = recentAttentionPlans.get(project.id);
     recentAttentionPlans.set(project.id, {
-      checkKey: plan.checkKey,
-      afterField: plan.afterField,
+      checkKeys: [
+        plan.checkKey,
+        ...(previous?.checkKeys.filter((key) => key !== plan.checkKey) ?? []),
+      ].slice(0, 5),
+      afterFields: [
+        plan.afterField,
+        ...(previous?.afterFields.filter(
+          (afterField) => afterField !== plan.afterField,
+        ) ?? []),
+      ].slice(0, 3),
     });
   }, [project.id]);
   const steps = useMemo<Step[]>(() => {
