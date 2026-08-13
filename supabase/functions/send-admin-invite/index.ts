@@ -62,7 +62,8 @@ Deno.serve(async (request) => {
     ) {
       return json(
         {
-          error: `The invitation could not be sent: ${inviteResult.error.message}`,
+          error:
+            `The invitation could not be sent: ${inviteResult.error.message}`,
         },
         { status: 502 },
       );

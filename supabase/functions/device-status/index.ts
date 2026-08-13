@@ -65,8 +65,9 @@ Deno.serve(async (request) => {
     if (
       deviceInsertError &&
       (deviceInsertError as { code?: string }).code !== "23505"
-    )
+    ) {
       return json({ error: "Device could not be updated" }, { status: 500 });
+    }
     const { data: device } = await service
       .from("devices")
       .select("contributor_id")
@@ -96,10 +97,9 @@ Deno.serve(async (request) => {
           project_id: projectId,
           contributor_id: user.id,
           last_seen_at: now,
-          last_sync_success_at:
-            pendingSubmissions === 0 && pendingMedia === 0
-              ? now
-              : (previousStatus?.last_sync_success_at ?? null),
+          last_sync_success_at: pendingSubmissions === 0 && pendingMedia === 0
+            ? now
+            : (previousStatus?.last_sync_success_at ?? null),
           pending_submissions: pendingSubmissions,
           pending_media: pendingMedia,
           app_version: String(body.app_version ?? ""),

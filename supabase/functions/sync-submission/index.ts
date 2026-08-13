@@ -55,18 +55,19 @@ function validateFields(
       if (
         config.minLength !== undefined &&
         value.length < Number(config.minLength)
-      )
+      ) {
         return `${label} is too short`;
+      }
       if (
         config.maxLength !== undefined &&
         value.length > Number(config.maxLength)
-      )
+      ) {
         return `${label} is too long`;
+      }
     } else if (field.type === "number") {
-      const numberValue =
-        value && typeof value === "object" && "value" in value
-          ? (value as { value?: unknown }).value
-          : value;
+      const numberValue = value && typeof value === "object" && "value" in value
+        ? (value as { value?: unknown }).value
+        : value;
       if (typeof numberValue !== "number" || !Number.isFinite(numberValue)) {
         return `${label} must be a finite number`;
       }
@@ -81,16 +82,16 @@ function validateFields(
       }
     } else if (field.type === "single_choice" || field.type === "tri_state") {
       // single_choice may carry an optional free-text "other" as { value, otherText }.
-      const singleValue =
-        value && typeof value === "object" && "value" in value
-          ? (value as { value?: unknown }).value
-          : value;
+      const singleValue = value && typeof value === "object" && "value" in value
+        ? (value as { value?: unknown }).value
+        : value;
       if (field.type === "tri_state") {
         if (
           typeof singleValue !== "string" ||
           !["yes", "no", "unknown"].includes(singleValue)
-        )
+        ) {
           return `${label} is not a valid tri-state value`;
+        }
       } else {
         if (typeof singleValue !== "string") {
           return `${label} must be one choice`;
@@ -103,22 +104,25 @@ function validateFields(
       if (
         !Array.isArray(value) ||
         value.some((item) => !optionIsKnown(field, item))
-      )
+      ) {
         return `${label} contains an unpublished option`;
+      }
     } else if (field.type === "date") {
       if (
         typeof value !== "string" ||
         !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
         Number.isNaN(Date.parse(`${value}T00:00:00Z`))
-      )
+      ) {
         return `${label} must be an ISO date`;
+      }
     } else if (field.type === "datetime") {
       if (
         typeof value !== "object" ||
         value === null ||
         typeof (value as { localDatetime?: unknown }).localDatetime !== "string"
-      )
+      ) {
         return `${label} must include a local datetime`;
+      }
     } else if (field.type === "location") {
       const location = value as Record<string, unknown>;
       if (
@@ -133,8 +137,9 @@ function validateFields(
         typeof location.accuracy !== "number" ||
         !Number.isFinite(location.accuracy) ||
         location.accuracy < 0
-      )
+      ) {
         return `${label} is not a valid location`;
+      }
     } else if (field.type === "photo" || field.type === "audio") {
       if (!Array.isArray(value)) {
         return `${label} must contain media identifiers`;
@@ -142,24 +147,29 @@ function validateFields(
       if (
         config.minCount !== undefined &&
         value.length < Number(config.minCount)
-      )
+      ) {
         return `${label} does not contain enough media`;
+      }
       if (
         config.maxCount !== undefined &&
         value.length > Number(config.maxCount)
-      )
+      ) {
         return `${label} contains too much media`;
+      }
     } else if (field.type === "repeatable_group") {
       if (
         !Array.isArray(value) ||
         value.some(
           (row) => !row || typeof row !== "object" || Array.isArray(row),
         )
-      )
+      ) {
         return `${label} must be an array of objects`;
-      for (const [index, row] of (
-        value as Array<Record<string, unknown>>
-      ).entries()) {
+      }
+      for (
+        const [index, row] of (
+          value as Array<Record<string, unknown>>
+        ).entries()
+      ) {
         const error = validateFields(
           field.children ?? [],
           row,
@@ -193,12 +203,11 @@ async function createSubmission(
   const projectId = String(body.project_id ?? "");
   const schemaVersion = Number(body.schema_version);
   const payload = body.payload;
-  const environment =
-    body.environment &&
-    typeof body.environment === "object" &&
-    !Array.isArray(body.environment)
-      ? (body.environment as Record<string, unknown>)
-      : null;
+  const environment = body.environment &&
+      typeof body.environment === "object" &&
+      !Array.isArray(body.environment)
+    ? (body.environment as Record<string, unknown>)
+    : null;
   if (environment && JSON.stringify(environment).length > 8192) {
     return invalid("Environment metadata is too large", 400);
   }
@@ -211,8 +220,9 @@ async function createSubmission(
     !deviceId ||
     !payload ||
     typeof payload !== "object"
-  )
+  ) {
     return invalid("Submission metadata is incomplete");
+  }
   if (media.length > 500) {
     return invalid("A submission cannot contain more than 500 media objects");
   }
@@ -254,8 +264,9 @@ async function createSubmission(
   }
 
   const canonicalPayloadHash = await sha256(canonicalJson(payload));
-  const suppliedHash =
-    typeof body.payload_hash === "string" ? body.payload_hash : null;
+  const suppliedHash = typeof body.payload_hash === "string"
+    ? body.payload_hash
+    : null;
   if (suppliedHash && suppliedHash !== canonicalPayloadHash) {
     return invalid("Payload checksum does not match", 409);
   }
@@ -304,14 +315,13 @@ async function createSubmission(
   const attention =
     body.attention_response && typeof body.attention_response === "object"
       ? (body.attention_response as {
-          check_key?: unknown;
-          selected_value?: unknown;
-        })
+        check_key?: unknown;
+        selected_value?: unknown;
+      })
       : null;
-  const attentionCheckKey =
-    attention && typeof attention.check_key === "string"
-      ? attention.check_key
-      : null;
+  const attentionCheckKey = attention && typeof attention.check_key === "string"
+    ? attention.check_key
+    : null;
   const attentionSelected =
     attention && typeof attention.selected_value === "string"
       ? attention.selected_value
@@ -347,8 +357,9 @@ async function createSubmission(
   if (
     deviceInsertError &&
     (deviceInsertError as { code?: string }).code !== "23505"
-  )
+  ) {
     return invalid("Device status could not be recorded", 500);
+  }
   const { data: device } = await service
     .from("devices")
     .select("contributor_id")
@@ -569,8 +580,9 @@ async function finalizeSubmission(
   if (
     (media ?? []).length !== submission.expected_media_count ||
     (media ?? []).some((item) => item.status !== "UPLOADED")
-  )
+  ) {
     return invalid("Media is still uploading", 409);
+  }
 
   // Atomic finalize: only the caller that flips status to COMPLETE gets to
   // mint the receipt timestamp; a concurrent caller that updates zero rows

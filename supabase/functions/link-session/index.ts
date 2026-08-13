@@ -85,13 +85,13 @@ Deno.serve(async (request) => {
         );
       }
 
-      const { data: link, error: linkError } =
-        await service.auth.admin.generateLink({
+      const { data: link, error: linkError } = await service.auth.admin
+        .generateLink({
           type: "magiclink",
           email,
           options: {
-            redirectTo:
-              Deno.env.get("APP_URL") ?? "https://collect-tawny.vercel.app",
+            redirectTo: Deno.env.get("APP_URL") ??
+              "https://collect-tawny.vercel.app",
           },
         });
       if (linkError || !link?.properties?.hashed_token) {

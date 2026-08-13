@@ -54,8 +54,7 @@ export async function projectAccess(
     .eq("project_id", projectId)
     .eq("user_id", userId)
     .maybeSingle();
-  const admin =
-    organizationMembership?.role === "admin" ||
+  const admin = organizationMembership?.role === "admin" ||
     projectMembership?.role === "admin";
   if (!admin && !projectMembership) return null;
   return { project, admin };
@@ -95,7 +94,7 @@ export async function isEmailAllowed(
     .filter((pattern: string) => pattern.length > 0);
   if (!patterns.length) return true;
   return patterns.some((pattern: string) =>
-    matchesAllowedPattern(pattern, email),
+    matchesAllowedPattern(pattern, email)
   );
 }
 

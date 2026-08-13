@@ -50,8 +50,8 @@ Deno.serve(async (request) => {
         },
       );
     }
-    const { data: contributor, error: contributorError } =
-      await service.auth.admin.getUserById(contributorId);
+    const { data: contributor, error: contributorError } = await service.auth
+      .admin.getUserById(contributorId);
     const email = contributor?.user?.email?.trim();
     if (contributorError || !email) {
       return json(
