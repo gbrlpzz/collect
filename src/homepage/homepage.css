@@ -51,6 +51,53 @@ html {
   font-size: 0.8125rem;
   font-weight: 500;
 }
+.hp-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+}
+.hp-logo {
+  display: block;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+}
+.hp-logo-dark {
+  border-radius: 6px;
+  vertical-align: -5px;
+  margin-right: 7px;
+  box-shadow: none;
+}
+.hp-hero-logo {
+  display: block;
+  margin: 0 auto 22px;
+  border-radius: 17px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.16);
+}
+.hp-hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 22px;
+  margin: 30px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--secondary);
+  font-size: 0.8125rem;
+}
+.hp-hero-stats li {
+  position: relative;
+}
+.hp-hero-stats li + li::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--separator);
+}
 .hp-nav-link {
   min-height: var(--control-height);
   display: inline-flex;
@@ -204,7 +251,9 @@ main [id] {
 
 /* ---------- Demo section ---------- */
 .hp-hero-demo {
-  padding-top: 0;
+  background: var(--paper);
+  border-top: 1px solid var(--separator-light);
+  border-bottom: 1px solid var(--separator-light);
 }
 .hp-flow-layout {
   display: grid;
@@ -447,6 +496,22 @@ main [id] {
   height: 100%;
   min-height: 0;
 }
+/* The app's fixed action chrome (home dock, old action bar) is positioned
+   against the page viewport; inside the mock-up it belongs to the screen. */
+.hp-app-viewport .primary-action-dock,
+.hp-app-viewport .collector-action-bar {
+  position: static;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
 .hp-home-indicator {
   position: absolute;
   bottom: 8px;
@@ -501,11 +566,6 @@ main [id] {
   right: -2px;
   width: 3px;
   height: 96px;
-}
-@media (min-width: 1200px) {
-  .hp-iphone {
-    zoom: 1.08;
-  }
 }
 
 /* ---------- Comparison table ---------- */
@@ -791,6 +851,8 @@ main [id] {
   border-bottom: 1px solid rgba(235, 235, 245, 0.16);
 }
 .hp-section-dark .eyebrow {
+  display: inline-flex;
+  align-items: center;
   color: rgba(235, 235, 245, 0.6);
 }
 .hp-admin-band {

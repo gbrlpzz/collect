@@ -23,8 +23,17 @@ function TopBar() {
   return (
     <header className="hp-topbar">
       <div className="hp-topbar-inner">
-        <a className="wordmark" href="#top">
-          collect<span className="wordmark-dot">.</span>
+        <a className="hp-brand" href="#top">
+          <img
+            className="hp-logo"
+            src="/icon.svg"
+            alt=""
+            width={26}
+            height={26}
+          />
+          <span className="wordmark">
+            collect<span className="wordmark-dot">.</span>
+          </span>
         </a>
         <nav className="hp-nav" aria-label="Sections">
           {NAV.map((item) => (
@@ -76,6 +85,13 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
   return (
     <section className="hp-hero" id="top" aria-labelledby="hero-title">
       <div className="hp-hero-inner">
+        <img
+          className="hp-hero-logo"
+          src="/icon.svg"
+          alt="collect"
+          width={64}
+          height={64}
+        />
         <p className="eyebrow">
           Offline-first field data collection · research preview
         </p>
@@ -140,6 +156,12 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
             Admin sign-in
           </a>
         </div>
+
+        <ul className="hp-hero-stats">
+          <li>Three resumable sync phases</li>
+          <li>Guess-adjusted attention scores</li>
+          <li>DataCite 4.4 exports</li>
+        </ul>
       </div>
     </section>
   );
@@ -220,7 +242,6 @@ function WhySection() {
         <div className="section-heading">
           <p className="eyebrow">Why collect is different</p>
           <h2 id="why-title">Built for the place generic tools fail.</h2>
-          <p>Fieldwork needs a contract, not a form builder.</p>
         </div>
         <div
           className="hp-compare"
@@ -264,7 +285,7 @@ function DataSection() {
           <h2 id="formats-title">A dataset, not a folder.</h2>
           <p>
             Every checkpoint is a self-contained, machine-readable research
-            package. Browse a real one below.
+            package.
           </p>
         </div>
         <PackageBrowser />
@@ -299,8 +320,8 @@ function QualitySection() {
           <p className="eyebrow">Quality &amp; provenance</p>
           <h2 id="quality-title">Measured, not assumed.</h2>
           <p>
-            Every observation carries verifiable quality signals and full device
-            provenance — both exported with the dataset.
+            Verifiable quality signals and full device provenance, exported with
+            the dataset.
           </p>
         </div>
         <div className="hp-quality">
@@ -328,12 +349,18 @@ function AdminBand() {
     >
       <div className="hp-section-inner hp-admin-band">
         <div>
-          <p className="eyebrow">collect Admin</p>
-          <h2 id="admin-title">The operations surface.</h2>
-          <p>
-            Define the form, publish immutable schema versions, invite
-            contributors, and export reproducible checkpoints.
+          <p className="eyebrow">
+            <img
+              className="hp-logo hp-logo-dark"
+              src="/icon-admin.svg"
+              alt=""
+              width={22}
+              height={22}
+            />
+            collect Admin
           </p>
+          <h2 id="admin-title">The operations surface.</h2>
+          <p>Define the form, invite contributors, export the dataset.</p>
         </div>
         <a
           className="button button-primary"
@@ -425,9 +452,8 @@ export function HomepageApp() {
               <p className="eyebrow">The research preview</p>
               <h2 id="preview-title">Try it with your own fieldwork.</h2>
               <p>
-                A running instance with your own schema, your own contributors,
-                and your own exports. Tell us what you collect — we read every
-                request.
+                A running instance with your schema and contributors. Tell us
+                what you collect.
               </p>
             </div>
             <div className="hp-preview-card">
@@ -440,8 +466,17 @@ export function HomepageApp() {
       <footer className="hp-footer">
         <div className="hp-footer-inner">
           <div className="hp-footer-brand">
-            <a className="wordmark" href="#top">
-              collect<span className="wordmark-dot">.</span>
+            <a className="hp-brand" href="#top">
+              <img
+                className="hp-logo"
+                src="/icon.svg"
+                alt=""
+                width={28}
+                height={28}
+              />
+              <span className="wordmark">
+                collect<span className="wordmark-dot">.</span>
+              </span>
             </a>
             <p>Fieldwork, ready offline. Source available under Apache-2.0.</p>
           </div>

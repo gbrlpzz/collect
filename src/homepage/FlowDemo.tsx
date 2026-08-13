@@ -53,55 +53,55 @@ const demoProject: Project = {
 const NARRATION: Record<string, { title: string; body: string }> = {
   site_section: {
     title: "One question at a time",
-    body: "Section intros are full-screen steps, not headers on a long form. The contributor sees one calm question per screen — and the page never moves.",
+    body: "Section intros are full-screen steps, not headers on a long form — one calm question per screen.",
   },
   site_code: {
     title: "Required means required",
-    body: "The key identifier comes first, and the flow cannot advance past it. Required steps disable Continue until answered, with the requirement said in words.",
+    body: "The key identifier comes first, and the flow cannot advance past it — required steps disable Continue until answered.",
   },
   site_photos: {
     title: "Media, fully offline",
-    body: "Photos and audio work with no signal at all. Original files are never recompressed, and every file is hashed invisibly for integrity.",
+    body: "Photos and audio work with no signal; original files are never recompressed.",
   },
   notes: {
     title: "The page never moves",
-    body: "Long text scrolls inside its step. The screen height is fixed, so a contributor in gloves or sunlight never loses their place.",
+    body: "Long text scrolls inside its step; the screen never moves.",
   },
   visible_features: {
     title: "Compound answers",
-    body: "Multi-select waits for an explicit Continue — the contributor stays in control of answers with several parts.",
+    body: "Multi-select waits for an explicit Continue.",
   },
   building_type: {
     title: "Answers carry you forward",
-    body: "Single answers auto-advance after about 200 ms. Capsule targets are 56 pt — comfortable in gloves — and Back is always one tap away.",
+    body: "Single answers auto-advance after about 200 ms; capsule targets are 56 pt, comfortable in gloves.",
   },
   building_condition: {
     title: "Typed values, stable ids",
-    body: "Choices store stable option ids, not labels. The schema stays typed, and the export stays clean.",
+    body: "Choices store stable option ids, not labels — the export stays clean.",
   },
   building_occupancy: {
     title: "Uncertainty is data",
-    body: "Yes / No / Unknown. \u201cUnknown\u201d is an honest answer, not a missing value — the tri-state keeps it explicit in the dataset.",
+    body: "Yes / No / Unknown — \u201cUnknown\u201d is an honest answer, not a missing value.",
   },
   provenance_section: {
     title: "Recorded, never asked",
-    body: "Provenance is captured, not questioned: who, what schema, which device, when, where, which app version — plus location and environment, recorded automatically in the background.",
+    body: "Who, what schema, which device, when, where, which app version — plus location and environment, recorded automatically.",
   },
   observed_date: {
     title: "Native inputs",
-    body: "Native date pickers with system keyboard hints. No custom widgets to learn, no locale surprises.",
+    body: "Native date pickers with system keyboard hints.",
   },
   people_count: {
     title: "Numbers with units",
-    body: "Numbers keep their unit (people), so the dataset never needs guessing later.",
+    body: "Numbers keep their unit, so the dataset never needs guessing.",
   },
   [ATTENTION_FIELD_KEY]: {
     title: "Attention, verified",
-    body: "A random quick check rides along in the flow — universally valid, options shuffled. The question text is never stored; only the check key and the answer, verified server-side, and the answer is stripped from the research payload before commit.",
+    body: "A random, universally valid quick check rides along in the flow — the question text is never stored, and the answer is stripped from the payload before commit.",
   },
   saved: {
     title: "Saved means saved",
-    body: "One local database transaction commits the payload, media metadata, and outbox before anything is promised. Then metadata → media → finalization, each resumable — only the server's durable receipt moves the record to synced.",
+    body: "One local transaction commits the payload before anything is promised; only the server's durable receipt moves the record to synced.",
   },
 };
 
@@ -444,9 +444,8 @@ export function FlowDemo() {
           <p className="eyebrow">Try it</p>
           <h2>The collection flow, one question at a time.</h2>
           <p>
-            This is the app's real frontend — the same guided flow, the same
-            copy, the same attention check. Watch it fill itself, or take over
-            at any moment. Nothing is recorded anywhere.
+            The app's real frontend. Watch it fill itself, or take over —
+            nothing is recorded anywhere.
           </p>
         </div>
 
@@ -520,8 +519,7 @@ export function FlowDemo() {
         </div>
 
         <p className="hp-demo-note">
-          Live app frontend · demo trims the location step so no permission is
-          asked · nothing is recorded anywhere
+          Live app frontend · no permission asked · nothing is recorded
         </p>
       </div>
 
