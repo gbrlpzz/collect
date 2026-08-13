@@ -76,7 +76,7 @@ Heartbeat values derive from durable stores:
 - current draft presence;
 - installation-scoped device provenance.
 
-`fieldwork_complete` is derived when no durable outbox work and no active draft remain. Contributors do not press a manual completion button.
+`fieldwork_complete` is derived from durable outbox and draft state.
 
 Administrator readiness aggregates every known device. An offline or never-reported device remains an epistemic boundary: the server cannot claim that unseen local work does not exist.
 

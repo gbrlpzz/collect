@@ -191,6 +191,18 @@ describe("PackageBrowser — derived from the canonical demo dataset", () => {
   });
 });
 
+describe("HomepageApp — product surfaces stay real", () => {
+  it("shows the real contributor and admin flows from one demo", () => {
+    render(<HomepageApp />);
+    fireEvent.click(screen.getByRole("button", { name: "Admin", exact: true }));
+    expect(screen.getByRole("heading", { name: "Projects" })).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Vernacular buildings/i }),
+    );
+    expect(screen.getByRole("tab", { name: "Form", exact: true })).toBeTruthy();
+  });
+});
+
 describe("PreviewForm — research preview email CTA", () => {
   it("validates the email before sending", async () => {
     render(<PreviewForm />);

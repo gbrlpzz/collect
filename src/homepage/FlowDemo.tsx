@@ -31,7 +31,7 @@ const demoFields = projectFields
       : field,
   );
 
-const demoProject: Project = {
+export const demoProject: Project = {
   id: "demo-project",
   organization: "Demo field organization",
   organizationMark: "D",
@@ -52,7 +52,7 @@ const demoProject: Project = {
 /** Story copy keyed by the real schema field keys (label→key map below). */
 const NARRATION: Record<string, { title: string; body: string }> = {
   site_section: {
-    title: "One question at a time",
+    title: "Capture the site",
     body: "Section intros are full-screen steps, not headers on a long form — one calm question per screen.",
   },
   site_code: {
@@ -239,12 +239,18 @@ function StatusBar() {
 function IPhone({
   children,
   zoom,
+  phoneRef,
 }: {
   children: React.ReactNode;
   zoom?: number | null;
+  phoneRef?: React.Ref<HTMLDivElement>;
 }) {
   return (
-    <div className="hp-iphone" style={zoom ? { zoom } : undefined}>
+    <div
+      ref={phoneRef}
+      className="hp-iphone"
+      style={zoom ? { zoom } : undefined}
+    >
       <div
         className="hp-iphone-buttons hp-iphone-buttons-left"
         aria-hidden="true"
@@ -289,6 +295,7 @@ export function FlowDemo() {
   const timersRef = useRef<number[]>([]);
   const screenRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
+  const phoneRef = useRef<HTMLDivElement>(null);
   const lastTitleRef = useRef("");
   const interactedRef = useRef(false);
 
@@ -320,7 +327,7 @@ export function FlowDemo() {
   // screens (desktop only; the CSS media queries handle phones).
   useEffect(() => {
     const compute = () => {
-      if (typeof window === "undefined" || window.innerWidth < 900) {
+      if (typeof window === "undefined" || window.innerWidth <= 560) {
         setFitZoom(null);
         return;
       }
@@ -338,15 +345,27 @@ export function FlowDemo() {
   // moment the visitor takes over. A safety timer prevents a trap.
   useEffect(() => {
     const root = document.documentElement;
+    const body = document.body;
     if (autoState === "playing") {
+      // Align first, then freeze the document with the iOS-safe fixed-body
+      // pattern. The phone itself remains fully visible while the actions run.
+      phoneRef.current?.scrollIntoView({ block: "center", behavior: "auto" });
+      const scrollY = window.scrollY;
       root.classList.add("hp-lock");
-      frameRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+      body.dataset.hpScrollY = String(scrollY);
+      body.style.top = `-${scrollY}px`;
+      body.classList.add("hp-lock-body");
       const safety = window.setTimeout(() => {
-        root.classList.remove("hp-lock");
+        stopAuto();
       }, 45000);
       return () => {
         window.clearTimeout(safety);
+        const previousY = Number(body.dataset.hpScrollY ?? scrollY);
+        body.classList.remove("hp-lock-body");
+        delete body.dataset.hpScrollY;
+        body.style.top = "";
         root.classList.remove("hp-lock");
+        window.scrollTo(0, previousY);
       };
     }
     if (autoState === "done" && syncStage === 3) {
@@ -356,8 +375,8 @@ export function FlowDemo() {
   }, [autoState, syncStage]);
 
   const stopAuto = () => {
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
+    // The automaton has its own tick timer. Keep sync timers alive if the
+    // visitor takes over after the local receipt appears.
     setAutoState((state) => (state === "playing" ? "idle" : state));
   };
 
@@ -382,16 +401,16 @@ export function FlowDemo() {
       }
       tickTimer = window.setTimeout(tick, 1250);
     };
-    tickTimer = window.setTimeout(tick, 900);
+    tickTimer = window.setTimeout(tick, 1200);
     return () => window.clearTimeout(tickTimer);
   }, [autoState, phase, round]);
 
   // Start the self-play once the demo scrolls into view — unless the
   // visitor prefers reduced motion or has already interacted.
   useEffect(() => {
-    const frame = frameRef.current;
+    const phone = phoneRef.current;
     if (
-      !frame ||
+      !phone ||
       reducedMotion ||
       interactedRef.current ||
       typeof IntersectionObserver === "undefined"
@@ -405,9 +424,9 @@ export function FlowDemo() {
           setAutoState("playing");
         }
       },
-      { threshold: 0.35 },
+      { threshold: 0.1 },
     );
-    observer.observe(frame);
+    observer.observe(phone);
     return () => observer.disconnect();
   }, []);
 
@@ -576,7 +595,7 @@ export function FlowDemo() {
       </div>
 
       <div className="hp-iphone-wrap">
-        <IPhone zoom={fitZoom}>
+        <IPhone zoom={fitZoom} phoneRef={phoneRef}>
           <div className="hp-app-viewport" ref={screenRef}>
             {phase === "collecting" ? (
               <Collector
@@ -598,10 +617,10 @@ export function FlowDemo() {
                 observations={[observation]}
                 hasDraft={false}
                 onStartObservation={reset}
+                onOpenSync={() => undefined}
                 onChooseProject={() => undefined}
                 onResumeObservation={reset}
                 onDiscardAndStartObservation={reset}
-                onOpenSync={() => undefined}
               />
             ) : null}
           </div>

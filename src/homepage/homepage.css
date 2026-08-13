@@ -13,9 +13,21 @@ html {
 /* The demo plays with the page standing still. */
 html.hp-lock {
   overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+body.hp-lock-body {
+  position: fixed;
+  right: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
 }
 
+/* Eight-point landing rhythm; the app's 4/8/16/24 spacing remains the
+   shared source, while the page uses these larger rails for composition. */
 .hp-shell {
+  --hp-unit: 8px;
   min-height: 100dvh;
   background: var(--canvas);
 }
@@ -25,7 +37,7 @@ html.hp-lock {
   position: sticky;
   top: 0;
   z-index: 30;
-  height: 60px;
+  height: 52px;
   border-bottom: 1px solid var(--separator-light);
   background: var(--glass);
   -webkit-backdrop-filter: blur(22px) saturate(180%);
@@ -33,7 +45,7 @@ html.hp-lock {
 }
 .hp-topbar-inner {
   width: min(100%, 1200px);
-  height: 100%;
+  height: 52px;
   margin: 0 auto;
   padding: 0 24px;
   display: flex;
@@ -75,33 +87,9 @@ html.hp-lock {
 }
 .hp-hero-logo {
   display: block;
-  margin: 0 auto 22px;
-  border-radius: 17px;
+  margin: 0 0 22px;
+  border-radius: 15px;
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.16);
-}
-.hp-hero-stats {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 22px;
-  margin: 30px 0 0;
-  padding: 0;
-  list-style: none;
-  color: var(--secondary);
-  font-size: 0.8125rem;
-}
-.hp-hero-stats li {
-  position: relative;
-}
-.hp-hero-stats li + li::before {
-  content: "";
-  position: absolute;
-  left: -12px;
-  top: 50%;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--separator);
 }
 .hp-nav-link {
   min-height: var(--control-height);
@@ -127,15 +115,16 @@ html.hp-lock {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: calc(60px + clamp(24px, 6vh, 64px)) 24px clamp(48px, 8vh, 88px);
+  padding: calc(52px + clamp(24px, 6vh, 64px)) 24px clamp(48px, 8vh, 88px);
   border-bottom: 1px solid var(--separator-light);
 }
 .hp-hero-inner {
-  width: min(100%, 880px);
+  width: min(100%, 1200px);
   margin: 0 auto;
-  text-align: center;
+  text-align: left;
 }
 .hp-hero h1 {
+  max-width: 760px;
   margin-top: 8px;
   font-size: clamp(2.75rem, 6.5vw, 4.25rem);
   line-height: 1.04;
@@ -143,16 +132,16 @@ html.hp-lock {
 }
 .hp-hero-lede {
   max-width: 42rem;
-  margin: 22px auto 0;
+  margin: 22px 0 0;
   color: var(--secondary);
   font-size: 1.125rem;
 }
 .hp-capture {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: 10px;
-  margin: 32px auto 0;
+  margin: 32px 0 0;
   max-width: 500px;
 }
 .hp-capture-input {
@@ -168,14 +157,14 @@ html.hp-lock {
 }
 .hp-capture-note {
   max-width: 32rem;
-  margin: 12px auto 0;
+  margin: 12px 0 0;
   color: var(--secondary);
   font-size: 0.8125rem;
 }
 .hp-hero-actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   gap: 6px 18px;
   margin-top: 30px;
@@ -187,16 +176,9 @@ html.hp-lock {
 .hp-hero-actions .text-button:hover {
   color: var(--text);
 }
-.hp-hero-sep {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--separator);
-}
-
 /* ---------- Sections ---------- */
 .hp-section {
-  padding: clamp(72px, 10vh, 120px) 24px;
+  padding: clamp(64px, 8vw, 96px) 24px;
 }
 .hp-section-paper {
   background: var(--paper);
@@ -209,7 +191,7 @@ html.hp-lock {
 }
 .section-heading {
   max-width: 44rem;
-  margin-bottom: 34px;
+  margin-bottom: 32px;
 }
 .section-heading h2 {
   margin-top: 2px;
@@ -238,7 +220,7 @@ html.hp-lock {
   text-underline-offset: 2px;
 }
 main [id] {
-  scroll-margin-top: 76px;
+  scroll-margin-top: 68px;
 }
 
 /* ---------- Scroll-based reveals ---------- */
@@ -260,10 +242,68 @@ main [id] {
   border-top: 1px solid var(--separator-light);
   border-bottom: 1px solid var(--separator-light);
 }
+.hp-demo-tabs-wrap {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 28px;
+}
+.hp-demo-tabs {
+  width: min(100%, 340px);
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+.hp-demo-surface {
+  animation: hp-step-in 0.28s ease;
+}
+.hp-admin-preview {
+  --canvas: #000000;
+  --paper: #1c1c1e;
+  --text: #f5f5f7;
+  --secondary: rgba(235, 235, 245, 0.6);
+  --tertiary: rgba(235, 235, 245, 0.36);
+  --separator: rgba(235, 235, 245, 0.28);
+  --separator-light: rgba(235, 235, 245, 0.16);
+  --grouped: rgba(118, 118, 128, 0.28);
+  --grouped-strong: rgba(118, 118, 128, 0.46);
+  --accent: #ffffff;
+  --accent-hover: #f2f2f7;
+  --accent-text: #000000;
+  --glass: rgba(28, 28, 30, 0.86);
+  --focus: #ffffff;
+  color-scheme: dark;
+  min-height: 520px;
+  overflow: hidden;
+  border: 1px solid rgba(235, 235, 245, 0.16);
+  border-radius: 22px;
+  background: #000000;
+  color: #f5f5f7;
+}
+.hp-admin-preview .page {
+  width: min(100%, 960px);
+  padding-bottom: 40px;
+}
+.hp-admin-preview .primary-action-dock,
+.hp-admin-preview .admin-context-actions {
+  position: static;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.hp-admin-preview .button-primary {
+  background: #ffffff;
+  color: #000000;
+}
+.hp-admin-preview .button-primary:hover {
+  background: #f2f2f7;
+}
 .hp-flow-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: clamp(40px, 6vw, 88px);
+  gap: 64px;
   align-items: start;
 }
 .hp-flow-copy {
@@ -435,13 +475,7 @@ main [id] {
   inset: 0;
   padding: 12px;
   border-radius: 60px;
-  background: linear-gradient(
-    150deg,
-    #48484a 0%,
-    #1c1c1e 38%,
-    #3a3a3c 78%,
-    #2a2a2c 100%
-  );
+  background: #1c1c1e;
   box-shadow:
     0 40px 90px rgba(0, 0, 0, 0.3),
     0 6px 18px rgba(0, 0, 0, 0.18),
@@ -504,7 +538,8 @@ main [id] {
 /* The app's fixed action chrome (home dock, old action bar) is positioned
    against the page viewport; inside the mock-up it belongs to the screen. */
 .hp-app-viewport .primary-action-dock,
-.hp-app-viewport .collector-action-bar {
+.hp-app-viewport .collector-action-bar,
+.hp-app-viewport .flow-actions {
   position: static;
   right: auto;
   bottom: auto;
@@ -545,7 +580,7 @@ main [id] {
   position: absolute;
   display: block;
   border-radius: 4px;
-  background: linear-gradient(90deg, #4a4a4d, #262628);
+  background: #3a3a3c;
   box-shadow: inset 0 0 1px rgba(255, 255, 255, 0.25);
 }
 .hp-btn-mute {
@@ -584,8 +619,8 @@ main [id] {
 .hp-compare-row {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.4fr);
-  gap: 18px;
-  padding: 15px 20px;
+  gap: 16px;
+  padding: 16px 24px;
   border-bottom: 1px solid var(--separator-light);
 }
 .hp-compare-head {
@@ -649,7 +684,7 @@ main [id] {
 }
 .hp-package-file {
   width: 100%;
-  min-height: 40px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   gap: 9px;
@@ -1068,6 +1103,9 @@ main [id] {
   .hp-topbar-inner {
     padding: 0 16px;
   }
+  .hp-topbar-actions > .hp-nav-link {
+    display: none;
+  }
   .hp-section {
     padding: 64px 16px;
   }
@@ -1076,6 +1114,10 @@ main [id] {
   }
   .hp-hero-lede {
     font-size: 1.0625rem;
+  }
+  .hp-package-code code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
   .hp-compare-head {
     display: none;

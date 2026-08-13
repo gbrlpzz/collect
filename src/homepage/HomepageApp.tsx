@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../components/Icon";
+import { AdminDashboard, AdminProject } from "../components/AdminDashboard";
 import { SegmentedControl } from "../components/ui";
-import { FlowDemo } from "./FlowDemo";
+import { FlowDemo, demoProject } from "./FlowDemo";
 import { AttentionDemo } from "./AttentionDemo";
 import { PackageBrowser } from "./PackageBrowser";
 import { ProvenanceCard } from "./ProvenanceCard";
@@ -10,9 +11,9 @@ import { PreviewForm } from "./PreviewForm";
 const APP_URL = "https://collect-tawny.vercel.app";
 const ADMIN_URL = `${APP_URL}/?role=admin`;
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
-const DOCS = (file: string) => `${GITHUB_URL}/blob/main/docs/${file}`;
 
 const NAV = [
+  { label: "Demo", href: "#demo" },
   { label: "Why", href: "#why" },
   { label: "Data", href: "#formats" },
   { label: "Quality", href: "#quality" },
@@ -93,17 +94,16 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
           height={64}
         />
         <p className="eyebrow">
-          Offline-first field data collection · research preview
+          Offline-first data collection · research preview
         </p>
         <h1 id="hero-title">
-          Fieldwork you can trust,
+          Data collection you can trust,
           <br />
           where the signal ends.
         </h1>
         <p className="hp-hero-lede">
-          collect saves every observation on the device before promising
-          anything, syncs only on a durable server receipt, and exports a FAIR
-          dataset with attention quality measured per contributor.
+          Save on the device. Sync on a server receipt. Export a FAIR dataset
+          with quality signals attached.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -128,7 +128,7 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
           </p>
         )}
         <p className="hp-capture-note">
-          The research preview is invite-only. Leave your email — we read every
+          Research preview is invite-only. Leave your email — we read every
           request.
         </p>
 
@@ -137,101 +137,116 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
             See it in action
             <Icon name="chevron-down" size={15} />
           </a>
-          <span className="hp-hero-sep" aria-hidden="true" />
-          <a
-            className="text-button"
-            href={APP_URL}
-            target="_blank"
-            rel="noopener"
-          >
-            Contributor sign-in
-          </a>
-          <span className="hp-hero-sep" aria-hidden="true" />
-          <a
-            className="text-button"
-            href={ADMIN_URL}
-            target="_blank"
-            rel="noopener"
-          >
-            Admin sign-in
-          </a>
         </div>
+      </div>
+    </section>
+  );
+}
 
-        <ul className="hp-hero-stats">
-          <li>Three resumable sync phases</li>
-          <li>Guess-adjusted attention scores</li>
-          <li>DataCite 4.4 exports</li>
-        </ul>
+function AdminPreview() {
+  const [view, setView] = useState<"dashboard" | "project">("dashboard");
+  const [project, setProject] = useState(demoProject);
+
+  if (view === "project") {
+    return (
+      <AdminProject
+        project={project}
+        onBack={() => setView("dashboard")}
+        onToast={() => undefined}
+        onExport={() => undefined}
+        onSchemaPublished={setProject}
+        onToggleStatus={() =>
+          setProject((current) => ({
+            ...current,
+            status: current.status === "active" ? "closed" : "active",
+          }))
+        }
+        onPreviewContributor={() => setView("dashboard")}
+      />
+    );
+  }
+
+  return (
+    <AdminDashboard
+      project={demoProject}
+      projects={[demoProject]}
+      onNavigate={(next) => {
+        if (next === "admin-project") setView("project");
+      }}
+      onSelectProject={setProject}
+    />
+  );
+}
+
+function DemoSurface() {
+  const [surface, setSurface] = useState("contributor");
+  return (
+    <section
+      className="hp-section hp-hero-demo"
+      id="demo"
+      aria-label="Live product preview"
+    >
+      <div className="hp-section-inner">
+        <div className="hp-demo-tabs-wrap">
+          <SegmentedControl
+            className="hp-demo-tabs"
+            label="Product surface"
+            options={[
+              { value: "contributor", label: "Contributor" },
+              { value: "admin", label: "Admin" },
+            ]}
+            value={surface}
+            onChange={setSurface}
+          />
+        </div>
+        <div className="hp-demo-surface" key={surface}>
+          {surface === "contributor" ? (
+            <FlowDemo />
+          ) : (
+            <div className="hp-browser-device" aria-label="Admin app preview">
+              <div className="hp-browser-chrome" aria-hidden="true">
+                <span className="hp-browser-dot" />
+                <span className="hp-browser-dot" />
+                <span className="hp-browser-dot" />
+                <span className="hp-browser-address">collect Admin</span>
+              </div>
+              <div className="hp-admin-preview">
+                <AdminPreview />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
 }
 
 /** Generic tools vs collect — the differentiating factors. */
-const COMPARISON: Array<{
-  factor: string;
-  generic: string;
-  collect: React.ReactNode;
-}> = [
+const WHY_POINTS = [
   {
-    factor: "What “saved” means",
-    generic: "“Saved” can mean the request was sent",
-    collect: (
-      <>
-        Saved means <strong>committed to the device</strong> in one local
-        transaction, before the interface says anything
-      </>
-    ),
+    title: "Capture anywhere",
+    body: "Each observation is committed to the device before the network is involved.",
+    label: "Local receipt",
   },
   {
-    factor: "What “synced” means",
-    generic: "“Synced” can mean the upload finished",
-    collect: (
-      <>
-        Synced means the server's <strong>durable finalization receipt</strong>{" "}
-        — metadata, media, finalization, each resumable
-      </>
-    ),
+    title: "Confirm delivery",
+    body: "Metadata, media, and finalization are resumable; synced means a server receipt.",
+    label: "Durable sync",
   },
   {
-    factor: "Quality signal",
-    generic: "No way to tell careful records from rushed ones",
-    collect: (
-      <>
-        <strong>Automatic attention QA</strong> on every observation — a
-        guess-adjusted score per contributor, exported with the data
-      </>
-    ),
+    title: "Make quality visible",
+    body: "One verified attention check per observation produces a contributor score.",
+    label: "Attention QA",
   },
   {
-    factor: "The dataset",
-    generic: "A folder of exports nobody can reuse",
-    collect: (
-      <>
-        A <strong>FAIR research package</strong>: JSONL + CSV + GeoJSON,
-        DataCite 4.4 metadata, data dictionary, media originals
-      </>
-    ),
+    title: "Preserve meaning",
+    body: "Published schemas stay versioned, so historical records keep their meaning.",
+    label: "Immutable history",
   },
   {
-    factor: "Schemas",
-    generic: "The form can change mid-project",
-    collect: (
-      <>
-        <strong>Immutable schema versions</strong> — historical observations
-        keep their meaning
-      </>
-    ),
-  },
-  {
-    factor: "Provenance",
-    generic: "Manual fields contributors forget",
-    collect: (
-      <>
-        <strong>Recorded automatically</strong> — who, what schema, which
-        device, when, where, which app version, plus location and environment
-      </>
-    ),
+    title: "Return a dataset",
+    body: "JSONL, CSV, GeoJSON, schema history, media, and FAIR metadata travel together.",
+    label: "Reusable export",
   },
 ];
 
@@ -240,31 +255,22 @@ function WhySection() {
     <section className="hp-section" id="why" aria-labelledby="why-title">
       <div className="hp-section-inner">
         <div className="section-heading">
-          <p className="eyebrow">Why collect is different</p>
-          <h2 id="why-title">Built for the place generic tools fail.</h2>
+          <p className="eyebrow">The difference</p>
+          <h2 id="why-title">A reliable path from observation to dataset.</h2>
+          <p>Every handoff has a receipt.</p>
         </div>
-        <div
-          className="hp-compare"
-          role="table"
-          aria-label="collect vs generic survey tools"
-        >
-          <div className="hp-compare-head" role="row">
-            <span role="columnheader" />
-            <span role="columnheader">Generic survey tool</span>
-            <span role="columnheader">collect</span>
-          </div>
-          {COMPARISON.map((row) => (
-            <div className="hp-compare-row" role="row" key={row.factor}>
-              <span className="hp-compare-factor" role="rowheader">
-                {row.factor}
+        <div className="hp-why-list">
+          {WHY_POINTS.map((point, index) => (
+            <article className="hp-why-item" key={point.title}>
+              <span className="hp-why-index">
+                {String(index + 1).padStart(2, "0")}
               </span>
-              <span className="hp-compare-generic" role="cell">
-                {row.generic}
-              </span>
-              <span className="hp-compare-collect" role="cell">
-                {row.collect}
-              </span>
-            </div>
+              <div>
+                <h3>{point.title}</h3>
+                <p>{point.body}</p>
+              </div>
+              <span className="hp-why-label">{point.label}</span>
+            </article>
           ))}
         </div>
       </div>
@@ -281,29 +287,21 @@ function DataSection() {
     >
       <div className="hp-section-inner">
         <div className="section-heading">
-          <p className="eyebrow">The data you get</p>
-          <h2 id="formats-title">A dataset, not a folder.</h2>
+          <p className="eyebrow">The export</p>
+          <h2 id="formats-title">A research package, ready to reuse.</h2>
           <p>
-            Every checkpoint is a self-contained, machine-readable research
-            package.
+            JSONL, CSV, GeoJSON, schema history, media originals, and FAIR
+            metadata in one checkpoint.
           </p>
         </div>
         <PackageBrowser />
-        <p className="hp-section-note">
-          Demo rows from <code>docs/demo-dataset</code>. The package format is
-          specified in{" "}
-          <a href={DOCS("export-format.md")} target="_blank" rel="noopener">
-            docs/export-format.md
-          </a>
-          .
-        </p>
       </div>
     </section>
   );
 }
 
 const QUALITY_TABS = [
-  { value: "attention", label: "Attention QA" },
+  { value: "attention", label: "Attention" },
   { value: "provenance", label: "Provenance" },
 ];
 
@@ -318,10 +316,9 @@ function QualitySection() {
       <div className="hp-section-inner">
         <div className="section-heading">
           <p className="eyebrow">Quality &amp; provenance</p>
-          <h2 id="quality-title">Measured, not assumed.</h2>
+          <h2 id="quality-title">Make quality visible.</h2>
           <p>
-            Verifiable quality signals and full device provenance, exported with
-            the dataset.
+            Attention verification and device provenance travel with the record.
           </p>
         </div>
         <div className="hp-quality">
@@ -359,8 +356,8 @@ function AdminBand() {
             />
             collect Admin
           </p>
-          <h2 id="admin-title">The operations surface.</h2>
-          <p>Define the form, invite contributors, export the dataset.</p>
+          <h2 id="admin-title">Bring the data home.</h2>
+          <p>Manage protocols, contributors, and exports from one surface.</p>
         </div>
         <a
           className="button button-primary"
@@ -418,13 +415,9 @@ export function HomepageApp() {
       <main id="main">
         <Hero onEmailSubmit={captureEmail} />
 
-        <section className="hp-section hp-hero-demo" id="demo">
-          <div className="hp-section-inner">
-            <div className="hp-reveal">
-              <FlowDemo />
-            </div>
-          </div>
-        </section>
+        <div className="hp-reveal">
+          <DemoSurface />
+        </div>
 
         <div className="hp-reveal">
           <WhySection />
@@ -449,12 +442,9 @@ export function HomepageApp() {
         >
           <div className="hp-section-inner hp-preview-layout">
             <div className="hp-preview-copy">
-              <p className="eyebrow">The research preview</p>
-              <h2 id="preview-title">Try it with your own fieldwork.</h2>
-              <p>
-                A running instance with your schema and contributors. Tell us
-                what you collect.
-              </p>
+              <p className="eyebrow">Research preview</p>
+              <h2 id="preview-title">Put your protocol in the field.</h2>
+              <p>Request a preview with your schema and contributors.</p>
             </div>
             <div className="hp-preview-card">
               <PreviewForm initialEmail={draftEmail} />
@@ -478,7 +468,9 @@ export function HomepageApp() {
                 collect<span className="wordmark-dot">.</span>
               </span>
             </a>
-            <p>Fieldwork, ready offline. Source available under Apache-2.0.</p>
+            <p>
+              Data collection, ready offline. Source available under Apache-2.0.
+            </p>
           </div>
           <nav className="hp-footer-links" aria-label="Footer">
             <div>

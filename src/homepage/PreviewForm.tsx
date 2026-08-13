@@ -6,7 +6,7 @@ import { Icon } from "../components/Icon";
  * Research-preview access request — the page's call to action. Email is the
  * only required field; the use case is optional but welcomed. Inserts one
  * row into the private preview_requests queue (RLS: anonymous insert only —
- * nothing is ever readable from the browser). Access stays invite-only.
+ * nothing is ever readable from the browser).
  */
 const FORM_ENDPOINT =
   "https://lrqlrufwrytpwhgclmyo.supabase.co/rest/v1/preview_requests";
@@ -75,8 +75,8 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
         </span>
         <h3>Request received.</h3>
         <p>
-          The research preview is invite-only and we read every request. You'll
-          hear from us at <strong>{email.trim()}</strong>.
+          We read every request. You'll hear from us at{" "}
+          <strong>{email.trim()}</strong>.
         </p>
       </div>
     );
@@ -128,10 +128,7 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
         >
           {sending ? "Sending…" : "Request access"}
         </Button>
-        <p className="hp-form-note">
-          No account is created. Requests go to a private queue; access stays
-          invite-only.
-        </p>
+        <p className="hp-form-note">We reply to every request.</p>
       </div>
     </form>
   );
