@@ -82,7 +82,7 @@ The collection surface presents one field at a time.
 - The current question is the only dominant content.
 - The bottom action area contains Back and one primary action.
 - The final action is **Save observation**.
-- Location fields usually remain background provenance rather than visible steps.
+- Location fields remain background provenance rather than visible steps. If a project declares one, a single contextual permission gate blocks collection until access and a position are available.
 - Section headings become short transitional steps only when they improve comprehension.
 
 ### Interaction

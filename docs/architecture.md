@@ -176,7 +176,7 @@ The score and totals are advisory metadata. They are visible with an explanation
 
 ## Provenance
 
-When platform capabilities and permissions allow, each observation records:
+Each observation records the provenance exposed by the platform:
 
 - contributor and installation-scoped device identifiers;
 - schema and application versions;
@@ -185,7 +185,7 @@ When platform capabilities and permissions allow, each observation records:
 - device family, operating system, browser, screen, and orientation;
 - connection and battery context.
 
-Location capture runs when the collector opens and refreshes at save. A missing optional value cannot block a local receipt. A missing required value produces an actionable validation state.
+When a published schema declares any location field, location access becomes a collection prerequisite regardless of whether the field was marked optional. Previously granted access is checked and used automatically; otherwise the collector presents a contextual permission gate. Collection stays locked after denial or an unavailable position, re-checks access after the contributor returns from device settings, and refreshes the position at save. Projects without a location field never request location access.
 
 ## Readiness
 

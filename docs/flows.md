@@ -19,7 +19,7 @@ This document describes the primary workflows and the system transitions that su
 2. The client creates or resumes a durable draft.
 3. Complete one field at a time. Single-choice fields may advance automatically; text, number, media, and multiple-choice fields wait for an explicit action.
 4. Leave an optional field empty and tap **Skip**. Optional fields do not receive automatic keyboard focus.
-5. The client captures location and device provenance in the background when the platform permits it.
+5. If the schema declares a location field, the client requires contextual location access before showing any questions; otherwise it never requests location.
 6. Tap **Save observation**.
 7. The client validates required fields and commits the submission, media, and outbox operations atomically.
 8. Only after that transaction succeeds does the interface show **Saved on this device**.

@@ -672,6 +672,15 @@ h3 {
   align-items: stretch;
   overscroll-behavior: contain;
 }
+.permission-gate {
+  width: min(100%, var(--flow-max));
+  margin: auto;
+  padding: var(--space-7) var(--space-5)
+    calc(var(--space-7) + env(safe-area-inset-bottom));
+}
+.permission-gate .button {
+  min-height: 52px;
+}
 .flow-step {
   width: min(100%, var(--flow-max));
   min-height: 100%;

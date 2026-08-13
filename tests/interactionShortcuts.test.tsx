@@ -463,7 +463,7 @@ describe("low-friction primary actions", () => {
     );
   });
 
-  it("captures location automatically when the location step opens", async () => {
+  it("blocks collection until the contributor grants location access", async () => {
     const getCurrentPosition = vi.fn((success: PositionCallback): void => {
       success({
         coords: {
@@ -509,12 +509,84 @@ describe("low-friction primary actions", () => {
       />,
     );
 
+    expect(screen.getByText("Location required")).toBeTruthy();
+    expect(getCurrentPosition).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Allow location" }));
+
     await waitFor(() =>
       expect(onDraftChange).toHaveBeenCalledWith(
         "location",
         expect.objectContaining({ latitude: 45.123456 }),
       ),
     );
+
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: previousGeolocation,
+    });
+  });
+
+  it("keeps collection locked when location access is denied", async () => {
+    const getCurrentPosition = vi.fn(
+      (_success: PositionCallback, error: PositionErrorCallback): void => {
+        error({
+          code: 1,
+          message: "Permission denied",
+          PERMISSION_DENIED: 1,
+          POSITION_UNAVAILABLE: 2,
+          TIMEOUT: 3,
+        });
+      },
+    );
+    const previousGeolocation = navigator.geolocation;
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+
+    render(
+      <Collector
+        project={{
+          ...project,
+          fields: [
+            {
+              id: "notes",
+              key: "notes",
+              label: "Notes",
+              type: "long_text",
+              required: false,
+              semantic_uri: null,
+            },
+            {
+              id: "location",
+              key: "location",
+              label: "Location",
+              type: "location",
+              required: false,
+              semantic_uri: null,
+            },
+          ],
+        }}
+        draft={{}}
+        lastSavedAt={null}
+        onDraftChange={() => undefined}
+        onSubmit={() => undefined}
+        onBack={() => undefined}
+        isSaving={false}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Allow location" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Allow location in Settings")).toBeTruthy(),
+    );
+    expect(screen.queryByRole("textbox", { name: "Notes" })).toBeNull();
+    expect(
+      screen.getByText(
+        "Collection remains locked until location access is available.",
+      ),
+    ).toBeTruthy();
 
     Object.defineProperty(navigator, "geolocation", {
       configurable: true,
