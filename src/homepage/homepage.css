@@ -134,7 +134,7 @@
 .hp-capture-note {
   max-width: 30rem;
   margin: 12px auto 0;
-  color: var(--tertiary);
+  color: var(--secondary);
   font-size: 0.8125rem;
 }
 .hp-hero-meta {
@@ -257,6 +257,7 @@ main [id] {
 }
 .section-heading h2 {
   margin-top: 2px;
+  font-size: clamp(1.5rem, 2.8vw, 2.125rem);
 }
 .section-heading > p:not(.eyebrow) {
   margin-top: 12px;
@@ -369,7 +370,7 @@ main [id] {
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid var(--separator-light);
-  color: var(--tertiary);
+  color: var(--secondary);
   font-size: 0.8125rem;
 }
 .hp-preview-card {
