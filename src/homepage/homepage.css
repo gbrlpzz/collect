@@ -75,8 +75,47 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
+  gap: 6px 18px;
+  margin-top: 26px;
+}
+.hp-hero-actions .text-button {
+  font-size: 0.875rem;
+  color: var(--secondary);
+}
+.hp-hero-actions .text-button:hover {
+  color: var(--text);
+}
+.hp-hero-sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--separator);
+}
+.hp-capture {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 10px;
-  margin-top: 30px;
+  margin: 30px auto 0;
+  max-width: 480px;
+}
+.hp-capture-input {
+  flex: 1 1 240px;
+  max-width: 300px;
+  text-align: left;
+}
+.hp-capture-error {
+  margin-top: 10px;
+  color: var(--error);
+  font-size: 0.8125rem;
+  font-weight: 550;
+}
+.hp-capture-note {
+  max-width: 30rem;
+  margin: 12px auto 0;
+  color: var(--tertiary);
+  font-size: 0.8125rem;
 }
 .hp-hero-meta {
   display: flex;
@@ -161,6 +200,82 @@
 .hp-sticky {
   position: sticky;
   top: 92px;
+}
+
+/* ---------- Comparison table ---------- */
+.hp-compare {
+  margin-bottom: 44px;
+  overflow: hidden;
+  border: 1px solid var(--separator-light);
+  border-radius: 16px;
+  background: var(--paper);
+}
+.hp-compare-head,
+.hp-compare-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 18px;
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--separator-light);
+}
+.hp-compare-head {
+  background: var(--canvas);
+  color: var(--tertiary);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+.hp-compare-row:last-child {
+  border-bottom: 0;
+}
+.hp-compare-factor {
+  color: var(--text);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.hp-compare-generic {
+  color: var(--secondary);
+  font-size: 0.875rem;
+}
+.hp-compare-collect {
+  color: var(--secondary);
+  font-size: 0.875rem;
+}
+.hp-compare-collect strong {
+  color: var(--text);
+  font-weight: 650;
+}
+
+/* ---------- Feature grid ---------- */
+.hp-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 14px;
+}
+.hp-feature-card {
+  padding: 24px;
+  border: 1px solid var(--separator-light);
+  border-radius: 16px;
+  background: var(--paper);
+}
+.hp-feature-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  background: var(--grouped);
+  color: var(--text);
+}
+.hp-feature-card h3 {
+  font-size: 1rem;
+}
+.hp-feature-card p {
+  margin-top: 7px;
+  color: var(--secondary);
+  font-size: 0.875rem;
 }
 
 /* ---------- Contract ---------- */
@@ -427,6 +542,9 @@
   padding-bottom: 26px;
 }
 .hp-app-viewport .collector-flow {
+  /* The app's guided flow is a full-screen fixed takeover; inside the
+     iPhone mock-up it must stay inside the screen. */
+  position: relative;
   height: 100%;
   min-height: 0;
 }

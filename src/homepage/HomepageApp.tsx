@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Icon } from "../components/Icon";
 import { FlowDemo } from "./FlowDemo";
 import { AttentionDemo } from "./AttentionDemo";
@@ -25,13 +26,8 @@ function TopBar() {
           >
             GitHub
           </a>
-          <a
-            className="button button-primary button-small"
-            href={APP_URL}
-            target="_blank"
-            rel="noopener"
-          >
-            Open the app
+          <a className="button button-primary button-small" href="#preview">
+            Request access
           </a>
         </nav>
       </div>
@@ -39,118 +35,194 @@ function TopBar() {
   );
 }
 
-function Hero() {
+function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    onEmailSubmit(email.trim());
+  };
+
   return (
     <section className="hp-hero" id="top" aria-labelledby="hero-title">
       <div className="hp-hero-inner">
-        <p className="eyebrow">Offline-first field data collection</p>
+        <p className="eyebrow">
+          Offline-first field data collection · research preview
+        </p>
         <h1 id="hero-title">
           Fieldwork you can trust,
           <br />
           where the signal ends.
         </h1>
         <p className="hp-hero-lede">
-          collect is a mobile-first collector for scientific surveys,
-          inventories, and structured observation. Every answer is saved on the
-          device before anything is promised, synced only on a durable server
-          receipt, and exported as a FAIR, machine-readable dataset — with the
-          attention quality of every contributor measured, not assumed.
+          collect is a field data collector for scientific surveys and
+          structured observation. It saves every answer on the device before
+          promising anything, syncs only on a durable server receipt, measures
+          the attention quality of every contributor — and exports the fieldwork
+          you actually did as a FAIR, machine-readable dataset.
         </p>
+
+        <form className="hp-capture" onSubmit={submit} noValidate>
+          <input
+            className="field-input hp-capture-input"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            type="email"
+            autoComplete="email"
+            required
+            maxLength={320}
+            placeholder="you@your-institution.org"
+            aria-label="Work email"
+          />
+          <button className="button button-primary" type="submit">
+            Request access
+          </button>
+        </form>
+        {error && (
+          <p className="hp-capture-error" role="alert">
+            {error}
+          </p>
+        )}
+        <p className="hp-capture-note">
+          The research preview is invite-only — we read every request. Tell us
+          your use case after leaving your email.
+        </p>
+
         <div className="hp-hero-actions">
-          <a className="button button-primary" href="#demo">
-            Try the research preview
-            <Icon name="chevron-down" size={17} />
+          <a className="text-button" href="#demo">
+            See it in action
+            <Icon name="chevron-down" size={15} />
           </a>
+          <span className="hp-hero-sep" aria-hidden="true" />
           <a
-            className="button button-secondary"
+            className="text-button"
+            href={APP_URL}
+            target="_blank"
+            rel="noopener"
+          >
+            Open the app
+          </a>
+          <span className="hp-hero-sep" aria-hidden="true" />
+          <a
+            className="text-button"
             href={GITHUB_URL}
             target="_blank"
             rel="noopener"
           >
-            Read the source
+            Source on GitHub
           </a>
         </div>
-        <ul className="hp-hero-meta">
-          <li>Apache-2.0</li>
-          <li>Installable PWA</li>
-          <li>Invite-only research preview</li>
-        </ul>
       </div>
     </section>
   );
 }
 
-const CONTRACT = [
+/** Generic tools vs collect — the differentiating factors. */
+const COMPARISON: Array<{
+  factor: string;
+  generic: string;
+  collect: React.ReactNode;
+}> = [
   {
-    title: "Saved means saved",
-    body: (
+    factor: "What “saved” means",
+    generic: "“Saved” can mean the request was sent",
+    collect: (
       <>
-        Submit commits the structured payload, media metadata, media blobs, and
-        outbox operations in <strong>one local database transaction</strong>{" "}
-        before the interface says anything. A "Saved on this device" receipt
-        never depends on the network — kill the app, drop the connection, wait a
-        week.
+        Saved means <strong>committed to the device</strong> in one local
+        transaction — before the interface says anything
       </>
     ),
   },
   {
-    title: "Synced means synced",
-    body: (
+    factor: "What “synced” means",
+    generic: "“Synced” can mean the upload finished",
+    collect: (
       <>
-        Metadata → each media object → finalization: three resumable phases,
-        none skippable, retried automatically with backoff. Only the server's{" "}
-        <strong>durable finalization receipt</strong> moves a record to
-        "synced". A request started is never a sync completed.
+        Synced means the server's <strong>durable finalization receipt</strong>{" "}
+        — metadata, media, finalization, each resumable
       </>
     ),
   },
   {
-    title: "Evidence stays honest",
-    body: (
+    factor: "Quality signal",
+    generic: "No way to tell careful records from rushed ones",
+    collect: (
       <>
-        Published schemas are immutable, finalized observations are immutable,
-        conflicts are explicit — never silently overwritten. Every record
-        carries full provenance:{" "}
-        <strong>
-          who, what schema, which device, when, where, which app version
-        </strong>
-        , plus location and environment, captured automatically.
+        <strong>Automatic attention QA</strong> on every observation — a
+        guess-adjusted score per contributor, exported with the data
+      </>
+    ),
+  },
+  {
+    factor: "The dataset",
+    generic: "A folder of exports nobody can reuse",
+    collect: (
+      <>
+        A <strong>FAIR research package</strong>: JSONL + CSV + GeoJSON,
+        DataCite 4.4 metadata, data dictionary, media originals
+      </>
+    ),
+  },
+  {
+    factor: "Schemas",
+    generic: "The form can change mid-project",
+    collect: (
+      <>
+        <strong>Immutable schema versions</strong> — historical observations
+        keep their meaning
+      </>
+    ),
+  },
+  {
+    factor: "Provenance",
+    generic: "Manual fields contributors forget",
+    collect: (
+      <>
+        <strong>Recorded automatically</strong> — who, what schema, which
+        device, when, where, which app version, plus location and environment
       </>
     ),
   },
 ];
 
-function Contract() {
-  return (
-    <section className="hp-section" aria-labelledby="contract-title">
-      <div className="hp-section-inner">
-        <div className="section-heading">
-          <p className="eyebrow">The contract</p>
-          <h2 id="contract-title">
-            Three promises, each backed by a mechanism.
-          </h2>
-          <p>
-            Most survey software fails in the field in predictable ways. collect
-            replaces slogans with mechanisms you can audit.
-          </p>
-        </div>
-        <ol className="hp-contract-list">
-          {CONTRACT.map((item, index) => (
-            <li className="hp-contract-row" key={item.title}>
-              <span className="hp-contract-index">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <div className="hp-contract-copy">
-                <h3>{item.title}</h3>
-                <p>{item.body}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  );
-}
+const FEATURES = [
+  {
+    icon: "signal" as const,
+    title: "Three days offline",
+    body: "Kill the app, drop the connection, wait a week. The queue, drafts, media, and receipts survive — nothing is discarded before the server acknowledges it.",
+  },
+  {
+    icon: "check" as const,
+    title: "One question at a time",
+    body: "A guided flow with capsule answers and auto-advance — no scrolling, no parsing, one thumb action at a time.",
+  },
+  {
+    icon: "location" as const,
+    title: "Location, in the background",
+    body: "Captured automatically after one permission grant. Never a question the contributor must answer.",
+  },
+  {
+    icon: "camera" as const,
+    title: "Media, fully offline",
+    body: "Photos and audio work with no signal; original files are never recompressed, and integrity hashes are computed invisibly.",
+  },
+  {
+    icon: "users" as const,
+    title: "Readiness, not self-reports",
+    body: "Device-reported status aggregates every device a contributor uses — no “I'm done” button.",
+  },
+  {
+    icon: "lock" as const,
+    title: "Consent, enforced",
+    body: "Versioned in-app consent at first sign-in; the server refuses submissions without it. Accounts are invite-only.",
+  },
+];
 
 const ADMIN_FEATURES = [
   {
@@ -174,6 +246,131 @@ const ADMIN_FEATURES = [
     chip: "submissions.jsonl",
   },
 ];
+
+function Differentiators() {
+  return (
+    <section className="hp-section" aria-labelledby="differentiators-title">
+      <div className="hp-section-inner">
+        <div className="section-heading">
+          <p className="eyebrow">Why collect is different</p>
+          <h2 id="differentiators-title">
+            Built for the place generic tools fail.
+          </h2>
+          <p>
+            Most survey software is a generic form builder or a fragile online
+            tool. Fieldwork needs a different contract — and the difference is
+            in the mechanisms, not the marketing.
+          </p>
+        </div>
+
+        <div
+          className="hp-compare"
+          role="table"
+          aria-label="collect vs generic survey tools"
+        >
+          <div className="hp-compare-head" role="row">
+            <span role="columnheader" />
+            <span role="columnheader">Generic survey tool</span>
+            <span role="columnheader">collect</span>
+          </div>
+          {COMPARISON.map((row) => (
+            <div className="hp-compare-row" role="row" key={row.factor}>
+              <span className="hp-compare-factor" role="rowheader">
+                {row.factor}
+              </span>
+              <span className="hp-compare-generic" role="cell">
+                {row.generic}
+              </span>
+              <span className="hp-compare-collect" role="cell">
+                {row.collect}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <ol className="hp-contract-list">
+          {[
+            {
+              title: "Saved means saved",
+              body: (
+                <>
+                  Submit commits the structured payload, media metadata, media
+                  blobs, and outbox operations in{" "}
+                  <strong>one local database transaction</strong> before the
+                  interface says anything. The receipt never depends on the
+                  network.
+                </>
+              ),
+            },
+            {
+              title: "Synced means synced",
+              body: (
+                <>
+                  Metadata → each media object → finalization: three resumable
+                  phases, retried automatically with backoff. Only the server's{" "}
+                  <strong>durable finalization receipt</strong> moves a record
+                  to “synced”.
+                </>
+              ),
+            },
+            {
+              title: "Evidence stays honest",
+              body: (
+                <>
+                  Published schemas and finalized observations are immutable;
+                  conflicts are explicit, never silently overwritten. Every
+                  record carries full provenance:{" "}
+                  <strong>
+                    who, what schema, which device, when, where, which app
+                    version
+                  </strong>
+                  .
+                </>
+              ),
+            },
+          ].map((item, index) => (
+            <li className="hp-contract-row" key={item.title}>
+              <span className="hp-contract-index">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div className="hp-contract-copy">
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
+function FeatureGrid() {
+  return (
+    <section
+      className="hp-section hp-section-paper"
+      aria-labelledby="features-title"
+    >
+      <div className="hp-section-inner">
+        <div className="section-heading">
+          <p className="eyebrow">What's inside</p>
+          <h2 id="features-title">Everything a field team needs.</h2>
+        </div>
+        <div className="hp-feature-grid">
+          {FEATURES.map((feature) => (
+            <article className="hp-feature-card" key={feature.title}>
+              <span className="hp-feature-icon" aria-hidden="true">
+                <Icon name={feature.icon} size={18} />
+              </span>
+              <h3>{feature.title}</h3>
+              <p>{feature.body}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function AdminSection() {
   return (
@@ -207,15 +404,26 @@ function AdminSection() {
 }
 
 export function HomepageApp() {
+  const [draftEmail, setDraftEmail] = useState("");
+
+  const captureEmail = (email: string) => {
+    setDraftEmail(email);
+    document.getElementById("preview")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   return (
     <div className="hp-shell">
       <TopBar />
       <main id="main">
-        <Hero />
-        <Contract />
+        <Hero onEmailSubmit={captureEmail} />
+        <Differentiators />
+        <FeatureGrid />
 
         <section
-          className="hp-section hp-section-paper hp-flow-section"
+          className="hp-section hp-flow-section"
           id="demo"
           aria-labelledby="flow-title"
         >
@@ -224,7 +432,10 @@ export function HomepageApp() {
           </div>
         </section>
 
-        <section className="hp-section" aria-labelledby="package-title">
+        <section
+          className="hp-section hp-section-paper"
+          aria-labelledby="package-title"
+        >
           <div className="hp-section-inner">
             <div className="section-heading">
               <p className="eyebrow">The data you get</p>
@@ -233,7 +444,7 @@ export function HomepageApp() {
                 Every checkpoint is a self-contained ZIP: canonical JSONL, CSV
                 and GeoJSON views, every published schema version, media
                 originals, and the FAIR metadata a published dataset needs. No
-                application required to read it. This is a real demo package,
+                application required to read it. Browse a real demo package —
                 derived from the demo dataset in the repository.
               </p>
             </div>
@@ -249,21 +460,17 @@ export function HomepageApp() {
           </div>
         </section>
 
-        <section
-          className="hp-section hp-section-paper"
-          aria-labelledby="attention-title"
-        >
+        <section className="hp-section" aria-labelledby="attention-title">
           <div className="hp-section-inner hp-split">
             <div className="section-heading hp-sticky">
               <p className="eyebrow">Attention QA</p>
               <h2 id="attention-title">Quality you can measure, not assume.</h2>
               <p>
                 Every observation quietly includes one random, universally valid
-                quick check — options shuffled, inserted after the first two
-                questions. The question text is never stored: only a stable
-                check key and the selected value. The server verifies against
-                its own bank and computes a guess-adjusted score per
-                contributor.
+                quick check — options shuffled, inserted into the flow. The
+                question text is never stored: only a stable check key and the
+                selected value. The server verifies against its own bank and
+                computes a guess-adjusted score per contributor.
               </p>
               <p className="muted">
                 Answer the check — then see exactly what the dataset will
@@ -274,7 +481,10 @@ export function HomepageApp() {
           </div>
         </section>
 
-        <section className="hp-section" aria-labelledby="provenance-title">
+        <section
+          className="hp-section hp-section-paper"
+          aria-labelledby="provenance-title"
+        >
           <div className="hp-section-inner hp-split">
             <div className="section-heading hp-sticky">
               <p className="eyebrow">Provenance</p>
@@ -282,11 +492,9 @@ export function HomepageApp() {
                 Recorded automatically, never asked.
               </h2>
               <p>
-                Location is captured with every observation after one permission
-                grant. Device model, operating system, browser, screen,
-                connection, battery, timezone, and language are written silently
-                with every record. A failed optional capture never blocks a
-                save.
+                Device model, operating system, browser, screen, connection,
+                battery, timezone, and language are written silently with every
+                record. A failed optional capture never blocks a save.
               </p>
               <p className="muted">
                 This is your device, right now, read with the app's own
@@ -302,22 +510,20 @@ export function HomepageApp() {
 
         <section
           className="hp-section hp-section-paper"
+          id="preview"
           aria-labelledby="preview-title"
         >
           <div className="hp-section-inner hp-form-wrap">
             <div className="section-heading">
               <p className="eyebrow">The research preview</p>
-              <h2 id="preview-title">
-                collect is invite-only — ask for access.
-              </h2>
+              <h2 id="preview-title">Try it with your own fieldwork.</h2>
               <p>
                 The research preview gives you a running instance with your own
-                schema, your own contributors, and your own exports. Tell us
-                what you collect and where the network ends; we read every
-                request.
+                schema, your own contributors, and your own exports. Leave your
+                email and tell us what you collect — we read every request.
               </p>
             </div>
-            <PreviewForm />
+            <PreviewForm initialEmail={draftEmail} />
           </div>
         </section>
       </main>
@@ -333,6 +539,8 @@ export function HomepageApp() {
           <nav className="hp-footer-links" aria-label="Footer">
             <div>
               <span className="hp-footer-heading">Product</span>
+              <a href="#preview">Research preview</a>
+              <a href="#demo">Live demo</a>
               <a href={APP_URL} target="_blank" rel="noopener">
                 Open the app
               </a>

@@ -1,24 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../components/ui";
 import { Icon } from "../components/Icon";
 
 /**
- * Research-preview access request. Inserts one row into the private
- * preview_requests queue (RLS: anonymous insert only — nothing is ever
- * readable from the browser). Access remains invite-only.
+ * Research-preview access request — the page's call to action. Email is the
+ * only required field; the use case is optional but welcomed. Inserts one
+ * row into the private preview_requests queue (RLS: anonymous insert only —
+ * nothing is ever readable from the browser). Access stays invite-only.
  */
 const FORM_ENDPOINT =
   "https://lrqlrufwrytpwhgclmyo.supabase.co/rest/v1/preview_requests";
 const FORM_KEY = "sb_publishable_BAsTV49V04O0WZVtVgohqg_BD5JReFE";
 
-export function PreviewForm() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [organization, setOrganization] = useState("");
+export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
+  const [email, setEmail] = useState(initialEmail);
   const [useCase, setUseCase] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    if (initialEmail && !sent) setEmail(initialEmail);
+  }, [initialEmail, sent]);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -30,10 +33,8 @@ export function PreviewForm() {
       setError("Enter a valid email address so we can reply.");
       return;
     }
-    if (trimmedUseCase.length < 10) {
-      setError(
-        "Tell us a little about what you'd collect (at least a sentence).",
-      );
+    if (trimmedUseCase.length > 0 && trimmedUseCase.length < 10) {
+      setError("If you add a use case, give it a sentence or two.");
       return;
     }
 
@@ -48,10 +49,10 @@ export function PreviewForm() {
           Prefer: "return=minimal",
         },
         body: JSON.stringify({
-          name: name.trim() || null,
+          name: null,
           email: trimmedEmail,
-          organization: organization.trim() || null,
-          use_case: trimmedUseCase,
+          organization: null,
+          use_case: trimmedUseCase || null,
           source: "homepage",
         }),
       });
@@ -87,55 +88,28 @@ export function PreviewForm() {
       onSubmit={(event) => void submit(event)}
       noValidate
     >
-      <div className="hp-form-grid">
-        <label className="field">
-          <span>
-            Name <em className="optional">optional</em>
-          </span>
-          <input
-            className="field-input"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            type="text"
-            autoComplete="name"
-            maxLength={120}
-          />
-        </label>
-        <label className="field">
-          <span>Work email</span>
-          <input
-            className="field-input"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            type="email"
-            autoComplete="email"
-            required
-            maxLength={320}
-          />
-        </label>
-      </div>
       <label className="field">
-        <span>
-          Organization <em className="optional">optional</em>
-        </span>
+        <span>Work email</span>
         <input
           className="field-input"
-          value={organization}
-          onChange={(event) => setOrganization(event.target.value)}
-          type="text"
-          autoComplete="organization"
-          maxLength={160}
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          type="email"
+          autoComplete="email"
+          required
+          maxLength={320}
+          placeholder="you@your-institution.org"
         />
       </label>
       <label className="field">
-        <span>What would you collect with it?</span>
+        <span>
+          What would you collect with it? <em className="optional">optional</em>
+        </span>
         <textarea
           className="field-input field-textarea"
           value={useCase}
           onChange={(event) => setUseCase(event.target.value)}
-          rows={5}
-          required
-          minLength={10}
+          rows={4}
           maxLength={4000}
           placeholder="e.g. We run a building survey in a valley with patchy coverage — three teams, photos + GPS, published as a dataset."
         />

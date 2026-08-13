@@ -12,6 +12,7 @@ import { FlowDemo } from "../src/homepage/FlowDemo";
 import { AttentionDemo } from "../src/homepage/AttentionDemo";
 import { PackageBrowser } from "../src/homepage/PackageBrowser";
 import { PreviewForm } from "../src/homepage/PreviewForm";
+import { HomepageApp } from "../src/homepage/HomepageApp";
 import { ATTENTION_CHECKS } from "../src/data/attentionChecks";
 
 const storageEmpty = () => {
@@ -62,8 +63,8 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
 
     // Advance through every step. Single answers auto-advance (~220 ms);
     // multi-select and optional steps need the primary button, so if the
-    // title has not changed after an answer, press Continue. Save on the
-    // last step.
+    // title has not changed after an answer, press Continue/Skip. Save on
+    // the last step (attention may be last and required — answer it first).
     for (let guard = 0; guard < 26; guard++) {
       await waitFor(() => expect(stepTitle()).not.toBe(""));
       const title = stepTitle();
@@ -79,8 +80,8 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
         const input = viewport().querySelector('input[type="date"]');
         fireEvent.change(input!, { target: { value: "2026-08-10" } });
       } else {
-        // Covers single/tri-state/attention steps (auto-advance) as well as
-        // the attention step whose title is the check prompt itself.
+        // Covers single/tri-state/attention steps (auto-advance) as well
+        // as the attention step whose title is the check prompt itself.
         const option = viewport().querySelector(
           ".choice-button, .tri-state button",
         );
@@ -148,7 +149,7 @@ describe("AttentionDemo — real bank and real strip logic", () => {
     const prompts = ATTENTION_CHECKS.map((check) => check.prompt);
     const heading = screen.getByRole("heading", { level: 3 });
     expect(prompts).toContain(heading.textContent);
-    expect(screen.getAllByRole("button").length).toBe(4);
+    expect(screen.getAllByRole("button", { name: /./ }).length).toBe(4);
   });
 
   it("shows the stored record and the stripped payload after answering", async () => {
@@ -190,14 +191,32 @@ describe("PackageBrowser — derived from the canonical demo dataset", () => {
   });
 });
 
-describe("PreviewForm — research preview access request", () => {
-  it("validates before sending", async () => {
+describe("PreviewForm — research preview email CTA", () => {
+  it("validates the email before sending", async () => {
     render(<PreviewForm />);
     fireEvent.click(screen.getByRole("button", { name: /request access/i }));
     expect(screen.getByRole("alert")).toBeTruthy();
   });
 
-  it("posts one row to the private queue and shows the success state", async () => {
+  it("accepts a bare email (use case optional)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<PreviewForm />);
+    fireEvent.change(screen.getByLabelText(/work email/i), {
+      target: { value: "researcher@lab.org" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /request access/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/request received/i)).toBeTruthy(),
+    );
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1].body));
+    expect(body.email).toBe("researcher@lab.org");
+    expect(body.use_case).toBeNull();
+    expect(body.source).toBe("homepage");
+    storageEmpty();
+  });
+
+  it("posts one row with the use case and shows the success state", async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal("fetch", fetchMock);
     render(<PreviewForm />);
@@ -223,6 +242,39 @@ describe("PreviewForm — research preview access request", () => {
     expect(body.email).toBe("researcher@lab.org");
     expect(body.source).toBe("homepage");
     expect(body.use_case).toContain("patchy coverage");
+    storageEmpty();
+  });
+
+  it("asks for a sentence when a use case is provided but too short", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<PreviewForm />);
+    fireEvent.change(screen.getByLabelText(/work email/i), {
+      target: { value: "researcher@lab.org" },
+    });
+    fireEvent.change(screen.getByLabelText(/what would you collect/i), {
+      target: { value: "short" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /request access/i }));
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("HomepageApp — promotional home with email CTA", () => {
+  it("prefills the research-preview form from the hero capture", async () => {
+    const { container } = render(<HomepageApp />);
+    const heroInput = container.querySelector(
+      ".hp-capture input",
+    ) as HTMLInputElement;
+    fireEvent.change(heroInput, { target: { value: "lead@lab.org" } });
+    fireEvent.click(container.querySelector(".hp-capture button")!);
+    // The research-preview form receives the hero email (scoped: the hero
+    // capture also has an email input).
+    const formEmail = container.querySelector(
+      '#preview input[type="email"]',
+    ) as HTMLInputElement;
+    await waitFor(() => expect(formEmail.value).toBe("lead@lab.org"));
     storageEmpty();
   });
 });
