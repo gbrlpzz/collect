@@ -7,19 +7,8 @@ import { AttentionDemo } from "./AttentionDemo";
 import { ProvenanceCard } from "./ProvenanceCard";
 import { Icon } from "../components/Icon";
 
-const APP_URL = "https://collect-tawny.vercel.app";
-const ADMIN_URL = `${APP_URL}/?role=admin`;
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 const DOCS = (file: string) => `${GITHUB_URL}/blob/main/docs/${file}`;
-
-const NAV = [
-  { label: "1. Setup & Schema", href: "#admin" },
-  { label: "2. Field Collection", href: "#collection" },
-  { label: "3. Integrity & QA", href: "#integrity" },
-  { label: "4. Data Package", href: "#data" },
-  { label: "Comparison", href: "#comparison" },
-  { label: "Deploy", href: "#preview" },
-];
 
 function TopBar() {
   return (
@@ -36,33 +25,37 @@ function TopBar() {
           <span className="wordmark">
             collect<span className="wordmark-dot">.</span>
           </span>
+          <span className="hp-brand-tag">Research Preview</span>
         </a>
+
         <nav className="hp-nav" aria-label="Sections">
-          {NAV.map((item) => (
-            <a className="hp-nav-link" href={item.href} key={item.href}>
-              {item.label}
-            </a>
-          ))}
+          <a className="hp-nav-link" href="#admin">
+            Setup
+          </a>
+          <a className="hp-nav-link" href="#collection">
+            Collector
+          </a>
+          <a className="hp-nav-link" href="#integrity">
+            Integrity
+          </a>
+          <a className="hp-nav-link" href="#data">
+            Dataset
+          </a>
         </nav>
+
         <div className="hp-topbar-actions">
           <a
-            className="hp-nav-link hp-nav-app-link"
-            href={APP_URL}
+            className="hp-nav-github"
+            href={GITHUB_URL}
             target="_blank"
-            rel="noopener"
+            rel="noopener noreferrer"
+            aria-label="GitHub Repository"
           >
-            Contributor
-          </a>
-          <a
-            className="hp-nav-link hp-nav-app-link"
-            href={ADMIN_URL}
-            target="_blank"
-            rel="noopener"
-          >
-            Admin
+            <Icon name="github" size={20} />
+            <span className="hp-github-text">GitHub</span>
           </a>
           <a className="button button-primary button-small" href="#preview">
-            Request access
+            Request test access
           </a>
         </div>
       </div>
@@ -89,15 +82,16 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
       <div className="hp-hero-inner">
         <div className="hp-hero-badge">
           <span className="status-dot" aria-hidden="true" />
-          <span>Offline-first field data collection</span>
+          <span>Open Source Research Preview · Apache-2.0</span>
         </div>
 
         <h1 id="hero-title">Field collection that never loses a record.</h1>
 
         <p className="hp-hero-lede">
-          An offline-first PWA for field research and surveys. Collect
-          structured observations and raw photos with zero signal — saved
-          securely on-device and synced automatically when connected.
+          An offline-first tool for scientific fieldwork and survey teams.
+          Observations and uncompressed media commit to local device storage
+          before touching the network, syncing automatically when connection
+          returns.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -113,7 +107,7 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
             aria-label="Institutional email"
           />
           <button className="button button-primary" type="submit">
-            Request access
+            Request test access
           </button>
         </form>
 
@@ -427,18 +421,16 @@ export function HomepageApp() {
                 <div className="hp-integrity-card-header">
                   <h3>Cognitive Attention QA</h3>
                   <p>
-                    Answer stripped before commit · Guess-adjusted reliability
-                    index
+                    Question never stored in schema · Answer stripped before
+                    commit
                   </p>
                 </div>
                 <AttentionDemo />
               </div>
               <div className="hp-integrity-card">
                 <div className="hp-integrity-card-header">
-                  <h3>Hardware & Environment Telemetry</h3>
-                  <p>
-                    Passive environment telemetry · Non-blocking local receipt
-                  </p>
+                  <h3>Ambient Environment Telemetry</h3>
+                  <p>Automatic hardware context · Never blocks local receipt</p>
                 </div>
                 <ProvenanceCard />
               </div>
@@ -488,14 +480,14 @@ export function HomepageApp() {
         >
           <div className="hp-section-inner hp-preview-layout">
             <div className="hp-preview-copy">
-              <p className="eyebrow">Deploy collect</p>
+              <p className="eyebrow">Research Preview & Feedback</p>
               <h2 id="preview-title">
-                Provision an instance for your institution or expedition.
+                Explore a pilot for your fieldwork or expedition.
               </h2>
               <p>
-                We provide managed research previews with custom schemas and
-                team invitations, or you can self-host the open-source
-                repository on your own cloud infrastructure.
+                We are testing collect with academic researchers and field
+                teams. Request preview access to test custom schemas, or clone
+                and self-host the open-source repository directly.
               </p>
             </div>
             <div className="hp-preview-card">
@@ -532,7 +524,7 @@ export function HomepageApp() {
               <a href="#collection">2. Field Collection</a>
               <a href="#integrity">3. Integrity & QA</a>
               <a href="#data">4. Data Package</a>
-              <a href="#preview">Deploy instance</a>
+              <a href="#preview">Request test access</a>
             </div>
             <div>
               <span className="hp-footer-heading">Documentation</span>

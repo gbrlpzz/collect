@@ -93,6 +93,10 @@ html,
 body {
   min-height: 100%;
   background: var(--canvas);
+  /* Installed PWA: never rubber-band the page when there is nothing to
+     scroll. Long screens still scroll normally; only the empty overscroll
+     (the iOS bounce with no overflowing content) is removed. */
+  overscroll-behavior: none;
 }
 html {
   color-scheme: light;

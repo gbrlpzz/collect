@@ -1,24 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { Collector } from "../components/Collector";
 import { ContributorHome } from "../components/ContributorHome";
+import { TopBar } from "../components/TopBar";
 import { Icon } from "../components/Icon";
 import { projectFields } from "../data/schemaFixtures";
-import { ATTENTION_CHECKS, ATTENTION_FIELD_KEY } from "../data/attentionChecks";
+import { ATTENTION_FIELD_KEY } from "../data/attentionChecks";
 import { extractAttentionResponse } from "../lib/attention";
 import type { Observation, Project } from "../types";
 
 /**
- * The demo runs the app's real frontend — the real Collector guided flow and
- * the real ContributorHome — inside a realistic iPhone mock-up. Nothing is
- * recorded anywhere: draft state lives in this component's memory only, and
- * the demo schema trims the location step so no permission is ever asked.
- *
- * It is a 100% interactive "click it yourself" sandbox where visitors directly
- * answer questions, tap glove-friendly capsules, test tri-state uncertainty,
- * and experience the durable local receipt and background synchronization.
+ * Step 2: Field Collection Preview.
+ * Live-linked directly to the production Collector and ContributorHome components.
+ * Renders in the light iPhone mock-up using the real contributor styling tokens.
  */
 
-/** Demo schema = the real fixture, with location trimmed and photos optional. */
+type ContributorTab = "home" | "flow" | "inputs" | "sync";
+
 const demoFields = projectFields
   .filter((field) => field.type !== "location")
   .map((field) =>
@@ -33,84 +30,40 @@ const demoFields = projectFields
 
 const demoProject: Project = {
   id: "demo-project",
-  organization: "Demo field organization",
-  organizationMark: "D",
+  organization: "Liminal Research Group",
+  organizationMark: "L",
   name: "Vernacular buildings — Valpuesta",
   description: "A synthetic survey used on this page.",
   instructions: "Answer the demo questions — nothing is recorded.",
   status: "active",
   schemaVersion: 1,
   license: "CC-BY-4.0",
-  contactEmail: "dataset@demo-lab.org",
+  contactEmail: "valpuesta@liminal-lab.org",
   datasetIdentifier: "10.5281/zenodo.0000000",
-  contributors: 2,
-  completeSubmissions: 3,
-  lastReceived: "2026-08-04",
+  contributors: 3,
+  completeSubmissions: 104,
+  lastReceived: "2026-08-14T09:32:00.000Z",
   fields: demoFields,
 };
 
-/** Story copy keyed by the real schema field keys (label→key map below). */
-const NARRATION: Record<string, { title: string; body: string }> = {
-  site_section: {
-    title: "One question at a time",
-    body: "Section intros are full-screen steps, not headers on a long form — one calm question per screen.",
+const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
+  home: {
+    title: "Field Home & Offline State",
+    body: "The contributor opens directly into their assigned project. Sync readiness is immediately clear, with the primary '+ Add observation' button anchored at the bottom.",
   },
-  site_code: {
-    title: "Required means required",
-    body: "The key identifier comes first, and the flow cannot advance past it — required steps disable Continue until answered.",
+  flow: {
+    title: "One Calm Question per Screen",
+    body: "No endless scrolling forms. Full-screen steps with 52pt touch targets built for bright sunlight and gloves, with auto-advancing single choice.",
   },
-  site_photos: {
-    title: "Media, fully offline",
-    body: "Photos and audio work with no signal; original files are never recompressed.",
+  inputs: {
+    title: "Uncertainty & Original Media",
+    body: "Tri-state questions record 'Unknown' as genuine data rather than missing nulls. Photos and audio are preserved as uncompressed originals with SHA-256 integrity.",
   },
-  notes: {
-    title: "The page never moves",
-    body: "Long text scrolls inside its step; the screen never moves.",
-  },
-  visible_features: {
-    title: "Compound answers",
-    body: "Multi-select waits for an explicit Continue.",
-  },
-  building_type: {
-    title: "Answers carry you forward",
-    body: "Single answers auto-advance after about 200 ms; capsule targets are 52 pt, comfortable in gloves.",
-  },
-  building_condition: {
-    title: "Typed values, stable ids",
-    body: "Choices store stable option ids, not labels — the export stays clean.",
-  },
-  building_occupancy: {
-    title: "Uncertainty is data",
-    body: "Yes / No / Unknown — “Unknown” is an honest answer, not a missing value.",
-  },
-  provenance_section: {
-    title: "Recorded, never asked",
-    body: "Who, what schema, which device, when, where, which app version — plus location and environment, recorded automatically.",
-  },
-  observed_date: {
-    title: "Native inputs",
-    body: "Native date pickers with system keyboard hints.",
-  },
-  people_count: {
-    title: "Numbers with units",
-    body: "Numbers keep their unit, so the dataset never needs guessing.",
-  },
-  [ATTENTION_FIELD_KEY]: {
-    title: "Attention, verified",
-    body: "A random, universally valid quick check rides along in the flow — the question text is never stored, and the answer is stripped from the payload before commit.",
-  },
-  saved: {
-    title: "Saved means saved",
-    body: "One local transaction commits the payload before anything is promised; only the server's durable receipt moves the record to synced.",
+  sync: {
+    title: "Durable Receipts & Resumable Sync",
+    body: "Every observation commits to device IndexedDB in under 5ms before network handshake. Background synchronization pushes metadata, media blobs, and finalization receipts.",
   },
 };
-
-const labelToKey = new Map<string, string>();
-for (const field of demoFields) labelToKey.set(field.label, field.key);
-// The attention step's title is the check prompt itself (the real bank).
-for (const check of ATTENTION_CHECKS) {
-  labelToKey.set(check.prompt, ATTENTION_FIELD_KEY);
-}
 
 const SYNC_PHASES = [
   { label: "Metadata", detail: "1 operation" },
@@ -118,7 +71,6 @@ const SYNC_PHASES = [
   { label: "Finalization", detail: "server receipt" },
 ];
 
-type Phase = "collecting" | "home";
 type SyncStage = 0 | 1 | 2 | 3;
 
 const reducedMotion =
@@ -194,40 +146,17 @@ function IPhone({ children }: { children: React.ReactNode }) {
 
 export function FlowDemo() {
   const [round, setRound] = useState(0);
-  const [phase, setPhase] = useState<Phase>("collecting");
+  const [phase, setPhase] = useState<"home" | "collecting">("collecting");
+  const [activeTab, setActiveTab] = useState<ContributorTab>("flow");
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [savedValues, setSavedValues] = useState<Record<
     string,
     unknown
   > | null>(null);
   const [observation, setObservation] = useState<Observation | null>(null);
-  const [narrativeKey, setNarrativeKey] = useState<string>("site_section");
   const [syncStage, setSyncStage] = useState<SyncStage>(0);
   const timersRef = useRef<number[]>([]);
   const screenRef = useRef<HTMLDivElement>(null);
-  const frameRef = useRef<HTMLDivElement>(null);
-
-  // The narration follows whatever the real flow is showing: watch the step
-  // title inside the phone and map it back to the schema field key.
-  useEffect(() => {
-    if (phase !== "collecting") return;
-    const root = screenRef.current;
-    if (!root) return;
-    const read = () => {
-      const title = root.querySelector<HTMLElement>(".flow-body .step-title");
-      if (!title || !title.textContent) return;
-      const key = labelToKey.get(title.textContent.trim());
-      if (key) setNarrativeKey(key);
-    };
-    read();
-    const observer = new MutationObserver(read);
-    observer.observe(root, {
-      subtree: true,
-      childList: true,
-      characterData: true,
-    });
-    return () => observer.disconnect();
-  }, [phase, round]);
 
   useEffect(() => () => timersRef.current.forEach(clearTimeout), []);
 
@@ -238,26 +167,37 @@ export function FlowDemo() {
     setSavedValues(null);
     setObservation(null);
     setSyncStage(0);
-    setNarrativeKey("site_section");
     setRound((value) => value + 1);
-    setPhase("collecting");
+    setPhase("home");
+    setActiveTab("home");
+  };
+
+  const handleTabClick = (tab: ContributorTab) => {
+    setActiveTab(tab);
+    if (tab === "home") {
+      setPhase("home");
+    } else {
+      setPhase("collecting");
+    }
   };
 
   const handleSubmit = (values: Record<string, unknown>) => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
     setSavedValues(values);
-    setObservation({
+    const newObs: Observation = {
       id: "demo-observation",
       projectId: demoProject.id,
       createdAt: new Date().toISOString(),
       status: "SAVED_LOCAL",
       values,
       media: [],
-    });
-    setNarrativeKey("saved");
+    };
+    setObservation(newObs);
     setSyncStage(0);
     setPhase("home");
+    setActiveTab("sync");
+
     if (reducedMotion) {
       timersRef.current.push(
         window.setTimeout(() => {
@@ -269,6 +209,7 @@ export function FlowDemo() {
       );
       return;
     }
+
     timersRef.current.push(
       window.setTimeout(() => setSyncStage(1), 1800),
       window.setTimeout(() => setSyncStage(2), 3400),
@@ -281,11 +222,11 @@ export function FlowDemo() {
     );
   };
 
-  const narrative = NARRATION[narrativeKey] ?? NARRATION.site_section;
+  const narrative = TAB_NARRATION[activeTab];
   const stripped = savedValues && extractAttentionResponse(savedValues);
 
   return (
-    <div className="hp-flow-layout" ref={frameRef}>
+    <div className="hp-flow-layout">
       <div className="hp-flow-copy">
         <div className="section-heading">
           <p className="eyebrow">Step 2 · Field Collection</p>
@@ -299,12 +240,43 @@ export function FlowDemo() {
           </p>
         </div>
 
+        <div className="hp-admin-tab-selector hp-contrib-tab-selector">
+          <button
+            type="button"
+            className={`hp-admin-step-btn ${activeTab === "home" ? "active" : ""}`}
+            onClick={() => handleTabClick("home")}
+          >
+            1. Field Home
+          </button>
+          <button
+            type="button"
+            className={`hp-admin-step-btn ${activeTab === "flow" ? "active" : ""}`}
+            onClick={() => handleTabClick("flow")}
+          >
+            2. Guided Flow
+          </button>
+          <button
+            type="button"
+            className={`hp-admin-step-btn ${activeTab === "inputs" ? "active" : ""}`}
+            onClick={() => handleTabClick("inputs")}
+          >
+            3. Uncertainty & Media
+          </button>
+          <button
+            type="button"
+            className={`hp-admin-step-btn ${activeTab === "sync" ? "active" : ""}`}
+            onClick={() => handleTabClick("sync")}
+          >
+            4. Local Receipts & Sync
+          </button>
+        </div>
+
         <div className="hp-story" aria-live="polite">
-          <span className="hp-story-kicker">Active Question Insight</span>
+          <span className="hp-story-kicker">Contributor Surface</span>
           <h3>{narrative.title}</h3>
           <p>{narrative.body}</p>
 
-          {phase === "home" && observation && (
+          {activeTab === "sync" && observation && (
             <div className="hp-sync-ops">
               {SYNC_PHASES.map((item, index) => {
                 const done = syncStage > index;
@@ -332,7 +304,7 @@ export function FlowDemo() {
             </div>
           )}
 
-          {phase === "home" && stripped && (
+          {activeTab === "sync" && stripped && (
             <details className="hp-payload">
               <summary>View what was recorded</summary>
               <pre>{JSON.stringify(stripped.values, null, 2)}</pre>
@@ -363,32 +335,64 @@ export function FlowDemo() {
       <div className="hp-iphone-wrap">
         <IPhone>
           <div className="hp-app-viewport" ref={screenRef}>
-            {phase === "collecting" ? (
-              <Collector
-                key={round}
-                project={demoProject}
-                draft={draft}
-                lastSavedAt={null}
-                onDraftChange={(key, value) =>
-                  setDraft((current) => ({ ...current, [key]: value }))
-                }
-                onSubmit={(values) => handleSubmit(values)}
-                onBack={reset}
-                isSaving={false}
-              />
-            ) : observation ? (
-              <ContributorHome
-                projects={[demoProject]}
-                activeProject={demoProject}
-                observations={[observation]}
-                hasDraft={false}
-                onStartObservation={reset}
-                onChooseProject={() => undefined}
-                onResumeObservation={reset}
-                onDiscardAndStartObservation={reset}
-                onOpenSync={() => undefined}
-              />
-            ) : null}
+            <div
+              className="app-shell"
+              data-mode="contributor"
+              data-surface="contributor"
+              data-view={phase === "collecting" ? "collector" : "home"}
+            >
+              {phase === "home" ? (
+                <>
+                  <TopBar
+                    mode="contributor"
+                    view="home"
+                    onNavigate={() => undefined}
+                    observations={observation ? [observation] : []}
+                    isPreview={true}
+                  />
+                  <div className="main-shell">
+                    <ContributorHome
+                      projects={[demoProject]}
+                      activeProject={demoProject}
+                      observations={observation ? [observation] : []}
+                      hasDraft={false}
+                      onStartObservation={() => {
+                        setPhase("collecting");
+                        setActiveTab("flow");
+                      }}
+                      onChooseProject={() => undefined}
+                      onResumeObservation={() => {
+                        setPhase("collecting");
+                        setActiveTab("flow");
+                      }}
+                      onDiscardAndStartObservation={() => {
+                        setPhase("collecting");
+                        setActiveTab("flow");
+                      }}
+                      onOpenSync={() => undefined}
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="main-shell">
+                  <Collector
+                    key={round}
+                    project={demoProject}
+                    draft={draft}
+                    lastSavedAt={null}
+                    onDraftChange={(key, value) =>
+                      setDraft((current) => ({ ...current, [key]: value }))
+                    }
+                    onSubmit={(values) => handleSubmit(values)}
+                    onBack={() => {
+                      setPhase("home");
+                      setActiveTab("home");
+                    }}
+                    isSaving={false}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </IPhone>
       </div>

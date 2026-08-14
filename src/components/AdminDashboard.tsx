@@ -116,6 +116,8 @@ interface AdminProjectProps {
   onSchemaPublished: (project: Project) => void;
   onToggleStatus: () => void;
   onPreviewContributor?: () => void;
+  initialTab?: AdminTab;
+  onTabChange?: (tab: AdminTab) => void;
 }
 
 export function AdminProject({
@@ -126,8 +128,15 @@ export function AdminProject({
   onSchemaPublished,
   onToggleStatus,
   onPreviewContributor,
+  initialTab = "setup",
+  onTabChange,
 }: AdminProjectProps) {
-  const [tab, setTab] = useState<AdminTab>("setup");
+  const [tab, setTab] = useState<AdminTab>(initialTab);
+
+  const handleTabChange = (nextTab: AdminTab) => {
+    setTab(nextTab);
+    onTabChange?.(nextTab);
+  };
   const receivedCount = project.completeSubmissions;
   const projectActionsRef = useRef<HTMLDetailsElement>(null);
   const {
@@ -209,7 +218,7 @@ export function AdminProject({
             aria-controls={`admin-panel-${item}`}
             tabIndex={tab === item ? 0 : -1}
             className={tab === item ? "tab-active" : ""}
-            onClick={() => setTab(item)}
+            onClick={() => handleTabChange(item)}
             onKeyDown={(event) => {
               if (event.key !== "ArrowLeft" && event.key !== "ArrowRight")
                 return;
