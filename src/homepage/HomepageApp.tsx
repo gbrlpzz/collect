@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FlowDemo } from "./FlowDemo";
+import { SyncDemo } from "./SyncDemo";
 import { PackageBrowser } from "./PackageBrowser";
 import { PreviewForm } from "./PreviewForm";
 import { AdminWalkthrough } from "./AdminWalkthrough";
@@ -269,7 +270,7 @@ export function HomepageApp() {
         <Hero onEmailSubmit={captureEmail} />
         <DifferentiationSummary />
 
-        {/* Step 1: Real Field Collection inside iPhone Mockup */}
+        {/* Real Field Collection inside iPhone Mockup */}
         <section
           className="hp-section hp-section-paper"
           id="collection"
@@ -283,103 +284,11 @@ export function HomepageApp() {
         {/* Sync Architecture */}
         <section className="hp-section" id="sync" aria-labelledby="sync-title">
           <div className="hp-section-inner">
-            <div className="hp-flow-layout">
-              <div className="hp-flow-copy">
-                <div className="section-heading">
-                  <p className="eyebrow">Synchronization</p>
-                  <h2 id="sync-title">Deterministic sync state machine.</h2>
-                  <p>
-                    Submissions transition through verifiable states. Records
-                    commit to local storage before network dispatch and mark
-                    synced only when the server returns a finalization receipt.
-                  </p>
-                  <DocLink
-                    file="background-automation.md"
-                    label="Background automation doc"
-                  />
-                  <DocLink
-                    file="architecture.md"
-                    label="Sync architecture doc"
-                  />
-                </div>
-
-                <ul className="hp-sync-principles">
-                  <li>
-                    <strong>Commit first.</strong> Structured payload, media
-                    metadata, and outbox operations write to IndexedDB before
-                    any network request.
-                  </li>
-                  <li>
-                    <strong>Resumable media.</strong> Original files upload via
-                    chunked tus transfers with SHA-256 checksums, resuming
-                    across broken connections.
-                  </li>
-                  <li>
-                    <strong>Receipt-gated finalization.</strong> The server
-                    validates and returns a signed receipt naming the submission
-                    ID before local state updates to <code>SYNCED</code>.
-                  </li>
-                </ul>
-              </div>
-
-              <div className="hp-flow-visual">
-                <div className="hp-sync-pipeline" aria-label="Sync stages">
-                  <div className="hp-sync-stage">
-                    <span className="hp-sync-stage-index">1</span>
-                    <div>
-                      <strong>Saved locally</strong>
-                      <p className="hp-sync-state-code">SAVED_LOCAL</p>
-                      <p>
-                        Payload and outbox operations commit to device storage.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="hp-sync-stage">
-                    <span className="hp-sync-stage-index">2</span>
-                    <div>
-                      <strong>Syncing</strong>
-                      <p className="hp-sync-state-code">
-                        SYNCING_METADATA → SYNCING_MEDIA
-                      </p>
-                      <p>
-                        Metadata transfers first, followed by chunked media
-                        uploads.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="hp-sync-stage">
-                    <span className="hp-sync-stage-index">3</span>
-                    <div>
-                      <strong>Finalized</strong>
-                      <p className="hp-sync-state-code">FINALIZING → SYNCED</p>
-                      <p>
-                        Server records durable receipt before local state flips
-                        to <code>SYNCED</code>.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="hp-sync-receipt">
-                    <span className="hp-sync-receipt-label">
-                      durable server receipt
-                    </span>
-                    <pre>{`{
-  "submission_id": "obs-4f2a9c…",
-  "received_at": "2026-08-14T09:32:01.204Z",
-  "finalized_at": "2026-08-14T09:32:02.118Z",
-  "status": "COMPLETE"
-}`}</pre>
-                    <p>
-                      A record marks <code>SYNCED</code> only when the server
-                      receipt confirms the exact submission ID.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <SyncDemo />
           </div>
         </section>
 
-        {/* Step 2: Admin Operations & Schema (Dark Mobile Mockup) */}
+        {/* Admin Operations & Schema (Dark Mobile Mockup) */}
         <section
           className="hp-section hp-section-admin"
           id="admin"
@@ -407,21 +316,21 @@ export function HomepageApp() {
                     className={`hp-admin-step-btn ${adminTab === "setup" ? "active" : ""}`}
                     onClick={() => setAdminTab("setup")}
                   >
-                    1. Form Schema
+                    Form Schema
                   </button>
                   <button
                     type="button"
                     className={`hp-admin-step-btn ${adminTab === "contributors" ? "active" : ""}`}
                     onClick={() => setAdminTab("contributors")}
                   >
-                    2. Device Pairing
+                    Device Pairing
                   </button>
                   <button
                     type="button"
                     className={`hp-admin-step-btn ${adminTab === "export" ? "active" : ""}`}
                     onClick={() => setAdminTab("export")}
                   >
-                    3. Checkpoint Export
+                    Checkpoint Export
                   </button>
                 </div>
 
@@ -469,7 +378,7 @@ export function HomepageApp() {
           </div>
         </section>
 
-        {/* Step 3: Integrity & Provenance */}
+        {/* Integrity & Provenance */}
         <section
           className="hp-section"
           id="integrity"
@@ -509,7 +418,7 @@ export function HomepageApp() {
           </div>
         </section>
 
-        {/* Step 4: FAIR Checkpoint Dataset Explorer */}
+        {/* FAIR Checkpoint Dataset Explorer */}
         <section
           className="hp-section hp-section-paper"
           id="data"
@@ -582,12 +491,12 @@ export function HomepageApp() {
           </div>
           <nav className="hp-footer-links" aria-label="Footer">
             <div>
-              <span className="hp-footer-heading">Lifecycle</span>
-              <a href="#collection">1. Field Collection</a>
+              <span className="hp-footer-heading">Sections</span>
+              <a href="#collection">Field collection</a>
               <a href="#sync">Sync pipeline</a>
-              <a href="#admin">2. Setup & Schema</a>
-              <a href="#integrity">3. Data Integrity</a>
-              <a href="#data">4. FAIR Export</a>
+              <a href="#admin">Setup & administration</a>
+              <a href="#integrity">Data integrity</a>
+              <a href="#data">Archival & export</a>
               <a href="#preview">Request access</a>
               <a href="/" target="_blank" rel="noopener noreferrer">
                 Sign in — contributor
@@ -600,6 +509,13 @@ export function HomepageApp() {
               <span className="hp-footer-heading">Documentation</span>
               <a href={GITHUB_URL} target="_blank" rel="noopener">
                 GitHub repository
+              </a>
+              <a
+                href={DOCS("background-automation.md")}
+                target="_blank"
+                rel="noopener"
+              >
+                Background automation
               </a>
               <a href={DOCS("export-format.md")} target="_blank" rel="noopener">
                 Export format spec

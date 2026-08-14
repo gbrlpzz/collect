@@ -246,7 +246,7 @@ export function FlowDemo() {
     <div className="hp-flow-layout">
       <div className="hp-flow-copy">
         <div className="section-heading">
-          <p className="eyebrow">Step 1 · Field Collection</p>
+          <p className="eyebrow">Field Collection</p>
           <h2 id="collection-title">
             Distraction-free capture. Built for zero connectivity.
           </h2>
@@ -273,21 +273,21 @@ export function FlowDemo() {
             className={`hp-admin-step-btn ${activeTab === "home" ? "active" : ""}`}
             onClick={() => handleTabClick("home")}
           >
-            1. Field Home
+            Field Home
           </button>
           <button
             type="button"
             className={`hp-admin-step-btn ${activeTab === "flow" ? "active" : ""}`}
             onClick={() => handleTabClick("flow")}
           >
-            2. Guided Flow
+            Guided Flow
           </button>
           <button
             type="button"
             className={`hp-admin-step-btn ${activeTab === "media" ? "active" : ""}`}
             onClick={() => handleTabClick("media")}
           >
-            3. Raw Media
+            Raw Media
           </button>
         </div>
 
