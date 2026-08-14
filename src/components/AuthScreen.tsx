@@ -8,7 +8,6 @@ import {
   sendMagicLink,
   setPassword,
   signInWithPassword,
-  verifySignInCode,
 } from "../lib/supabaseClient";
 import { Icon } from "./Icon";
 import { CollectBrand } from "./CollectBrand";
@@ -60,7 +59,6 @@ export function AuthScreen({
   );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [codeMode, setCodeMode] = useState(false);
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState<string | null>(null);
   const [codeBusy, setCodeBusy] = useState(false);
@@ -73,7 +71,6 @@ export function AuthScreen({
   const [passwordSetupBusy, setPasswordSetupBusy] = useState(false);
   // Device-link entry.
   const deviceCodeInputRef = useRef<HTMLInputElement>(null);
-  const codeInputRef = useRef<HTMLInputElement>(null);
   // Self-service: request a fresh sign-in code by email.
   const [requestOpen, setRequestOpen] = useState(false);
   const [requestEmail, setRequestEmail] = useState("");
@@ -154,39 +151,6 @@ export function AuthScreen({
       }
     } finally {
       setBusy(false);
-    }
-  };
-
-  const verifyCode = async (token?: string) => {
-    const address = email.trim();
-    const nextToken = (token ?? code).trim();
-    if (!address || nextToken.length !== 6) return;
-    setCodeBusy(true);
-    setCodeError(null);
-    try {
-      await verifySignInCode(address, nextToken);
-      // Session updates flow through the auth listener; this screen unmounts.
-    } catch (caught) {
-      const message =
-        caught instanceof Error ? caught.message.toLowerCase() : "";
-      if (
-        message.includes("expired") ||
-        message.includes("invalid") ||
-        message.includes("token")
-      ) {
-        setCodeError(
-          "That code is invalid or expired. Check the newest email for the current code.",
-        );
-      } else {
-        setCodeError(
-          "That code could not be verified. Check the email and try again.",
-        );
-      }
-      setCodeError((current) =>
-        `${current ?? ""}${current ? " " : ""}If the email has no 6-digit code, its template needs the sign-in code added — the link in that email still works.`.trim(),
-      );
-    } finally {
-      setCodeBusy(false);
     }
   };
 
@@ -721,110 +685,25 @@ export function AuthScreen({
                 {error}
               </p>
             )}
-            {codeMode ? (
-              <div className="auth-code">
-                <form
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void verifyCode();
-                  }}
-                >
-                  <label className="auth-label" htmlFor="auth-code-input">
-                    6-digit code from the email
-                    <input
-                      ref={codeInputRef}
-                      id="auth-code-input"
-                      className="field-input"
-                      type="text"
-                      required
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      pattern="[0-9]{6}"
-                      maxLength={6}
-                      value={code}
-                      onChange={(event) => {
-                        const nextCode = event.target.value
-                          .replace(/\D/g, "")
-                          .slice(0, 6);
-                        setCode(nextCode);
-                        setCodeError(null);
-                        if (nextCode.length === 6 && !codeBusy)
-                          void verifyCode(nextCode);
-                      }}
-                      placeholder="000000"
-                      autoFocus
-                      disabled={codeBusy}
-                    />
-                  </label>
-                  {codeError && (
-                    <p className="auth-error" role="alert">
-                      {codeError}
-                    </p>
-                  )}
-                  {(code.length === 6 || codeBusy) && (
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      fullWidth
-                      disabled={codeBusy}
-                      busy={codeBusy}
-                    >
-                      {codeBusy
-                        ? "Verifying…"
-                        : codeError
-                          ? "Try again"
-                          : "Verify code"}
-                    </Button>
-                  )}
-                </form>
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={() => {
-                    setCodeMode(false);
-                    setCode("");
-                    setCodeError(null);
-                  }}
-                >
-                  Back to the sign-in link <Icon name="arrow-right" size={15} />
-                </button>
-              </div>
-            ) : (
-              <>
-                <button
-                  className="text-button"
-                  onClick={() => void submit()}
-                  disabled={busy}
-                >
-                  {busy ? "Sending…" : "Send a new link"}{" "}
-                  <Icon name="refresh" size={15} />
-                </button>
-                <button
-                  className="text-button"
-                  onClick={() => {
-                    setSent(false);
-                    setError(null);
-                    setCallbackIssue(null);
-                  }}
-                >
-                  Use another email <Icon name="arrow-right" size={15} />
-                </button>
-                {configured && (
-                  <button
-                    className="text-button"
-                    onClick={() => {
-                      setCodeMode(true);
-                      setCodeError(null);
-                      setCode("");
-                      window.setTimeout(() => codeInputRef.current?.focus(), 0);
-                    }}
-                  >
-                    Enter the code from the email instead{" "}
-                    <Icon name="arrow-right" size={15} />
-                  </button>
-                )}
-              </>
-            )}
+
+            <button
+              className="text-button"
+              onClick={() => void submit()}
+              disabled={busy}
+            >
+              {busy ? "Sending…" : "Send a new link"}{" "}
+              <Icon name="refresh" size={15} />
+            </button>
+            <button
+              className="text-button"
+              onClick={() => {
+                setSent(false);
+                setError(null);
+                setCallbackIssue(null);
+              }}
+            >
+              Use another email <Icon name="arrow-right" size={15} />
+            </button>
           </div>
         )}
         {!configured && onPreview && (

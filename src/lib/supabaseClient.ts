@@ -160,19 +160,6 @@ export function isStandalonePwa(): boolean {
  * code is typed into the current app, so it works identically in Safari and
  * in an installed PWA — the two storage containers iOS keeps separate.
  */
-export async function verifySignInCode(
-  email: string,
-  code: string,
-): Promise<void> {
-  if (!supabase) throw new Error("Supabase is not configured");
-  const { error } = await supabase.auth.verifyOtp({
-    email,
-    token: code.trim(),
-    type: "email",
-  });
-  if (error) throw error;
-}
-
 /**
  * Password sign-in: works identically in every container (Safari, installed
  * PWA, desktop) with no email round-trip. This is the primary flow for

@@ -22,7 +22,6 @@ vi.mock("../src/lib/consent", () => ({
 
 const authMocks = vi.hoisted(() => ({
   sendMagicLink: vi.fn().mockResolvedValue(undefined),
-  verifySignInCode: vi.fn().mockResolvedValue(undefined),
   signInWithPassword: vi.fn().mockResolvedValue(undefined),
   setPassword: vi.fn().mockResolvedValue(undefined),
   linkDeviceSession: vi.fn().mockResolvedValue(undefined),
@@ -38,7 +37,6 @@ vi.mock("../src/lib/supabaseClient", () => ({
   pendingAuthEmail: () => "",
   rememberAuthEmail: () => undefined,
   sendMagicLink: authMocks.sendMagicLink,
-  verifySignInCode: authMocks.verifySignInCode,
   signInWithPassword: authMocks.signInWithPassword,
   setPassword: authMocks.setPassword,
   linkDeviceSession: authMocks.linkDeviceSession,
@@ -110,7 +108,7 @@ describe("low-friction primary actions", () => {
     );
   });
 
-  it("falls back to a magic link and auto-verifies the email code", async () => {
+  it("falls back to a magic link for administrators", async () => {
     render(<AuthScreen configured role="admin" />);
     const emailInput = screen.getByLabelText("Email address");
     fireEvent.change(emailInput, { target: { value: "field@example.com" } });
@@ -119,19 +117,7 @@ describe("low-friction primary actions", () => {
     await waitFor(() =>
       expect(authMocks.sendMagicLink).toHaveBeenCalledWith("field@example.com"),
     );
-    fireEvent.click(
-      screen.getByRole("button", { name: /enter the code from the email/i }),
-    );
-    fireEvent.change(screen.getByLabelText(/6-digit code from the email/i), {
-      target: { value: "123456" },
-    });
-
-    await waitFor(() =>
-      expect(authMocks.verifySignInCode).toHaveBeenCalledWith(
-        "field@example.com",
-        "123456",
-      ),
-    );
+    expect(screen.getByText(/open the newest link sent to/i)).toBeTruthy();
   });
 
   it("sets a password once after an invite sign-in", async () => {

@@ -128,6 +128,17 @@ Deno.serve(async (request) => {
       if (!email.includes("@")) {
         return json({ accepted: true });
       }
+      // Per-IP throttle so one source cannot hammer many addresses. Answer
+      // uniformly either way so the screen never reveals the limit.
+      const ip =
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+          "";
+      const { data: allowed } = await service
+        .rpc("bump_signin_code_request", { p_ip_hash: await sha256(ip) })
+        .maybeSingle();
+      if (allowed === false) {
+        return json({ accepted: true });
+      }
       // Self-service is invite-only: mint only for addresses that already
       // hold a contributor account, and answer uniformly either way.
       const { data: userId } = await service.rpc("resolve_user_id_by_email", {
