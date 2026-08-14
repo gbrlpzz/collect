@@ -112,6 +112,7 @@ Deno.serve(async (request) => {
         access.project.organization_id
           ? String(access.project.organization_id)
           : null,
+        false,
       );
       return json({
         accepted: true,
@@ -164,16 +165,22 @@ async function issueCode(
   actorId: string | null,
   projectId: string | null,
   organizationId: string | null,
+  throttle = true,
 ): Promise<{ code: string; emailed: boolean }> {
-  const recent = await service.rpc("count_recent_session_link_codes", {
-    p_user_id: userId,
-  });
-  const recentCount = Number(recent.data ?? 0);
-  if (recentCount >= MAX_RECENT_PER_USER) {
-    throw new Response(
-      "Too many codes were issued recently; wait a few minutes",
-      { status: 429 },
-    );
+  // The mint throttle protects the anonymous self-service path from abuse.
+  // Administrator minting is authenticated and audited, so onboarding a
+  // whole team is never blocked by it.
+  if (throttle) {
+    const recent = await service.rpc("count_recent_session_link_codes", {
+      p_user_id: userId,
+    });
+    const recentCount = Number(recent.data ?? 0);
+    if (recentCount >= MAX_RECENT_PER_USER) {
+      throw new Response(
+        "Too many codes were issued recently; wait a few minutes",
+        { status: 429 },
+      );
+    }
   }
 
   const code = randomCode();
