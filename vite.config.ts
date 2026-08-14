@@ -2,14 +2,14 @@ import { loadEnv, type HtmlTagDescriptor } from "vite";
 import { defineConfig, type Plugin } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
-const SOCIAL_TITLE =
-  "collect — trustworthy field evidence, offline on any phone";
+const SOCIAL_TITLE = "Offline Field Data Collection App — collect";
 const SOCIAL_DESCRIPTION =
-  "An offline-first field collection app for research teams. Record structured observations, raw photos, and GPS coordinates on any phone beyond cellular reach.";
+  "Offline-first field data collection for research teams. Capture observations, photos, audio, and GPS with no signal, then sync and export FAIR datasets.";
 
 /**
- * Emits crawler-readable social metadata at build time. VITE_APP_URL produces
- * an absolute image URL in deployments; local builds retain a valid root URL.
+ * Emits crawler-readable social metadata and structured data at build time.
+ * VITE_APP_URL produces absolute URLs in deployments; local builds retain a
+ * valid root image URL and omit origin-dependent tags.
  */
 function socialMetadata(appUrl: string | undefined): Plugin {
   const origin = appUrl?.trim().replace(/\/+$/, "");
@@ -19,6 +19,7 @@ function socialMetadata(appUrl: string | undefined): Plugin {
   const tags: HtmlTagDescriptor[] = [
     { tag: "meta", attrs: { property: "og:type", content: "website" } },
     { tag: "meta", attrs: { property: "og:site_name", content: "collect" } },
+    { tag: "meta", attrs: { property: "og:locale", content: "en_US" } },
     { tag: "meta", attrs: { property: "og:title", content: SOCIAL_TITLE } },
     {
       tag: "meta",
@@ -35,6 +36,7 @@ function socialMetadata(appUrl: string | undefined): Plugin {
     },
     { tag: "meta", attrs: { property: "og:image:width", content: "2400" } },
     { tag: "meta", attrs: { property: "og:image:height", content: "1260" } },
+    { tag: "meta", attrs: { property: "og:image:type", content: "image/png" } },
     {
       tag: "meta",
       attrs: { name: "twitter:card", content: "summary_large_image" },
@@ -52,9 +54,104 @@ function socialMetadata(appUrl: string | undefined): Plugin {
       { tag: "link", attrs: { rel: "canonical", href: origin } },
     );
   }
+
+  const homepageJsonLd = (): HtmlTagDescriptor[] => {
+    if (!origin) return [];
+    const graph = [
+      {
+        "@type": "WebSite",
+        "@id": `${origin}/#website`,
+        url: `${origin}/`,
+        name: "collect",
+        description: SOCIAL_DESCRIPTION,
+        inLanguage: "en",
+        publisher: { "@id": `${origin}/#organization` },
+      },
+      {
+        "@type": "Organization",
+        "@id": `${origin}/#organization`,
+        name: "collect",
+        url: `${origin}/`,
+        logo: { "@type": "ImageObject", url: `${origin}/icon-512.png` },
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": `${origin}/#software`,
+        name: "collect",
+        url: `${origin}/`,
+        description: SOCIAL_DESCRIPTION,
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web, iOS, Android",
+        image,
+        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        featureList: [
+          "Offline-first field capture",
+          "Resumable synchronization",
+          "Immutable published schemas",
+          "FAIR checkpoint exports",
+        ],
+      },
+      {
+        "@type": "WebPage",
+        "@id": `${origin}/#webpage`,
+        url: `${origin}/`,
+        name: SOCIAL_TITLE,
+        description: SOCIAL_DESCRIPTION,
+        isPartOf: { "@id": `${origin}/#website` },
+        about: { "@id": `${origin}/#software` },
+      },
+    ];
+    return [
+      {
+        tag: "script",
+        attrs: { type: "application/ld+json" },
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": graph,
+        }),
+      },
+    ];
+  };
+
+  const robotsIndex = {
+    tag: "meta",
+    attrs: {
+      name: "robots",
+      content: "index, follow, max-image-preview:large, max-snippet:-1",
+    },
+  };
+  const robotsNoindex = {
+    tag: "meta",
+    attrs: { name: "robots", content: "noindex, nofollow" },
+  };
   return {
     name: "collect-social-metadata",
-    transformIndexHtml: { order: "pre", handler: () => tags },
+    transformIndexHtml: {
+      order: "pre",
+      handler: (_html, ctx) =>
+        ctx.filename.endsWith("index.html")
+          ? [...tags, robotsIndex, ...homepageJsonLd()]
+          : [...tags, robotsNoindex],
+    },
+    generateBundle() {
+      if (!origin) return;
+      this.emitFile({
+        type: "asset",
+        fileName: "sitemap.xml",
+        source:
+          `<?xml version="1.0" encoding="UTF-8"?>\n` +
+          `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+          `  <url><loc>${origin}/</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>\n` +
+          `</urlset>\n`,
+      });
+      this.emitFile({
+        type: "asset",
+        fileName: "robots.txt",
+        source:
+          `User-agent: *\nAllow: /\nDisallow: /app\nDisallow: /app/*\n\n` +
+          `Sitemap: ${origin}/sitemap.xml\n`,
+      });
+    },
   };
 }
 

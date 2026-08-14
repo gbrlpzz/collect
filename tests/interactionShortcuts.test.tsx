@@ -188,7 +188,11 @@ describe("low-friction primary actions", () => {
     await waitFor(() =>
       expect(authMocks.requestDeviceLinkCode).toHaveBeenCalledTimes(1),
     );
-    expect(screen.getByLabelText(/code AB2D9KQX/i)).toBeTruthy();
+    // The code renders after the async request resolves; wait for the label
+    // rather than asserting immediately after the mock call.
+    await waitFor(() =>
+      expect(screen.getByLabelText(/code AB2D9KQX/i)).toBeTruthy(),
+    );
     expect(screen.getByText(/expires in/i)).toBeTruthy();
     expect(screen.queryByText("Another device")).toBeNull();
     expect(screen.queryByText(/works once and expires/i)).toBeNull();
@@ -402,7 +406,7 @@ describe("low-friction primary actions", () => {
     );
     expect(screen.getByText("14")).toBeTruthy();
     fireEvent.click(screen.getByText("Attention"));
-    expect(screen.getByText(/adjusts for random guessing/i)).toBeTruthy();
+    expect(screen.getByText(/chance-adjusted/i)).toBeTruthy();
   });
 
   it("presents consent as readable sections and prevents duplicate acceptance", async () => {

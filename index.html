@@ -8,15 +8,223 @@
     />
     <meta name="theme-color" content="#f5f5f7" />
     <meta
-      name="description"
-      content="An offline-first field collection app for research teams. Record structured observations, raw photos, and GPS coordinates on any phone beyond cellular reach."
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1"
     />
-    <title>collect — trustworthy field evidence, offline on any phone</title>
+    <meta
+      name="description"
+      content="Offline-first field data collection for research teams. Capture observations, photos, audio, and GPS with no signal, then sync and export FAIR datasets."
+    />
+    <title>Offline Field Data Collection App — collect</title>
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link
+      rel="preload"
+      as="image"
+      href="/hero-alps.webp"
+      fetchpriority="high"
+    />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!--
+        Static crawlable content. This mirrors the landing page's visible copy
+        so crawlers receive the full page without executing JavaScript; the
+        React app replaces it on load. Keep in sync with HomepageApp.
+      -->
+      <div class="seo-landing">
+        <style>
+          .seo-landing {
+            color: #f5f5f7;
+            background: #101114;
+            font-family:
+              -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.55;
+            padding: 2rem 1.25rem 3rem;
+            max-width: 1080px;
+            margin: 0 auto;
+          }
+          .seo-landing h1 {
+            font-size: 2.3rem;
+            line-height: 1.15;
+            margin: 0 0 0.75rem;
+          }
+          .seo-landing h2 {
+            font-size: 1.5rem;
+            line-height: 1.2;
+            margin: 2.75rem 0 0.5rem;
+          }
+          .seo-landing h3 {
+            font-size: 1.05rem;
+            margin: 1.25rem 0 0.25rem;
+          }
+          .seo-landing p {
+            margin: 0.5rem 0;
+          }
+          .seo-landing ul {
+            padding-left: 1.1rem;
+            margin: 0.5rem 0;
+          }
+          .seo-landing li {
+            margin: 0.5rem 0;
+          }
+          .seo-landing a {
+            color: #7ab7ff;
+          }
+          .seo-landing .seo-cta {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.6rem 1.3rem;
+            border-radius: 999px;
+            background: #0a84ff;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+          }
+          .seo-landing footer {
+            margin-top: 3rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            padding-top: 1.5rem;
+          }
+          .seo-landing .seo-links a {
+            display: inline-block;
+            margin: 0.25rem 1.25rem 0.25rem 0;
+          }
+        </style>
+        <header>
+          <h1>Trustworthy field evidence. Offline on any phone.</h1>
+          <p>
+            An offline-first field collection app for research teams. Record
+            structured observations, raw photos, and GPS coordinates on any
+            phone beyond cellular reach.
+          </p>
+          <a class="seo-cta" href="#preview">Request access</a>
+        </header>
+
+        <section id="collection">
+          <h2>Designed for bright sun, cold hands, and zero signal.</h2>
+          <p>
+            One calm question at a time. High-contrast typography that cuts
+            through glare, oversized touch targets for gloved fingers, and
+            immediate local commit on every step.
+          </p>
+        </section>
+
+        <section id="guarantees">
+          <h2>Four guarantees for data collected in the wild.</h2>
+          <p>
+            Fieldwork happens in harsh conditions. collect is engineered around
+            four technical guarantees that protect your data from capture to
+            archive:
+          </p>
+          <ul>
+            <li>
+              <strong>Local-first durability:</strong> Observations and media
+              commit to IndexedDB before any network attempt, updating to synced
+              only upon server confirmation.
+            </li>
+            <li>
+              <strong>Unmodified media originals:</strong> Photos and audio
+              retain capture quality with SHA-256 checksums, with no
+              collection-path recompression.
+            </li>
+            <li>
+              <strong>Isolated attention checks:</strong> Periodic checks
+              evaluate contributor focus in memory, stripping questions and
+              answers before database commit.
+            </li>
+            <li>
+              <strong>FAIR export archives:</strong> Checkpoint exports package
+              canonical JSONL, CSV, RFC 7946 GeoJSON, DataCite 4.4 metadata, and
+              raw media into a single archive.
+            </li>
+          </ul>
+        </section>
+
+        <section id="sync">
+          <h2>
+            Sync that survives dead zones, captive portals, and battery drops.
+          </h2>
+          <p>
+            Flaky cellular links shouldn&rsquo;t jeopardize weeks of fieldwork.
+            Submissions commit to device storage first, media transfers resume
+            in chunks, and records mark synced only upon signed server receipt.
+          </p>
+        </section>
+
+        <section id="admin">
+          <h2>Lock survey versions. Monitor sync progress across the fleet.</h2>
+          <p>
+            Author locked survey contracts, onboard researchers with single-use
+            8-character codes, and monitor fleet sync readiness &mdash; tracking
+            received observations, pending device queues, and attention scores
+            in real time.
+          </p>
+        </section>
+
+        <section id="integrity">
+          <h2>Detect surveyor fatigue without polluting research data.</h2>
+          <p>
+            During 8-hour field transects, fatigue causes rapid tapping without
+            reading. collect interleaves subtle instruction checks to measure
+            focus, stripping questions and answers in memory before database
+            commit. Device context and GPS coordinates record verifiable
+            provenance.
+          </p>
+        </section>
+
+        <section id="data">
+          <h2>
+            Deposit-ready research packages for open repositories and peer
+            review.
+          </h2>
+          <p>
+            Export packages bundle canonical JSONL, CSV, RFC 7946 GeoJSON,
+            DataCite 4.4 metadata, and unmodified media with SHA-256 checksums
+            into a single verifiable archive.
+          </p>
+          <h3>Findable (DataCite 4.4)</h3>
+          <p>
+            Native datacite.json metadata kernel with DOI identifiers,
+            organizational creators, and license declarations for repository
+            deposit and institutional archiving.
+          </p>
+          <h3>Interoperable (RFC 7946 &amp; JSONL)</h3>
+          <p>
+            Canonical JSONL stream, flat CSV tables, RFC 7946 GeoJSON spatial
+            features, and machine-readable data-dictionary.json with semantic
+            URIs.
+          </p>
+          <h3>Reusable (Byte-for-Byte)</h3>
+          <p>
+            Self-contained ZIP archives containing uncompressed original media
+            files, schema version histories, and SHA-256 integrity manifests.
+          </p>
+        </section>
+
+        <section id="preview">
+          <h2>Equip your next expedition.</h2>
+          <p>
+            Request preview access to test custom schemas, or clone the
+            repository to self-host.
+          </p>
+          <a class="seo-cta" href="#preview">Request access</a>
+        </section>
+
+        <footer>
+          <h2>collect &mdash; open source field data collection</h2>
+          <p>
+            Offline-first field data collection, Apache-2.0 licensed and
+            self-hostable. Built by Gabriele Pizzi.
+          </p>
+          <p class="seo-links">
+            <a href="https://github.com/gbrlpzz/collect">GitHub</a>
+            <a href="/app">Sign in (Contributor)</a>
+            <a href="/app?role=admin">Sign in (Admin)</a>
+          </p>
+        </footer>
+      </div>
+    </div>
     <script type="module" src="/src/homepage/main.tsx"></script>
   </body>
 </html>
