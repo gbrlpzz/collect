@@ -198,6 +198,141 @@ function invalid(message: string, status = 400): Response {
   return json({ error: message }, { status });
 }
 
+function mediaRows(
+  projectId: string,
+  submissionId: string,
+  media: MediaInput[],
+): Array<Record<string, unknown>> {
+  return media.map((item) => ({
+    id: item.media_id,
+    submission_id: submissionId,
+    field_id: item.field_id,
+    object_path: mediaPath(projectId, submissionId, item.media_id),
+    mime_type: item.mime_type,
+    byte_size: item.byte_size,
+    original_filename: item.original_filename ?? "",
+    sha256: item.sha256 ?? null,
+    capture_source: item.capture_source ?? "picker",
+    captured_at: item.captured_at ?? null,
+  }));
+}
+
+/** Idempotent: recording the same attention response twice changes nothing. */
+async function recordAttention(
+  service: SupabaseClient,
+  userId: string,
+  projectId: string,
+  submissionId: string,
+  checkKey: string,
+  selectedValue: string,
+): Promise<void> {
+  const { data: check } = await service
+    .from("attention_checks")
+    .select("correct_value,guess_probability")
+    .eq("key", checkKey)
+    .eq("active", true)
+    .maybeSingle();
+  if (!check) return;
+  const correct = selectedValue === check.correct_value;
+  const { error } = await service
+    .from("attention_responses")
+    .upsert(
+      {
+        submission_id: submissionId,
+        contributor_id: userId,
+        project_id: projectId,
+        check_key: checkKey,
+        selected_value: selectedValue,
+        correct,
+        guess_probability: check.guess_probability,
+      },
+      { onConflict: "submission_id", ignoreDuplicates: true },
+    );
+  if (error) return;
+  // The per-submission flag and contributor score are advisory.
+  try {
+    await service
+      .from("submissions")
+      .update({ attention_failed: !correct })
+      .eq("id", submissionId);
+  } catch {
+    // Advisory; never block ingestion on it.
+  }
+  try {
+    await service.rpc("recompute_attention_score", { target_user: userId });
+  } catch {
+    // Advisory; never block ingestion on it.
+  }
+}
+
+/**
+ * A RECEIVED submission whose metadata matches the incoming request is either
+ * a clean retry or the residue of a crash between the submission insert and
+ * the attention/media inserts. Reconcile to the complete state instead of
+ * failing: matching media rows are kept, missing rows are backfilled, and any
+ * media id reused with different content is still a hard conflict.
+ */
+async function reconcileReceivedSubmission(
+  service: SupabaseClient,
+  userId: string,
+  projectId: string,
+  submissionId: string,
+  media: MediaInput[],
+  attentionCheckKey: string | null,
+  attentionSelected: string | null,
+): Promise<Response> {
+  const { data: existingMedia, error: mediaError } = await service
+    .from("submission_media")
+    .select("id,byte_size,sha256")
+    .eq("submission_id", submissionId);
+  if (mediaError) return invalid("Submission media could not be read", 500);
+
+  const priorById = new Map(
+    (existingMedia ?? []).map((item) => [String(item.id), item]),
+  );
+  const incomingIds = new Set(media.map((item) => item.media_id));
+  const sameContent = (prior: Record<string, unknown>, item: MediaInput) =>
+    String(prior.byte_size ?? "") === String(item.byte_size ?? "") &&
+    (prior.sha256 ?? null) === (item.sha256 ?? null);
+  const conflicts =
+    // A media id the server has but the retry no longer describes means the
+    // client changed its media list for this submission id.
+    (existingMedia ?? []).some((item) => !incomingIds.has(String(item.id))) ||
+    // The same media id reused with different bytes/hash.
+    media.some((item) => {
+      const prior = priorById.get(item.media_id);
+      return prior !== undefined && !sameContent(prior, item);
+    });
+  if (conflicts) {
+    return invalid(
+      "Submission ID conflict: the server already has different content for this identifier",
+      409,
+    );
+  }
+
+  const missing = media.filter((item) => !priorById.has(item.media_id));
+  if (missing.length) {
+    const { error: insertError } = await service
+      .from("submission_media")
+      .insert(mediaRows(projectId, submissionId, missing));
+    if (insertError) {
+      return invalid("Submission media metadata could not be stored", 500);
+    }
+  }
+
+  if (attentionCheckKey && attentionSelected) {
+    await recordAttention(
+      service,
+      userId,
+      projectId,
+      submissionId,
+      attentionCheckKey,
+      attentionSelected,
+    );
+  }
+  return json({ accepted: true, idempotent: true });
+}
+
 async function createSubmission(
   service: SupabaseClient,
   userId: string,
@@ -295,42 +430,6 @@ async function createSubmission(
     return invalid("Media identifiers must be unique", 409);
   }
 
-  const { data: existing, error: existingError } = await service
-    .from("submissions")
-    .select(
-      "id,project_id,contributor_id,payload_hash,expected_media_count,status",
-    )
-    .eq("id", submissionId)
-    .maybeSingle();
-  if (existingError) return invalid("Submission lookup failed", 500);
-  if (existing) {
-    const { data: existingMedia } = await service
-      .from("submission_media")
-      .select("id,byte_size,sha256")
-      .eq("submission_id", submissionId);
-    const existingTuples = (existingMedia ?? [])
-      .map((item) => `${item.id}:${item.byte_size}:${item.sha256 ?? ""}`)
-      .sort();
-    const incomingTuples = media
-      .map((item) => `${item.media_id}:${item.byte_size}:${item.sha256 ?? ""}`)
-      .sort();
-    const sameMedia =
-      JSON.stringify(existingTuples) === JSON.stringify(incomingTuples);
-    if (
-      existing.project_id !== projectId ||
-      existing.contributor_id !== userId ||
-      existing.payload_hash !== canonicalPayloadHash ||
-      existing.expected_media_count !== media.length ||
-      !sameMedia
-    ) {
-      return invalid(
-        "Submission ID conflict: the server already has different content for this identifier",
-        409,
-      );
-    }
-    return json({ accepted: true, idempotent: true });
-  }
-
   const attention =
     body.attention_response && typeof body.attention_response === "object"
       ? (body.attention_response as {
@@ -345,6 +444,39 @@ async function createSubmission(
     attention && typeof attention.selected_value === "string"
       ? attention.selected_value
       : null;
+
+  const { data: existing, error: existingError } = await service
+    .from("submissions")
+    .select(
+      "id,project_id,contributor_id,payload_hash,expected_media_count,status",
+    )
+    .eq("id", submissionId)
+    .maybeSingle();
+  if (existingError) return invalid("Submission lookup failed", 500);
+  if (existing) {
+    const sameCore = existing.project_id === projectId &&
+      existing.contributor_id === userId &&
+      existing.payload_hash === canonicalPayloadHash &&
+      existing.expected_media_count === media.length;
+    if (!sameCore) {
+      return invalid(
+        "Submission ID conflict: the server already has different content for this identifier",
+        409,
+      );
+    }
+    if (existing.status === "COMPLETE") {
+      return json({ accepted: true, idempotent: true });
+    }
+    return await reconcileReceivedSubmission(
+      service,
+      userId,
+      projectId,
+      submissionId,
+      media,
+      attentionCheckKey,
+      attentionSelected,
+    );
+  }
 
   const correctsSubmissionId = body.corrects_submission_id
     ? String(body.corrects_submission_id)
@@ -417,62 +549,20 @@ async function createSubmission(
   }
 
   if (attentionCheckKey && attentionSelected) {
-    const { data: check } = await service
-      .from("attention_checks")
-      .select("correct_value,guess_probability")
-      .eq("key", attentionCheckKey)
-      .eq("active", true)
-      .maybeSingle();
-    if (check) {
-      const correct = attentionSelected === check.correct_value;
-      const { error: attentionError } = await service
-        .from("attention_responses")
-        .insert({
-          submission_id: submissionId,
-          contributor_id: userId,
-          project_id: projectId,
-          check_key: attentionCheckKey,
-          selected_value: attentionSelected,
-          correct,
-          guess_probability: check.guess_probability,
-        });
-      if (!attentionError) {
-        // Binary per-submission flag: the filterable signal admins use.
-        try {
-          await service
-            .from("submissions")
-            .update({ attention_failed: !correct })
-            .eq("id", submissionId);
-        } catch {
-          // The flag is advisory; never block ingestion on it.
-        }
-        try {
-          await service.rpc("recompute_attention_score", {
-            target_user: userId,
-          });
-        } catch {
-          // The score is advisory; never block ingestion on it.
-        }
-      }
-    }
+    await recordAttention(
+      service,
+      userId,
+      projectId,
+      submissionId,
+      attentionCheckKey,
+      attentionSelected,
+    );
   }
 
   if (media.length) {
-    const rows = media.map((item) => ({
-      id: item.media_id,
-      submission_id: submissionId,
-      field_id: item.field_id,
-      object_path: mediaPath(projectId, submissionId, item.media_id),
-      mime_type: item.mime_type,
-      byte_size: item.byte_size,
-      original_filename: item.original_filename ?? "",
-      sha256: item.sha256 ?? null,
-      capture_source: item.capture_source ?? "picker",
-      captured_at: item.captured_at ?? null,
-    }));
     const { error: mediaError } = await service
       .from("submission_media")
-      .insert(rows);
+      .insert(mediaRows(projectId, submissionId, media));
     if (mediaError) {
       await service
         .from("submissions")
