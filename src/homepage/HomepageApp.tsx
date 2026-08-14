@@ -427,89 +427,94 @@ export function HomepageApp() {
 
         {/* 5. Integrity & Privacy */}
         <section
-          className="hp-section hp-section-canvas"
+          className="hp-section-scrolly hp-section-canvas"
           id="integrity"
           aria-labelledby="integrity-title"
         >
-          <div className="hp-section-inner">
-            <div className="section-heading">
-              <p className="eyebrow">Data Integrity</p>
-              <h2 id="integrity-title">
-                Detect surveyor fatigue without polluting research data.
-              </h2>
-              <p>
-                During 8-hour field transects, fatigue causes rapid tapping
-                without reading. collect interleaves subtle instruction checks
-                to measure focus, stripping questions and answers in memory
-                before database commit. Device context and GPS coordinates
-                record verifiable provenance.
-              </p>
-              <DocLinks files={["attention-qa.md", "privacy.md"]} />
-            </div>
-
-            <div className="hp-integrity-grid">
-              {/* Left rail: Attention QA + Storage Boundaries */}
-              <div className="hp-integrity-left-rail">
-                <div className="hp-integrity-card">
-                  <div className="hp-integrity-card-header">
-                    <h3>Attention Verification</h3>
-                    <p>
-                      Evaluated in memory and stripped before database commit
-                    </p>
-                  </div>
-                  <AttentionDemo />
+          <div className="hp-scrolly hp-scrolly-hold">
+            <div className="hp-scrolly-panel">
+              <div className="hp-section-inner">
+                <div className="section-heading">
+                  <p className="eyebrow">Data Integrity</p>
+                  <h2 id="integrity-title">
+                    Detect surveyor fatigue without polluting research data.
+                  </h2>
+                  <p>
+                    During 8-hour field transects, fatigue causes rapid tapping
+                    without reading. collect interleaves subtle instruction
+                    checks to measure focus, stripping questions and answers in
+                    memory before database commit. Device context and GPS
+                    coordinates record verifiable provenance.
+                  </p>
+                  <DocLinks files={["attention-qa.md", "privacy.md"]} />
                 </div>
 
-                <div className="hp-integrity-card hp-privacy-card">
-                  <div className="hp-integrity-card-header">
-                    <h3>Storage & Access Safeguards</h3>
-                    <p>
-                      Client storage isolation and server-side authorization
-                    </p>
-                  </div>
-                  <div className="hp-privacy-list">
-                    <div className="hp-privacy-row">
-                      <div className="hp-privacy-icon">
-                        <Icon name="lock" size={15} />
-                      </div>
-                      <div className="hp-privacy-content">
-                        <strong>Account-Scoped Storage</strong>
+                <div className="hp-integrity-grid">
+                  {/* Left rail: Attention QA + Storage Boundaries */}
+                  <div className="hp-integrity-left-rail">
+                    <div className="hp-integrity-card">
+                      <div className="hp-integrity-card-header">
+                        <h3>Attention Verification</h3>
                         <p>
-                          IndexedDB is strictly scoped per authenticated user (
-                          <code>collect-local-v1-userId</code>), preventing data
-                          leaks across shared field devices.
+                          Evaluated in memory and stripped before database
+                          commit
                         </p>
                       </div>
+                      <AttentionDemo />
                     </div>
 
-                    <div className="hp-privacy-row">
-                      <div className="hp-privacy-icon">
-                        <Icon name="shield" size={15} />
-                      </div>
-                      <div className="hp-privacy-content">
-                        <strong>Server-Enforced Consent</strong>
+                    <div className="hp-integrity-card hp-privacy-card">
+                      <div className="hp-integrity-card-header">
+                        <h3>Storage & Access Safeguards</h3>
                         <p>
-                          The sync backend strictly rejects submissions from
-                          accounts without active, unrevoked participant
-                          consent.
+                          Client storage isolation and server-side authorization
                         </p>
                       </div>
+                      <div className="hp-privacy-list">
+                        <div className="hp-privacy-row">
+                          <div className="hp-privacy-icon">
+                            <Icon name="lock" size={15} />
+                          </div>
+                          <div className="hp-privacy-content">
+                            <strong>Account-Scoped Storage</strong>
+                            <p>
+                              IndexedDB is strictly scoped per authenticated
+                              user (<code>collect-local-v1-userId</code>),
+                              preventing data leaks across shared field devices.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="hp-privacy-row">
+                          <div className="hp-privacy-icon">
+                            <Icon name="shield" size={15} />
+                          </div>
+                          <div className="hp-privacy-content">
+                            <strong>Server-Enforced Consent</strong>
+                            <p>
+                              The sync backend strictly rejects submissions from
+                              accounts without active, unrevoked participant
+                              consent.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Right rail: Spatial & Device Provenance */}
-              <div className="hp-integrity-right-rail">
-                <div className="hp-integrity-card">
-                  <div className="hp-integrity-card-header">
-                    <h3>Device & Spatial Provenance</h3>
-                    <p>
-                      Device model, OS, and GPS coordinates recorded per
-                      observation
-                    </p>
+                  {/* Right rail: Spatial & Device Provenance */}
+                  <div className="hp-integrity-right-rail">
+                    <div className="hp-integrity-card">
+                      <div className="hp-integrity-card-header">
+                        <h3>Device & Spatial Provenance</h3>
+                        <p>
+                          Device model, OS, and GPS coordinates recorded per
+                          observation
+                        </p>
+                      </div>
+                      <ProvenanceCard />
+                    </div>
                   </div>
-                  <ProvenanceCard />
                 </div>
               </div>
             </div>
@@ -518,73 +523,84 @@ export function HomepageApp() {
 
         {/* 6. FAIR Checkpoint Dataset Explorer */}
         <section
-          className="hp-section hp-section-paper"
+          className="hp-section-scrolly hp-section-paper"
           id="data"
           aria-labelledby="data-title"
         >
-          <div className="hp-section-inner">
-            <div className="section-heading">
-              <p className="eyebrow">Archival & Export</p>
-              <h2 id="data-title">
-                Deposit-ready research packages for open repositories and peer
-                review.
-              </h2>
-              <p>
-                Export packages bundle canonical JSONL, CSV, RFC 7946 GeoJSON,
-                DataCite 4.4 metadata, and unmodified media with SHA-256
-                checksums into a single verifiable archive.
-              </p>
-              <DocLinks files={["export-format.md", "dataset-standards.md"]} />
-            </div>
-            <PackageBrowser />
-            <p className="hp-section-note">
-              Inspecting reference checkpoint package from{" "}
-              <code>docs/demo-dataset</code>, conforming to{" "}
-              <a href={DOCS("export-format.md")} target="_blank" rel="noopener">
-                docs/export-format.md
-              </a>
-              .
-            </p>
-
-            {/* FAIR Compliance Principles from docs/dataset-standards.md */}
-            <div
-              className="hp-fact-grid"
-              style={{ "--fact-cols": 3 } as React.CSSProperties}
-            >
-              <div className="hp-fact-card">
-                <div className="hp-fact-header">
-                  <Icon name="archive" size={16} />
-                  <strong>Findable (DataCite 4.4)</strong>
+          <div className="hp-scrolly hp-scrolly-hold">
+            <div className="hp-scrolly-panel">
+              <div className="hp-section-inner">
+                <div className="section-heading">
+                  <p className="eyebrow">Archival & Export</p>
+                  <h2 id="data-title">
+                    Deposit-ready research packages for open repositories and
+                    peer review.
+                  </h2>
+                  <p>
+                    Export packages bundle canonical JSONL, CSV, RFC 7946
+                    GeoJSON, DataCite 4.4 metadata, and unmodified media with
+                    SHA-256 checksums into a single verifiable archive.
+                  </p>
+                  <DocLinks
+                    files={["export-format.md", "dataset-standards.md"]}
+                  />
                 </div>
-                <p>
-                  Native <code>datacite.json</code> metadata kernel with DOI
-                  identifiers, organizational creators, and license declarations
-                  for repository deposit and institutional archiving.
+                <PackageBrowser />
+                <p className="hp-section-note">
+                  Inspecting reference checkpoint package from{" "}
+                  <code>docs/demo-dataset</code>, conforming to{" "}
+                  <a
+                    href={DOCS("export-format.md")}
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    docs/export-format.md
+                  </a>
+                  .
                 </p>
-              </div>
 
-              <div className="hp-fact-card">
-                <div className="hp-fact-header">
-                  <Icon name="sliders" size={16} />
-                  <strong>Interoperable (RFC 7946 & JSONL)</strong>
-                </div>
-                <p>
-                  Canonical JSONL stream, flat CSV tables, RFC 7946 GeoJSON
-                  spatial features, and machine-readable{" "}
-                  <code>data-dictionary.json</code> with semantic URIs.
-                </p>
-              </div>
+                {/* FAIR Compliance Principles from docs/dataset-standards.md */}
+                <div
+                  className="hp-fact-grid"
+                  style={{ "--fact-cols": 3 } as React.CSSProperties}
+                >
+                  <div className="hp-fact-card">
+                    <div className="hp-fact-header">
+                      <Icon name="archive" size={16} />
+                      <strong>Findable (DataCite 4.4)</strong>
+                    </div>
+                    <p>
+                      Native <code>datacite.json</code> metadata kernel with DOI
+                      identifiers, organizational creators, and license
+                      declarations for repository deposit and institutional
+                      archiving.
+                    </p>
+                  </div>
 
-              <div className="hp-fact-card">
-                <div className="hp-fact-header">
-                  <Icon name="camera" size={16} />
-                  <strong>Reusable (Byte-for-Byte)</strong>
+                  <div className="hp-fact-card">
+                    <div className="hp-fact-header">
+                      <Icon name="sliders" size={16} />
+                      <strong>Interoperable (RFC 7946 & JSONL)</strong>
+                    </div>
+                    <p>
+                      Canonical JSONL stream, flat CSV tables, RFC 7946 GeoJSON
+                      spatial features, and machine-readable{" "}
+                      <code>data-dictionary.json</code> with semantic URIs.
+                    </p>
+                  </div>
+
+                  <div className="hp-fact-card">
+                    <div className="hp-fact-header">
+                      <Icon name="camera" size={16} />
+                      <strong>Reusable (Byte-for-Byte)</strong>
+                    </div>
+                    <p>
+                      Self-contained ZIP archives containing uncompressed
+                      original media files, schema version histories, and
+                      SHA-256 integrity manifests.
+                    </p>
+                  </div>
                 </div>
-                <p>
-                  Self-contained ZIP archives containing uncompressed original
-                  media files, schema version histories, and SHA-256 integrity
-                  manifests.
-                </p>
               </div>
             </div>
           </div>

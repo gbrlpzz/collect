@@ -717,9 +717,23 @@ body {
   width: min(100%, 1080px);
   margin: 0 auto;
 }
-/* Sections without sub-steps only hold briefly — no click-through. */
+/* Sections without sub-steps: the panel simply sticks to the top for a beat,
+   then releases so the reader scrolls on through the rest of the content.
+   Works for sections taller than the viewport too. */
 .hp-scrolly-hold {
-  height: calc(100vh + 45vh);
+  height: auto;
+}
+/* A real block spacer (not padding) gives the sticky panel its travel, so the
+   section holds at the top for a beat and then scrolls on — this works even
+   when the section is taller than the viewport. */
+.hp-scrolly-hold::after {
+  content: "";
+  display: block;
+  height: 32vh;
+}
+.hp-scrolly-hold > .hp-scrolly-panel {
+  min-height: 0;
+  align-items: flex-start;
 }
 
 /* ---------- Common Section Layout ---------- */
@@ -841,8 +855,11 @@ section[id] {
   outline-offset: 2px;
   border-radius: 4px;
 }
+.hp-field-type-item {
+  white-space: nowrap;
+}
 .hp-field-type-sep {
-  padding: 0 6px;
+  margin-left: 6px;
   color: var(--separator-light);
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Collector } from "../components/Collector";
 import { ContributorHome } from "../components/ContributorHome";
 import { TopBar } from "../components/TopBar";
@@ -305,20 +305,24 @@ export function FlowDemo({
         {tab === "flow" && (
           <p className="hp-field-types">
             {FIELD_TYPES.map((type, index) => (
-              <span key={type.fieldKey}>
-                {index > 0 && (
-                  <span className="hp-field-type-sep" aria-hidden="true">
-                    ·
-                  </span>
-                )}
-                <button
-                  type="button"
-                  className="hp-field-type"
-                  onClick={() => jumpToField(type.fieldKey)}
-                >
-                  {type.label}
-                </button>
-              </span>
+              <Fragment key={type.fieldKey}>
+                {/* Label and separator stay together so a wrapped line never
+                    begins with a separator (which reads as an indent). */}
+                <span className="hp-field-type-item">
+                  <button
+                    type="button"
+                    className="hp-field-type"
+                    onClick={() => jumpToField(type.fieldKey)}
+                  >
+                    {type.label}
+                  </button>
+                  {index < FIELD_TYPES.length - 1 && (
+                    <span className="hp-field-type-sep" aria-hidden="true">
+                      ·
+                    </span>
+                  )}
+                </span>{" "}
+              </Fragment>
             ))}
           </p>
         )}
