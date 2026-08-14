@@ -448,27 +448,14 @@ body {
   gap: 16px;
 }
 .hp-diff-card {
-  padding: 20px 18px 16px;
+  padding: 20px 18px 18px;
   border-radius: 18px;
   border: 1px solid var(--separator-light);
   background: var(--canvas);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  color: inherit;
-  text-decoration: none;
-  transition:
-    border-color 0.15s ease,
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
-}
-.hp-diff-card:hover {
-  border-color: var(--text);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px -12px rgba(0, 0, 0, 0.22);
-}
-.hp-diff-card:active {
-  transform: scale(0.985);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 .hp-diff-icon {
   width: 36px;
@@ -500,21 +487,20 @@ body {
   color: var(--tertiary);
   padding-top: 2px;
 }
-.hp-diff-cta {
+.hp-diff-doc-link {
   margin-top: auto;
   padding-top: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.8125rem;
-  font-weight: 600;
+}
+.hp-diff-doc-link a {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  color: var(--tertiary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+.hp-diff-doc-link a:hover {
   color: var(--text);
-}
-.hp-diff-card:hover .hp-diff-cta svg {
-  transform: translateX(2px);
-}
-.hp-diff-cta svg {
-  transition: transform 0.15s ease;
 }
 .hp-diff-stats {
   margin-top: 22px;
