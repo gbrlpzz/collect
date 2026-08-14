@@ -168,6 +168,16 @@ body {
   color: var(--text);
   flex-shrink: 0;
 }
+.hp-brand .collect-wordmark {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.075em;
+  line-height: 1;
+}
+.hp-brand .collect-mark {
+  width: 22px;
+  height: 22px;
+}
 .hp-brand:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 3px;
@@ -579,6 +589,21 @@ body {
   font-size: 0.9375rem;
   line-height: 1.52;
 }
+.hp-doc-link {
+  margin-top: 14px;
+}
+.hp-doc-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.hp-doc-link a:hover {
+  color: var(--text);
+}
 .hp-section-note {
   margin-top: 16px;
   color: var(--secondary);
@@ -828,9 +853,9 @@ main [id] {
 .hp-app-viewport .admin-context-actions,
 .hp-app-viewport .flow-actions {
   position: absolute !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
+  left: 16px !important;
+  right: 16px !important;
+  bottom: 14px !important;
   z-index: 25 !important;
 }
 .hp-app-viewport .collector-page,

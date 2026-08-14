@@ -6,6 +6,7 @@ import { AdminWalkthrough } from "./AdminWalkthrough";
 import { AttentionDemo } from "./AttentionDemo";
 import { ProvenanceCard } from "./ProvenanceCard";
 import { Icon, type IconName } from "../components/Icon";
+import { CollectBrand } from "../components/CollectBrand";
 
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 const DOCS = (file: string) => `${GITHUB_URL}/blob/main/docs/${file}`;
@@ -15,16 +16,7 @@ function TopBar() {
     <header className="hp-topbar">
       <div className="hp-topbar-inner">
         <a className="hp-brand" href="#top" aria-label="collect home">
-          <img
-            className="hp-logo"
-            src="/icon.svg"
-            alt=""
-            width={22}
-            height={22}
-          />
-          <span className="wordmark">
-            collect<span className="wordmark-dot">.</span>
-          </span>
+          <CollectBrand compact />
           <span className="hp-brand-tag">Research Preview</span>
         </a>
 
@@ -47,22 +39,6 @@ function TopBar() {
         </nav>
 
         <div className="hp-topbar-actions">
-          <details className="hp-signin">
-            <summary aria-label="Sign in to the app">
-              <span>Sign in</span>
-              <Icon name="chevron-down" size={13} />
-            </summary>
-            <div className="hp-signin-menu">
-              <a href="/" target="_blank" rel="noopener noreferrer">
-                Contributor app
-                <span className="hp-signin-path">/</span>
-              </a>
-              <a href="/?role=admin" target="_blank" rel="noopener noreferrer">
-                Admin console
-                <span className="hp-signin-path">/?role=admin</span>
-              </a>
-            </div>
-          </details>
           <a
             className="hp-nav-github"
             href={GITHUB_URL}
@@ -243,6 +219,18 @@ function DifferentiationSummary() {
   );
 }
 
+/** A small per-section pointer to the relevant technical documentation. */
+function DocLink({ file, label }: { file: string; label?: string }) {
+  return (
+    <p className="hp-doc-link">
+      <a href={DOCS(file)} target="_blank" rel="noopener">
+        {label ?? "Technical documentation"}
+        <Icon name="arrow-right" size={13} />
+      </a>
+    </p>
+  );
+}
+
 export function HomepageApp() {
   const [draftEmail, setDraftEmail] = useState("");
   const [adminTab, setAdminTab] = useState<"setup" | "contributors" | "export">(
@@ -290,32 +278,28 @@ export function HomepageApp() {
                     A three-stage pipeline that ends in a server receipt.
                   </h2>
                   <p>
-                    Sync is treated as a data path, not an afterthought: nothing
-                    is uploaded before it exists on device, and nothing is
-                    marked sent before the server says so.
+                    A data path, not an afterthought: nothing uploads before it
+                    exists on device, and nothing is marked sent before the
+                    server says so.
                   </p>
+                  <DocLink
+                    file="architecture.md"
+                    label="Sync architecture doc"
+                  />
                 </div>
 
                 <ul className="hp-sync-principles">
                   <li>
                     <strong>Commit first.</strong> Payload, media, and outbox
-                    operations write to IndexedDB before any network attempt.
+                    write to IndexedDB before any network attempt.
                   </li>
                   <li>
                     <strong>Resumable media.</strong> Original files upload over
-                    tus; a flaky link continues where it stopped instead of
-                    restarting.
+                    tus and resume where a flaky link stopped.
                   </li>
                   <li>
                     <strong>Receipt-gated status.</strong> <code>SYNCED</code>{" "}
-                    is written only when the server finalizes the submission —
-                    never on request start or upload completion.
-                  </li>
-                  <li>
-                    <strong>Server is the source of truth.</strong> Reachability
-                    is never guessed from <code>navigator.onLine</code>, and
-                    installed-PWA storage stays isolated until the server
-                    mediates.
+                    only after server finalization.
                   </li>
                 </ul>
               </div>
@@ -326,20 +310,14 @@ export function HomepageApp() {
                     <span className="hp-sync-stage-index">1</span>
                     <div>
                       <strong>Metadata</strong>
-                      <p>
-                        Structured payload and submission receipt op commit to
-                        the local outbox.
-                      </p>
+                      <p>Payload and receipt ops commit to the local outbox.</p>
                     </div>
                   </div>
                   <div className="hp-sync-stage">
                     <span className="hp-sync-stage-index">2</span>
                     <div>
                       <strong>Media</strong>
-                      <p>
-                        Original files upload as resumable tus transfers with
-                        integrity hashes.
-                      </p>
+                      <p>Original files upload as resumable tus transfers.</p>
                     </div>
                   </div>
                   <div className="hp-sync-stage">
@@ -347,8 +325,8 @@ export function HomepageApp() {
                     <div>
                       <strong>Finalization</strong>
                       <p>
-                        The server writes a durable receipt; only then does the
-                        local record become <code>SYNCED</code>.
+                        A durable server receipt flips the record to{" "}
+                        <code>SYNCED</code>.
                       </p>
                     </div>
                   </div>
@@ -376,6 +354,7 @@ export function HomepageApp() {
                     Author versioned surveys, generate single-use 8-character
                     pairing codes, and trigger publication checkpoints.
                   </p>
+                  <DocLink file="flows.md" label="Administrator workflow doc" />
                 </div>
 
                 <div className="hp-admin-tab-selector">
@@ -463,6 +442,7 @@ export function HomepageApp() {
                 guess-adjusted reliability score alongside ambient hardware
                 telemetry.
               </p>
+              <DocLink file="attention-qa.md" label="Attention QA doc" />
             </div>
             <div className="hp-integrity-grid">
               <div className="hp-integrity-card">
@@ -503,6 +483,7 @@ export function HomepageApp() {
                 GeoJSON, DataCite 4.4 kernel metadata, and original media with
                 SHA-256 hashes.
               </p>
+              <DocLink file="export-format.md" label="Export format doc" />
             </div>
             <PackageBrowser />
             <p className="hp-section-note">
@@ -545,16 +526,7 @@ export function HomepageApp() {
         <div className="hp-footer-inner">
           <div className="hp-footer-brand">
             <a className="hp-brand" href="#top" aria-label="collect home">
-              <img
-                className="hp-logo"
-                src="/icon.svg"
-                alt=""
-                width={22}
-                height={22}
-              />
-              <span className="wordmark">
-                collect<span className="wordmark-dot">.</span>
-              </span>
+              <CollectBrand compact />
             </a>
             <p>
               Infrastructure for trustworthy field evidence. Open source under
