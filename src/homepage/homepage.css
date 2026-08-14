@@ -878,12 +878,7 @@ main [id] {
 
 /* =========================================================================
    MOBILE VIEWPORT SIMULATION (PHONE-ON-DESKTOP)
-   The mockups sit in a desktop viewport, so the app's @media (max-width:
-   680px) rules never fire. These rules are mechanically derived from the
-   app's own mobile blocks (geometry.css, foundation.css, native.css, in the
-   same cascade order) and scoped under .hp-app-viewport, so the phone
-   renders the exact mobile design — bubbles, pill tabs, floating docks —
-   with the app's own values. Keep in sync with those files.
+   ... (regenerated) ...
    ========================================================================= */
 .hp-app-viewport .desktop-only {
   display: none;
@@ -1286,7 +1281,7 @@ main [id] {
   padding-left: var(--space-3);
 }
 .hp-app-viewport .schema-field-row {
-  grid-template-columns: 24px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
 }
 .hp-app-viewport .schema-type,
@@ -1444,6 +1439,20 @@ main [id] {
   height: 1px;
   overflow: hidden;
   clip: rect(0 0 0 0);
+}
+
+/* -------------------------------------------------------------------------
+   Device-relative sizing
+   The app sizes headings with vw-based clamps. Inside a desktop page those
+   clamps key to the 1440px viewport instead of the 375px phone, inflating
+   titles (44px vs the 28-34px a real phone computes). Pin them to the app's
+   own mobile clamp minimums — the exact values rendered at <=375px.
+   ------------------------------------------------------------------------- */
+.hp-app-viewport .step-title {
+  font-size: 1.75rem; /* clamp(1.75rem, 6vw, 2.125rem) at 375px -> 1.75rem */
+}
+.hp-app-viewport h1 {
+  font-size: 2.125rem; /* clamp(2.125rem, 5vw, 2.75rem) at 375px -> 2.125rem */
 }
 
 /* =========================================================================

@@ -48,7 +48,7 @@ The application does not replace a general-purpose database, spreadsheet editor,
 
 ### Contributor workflow
 
-1. Open the installed app and sign in.
+1. Open the installed app and sign in with an eight-character sign-in code (issued by your administrator from the roster, or requested by email from the login screen).
 2. Select an assigned project and tap **Add observation**.
 3. Complete one field at a time. Skip optional fields directly without dismissing the keyboard.
 4. Tap **Save observation**. The client creates a durable local receipt before displaying success.
@@ -67,10 +67,10 @@ The application does not replace a general-purpose database, spreadsheet editor,
 
 Safari and installed iOS web apps use separate storage containers. `collect` bridges this platform boundary:
 
-- Safari authenticates via passwordless magic link by default.
-- The installed app authenticates via an eight-character single-use device code.
-- A signed-in browser generates the code from **Profile → Sign in another device**.
-- Passwords and email OTP codes remain available as fallback options.
+- Contributors sign in with an eight-character single-use sign-in code, issued by the administrator from the roster or requested by email from the login screen.
+- Administrators sign in through invitation magic links (the generic sign-in screen never creates accounts).
+- The installed app can also authenticate via an eight-character single-use device code generated from a signed-in browser (**Profile → Sign in another device**).
+- Passwords remain available as a fallback once set.
 
 ---
 
@@ -111,7 +111,7 @@ The synchronization sequence strictly follows: **metadata $\to$ media $\to$ fina
 - **Account isolation**: Dedicated IndexedDB database per account (`collect-local-v1-<userId>`) to protect shared devices.
 - **Resumable media uploads**: TUS chunked uploads with client-calculated SHA-256 integrity metadata.
 - **Data immutability**: Database triggers protect published schemas and finalized submissions from modification.
-- **Access control**: Invite-only registration, administrator allow-lists, passwordless links, and single-use device-link codes.
+- **Access control**: Invite-only registration, administrator allow-lists, admin-issued or self-service sign-in codes, passwordless links, and single-use device-link codes.
 - **Consent enforcement**: Versioned, server-enforced in-app consent required before data ingestion.
 - **Provenance tracking**: Automatic recording of device model, OS, browser, battery, connection, timezone, and location accuracy.
 - **Attention checks**: Curated attention verification with server-evaluated chance-corrected scoring.
@@ -202,7 +202,7 @@ npm ci
 npm run dev
 ```
 
-Without backend environment variables, `collect` launches an interactive local preview.
+Without backend environment variables, `collect` launches an interactive local preview. The marketing homepage (`homepage.html`) is a second Vite entry in the same bundle; it mounts the app's real components, so interface changes mirror into its live demo.
 
 Run the verification suite before committing changes:
 

@@ -47,7 +47,9 @@ flowchart TB
       HealthEndpoint["/health<br/>(Reachability probe)"]
       IngestEndpoint["/sync-submission<br/>(Ingestion & Verification)"]
       LinkEndpoint["/link-session<br/>(iOS PWA code auth)"]
-      InviteEndpoint["/claim-invites & /send-invite"]
+      SigninEndpoint["/contributor-signin-code<br/>(Admin-minted & self-service codes)"]
+      InviteEndpoint["/claim-invites & send-project-invite"]
+      RemovalEndpoint["/remove-project-contributor<br/>(Roster revocation)"]
       ExportEndpoint["/export-checkpoint<br/>(FAIR ZIP bundler)"]
     end
 
@@ -90,20 +92,21 @@ flowchart TB
 
 ## Client code boundaries
 
-| Path                          | Responsibility                                                       |
-| :---------------------------- | :------------------------------------------------------------------- |
-| `src/App.tsx`                 | Root shell, surface routing, and code-split chunk loading            |
-| `src/app/useAppController.ts` | Session lifecycle, active project selection, and state orchestration |
-| `src/app/submission.ts`       | Local validation and atomic commit transaction boundary              |
-| `src/app/syncController.ts`   | Queue execution, upload workers, and item failure isolation          |
-| `src/app/useSyncLifecycle.ts` | Lifecycle event listeners and single-flight sync coordination        |
-| `src/app/recovery.ts`         | Local ZIP package builder for unsynced device data                   |
-| `src/components/`             | Contributor and administrator feature views                          |
-| `src/components/ui/`          | Shared accessible UI controls, dialogs, and sheets                   |
-| `src/lib/localDatabase.ts`    | IndexedDB transaction wrappers and database initialization           |
-| `src/lib/localStore.ts`       | Domain operations, media blob storage, outbox, and migrations        |
-| `src/lib/syncProtocol.ts`     | Shared synchronization types and protocol definitions                |
-| `src/styles/`                 | Foundation CSS tokens, geometry layers, and mobile viewport styling  |
+| Path                          | Responsibility                                                                                                          |
+| :---------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
+| `src/App.tsx`                 | Root shell, surface routing, and code-split chunk loading                                                               |
+| `src/app/useAppController.ts` | Session lifecycle, active project selection, and state orchestration                                                    |
+| `src/app/submission.ts`       | Local validation and atomic commit transaction boundary                                                                 |
+| `src/app/syncController.ts`   | Queue execution, upload workers, and item failure isolation                                                             |
+| `src/app/useSyncLifecycle.ts` | Lifecycle event listeners and single-flight sync coordination                                                           |
+| `src/app/recovery.ts`         | Local ZIP package builder for unsynced device data                                                                      |
+| `src/components/`             | Contributor and administrator feature views                                                                             |
+| `src/components/ui/`          | Shared accessible UI controls, dialogs, and sheets                                                                      |
+| `src/lib/localDatabase.ts`    | IndexedDB transaction wrappers and database initialization                                                              |
+| `src/lib/localStore.ts`       | Domain operations, media blob storage, outbox, and migrations                                                           |
+| `src/lib/syncProtocol.ts`     | Shared synchronization types and protocol definitions                                                                   |
+| `src/styles/`                 | Foundation CSS tokens, geometry layers, and mobile viewport styling                                                     |
+| `src/homepage/`               | Marketing homepage (`homepage.html`), a second Vite entry that mounts the app's real components and links to these docs |
 
 Feature components never query IndexedDB directly or invoke privileged server endpoints without an adapter. Contributor views do not download administrator code chunks.
 
@@ -332,6 +335,21 @@ Re-submitting an existing submission ID succeeds only when the project, contribu
 - **Privileged functions**: Supabase Edge Functions verify caller authentication and perform server-side permission checks.
 - **Private keys**: Service-role keys exist only in Edge Function secrets.
 - **Secure views**: `project_overviews` uses `security_invoker = true` to preserve user RLS policies.
+- **Bridge codes**: contributor sign-in and device-link codes share one
+  single-use bridge table (`private.session_link_codes`): 8 characters from
+  an unambiguous alphabet, stored only as SHA-256 hashes, atomic consume,
+  short TTLs, and a failed-attempt cap.
+- **Mint throttles**: self-service sign-in-code requests are throttled per
+  user (3 per 20 minutes) and per IP (20 per hour); administrator minting is
+  authenticated and written to `audit_events`.
+- **Identity resolution**: Edge Functions resolve emails through the
+  security-definer RPC `resolve_user_id_by_email`; the `auth` schema is
+  never queried through PostgREST.
+- **Access revocation**: `remove-project-contributor` revokes the
+  membership, pending invites, and device-readiness rows. Submissions,
+  media, attention responses, and the contributor profile stay in the
+  dataset; the contributor's device keeps local observations and shows a
+  distinct **Project access removed** state.
 
 ---
 
