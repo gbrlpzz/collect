@@ -80,9 +80,10 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
         </h1>
 
         <p className="hp-hero-lede">
-          Structured observations and unmodified media commit to local device
-          storage before touching the network, syncing automatically when
-          connectivity returns.
+          An offline-first platform for scientific fieldwork and expeditions.
+          Structured observations and raw media commit to device storage before
+          touching the network, syncing automatically upon durable server
+          receipt.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -94,7 +95,7 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
             autoComplete="email"
             required
             maxLength={320}
-            placeholder="you@example.com"
+            placeholder="you@institution.edu"
             aria-label="Institutional email"
           />
           <button className="button button-primary" type="submit">
@@ -108,9 +109,13 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
           </p>
         )}
 
-        <div className="hp-hero-actions">
-          <a className="text-button" href="#collection">
-            Try the live collector ↓
+        <div className="hp-hero-meta">
+          <span>Open source · Apache-2.0</span>
+          <span className="hp-hero-dot">·</span>
+          <span>Self-hostable</span>
+          <span className="hp-hero-dot">·</span>
+          <a className="hp-hero-jump" href="#collection">
+            Test live collector ↓
           </a>
         </div>
       </div>
