@@ -86,8 +86,8 @@ export function ContributorProfileSheet({
         <div className="empty-list-state">
           <strong>Invitation pending</strong>
           <span>
-            This person has not opened the invitation yet. Resend the invite
-            from the roster if it went unseen.
+            This person has not opened the invitation yet. Resend the invitation
+            from the roster if needed.
           </span>
         </div>
       ) : (

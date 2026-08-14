@@ -88,9 +88,8 @@ export function ProfileSheet({
                 <Icon name="info" size={15} />
               </summary>
               <p>
-                This 0–100 score summarizes quick verification questions and
-                adjusts for random guessing. It never changes or removes a
-                contribution.
+                Attention score (0–100), chance-adjusted. A higher score means
+                more attention checks were answered correctly.
               </p>
             </details>
           </div>

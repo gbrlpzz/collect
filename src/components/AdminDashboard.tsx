@@ -1061,9 +1061,8 @@ export function ContributorsPanel({
         </div>
         <InfoDisclosure title="About attention scores">
           <p>
-            The ring is a 0–100 summary of quick verification questions,
-            adjusted for random guessing. The number remains visible so color is
-            never the only signal.
+            Attention score (0–100), chance-adjusted. A higher score means more
+            attention checks were answered correctly.
           </p>
         </InfoDisclosure>
         {inviteOpen && isSupabaseConfigured && (
