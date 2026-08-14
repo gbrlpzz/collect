@@ -175,12 +175,6 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
               {error}
             </p>
           )}
-
-          <div className="hp-hero-actions">
-            <a className="text-button" href="#collection">
-              Try the live collector ↓
-            </a>
-          </div>
         </div>
       </div>
     </section>

@@ -387,23 +387,7 @@ body {
   font-size: 0.75rem;
   font-weight: 550;
 }
-.hp-hero-actions {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin-top: 20px;
-}
-.hp-hero-actions .text-button {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--text);
-  text-decoration: none;
-  transition: opacity 0.15s ease;
-}
-.hp-hero-actions .text-button:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
+
 .hp-hero-deployment-note {
   max-width: 32rem;
   margin: 20px 0 0;
