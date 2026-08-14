@@ -179,10 +179,11 @@ function DifferentiationSummary() {
       <div className="hp-diff-inner">
         <div className="hp-diff-heading">
           <p className="eyebrow">Guarantees</p>
-          <h2>Built for defensible field evidence.</h2>
+          <h2>Four guarantees for data collected in the wild.</h2>
           <p>
-            An offline-first platform engineered for hostile connectivity,
-            verifiable provenance, and direct archive deposit.
+            Fieldwork happens in harsh conditions. collect is engineered around
+            four technical guarantees that protect your data from capture to
+            archive:
           </p>
         </div>
 
@@ -278,13 +279,15 @@ export function HomepageApp() {
             <div className="hp-flow-layout">
               <div className="hp-flow-copy">
                 <div className="section-heading">
-                  <p className="eyebrow">Setup & Administration</p>
+                  <p className="eyebrow">Setup & Operations</p>
                   <h2 id="admin-title">
-                    Immutable schemas and instant device pairing.
+                    Lock survey versions. Pair field devices without passwords.
                   </h2>
                   <p>
-                    Publish version-locked schemas, issue single-use pairing
-                    codes, and monitor contributor sync status in real time.
+                    Published surveys are locked to protect past data. Field
+                    researchers link their phones in seconds with single-use
+                    8-character codes — no account creation, no password resets
+                    in the field.
                   </p>
                   <DocLinks
                     docs={[
@@ -372,13 +375,13 @@ export function HomepageApp() {
             <div className="section-heading">
               <p className="eyebrow">Data Integrity</p>
               <h2 id="integrity-title">
-                Verify contributor attention without biasing research data.
+                Detect surveyor fatigue without polluting research data.
               </h2>
               <p>
-                Interleaved checks evaluate contributor focus. Prompts and
-                responses are stripped in memory, preserving only a
-                guess-adjusted reliability metric alongside ambient device
-                telemetry.
+                Unannounced checks measure focus during long transects, but
+                questions and answers are stripped in memory before database
+                commit. Ambient hardware telemetry records context without
+                tracking personal identity.
               </p>
               <DocLinks
                 docs={[
@@ -468,7 +471,7 @@ export function HomepageApp() {
             <div className="section-heading">
               <p className="eyebrow">Archival & Export</p>
               <h2 id="data-title">
-                Self-contained research archives for repository deposit.
+                Deposit-ready research packages for Zenodo and peer review.
               </h2>
               <p>
                 Export packages bundle canonical JSONL, CSV, RFC 7946 GeoJSON,
@@ -549,7 +552,7 @@ export function HomepageApp() {
             <div className="hp-preview-copy">
               <p className="eyebrow">Research Preview</p>
               <h2 id="preview-title">
-                Request preview access for your fieldwork.
+                Equip your next field campaign or expedition.
               </h2>
               <p>
                 We are onboarding research teams and field campaigns. Request
@@ -580,7 +583,7 @@ export function HomepageApp() {
               <span className="hp-footer-heading">Sections</span>
               <a href="#collection">Field collection</a>
               <a href="#sync">Sync pipeline</a>
-              <a href="#admin">Setup & administration</a>
+              <a href="#admin">Setup & operations</a>
               <a href="#integrity">Data integrity</a>
               <a href="#data">Archival & export</a>
               <a href="#preview">Request access</a>
