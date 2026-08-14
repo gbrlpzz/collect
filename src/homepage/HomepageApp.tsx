@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { FlowDemo, type ContributorTab } from "./FlowDemo";
 import { SyncDemo } from "./SyncDemo";
@@ -11,6 +11,7 @@ import { DocLinks, DOCS } from "./DocLinks";
 import { Icon, type IconName } from "../components/Icon";
 import { CollectBrand } from "../components/CollectBrand";
 import { useSectionSpy } from "./useSectionSpy";
+import { useScrollytelling } from "./useScrollytelling";
 
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 
@@ -273,10 +274,11 @@ function DifferentiationSummary() {
   );
 }
 
+const CONTRIB_TABS: ContributorTab[] = ["home", "flow", "media"];
+
 export function HomepageApp() {
   const [draftEmail, setDraftEmail] = useState("");
   const [contribTab, setContribTab] = useState<ContributorTab>("home");
-  const [adminTab, setAdminTab] = useState<AdminSceneTab>("setup");
 
   const captureEmail = (email: string) => {
     setDraftEmail(email);
@@ -299,6 +301,15 @@ export function HomepageApp() {
     "data",
     "preview",
   ]);
+
+  const collection = useScrollytelling<HTMLDivElement>(CONTRIB_TABS.length);
+  const sync = useScrollytelling<HTMLDivElement>(3);
+  const admin = useScrollytelling<HTMLDivElement>(ADMIN_SCENES.length);
+  const adminScene = ADMIN_SCENES[admin.active];
+
+  useEffect(() => {
+    setContribTab(CONTRIB_TABS[collection.active]);
+  }, [collection.active]);
   return (
     <div className="hp-shell">
       <TopBar activeSection={activeSection} />
@@ -307,12 +318,20 @@ export function HomepageApp() {
 
         {/* 1. Field Collection inside iPhone Mockup (Directly under Hero) */}
         <section
-          className="hp-section hp-section-canvas"
+          className="hp-section-scrolly hp-section-canvas"
           id="collection"
           aria-labelledby="collection-title"
         >
-          <div className="hp-section-inner">
-            <FlowDemo tab={contribTab} onTabChange={setContribTab} />
+          <div
+            className="hp-scrolly"
+            ref={collection.ref}
+            style={{ "--hp-steps": CONTRIB_TABS.length } as React.CSSProperties}
+          >
+            <div className="hp-scrolly-panel">
+              <div className="hp-section-inner">
+                <FlowDemo tab={contribTab} onTabChange={setContribTab} />
+              </div>
+            </div>
           </div>
         </section>
 
@@ -321,74 +340,82 @@ export function HomepageApp() {
 
         {/* 3. Synchronization State Machine */}
         <section
-          className="hp-section hp-section-canvas"
+          className="hp-section-scrolly hp-section-canvas"
           id="sync"
           aria-labelledby="sync-title"
         >
-          <div className="hp-section-inner">
-            <SyncDemo />
+          <div
+            className="hp-scrolly"
+            ref={sync.ref}
+            style={{ "--hp-steps": 3 } as React.CSSProperties}
+          >
+            <div className="hp-scrolly-panel">
+              <div className="hp-section-inner">
+                <SyncDemo active={sync.active} />
+              </div>
+            </div>
           </div>
         </section>
 
         {/* 4. Admin Operations & Schema */}
         <section
-          className="hp-section hp-section-paper"
+          className="hp-section-scrolly hp-section-paper"
           id="admin"
           aria-labelledby="admin-title"
         >
-          <div className="hp-section-inner">
-            <div className="hp-flow-layout">
-              <div className="hp-flow-copy">
-                <div className="section-heading">
-                  <p className="eyebrow">Setup & Operations</p>
-                  <h2 id="admin-title">
-                    Lock survey versions. Monitor sync progress across the
-                    fleet.
-                  </h2>
-                  <p>
-                    Author locked survey contracts, onboard researchers with
-                    single-use 8-character codes, and monitor fleet sync
-                    readiness — tracking received observations, pending device
-                    queues, and attention scores in real time.
-                  </p>
-                  <DocLinks files={["flows.md", "spec.md"]} />
-                </div>
+          <div
+            className="hp-scrolly"
+            ref={admin.ref}
+            style={{ "--hp-steps": ADMIN_SCENES.length } as React.CSSProperties}
+          >
+            <div className="hp-scrolly-panel">
+              <div className="hp-section-inner">
+                <div className="hp-flow-layout">
+                  <div className="hp-flow-copy">
+                    <div className="section-heading">
+                      <p className="eyebrow">Setup & Operations</p>
+                      <h2 id="admin-title">
+                        Lock survey versions. Monitor sync progress across the
+                        fleet.
+                      </h2>
+                      <p>
+                        Author locked survey contracts, onboard researchers with
+                        single-use 8-character codes, and monitor fleet sync
+                        readiness — tracking received observations, pending
+                        device queues, and attention scores in real time.
+                      </p>
+                      <DocLinks files={["flows.md", "spec.md"]} />
+                    </div>
 
-                <div
-                  className="hp-admin-tab-selector"
-                  aria-label="Administrator steps"
-                >
-                  {ADMIN_SCENES.map((scene, i) => (
-                    <button
-                      key={scene.tab}
-                      type="button"
-                      className={`hp-admin-step-btn ${
-                        adminTab === scene.tab ? "active" : ""
-                      }`}
-                      aria-pressed={adminTab === scene.tab}
-                      onClick={() => setAdminTab(scene.tab)}
+                    <div
+                      className="hp-admin-tab-selector"
+                      aria-label="Administrator steps"
                     >
-                      {scene.kicker}
-                    </button>
-                  ))}
-                </div>
+                      {ADMIN_SCENES.map((scene, i) => (
+                        <button
+                          key={scene.tab}
+                          type="button"
+                          className={`hp-admin-step-btn ${
+                            admin.active === i ? "active" : ""
+                          }`}
+                          aria-pressed={admin.active === i}
+                          onClick={() => admin.goToStep(i)}
+                        >
+                          {scene.kicker}
+                        </button>
+                      ))}
+                    </div>
 
-                <div className="hp-story hp-story-step" aria-live="polite">
-                  <span className="hp-story-kicker">Administrator Console</span>
-                  <h3>
-                    {
-                      ADMIN_SCENES.find((scene) => scene.tab === adminTab)
-                        ?.title
-                    }
-                  </h3>
-                  <p>
-                    {ADMIN_SCENES.find((scene) => scene.tab === adminTab)?.body}
-                  </p>
-                </div>
-              </div>
+                    <div className="hp-story" aria-live="polite">
+                      <h3>{adminScene.title}</h3>
+                      <p>{adminScene.body}</p>
+                    </div>
+                  </div>
 
-              <div className="hp-flow-visual">
-                <AdminWalkthrough initialTab={adminTab} />
+                  <div className="hp-flow-visual">
+                    <AdminWalkthrough initialTab={adminScene.tab} />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

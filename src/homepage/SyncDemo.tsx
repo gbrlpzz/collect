@@ -1,29 +1,24 @@
-import { useState } from "react";
 import { DocLinks } from "./DocLinks";
 
 const SYNC_STEPS = [
   {
-    kicker: "Stage 1 · Commit",
     title: "Saved locally",
     code: "SAVED_LOCAL",
     body: "Payload, media blobs, and the outbox entry commit to device storage before any network work.",
   },
   {
-    kicker: "Stage 2 · Transfer",
     title: "Syncing",
     code: "SYNCING_METADATA → SYNCING_MEDIA",
     body: "An active /health probe, cross-tab lock, and resumable TUS upload carry the record across flaky links.",
   },
   {
-    kicker: "Stage 3 · Receipt",
     title: "Finalized & Synced",
     code: "FINALIZING → SYNCED",
     body: "The server writes to the database and issues a signed finalization receipt.",
   },
 ] as const;
 
-export function SyncDemo() {
-  const [active, setActive] = useState(0);
+export function SyncDemo({ active }: { active: number }) {
   const step = SYNC_STEPS[active];
 
   return (
@@ -42,25 +37,7 @@ export function SyncDemo() {
           <DocLinks files={["background-automation.md", "architecture.md"]} />
         </div>
 
-        <div
-          className="hp-admin-tab-selector hp-sync-tab-selector"
-          aria-label="Sync stages"
-        >
-          {SYNC_STEPS.map((s, i) => (
-            <button
-              key={s.code}
-              type="button"
-              className={`hp-admin-step-btn ${active === i ? "active" : ""}`}
-              aria-pressed={active === i}
-              onClick={() => setActive(i)}
-            >
-              {s.title}
-            </button>
-          ))}
-        </div>
-
-        <div className="hp-story hp-story-step" aria-live="polite">
-          <span className="hp-story-kicker">{step.kicker}</span>
+        <div className="hp-story" aria-live="polite">
           <h3>{step.title}</h3>
           <p className="hp-sync-state-code">{step.code}</p>
           <p>{step.body}</p>

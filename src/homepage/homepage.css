@@ -692,6 +692,31 @@ body {
   border-radius: 4px;
 }
 
+/* ---------- Sticky scrollytelling sections ---------- */
+/* A tall band gives the panel room to stay pinned while the reader scrolls
+   through it, so the section holds still and its sub-sections click through
+   themselves. Scrolling stays entirely native. */
+.hp-section-scrolly {
+  position: relative;
+}
+.hp-scrolly {
+  position: relative;
+  height: calc(100vh + var(--hp-steps, 3) * 58vh);
+}
+.hp-scrolly-panel {
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 92px 24px 40px;
+  box-sizing: border-box;
+}
+.hp-scrolly-panel > .hp-section-inner {
+  width: min(100%, 1080px);
+  margin: 0 auto;
+}
+
 /* ---------- Common Section Layout ---------- */
 .hp-section {
   padding: clamp(76px, 11vh, 112px) 24px;
@@ -866,14 +891,6 @@ section[id] {
   padding: 14px 0 12px;
   border-top: 1px solid var(--separator-light);
   border-bottom: 1px solid var(--separator-light);
-}
-/* Step sections: the story area keeps the two columns balanced at the top
-   and gives the auto click-through a beat to linger on. */
-.hp-story-step {
-  min-height: 34vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
 }
 .hp-story-kicker {
   display: block;
@@ -2245,6 +2262,14 @@ section[id] {
   }
   .hp-diff-stat:nth-child(4) {
     border-top: 1px solid var(--separator-light);
+  }
+  .hp-scrolly {
+    height: auto;
+  }
+  .hp-scrolly-panel {
+    position: static;
+    min-height: 0;
+    padding: 52px 16px;
   }
   .hp-flow-layout {
     grid-template-columns: 1fr;

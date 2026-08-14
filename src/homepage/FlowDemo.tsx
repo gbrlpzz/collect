@@ -323,7 +323,6 @@ export function FlowDemo({
         )}
 
         <div className="hp-story" aria-live="polite">
-          <span className="hp-story-kicker">Contributor Surface</span>
           <h3>{narrative.title}</h3>
           <p>{narrative.body}</p>
         </div>
