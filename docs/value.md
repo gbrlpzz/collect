@@ -69,7 +69,7 @@ Checkpoints contain canonical JSONL, CSV, GeoJSON, raw original media, schema de
 | :--------------------------------------- | :----------------------------------------------------------------------------------------------- |
 | **Ecological & biodiversity monitoring** | Long offline transects, automated location provenance, original photos, repository-ready exports |
 | **Infrastructure & building surveys**    | Multi-contributor field teams, typed schema enforcement, account isolation on shared devices     |
-| **Humanitarian & disaster assessment**   | Hostile connectivity resilience, local recovery export, clear sync status                        |
+| **Humanitarian & disaster assessment**   | Poor connectivity resilience, local recovery export, clear sync status                           |
 | **Citizen-science research**             | Simple guided mobile interface, invite-only access, centralized data curation                    |
 | **Academic & institutional research**    | DataCite kernel metadata, SPDX licensing, FAIR compliance, self-hosted privacy                   |
 

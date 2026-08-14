@@ -13,7 +13,7 @@
 | **Location capture**    | Coordinates captured on collector open and refreshed on save.        | Prompts if permission is missing for required fields.             |
 | **Synchronization**     | Health probe, lease election, TUS upload, and atomic finalization.   | Active only in background; surfaces errors when action is needed. |
 | **Readiness reporting** | Background device pings with pending submission counts.              | Visible on the administrator monitoring dashboard.                |
-| **PWA caching**         | Precache manifest caches app shell for instant offline loading.      | Silent; updates automatically on new version releases.            |
+| **PWA caching**         | Precache manifest caches the app shell for fast offline loading.     | Silent; updates automatically on new version releases.            |
 | **Recovery packaging**  | Directly streams IndexedDB records into a local ZIP file.            | Triggered manually when exporting unsynced local data.            |
 
 ---

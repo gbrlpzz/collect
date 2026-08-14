@@ -12,11 +12,11 @@ Its core purpose is:
 
 **Allow an organization to define structured observations, assign them to contributors, collect them reliably in the field, know what has and has not reached the server, and export a complete, portable dataset.**
 
-The key differentiator is reliability under hostile field conditions.
+The key differentiator is reliability when connectivity is poor or unavailable.
 
 A contributor must be able to open an assigned project, collect structured data including photos and location while completely offline, close or kill the app, reopen it hours or days later, continue collecting, reconnect intermittently, and eventually have all collected data reach the server without duplicates, omissions, corruption, or manual reconstruction.
 
-The product should feel dramatically simpler than Jotform, KoboToolbox, ODK, Survey123, etc.
+The product should be much simpler than Jotform, KoboToolbox, ODK, Survey123, and similar tools.
 
 The complexity belongs in the infrastructure, not in the contributor interface.
 
