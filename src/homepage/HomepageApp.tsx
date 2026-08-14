@@ -489,8 +489,8 @@ export function HomepageApp() {
                     </div>
                     <p>
                       IndexedDB is strictly scoped per authenticated user (
-                      <code>collect-local-v1-userId</code>), preventing
-                      cross-account leaks.
+                      <code>collect-local-v1-userId</code>), preventing data
+                      leaks across shared field devices.
                     </p>
                   </div>
 
@@ -500,31 +500,8 @@ export function HomepageApp() {
                       <strong>Server-Enforced Consent</strong>
                     </div>
                     <p>
-                      The sync backend rejects submissions from accounts without
-                      active, unrevoked participant consent.
-                    </p>
-                  </div>
-
-                  <div className="hp-fact-card">
-                    <div className="hp-fact-header">
-                      <Icon name="file" size={16} />
-                      <strong>Verbatim Provenance</strong>
-                    </div>
-                    <p>
-                      Observations and media blobs are stored verbatim as
-                      entered, with zero AI transformation or lossy
-                      preprocessing.
-                    </p>
-                  </div>
-
-                  <div className="hp-fact-card">
-                    <div className="hp-fact-header">
-                      <Icon name="download" size={16} />
-                      <strong>Local Recovery Archive</strong>
-                    </div>
-                    <p>
-                      Unsynced observations can be exported directly from device
-                      storage to a self-contained ZIP archive at any time.
+                      The sync backend strictly rejects submissions from
+                      accounts without active, unrevoked participant consent.
                     </p>
                   </div>
                 </div>
