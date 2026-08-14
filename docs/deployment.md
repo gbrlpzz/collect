@@ -168,11 +168,12 @@ project is linked. The production project currently has these applied:
   screen can never create accounts; only administrator invitations do.
 - **Bridge codes**: contributor sign-in and device-link codes share one
   bridge table: 8 characters from an unambiguous alphabet (32⁸), single-use
-  with an atomic consume, stored only as SHA-256 hashes, and capped at 10
-  failed attempts. Sign-in codes expire after 20 minutes and are throttled
-  (3 per user per 20 minutes on self-service; the anonymous request path is
-  additionally capped per IP at 20 per hour). Device-link codes expire after
-  5 minutes.
+  with an atomic consume, and stored only as SHA-256 hashes. Sign-in codes
+  expire after 20 minutes and are throttled (3 per user per 20 minutes on
+  self-service; the anonymous request path is additionally capped per IP at
+  20 per hour). The exchange path shares the same per-IP budget (20 per
+  hour), which is the effective control against code guessing. Device-link
+  codes expire after 5 minutes.
 
 The branded email templates (invite, magic link, confirmation, recovery,
 email-change, reauthentication) live in `supabase/templates/`. Customizing

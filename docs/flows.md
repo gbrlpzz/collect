@@ -211,9 +211,10 @@ sequenceDiagram
 Contributor sign-in codes and device-link codes share the same bridge: they
 are 8 characters from an unambiguous alphabet (32⁸ ≈ 1.1×10¹²), single-use
 with an atomic consume, expire after 20 minutes (device links: 5), are
-stored only as SHA-256 hashes, and invalidate after 10 failed attempts.
-Minting is throttled to 3 codes per user per 20 minutes and every issuance
-is written to `audit_events`.
+stored only as SHA-256 hashes. Code guessing is rate-limited per source
+IP: a shared 20-per-hour budget covers both minting and exchange. Minting is
+throttled to 3 codes per user per 20 minutes and every issuance is written
+to `audit_events`.
 
 ---
 

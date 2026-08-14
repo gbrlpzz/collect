@@ -340,7 +340,7 @@ Re-submitting an existing submission ID succeeds only when the project, contribu
 - **Bridge codes**: contributor sign-in and device-link codes share one
   single-use bridge table (`private.session_link_codes`): 8 characters from
   an unambiguous alphabet, stored only as SHA-256 hashes, atomic consume,
-  short TTLs, and a failed-attempt cap.
+  and short TTLs. Code guessing is rate-limited per source IP.
 - **Mint throttles**: self-service sign-in-code requests are throttled per
   user (3 per 20 minutes) and per IP (20 per hour); administrator minting is
   authenticated and written to `audit_events`.
