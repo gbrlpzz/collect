@@ -2194,7 +2194,7 @@ section[id] {
   }
   .hp-flow-layout {
     grid-template-columns: 1fr;
-    gap: 36px;
+    gap: 32px;
   }
   .hp-flow-copy {
     max-width: 100%;
@@ -2202,8 +2202,15 @@ section[id] {
   .hp-integrity-grid {
     grid-template-columns: 1fr;
   }
+  .hp-fact-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .hp-preview-layout {
     grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .hp-preview-copy {
+    max-width: 100%;
   }
 }
 
@@ -2228,8 +2235,23 @@ section[id] {
   .hp-topbar-inner {
     padding: 0 16px;
   }
-  .hp-nav-app-link {
-    display: none;
+  .hp-section {
+    padding: 52px 16px;
+  }
+  .hp-diff-section {
+    padding: 52px 16px;
+  }
+  .hp-hero {
+    min-height: auto;
+    padding: 48px 16px 36px;
+  }
+  .hp-hero h1 {
+    font-size: clamp(2.15rem, 8.5vw, 2.75rem);
+    max-width: 100%;
+  }
+  .hp-hero-lede {
+    font-size: 1rem;
+    line-height: 1.5;
   }
   .hp-diff-grid {
     grid-template-columns: 1fr;
@@ -2241,28 +2263,70 @@ section[id] {
     border-left: 0;
     border-top: 1px solid var(--separator-light);
   }
-  .hp-section {
-    padding: 44px 16px;
-  }
-  .hp-hero {
-    padding: 48px 16px 36px;
-  }
-  .hp-hero h1 {
-    font-size: 1.875rem;
-  }
-  .hp-hero-lede {
-    font-size: 0.9375rem;
+  .hp-fact-grid {
+    grid-template-columns: 1fr;
   }
   .hp-footer-inner {
     grid-template-columns: 1fr;
-    gap: 28px;
+    gap: 32px;
   }
   .hp-footer-links {
-    grid-template-columns: 1fr;
-    gap: 20px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
   }
   .hp-footer-legal {
     grid-column: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .hp-topbar-inner {
+    padding: 0 14px;
+  }
+  .hp-github-text {
+    display: none;
+  }
+  .hp-nav-github {
+    padding: 6px;
+  }
+  .hp-topbar-actions .button {
+    min-height: 38px;
+    padding: 0 14px;
+    font-size: 0.8125rem;
+  }
+  .hp-capture {
+    flex-direction: column;
+    align-items: stretch;
+    max-width: 100%;
+    margin-top: 24px;
+  }
+  .hp-capture-input {
+    max-width: 100%;
+    width: 100%;
+    flex: auto;
+  }
+  .hp-capture .button-primary {
+    width: 100%;
+  }
+  .hp-admin-tab-selector {
+    gap: 6px;
+  }
+  .hp-admin-step-btn {
+    font-size: 0.8125rem;
+    padding: 6px 14px;
+  }
+  .hp-footer-links {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .hp-preview-card {
+    padding: 20px 16px;
+  }
+  .hp-integrity-card {
+    padding: 16px 14px;
+  }
+  .hp-sync-pipeline {
+    padding: 6px;
   }
 }
 
