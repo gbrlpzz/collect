@@ -147,7 +147,7 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
 
           <p className="hp-hero-lede">
             An offline-first field collection app for research teams. Installs
-            from the browser, exports FAIR archives.
+            from the browser, exports complete datasets.
           </p>
 
           <form className="hp-capture" onSubmit={submit} noValidate>
