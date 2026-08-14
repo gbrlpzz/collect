@@ -14,7 +14,7 @@ import type { Observation, Project } from "../types";
  * Renders in the light iPhone mock-up using the real contributor styling tokens.
  */
 
-type ContributorTab = "home" | "flow" | "inputs" | "sync";
+type ContributorTab = "home" | "flow" | "media" | "sync";
 
 const demoFields = projectFields
   .filter((field) => field.type !== "location")
@@ -93,9 +93,9 @@ const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
     title: "One Calm Question per Screen",
     body: "One question per screen with large touch targets for gloves and sunlight, with auto-advancing choices.",
   },
-  inputs: {
-    title: "Genuine uncertainty is a real answer",
-    body: "The tri-state question lets a surveyor record 'Unknown' when evidence is inconclusive, instead of forcing a guess that would corrupt the variable. Photos and audio still save uncompressed with SHA-256 hashes.",
+  media: {
+    title: "Original media, preserved as captured",
+    body: "Photos and audio are stored as the original files with SHA-256 integrity hashes — never recompressed, downsampled, or transcribed in the collection path.",
   },
   sync: {
     title: "Durable Receipts & Resumable Sync",
@@ -223,10 +223,10 @@ export function FlowDemo() {
     } else if (tab === "flow") {
       setPhase("collecting");
       setCollectorStep(0);
-    } else if (tab === "inputs") {
+    } else if (tab === "media") {
       setPhase("collecting");
-      // Jump to the tri-state question by key so the live step order
-      // (including the attention check) never shifts the target screen.
+      // Jump to the photo step by key so the live step order (including the
+      // attention check) never shifts the target screen.
       setCollectorStep(-1);
     } else if (tab === "sync") {
       setPhase("home");
@@ -337,10 +337,10 @@ export function FlowDemo() {
           </button>
           <button
             type="button"
-            className={`hp-admin-step-btn ${activeTab === "inputs" ? "active" : ""}`}
-            onClick={() => handleTabClick("inputs")}
+            className={`hp-admin-step-btn ${activeTab === "media" ? "active" : ""}`}
+            onClick={() => handleTabClick("media")}
           >
-            3. Uncertainty & Media
+            3. Original Media
           </button>
           <button
             type="button"
@@ -475,11 +475,9 @@ export function FlowDemo() {
                   <Collector
                     key={`${round}-${collectorStep}`}
                     project={demoProject}
-                    initialStepIndex={
-                      activeTab === "inputs" ? 0 : collectorStep
-                    }
+                    initialStepIndex={activeTab === "media" ? 0 : collectorStep}
                     initialFieldKey={
-                      activeTab === "inputs" ? "building_occupancy" : undefined
+                      activeTab === "media" ? "site_photos" : undefined
                     }
                     draft={draft}
                     lastSavedAt={null}
