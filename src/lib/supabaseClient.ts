@@ -226,7 +226,9 @@ export async function requestDeviceLinkCode(): Promise<{
  * uniformly whether or not the address has an account, so the login screen
  * never reveals which addresses exist.
  */
-export async function requestContributorSigninCode(email: string): Promise<void> {
+export async function requestContributorSigninCode(
+  email: string,
+): Promise<void> {
   if (!supabase) throw new Error("Supabase is not configured");
   await invokeFunction(supabase, "contributor-signin-code", {
     action: "request",
