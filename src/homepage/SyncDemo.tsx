@@ -1,5 +1,5 @@
 import { DocLinks } from "./DocLinks";
-import { useScrollFocus } from "./useScrollFocus";
+import { useScrollStep } from "./useScrollStep";
 
 const SYNC_STEPS = [
   {
@@ -23,8 +23,9 @@ const SYNC_STEPS = [
 ] as const;
 
 export function SyncDemo() {
-  const { ref, active, activate } = useScrollFocus<HTMLDivElement>(
+  const { ref, active, activate } = useScrollStep<HTMLDivElement>(
     SYNC_STEPS.length,
+    "sync",
   );
   const step = SYNC_STEPS[active];
 

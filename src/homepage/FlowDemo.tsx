@@ -13,7 +13,7 @@ import type { Observation, Project } from "../types";
  * Renders in the light iPhone mock-up using the real contributor styling tokens.
  */
 
-type ContributorTab = "home" | "flow" | "media";
+export type ContributorTab = "home" | "flow" | "media";
 
 const demoFields = projectFields
   .filter((field) => field.type !== "location")
@@ -182,10 +182,15 @@ function IPhone({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function FlowDemo() {
+export function FlowDemo({
+  tab = "home",
+  onTabChange = () => undefined,
+}: {
+  tab?: ContributorTab;
+  onTabChange?: (tab: ContributorTab) => void;
+}) {
   const [round, setRound] = useState(0);
   const [phase, setPhase] = useState<"home" | "collecting">("home");
-  const [activeTab, setActiveTab] = useState<ContributorTab>("home");
   const [collectorStep, setCollectorStep] = useState<number>(0);
   const [jumpKey, setJumpKey] = useState<string | undefined>(undefined);
   const [draft, setDraft] = useState<Record<string, unknown>>({});
@@ -198,24 +203,30 @@ export function FlowDemo() {
 
   useEffect(() => () => timersRef.current.forEach(clearTimeout), []);
 
-  const handleTabClick = (tab: ContributorTab) => {
-    setActiveTab(tab);
+  // Follow the controlled tab, which the guided tour and the tab chips drive.
+  useEffect(() => {
     if (tab === "home") {
       setPhase("home");
     } else if (tab === "flow") {
       setPhase("collecting");
       setCollectorStep(0);
+      setJumpKey(undefined);
     } else if (tab === "media") {
       setPhase("collecting");
       // Jump to the photo step by key so the live step order (including the
       // attention check) never shifts the target screen.
       setCollectorStep(-1);
+      setJumpKey("site_photos");
     }
+  }, [tab]);
+
+  const handleTabClick = (next: ContributorTab) => {
+    onTabChange(next);
   };
 
   const jumpToField = (fieldKey: string) => {
     setPhase("collecting");
-    setActiveTab("flow");
+    onTabChange("flow");
     setCollectorStep(-1);
     setJumpKey(fieldKey);
   };
@@ -246,11 +257,11 @@ export function FlowDemo() {
     setObservation(newObs);
     setSeedObservations((current) => [newObs, ...current]);
     setPhase("home");
-    setActiveTab("home");
+    onTabChange("home");
     triggerSyncAnimation();
   };
 
-  const narrative = TAB_NARRATION[activeTab];
+  const narrative = TAB_NARRATION[tab];
 
   return (
     <div className="hp-flow-layout">
@@ -271,28 +282,28 @@ export function FlowDemo() {
         <div className="hp-admin-tab-selector hp-contrib-tab-selector">
           <button
             type="button"
-            className={`hp-admin-step-btn ${activeTab === "home" ? "active" : ""}`}
+            className={`hp-admin-step-btn ${tab === "home" ? "active" : ""}`}
             onClick={() => handleTabClick("home")}
           >
             Field Home
           </button>
           <button
             type="button"
-            className={`hp-admin-step-btn ${activeTab === "flow" ? "active" : ""}`}
+            className={`hp-admin-step-btn ${tab === "flow" ? "active" : ""}`}
             onClick={() => handleTabClick("flow")}
           >
             Guided Flow
           </button>
           <button
             type="button"
-            className={`hp-admin-step-btn ${activeTab === "media" ? "active" : ""}`}
+            className={`hp-admin-step-btn ${tab === "media" ? "active" : ""}`}
             onClick={() => handleTabClick("media")}
           >
             Raw Media
           </button>
         </div>
 
-        {activeTab === "flow" && (
+        {tab === "flow" && (
           <div className="hp-field-types">
             <span className="hp-field-types-label">Input types</span>
             <div className="hp-field-types-row">
@@ -335,7 +346,7 @@ export function FlowDemo() {
                     onNavigate={(v) => {
                       if (v === "home") {
                         setPhase("home");
-                        setActiveTab("home");
+                        onTabChange("home");
                       }
                     }}
                     observations={
@@ -357,21 +368,21 @@ export function FlowDemo() {
                       hasDraft={false}
                       onStartObservation={() => {
                         setPhase("collecting");
-                        setActiveTab("flow");
+                        onTabChange("flow");
                         setCollectorStep(0);
                       }}
                       onChooseProject={() => undefined}
                       onResumeObservation={() => {
                         setPhase("collecting");
-                        setActiveTab("flow");
+                        onTabChange("flow");
                       }}
                       onDiscardAndStartObservation={() => {
                         setPhase("collecting");
-                        setActiveTab("flow");
+                        onTabChange("flow");
                       }}
                       onOpenSync={() => {
                         setPhase("home");
-                        setActiveTab("home");
+                        onTabChange("home");
                       }}
                     />
                   </div>
@@ -382,12 +393,10 @@ export function FlowDemo() {
                     key={`${round}-${collectorStep}-${jumpKey ?? ""}`}
                     project={demoProject}
                     initialStepIndex={
-                      activeTab === "media" || jumpKey ? 0 : collectorStep
+                      tab === "media" || jumpKey ? 0 : collectorStep
                     }
                     initialFieldKey={
-                      activeTab === "media"
-                        ? "site_photos"
-                        : (jumpKey ?? undefined)
+                      tab === "media" ? "site_photos" : (jumpKey ?? undefined)
                     }
                     draft={draft}
                     lastSavedAt={null}
@@ -397,7 +406,7 @@ export function FlowDemo() {
                     onSubmit={(values) => handleSubmit(values)}
                     onBack={() => {
                       setPhase("home");
-                      setActiveTab("home");
+                      onTabChange("home");
                     }}
                     isSaving={false}
                   />

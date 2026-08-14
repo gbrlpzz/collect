@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
-import { FlowDemo } from "./FlowDemo";
+import { FlowDemo, type ContributorTab } from "./FlowDemo";
 import { SyncDemo } from "./SyncDemo";
 import { PackageBrowser } from "./PackageBrowser";
 import { PreviewForm } from "./PreviewForm";
@@ -11,7 +11,7 @@ import { DocLinks, DOCS } from "./DocLinks";
 import { Icon, type IconName } from "../components/Icon";
 import { CollectBrand } from "../components/CollectBrand";
 import { useSectionSpy } from "./useSectionSpy";
-import { useScrollFocus } from "./useScrollFocus";
+import { useScrollStep } from "./useScrollStep";
 
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 
@@ -274,8 +274,11 @@ function DifferentiationSummary() {
   );
 }
 
+const CONTRIB_TABS: ContributorTab[] = ["home", "flow", "media"];
+
 export function HomepageApp() {
   const [draftEmail, setDraftEmail] = useState("");
+  const [contribTab, setContribTab] = useState<ContributorTab>("home");
 
   const captureEmail = (email: string) => {
     setDraftEmail(email);
@@ -298,12 +301,18 @@ export function HomepageApp() {
     "data",
     "preview",
   ]);
+  const { ref: collectionRef, active: collectionStep } =
+    useScrollStep<HTMLElement>(CONTRIB_TABS.length, "collection");
   const {
     ref: adminStepsRef,
     active: adminStep,
     activate: activateAdminStep,
-  } = useScrollFocus<HTMLDivElement>(ADMIN_SCENES.length);
+  } = useScrollStep<HTMLDivElement>(ADMIN_SCENES.length, "admin");
   const adminTab: AdminSceneTab = ADMIN_SCENES[adminStep].tab;
+
+  useEffect(() => {
+    setContribTab(CONTRIB_TABS[collectionStep]);
+  }, [collectionStep]);
 
   return (
     <div className="hp-shell">
@@ -313,12 +322,13 @@ export function HomepageApp() {
 
         {/* 1. Field Collection inside iPhone Mockup (Directly under Hero) */}
         <section
+          ref={collectionRef}
           className="hp-section hp-section-canvas"
           id="collection"
           aria-labelledby="collection-title"
         >
           <div className="hp-section-inner">
-            <FlowDemo />
+            <FlowDemo tab={contribTab} onTabChange={setContribTab} />
           </div>
         </section>
 
