@@ -544,9 +544,6 @@ main [id] {
   background: var(--canvas);
   overflow: hidden;
 }
-.hp-admin-viewport {
-  background: #000000;
-}
 .hp-app-viewport .app-shell {
   min-height: 100% !important;
   height: 100% !important;
@@ -569,39 +566,26 @@ main [id] {
 /* PWA Collector Guided Flow Viewport */
 .hp-app-viewport .collector-page,
 .hp-app-viewport .collector-flow {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  bottom: auto !important;
-  z-index: 1 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  height: 100% !important;
-  min-height: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: space-between !important;
-  padding: 0 !important;
-  margin: 0 !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  max-height: 100% !important;
+  width: 100% !important;
   overflow: hidden !important;
+  justify-content: space-between !important;
 }
 .hp-app-viewport .collector-topbar {
-  position: relative !important;
-  top: auto !important;
-  z-index: 5 !important;
   flex: 0 0 52px !important;
   height: 52px !important;
   min-height: 52px !important;
-  max-height: 52px !important;
   display: grid !important;
   grid-template-columns: 36px minmax(0, 1fr) 52px !important;
   align-items: center !important;
   padding: 0 14px !important;
-  margin: 0 !important;
-  gap: 8px !important;
   border-bottom: 1px solid var(--separator-light) !important;
   background: var(--canvas) !important;
+  gap: 8px !important;
 }
 .hp-app-viewport .collector-topbar .back-button {
   width: 34px !important;
@@ -617,10 +601,6 @@ main [id] {
   border: none !important;
   cursor: pointer !important;
   justify-self: start !important;
-  transition: all 0.15s ease !important;
-}
-.hp-app-viewport .collector-topbar .back-button:hover {
-  background: var(--grouped-strong) !important;
 }
 .hp-app-viewport .collector-topbar .back-button-label {
   position: absolute !important;
@@ -638,53 +618,33 @@ main [id] {
   align-items: center !important;
   justify-content: center !important;
   text-align: center !important;
-  justify-self: center !important;
   overflow: hidden !important;
-  padding: 0 2px !important;
 }
 .hp-app-viewport .collector-topbar .collector-title span {
-  display: block !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  text-align: center !important;
   font-size: 0.625rem !important;
   color: var(--secondary) !important;
-  line-height: 1.15 !important;
-}
-.hp-app-viewport .collector-topbar .collector-title strong {
-  display: block !important;
-  width: 100% !important;
-  max-width: 100% !important;
+  white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  text-align: center !important;
+}
+.hp-app-viewport .collector-topbar .collector-title strong {
   font-size: 0.8125rem !important;
   font-weight: 650 !important;
   color: var(--text) !important;
-  line-height: 1.15 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 .hp-app-viewport .collector-topbar .collector-save-state {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-self: end !important;
   font-size: 0.6875rem !important;
   color: var(--secondary) !important;
   text-align: right !important;
-  white-space: nowrap !important;
-  flex-shrink: 0 !important;
 }
 .hp-app-viewport .flow-progress {
   flex: 0 0 2.5px !important;
   height: 2.5px !important;
   width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
   background: var(--separator-light) !important;
-  border-radius: 0 !important;
 }
 .hp-app-viewport .flow-progress span {
   display: block !important;
@@ -692,22 +652,18 @@ main [id] {
   background: var(--accent) !important;
 }
 .hp-app-viewport .flow-body {
-  flex: 1 1 auto !important;
+  flex: 1 1 0 !important;
   min-height: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: space-between !important;
-  padding: 0 !important;
-  margin: 0 !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 .hp-app-viewport .flow-step {
   flex: 1 1 auto !important;
-  padding: 20px 18px 14px !important;
+  padding: 24px 20px 20px !important;
   display: flex !important;
   flex-direction: column !important;
-  width: 100% !important;
   box-sizing: border-box !important;
 }
 .hp-app-viewport .flow-step .step-title {
@@ -725,34 +681,289 @@ main [id] {
   margin: 0 0 14px 0 !important;
 }
 .hp-app-viewport .flow-actions {
-  position: static !important;
   flex: 0 0 auto !important;
-  padding: 12px 18px 24px !important;
+  position: relative !important;
+  z-index: 20 !important;
+  padding: 12px 20px 24px !important;
+  background: rgba(245, 245, 247, 0.94) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-top: 1px solid var(--separator-light) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  gap: 10px !important;
-  background: rgba(245, 245, 247, 0.92) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  backdrop-filter: blur(20px) !important;
-  border-top: 1px solid var(--separator-light) !important;
-  width: 100% !important;
+  gap: 12px !important;
   box-sizing: border-box !important;
 }
-.hp-app-viewport .flow-actions .button {
+.hp-app-viewport .flow-actions .flow-continue {
+  flex: 1 1 auto !important;
   min-height: 50px !important;
+  border-radius: 999px !important;
   font-size: 1rem !important;
-  border-radius: 999px !important;
+  font-weight: 600 !important;
 }
-.hp-app-viewport .choice-button {
+.hp-app-viewport .flow-actions .flow-back {
+  flex: 0 0 auto !important;
   min-height: 50px !important;
-  padding: 0 18px !important;
-  font-size: 0.9375rem !important;
+  min-width: 88px !important;
   border-radius: 999px !important;
 }
-.hp-app-viewport .page-contributor,
-.hp-app-viewport .page-admin-project {
+.hp-app-viewport .page-contributor {
   padding: 18px 18px 32px !important;
+}
+
+/* =========================================================================
+   PWA Admin Viewport inside Dark iPhone Mock-up
+   ========================================================================= */
+.hp-admin-viewport {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  background: #000000 !important;
+  color: #f5f5f7 !important;
+  box-sizing: border-box !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+.hp-admin-viewport .page-admin-project {
+  padding: 14px 18px 40px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  background: transparent !important;
+}
+.hp-admin-viewport .back-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 12px !important;
+}
+.hp-admin-viewport .admin-project-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  margin-bottom: 16px !important;
+}
+.hp-admin-viewport .admin-project-header h1 {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  line-height: 1.2 !important;
+  margin: 4px 0 2px !important;
+}
+.hp-admin-viewport .admin-project-header .lede {
+  font-size: 0.8125rem !important;
+  color: var(--secondary) !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+.hp-admin-viewport .admin-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  padding: 10px 0 !important;
+  margin-bottom: 16px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+.hp-admin-viewport .admin-metrics span {
+  font-size: 0.6875rem !important;
+  color: var(--secondary) !important;
+}
+.hp-admin-viewport .admin-metrics strong {
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+}
+.hp-admin-viewport .admin-tabs {
+  display: flex !important;
+  gap: 4px !important;
+  margin-bottom: 16px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 999px !important;
+  padding: 3px !important;
+}
+.hp-admin-viewport .admin-tabs button {
+  flex: 1 !important;
+  min-height: 32px !important;
+  padding: 0 8px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--secondary) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+.hp-admin-viewport .admin-tabs button.tab-active {
+  background: #2c2c2e !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+.hp-admin-viewport .panel-heading {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 10px !important;
+}
+.hp-admin-viewport .panel-heading h2 {
+  font-size: 0.9375rem !important;
+  font-weight: 650 !important;
+  color: #ffffff !important;
+  margin: 0 !important;
+}
+.hp-admin-viewport .panel-heading p {
+  font-size: 0.75rem !important;
+  color: var(--secondary) !important;
+  margin: 2px 0 0 !important;
+}
+.hp-admin-viewport .schema-list {
+  display: flex !important;
+  flex-direction: column !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  background: #1c1c1e !important;
+  overflow: hidden !important;
+  margin-top: 10px !important;
+}
+.hp-admin-viewport .schema-field-row {
+  min-height: 44px !important;
+  display: grid !important;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto !important;
+  gap: 8px !important;
+  align-items: center !important;
+  padding: 8px 12px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  cursor: pointer !important;
+}
+.hp-admin-viewport .schema-field-row.schema-field-row-active {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+.hp-admin-viewport .schema-index {
+  font-family: ui-monospace, monospace !important;
+  font-size: 0.6875rem !important;
+  color: var(--tertiary) !important;
+}
+.hp-admin-viewport .schema-field-row strong {
+  font-size: 0.8125rem !important;
+  color: #ffffff !important;
+}
+.hp-admin-viewport .schema-field-row span {
+  font-size: 0.6875rem !important;
+  color: var(--secondary) !important;
+}
+.hp-admin-viewport .schema-type {
+  font-size: 0.75rem !important;
+  color: var(--secondary) !important;
+}
+.hp-admin-viewport .schema-required {
+  font-size: 0.6875rem !important;
+  color: var(--tertiary) !important;
+}
+.hp-admin-viewport .hp-schema-detail-card {
+  margin-top: 10px !important;
+  padding: 12px !important;
+  border-radius: 10px !important;
+  background: #1c1c1e !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+.hp-admin-viewport .hp-schema-detail-header strong {
+  font-size: 0.8125rem !important;
+  color: #ffffff !important;
+}
+.hp-admin-viewport .hp-schema-detail-header code {
+  font-size: 0.6875rem !important;
+  color: var(--secondary) !important;
+}
+.hp-admin-viewport .hp-schema-detail-card p {
+  font-size: 0.75rem !important;
+  color: var(--secondary) !important;
+  margin: 4px 0 0 !important;
+}
+.hp-admin-viewport .hp-schema-options-pills {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+  margin-top: 8px !important;
+}
+.hp-admin-viewport .hp-schema-options-pills .chip {
+  font-size: 0.6875rem !important;
+  padding: 2px 8px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+.hp-admin-viewport .hp-admin-pairing-box {
+  margin-bottom: 14px !important;
+  padding: 14px !important;
+  border-radius: 12px !important;
+  background: #1c1c1e !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+.hp-admin-viewport .hp-pairing-code-display {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin: 6px 0 !important;
+}
+.hp-admin-viewport .hp-pairing-code {
+  font-size: 1.25rem !important;
+  font-weight: 750 !important;
+  color: #ffffff !important;
+  letter-spacing: 0.08em !important;
+}
+.hp-admin-viewport .contributor-list {
+  display: flex !important;
+  flex-direction: column !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  background: #1c1c1e !important;
+  overflow: hidden !important;
+  margin-top: 10px !important;
+}
+.hp-admin-viewport .contributor-row {
+  min-height: 48px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 12px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+.hp-admin-viewport .contributor-copy strong {
+  font-size: 0.8125rem !important;
+  color: #ffffff !important;
+}
+.hp-admin-viewport .contributor-copy span {
+  font-size: 0.75rem !important;
+  color: var(--secondary) !important;
+}
+.hp-admin-viewport .export-readiness {
+  padding: 12px 14px !important;
+  border-radius: 12px !important;
+  background: #1c1c1e !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  margin-bottom: 14px !important;
+}
+.hp-admin-viewport .readiness-bar {
+  height: 4px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+}
+.hp-admin-viewport .readiness-bar span {
+  display: block !important;
+  height: 100% !important;
+  background: #ffffff !important;
+}
+.hp-admin-viewport .export-readiness span {
+  font-size: 0.75rem !important;
+  color: var(--secondary) !important;
+}
+.hp-admin-viewport .export-readiness strong {
+  font-size: 0.8125rem !important;
+  color: #ffffff !important;
 }
 
 /* =========================================================================

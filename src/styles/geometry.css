@@ -64,7 +64,9 @@
   --tracking-wordmark: -0.045em;
 }
 
-:root[data-collect-surface="admin"] {
+:root[data-collect-surface="admin"],
+.app-shell[data-mode="admin"],
+.hp-iphone-dark {
   color-scheme: dark;
   --canvas: #000000;
   --paper: #1c1c1e;
@@ -1255,7 +1257,9 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
     --grouped: rgba(118, 118, 128, 0.2);
     --focus-ring: rgba(0, 0, 0, 0.38);
   }
-  :root[data-collect-surface="admin"] {
+  :root[data-collect-surface="admin"],
+  .app-shell[data-mode="admin"],
+  .hp-iphone-dark {
     --text: #ffffff;
     --secondary: #f2f2f7;
     --tertiary: #d1d1d6;
