@@ -271,10 +271,13 @@ export function rememberAuthEmail(email: string): void {
   }
 }
 
+/** App base path inside the single Vercel deployment (homepage at /, app at /app). */
+const APP_BASE_PATH = import.meta.env.PROD ? "/app" : "/";
+
 export async function sendMagicLink(email: string): Promise<void> {
   if (!supabase) throw new Error("Supabase is not configured");
-  const emailRedirectTo = authRedirectOrigin();
-  if (isLocalOrigin(emailRedirectTo) && !configuredAppUrl) {
+  const emailRedirectTo = authRedirectOrigin() + APP_BASE_PATH;
+  if (isLocalOrigin(authRedirectOrigin()) && !configuredAppUrl) {
     // A magic link that returns to localhost can only be opened in the same
     // browser that requested it — never on a phone or another device. This
     // instance has no VITE_APP_URL, so a link would be silently broken:

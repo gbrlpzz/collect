@@ -1,9 +1,9 @@
 {
-  "id": "/",
+  "id": "/app",
   "name": "collect Fieldwork",
   "short_name": "collect",
   "description": "Capture reliable field observations, even offline.",
-  "start_url": "/",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

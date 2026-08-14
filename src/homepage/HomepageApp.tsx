@@ -668,10 +668,14 @@ export function HomepageApp() {
                 GitHub
               </a>
               <a href="#preview">Request access</a>
-              <a href="/" target="_blank" rel="noopener noreferrer">
+              <a href="/app" target="_blank" rel="noopener noreferrer">
                 Sign in (Contributor)
               </a>
-              <a href="/?role=admin" target="_blank" rel="noopener noreferrer">
+              <a
+                href="/app?role=admin"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Sign in (Admin)
               </a>
             </div>

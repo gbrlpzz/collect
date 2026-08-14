@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "description": "Single deployment: marketing homepage at /, the collect app at /app. Auth links in the homepage footer point to /app.",
+  "rewrites": [
+    { "source": "/", "destination": "/homepage.html" },
+    { "source": "/app", "destination": "/index.html" },
+    { "source": "/app/:path*", "destination": "/index.html" }
+  ]
+}

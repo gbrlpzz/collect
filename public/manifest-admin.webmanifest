@@ -1,9 +1,9 @@
 {
-  "id": "/?role=admin",
+  "id": "/app?role=admin",
   "name": "collect Admin",
   "short_name": "collect Admin",
   "description": "Configure and monitor collect fieldwork.",
-  "start_url": "/?role=admin",
+  "start_url": "/app?role=admin",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
