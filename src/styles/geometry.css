@@ -1761,8 +1761,24 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   font-size: 0.875rem;
   text-align: left;
 }
-.admin-project-actions-menu button:hover {
+.admin-project-actions-menu button:hover,
+.admin-project-actions-menu button:focus-visible {
   background: var(--grouped);
+}
+.admin-project-actions-menu .menu-separator {
+  display: block;
+  height: 1px;
+  margin: 6px 0;
+  background: var(--separator-light);
+}
+.admin-project-actions-menu button {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-project-actions-menu {
+  max-width: min(280px, calc(100vw - 24px));
 }
 .schema-field-row {
   grid-template-columns: minmax(0, 1fr);
