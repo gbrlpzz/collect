@@ -827,6 +827,9 @@ main [id] {
   overflow: hidden;
   transform: translateZ(0);
   contain: layout paint;
+  /* Size queries make the phone behave like a real 375px viewport for
+     vw-dependent values (headings, title clamps) via container units. */
+  container-type: inline-size;
 }
 .hp-app-viewport .app-shell {
   position: relative !important;
@@ -1462,10 +1465,16 @@ main [id] {
    own mobile clamp minimums — the exact values rendered at <=375px.
    ------------------------------------------------------------------------- */
 .hp-app-viewport .step-title {
-  font-size: 1.75rem; /* clamp(1.75rem, 6vw, 2.125rem) at 375px -> 1.75rem */
+  font-size: clamp(1.75rem, 6cqi, 2.125rem);
 }
 .hp-app-viewport h1 {
-  font-size: 2.125rem; /* clamp(2.125rem, 5vw, 2.75rem) at 375px -> 2.125rem */
+  font-size: clamp(2.125rem, 5cqi, 2.75rem);
+}
+/* The collector title is centered with max-width min(240px, 42vw); inside
+   the phone 42vw would key to the 1440px page (240px) and overlap the back
+   button. 42cqi = 42% of the 357px phone, matching a real device. */
+.hp-app-viewport .collector-title {
+  max-width: min(240px, 42cqi);
 }
 
 /* =========================================================================
