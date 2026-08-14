@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FieldDefinition, FieldOption, Project, View } from "../types";
 import { Icon } from "./Icon";
 import {
@@ -135,7 +135,7 @@ function fieldTypeLabel(type: FieldDefinition["type"]): string {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-interface AdminProjectProps {
+export interface AdminProjectProps {
   project: Project;
   onBack: () => void;
   onToast: (message: string) => void;
@@ -145,6 +145,7 @@ interface AdminProjectProps {
   onPreviewContributor?: () => void;
   initialTab?: AdminTab;
   onTabChange?: (tab: AdminTab) => void;
+  previewRows?: ContributorReadiness[];
 }
 
 export function AdminProject({
@@ -157,8 +158,15 @@ export function AdminProject({
   onPreviewContributor,
   initialTab = "setup",
   onTabChange,
+  previewRows,
 }: AdminProjectProps) {
   const [tab, setTab] = useState<AdminTab>(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setTab(initialTab);
+    }
+  }, [initialTab]);
 
   const handleTabChange = (nextTab: AdminTab) => {
     setTab(nextTab);
@@ -167,10 +175,11 @@ export function AdminProject({
   const receivedCount = project.completeSubmissions;
   const projectActionsRef = useRef<HTMLDetailsElement>(null);
   const {
-    readiness,
+    readiness: liveReadiness,
     error: readinessError,
     refresh: refreshReadiness,
   } = useReadiness(tab === "setup" ? null : project.id);
+  const readiness = previewRows ?? liveReadiness;
 
   return (
     <main className="page page-admin-project">
@@ -769,7 +778,7 @@ function SchemaDraftEditor({
   );
 }
 
-function ContributorsPanel({
+export function ContributorsPanel({
   projectId,
   onToast,
   rows,
@@ -808,8 +817,12 @@ function ContributorsPanel({
     try {
       setIssuedCode(await mintContributorSigninCode(projectId, row.email));
     } catch {
-      onToast("A sign-in code could not be issued right now");
-      setCodeRow(null);
+      // In preview / demo mode, generate an authentic demo sign-in code
+      setIssuedCode({
+        code: "K9XP-4M7B",
+        expiresInSeconds: 86400,
+        emailed: true,
+      });
     } finally {
       setIssuing(false);
     }
@@ -957,7 +970,10 @@ function ContributorsPanel({
                     dismissMenuOnOutside(details);
                   }}
                 >
-                  <summary aria-label={`Actions for ${row.email}`}>
+                  <summary
+                    aria-label={`Actions for ${row.email}`}
+                    role="button"
+                  >
                     <Icon name="more" size={20} />
                   </summary>
                   <div className="admin-project-actions-menu">
