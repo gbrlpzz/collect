@@ -316,7 +316,7 @@ body {
   margin: 0 auto;
 }
 .hp-hero-inner {
-  max-width: 680px;
+  max-width: 840px;
   text-align: left;
   display: flex;
   flex-direction: column;
@@ -329,7 +329,10 @@ body {
   letter-spacing: -0.045em;
   font-weight: 750;
   color: var(--text);
-  max-width: 18ch;
+  /* Wide enough that each sentence of the headline holds its own line
+     instead of breaking into an orphan. */
+  max-width: 24ch;
+  text-wrap: balance;
 }
 .hp-hero-br {
   display: block;
@@ -342,6 +345,8 @@ body {
 .hp-hero-lede {
   max-width: 36rem;
   margin: 20px 0 0;
+  /* Even lines, no stranded last word. */
+  text-wrap: balance;
   color: var(--secondary);
   font-size: clamp(1.0625rem, 1.4vw, 1.1875rem);
   line-height: 1.52;
@@ -783,6 +788,14 @@ body {
 .section-heading {
   max-width: 46rem;
   margin-bottom: 28px;
+}
+.section-heading h2,
+.hp-diff-heading h2 {
+  text-wrap: balance;
+}
+.section-heading > p,
+.hp-diff-heading > p {
+  text-wrap: pretty;
 }
 .section-heading h2 {
   margin: 6px 0 0;
