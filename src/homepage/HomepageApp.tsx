@@ -77,41 +77,54 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
 
   return (
     <section className="hp-hero" id="top" aria-labelledby="hero-title">
-      <div className="hp-hero-inner">
-        <h1 id="hero-title">Field observations you can trust.</h1>
+      <div className="hp-hero-bg" aria-hidden="true">
+        <img
+          src="/hero-alps.webp"
+          alt=""
+          className="hp-hero-bg-img"
+          loading="eager"
+        />
+        <div className="hp-hero-bg-overlay" />
+      </div>
 
-        <p className="hp-hero-lede">
-          Record structured observations, photos, and GPS coordinates offline on
-          any phone.
-        </p>
+      <div className="hp-hero-container">
+        <div className="hp-hero-inner">
+          <h1 id="hero-title">Field evidence you can trust.</h1>
 
-        <form className="hp-capture" onSubmit={submit} noValidate>
-          <input
-            className="field-input hp-capture-input"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            type="email"
-            autoComplete="email"
-            required
-            maxLength={320}
-            placeholder="you@example.com"
-            aria-label="Institutional email"
-          />
-          <button className="button button-primary" type="submit">
-            Request access
-          </button>
-        </form>
-
-        {error && (
-          <p className="hp-capture-error" role="alert">
-            {error}
+          <p className="hp-hero-lede">
+            Record structured observations, unmodified media, and GPS provenance
+            offline on any device. Built for scientific transects, heritage
+            surveys, and fieldwork beyond cell range.
           </p>
-        )}
 
-        <div className="hp-hero-actions">
-          <a className="text-button" href="#collection">
-            Try the live collector ↓
-          </a>
+          <form className="hp-capture" onSubmit={submit} noValidate>
+            <input
+              className="field-input hp-capture-input"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              type="email"
+              autoComplete="email"
+              required
+              maxLength={320}
+              placeholder="you@example.com"
+              aria-label="Institutional email"
+            />
+            <button className="button button-primary" type="submit">
+              Request access
+            </button>
+          </form>
+
+          {error && (
+            <p className="hp-capture-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          <div className="hp-hero-actions">
+            <a className="text-button" href="#collection">
+              Try the live collector ↓
+            </a>
+          </div>
         </div>
       </div>
     </section>
