@@ -30,6 +30,9 @@ interface CollectorProps {
   attentionCheck?: boolean;
   /** Optional starting step index for interactive walkthroughs */
   initialStepIndex?: number;
+  /** Optional starting field key for interactive walkthroughs (resolved
+   *  against the live step list, including the attention check). */
+  initialFieldKey?: string;
 }
 
 type Step =
@@ -90,6 +93,7 @@ export function Collector({
   preview = false,
   attentionCheck = true,
   initialStepIndex,
+  initialFieldKey,
 }: CollectorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stepIndex, setStepIndex] = useState(initialStepIndex ?? 0);
@@ -99,6 +103,7 @@ export function Collector({
       setStepIndex(initialStepIndex);
     }
   }, [initialStepIndex]);
+
   const [capturingLocation, setCapturingLocation] = useState(false);
   const locationPermissionCheckStartedRef = useRef(false);
   const [mediaByField, setMediaByField] = useState<
@@ -212,6 +217,15 @@ export function Collector({
     copy.splice(plan.index, 0, { kind: "field", field: plan.field });
     return copy;
   }, [baseSteps]);
+
+  useEffect(() => {
+    if (!initialFieldKey) return;
+    const index = steps.findIndex(
+      (step) => step.kind === "field" && step.field.key === initialFieldKey,
+    );
+    if (index >= 0) setStepIndex(index);
+  }, [initialFieldKey, steps]);
+
   const locationFields = useMemo(
     () => project.fields.filter((field) => field.type === "location"),
     [project.fields],
