@@ -425,17 +425,8 @@ export function FlowDemo() {
   return (
     <div className="hp-flow-layout" ref={frameRef}>
       <div className="hp-flow-copy">
-        <div className="section-heading">
-          <p className="eyebrow">Interactive field preview</p>
-          <h2>The collection flow, one question at a time.</h2>
-          <p>
-            The app's real frontend. Watch it fill itself, or tap anywhere to
-            take over — nothing is recorded anywhere.
-          </p>
-        </div>
-
         <div className="hp-story" aria-live="polite">
-          <span className="hp-story-kicker">While you fill it in</span>
+          <span className="hp-story-kicker">Active Step Insight</span>
           <h3>{narrative.title}</h3>
           <p>{narrative.body}</p>
 

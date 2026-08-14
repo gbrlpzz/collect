@@ -204,12 +204,19 @@ button {
   border-bottom-color: var(--separator-light);
   background: var(--glass);
 }
+.collector-title {
+  text-align: center;
+  justify-self: center;
+  align-items: center;
+}
 .collector-title strong {
   font-size: 1rem;
+  text-align: center;
 }
 .collector-title span {
   max-width: 220px;
   font-size: 0.75rem;
+  text-align: center;
 }
 .collector-save-state {
   display: inline-flex;
@@ -662,15 +669,21 @@ button {
     max-width: 92px;
   }
   .collector-topbar {
-    grid-template-columns: minmax(92px, 1fr) auto minmax(92px, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px;
   }
   .collector-save-state {
     max-width: 95px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  .collector-title {
+    text-align: center;
+    justify-self: center;
+  }
   .collector-title span {
     max-width: 150px;
+    text-align: center;
   }
   .collector-action-bar {
     padding-right: max(16px, env(safe-area-inset-right));

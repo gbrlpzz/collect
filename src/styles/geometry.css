@@ -730,15 +730,24 @@ h3 {
   padding-top: env(safe-area-inset-top);
   padding-right: max(16px, env(safe-area-inset-right));
   padding-left: max(16px, env(safe-area-inset-left));
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-rows: 52px;
+  gap: 8px;
 }
 .collector-title {
   min-width: 0;
   max-width: min(240px, 42vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  justify-self: center;
 }
 .collector-title strong,
 .collector-title span {
+  display: block;
+  text-align: center;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
