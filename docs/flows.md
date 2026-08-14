@@ -54,7 +54,7 @@ flowchart TD
 ### 1. Onboarding and sign-in
 
 1. The administrator invites the contributor to a project by email; the invitation email creates the account on first open.
-2. The administrator issues a **sign-in code** from the roster (**Contributors → ⋯ → Issue sign-in code**); the single-use, 20-minute code is emailed to the contributor and shown to the administrator for in-person sharing.
+2. The administrator issues a **sign-in code** from the roster row menu (**⋯ → Issue sign-in code**); the single-use, 20-minute code is emailed to the contributor and shown to the administrator for in-person sharing.
 3. The contributor signs in by entering the 8-character code on the login screen (**Sign in with a code**). Returning contributors can request a fresh code by email from the same screen (invite-only, uniform response).
 4. The contributor reviews the privacy disclosure and accepts the versioned consent.
 5. On iOS, the contributor adds `collect` to the Home Screen. Because iOS runs installed web apps in an isolated storage container, the app requires its own authentication session (device-link codes from **Profile → Sign in another device** still bridge a signed-in browser to the installed app).
@@ -147,14 +147,15 @@ flowchart TD
 3. The dashboard highlights items needing attention; healthy background sync details remain collapsed.
 4. Review advisory attention summaries (quality metadata that never alters or deletes research records).
 5. Send email reminders to contributors with pending unsynced records.
-6. Issue per-contributor **sign-in codes** from the roster menu
-   (**Contributors → ⋯ → Issue sign-in code**); the single-use, 20-minute
-   code is emailed and shown to the administrator for in-person sharing.
-7. Remove a contributor's access with **⋯ → Remove** when needed. Removal
-   revokes the membership, pending invites, and device-readiness rows;
-   submissions, media, attention responses, and the contributor profile
-   remain in the dataset untouched, and the contributor's device keeps its
-   local observations (shown as **Project access removed**).
+6. Issue per-contributor **sign-in codes** from the roster row menu
+   (**⋯ → Issue sign-in code**); the single-use, 20-minute code is emailed
+   and shown to the administrator for in-person sharing.
+7. Remove a contributor's access with **⋯ → Remove contributor** when
+   needed (pending invitations show **Revoke invitation**). Removal revokes
+   the membership, pending invites, and device-readiness rows; submissions,
+   media, attention responses, and the contributor profile remain in the
+   dataset untouched, and the contributor's device keeps its local
+   observations (shown as **Project access removed**).
 
 ### 3. Exporting checkpoint archives
 

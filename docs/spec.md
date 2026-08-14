@@ -22,7 +22,7 @@ The complexity belongs in the infrastructure, not in the contributor interface.
 
 ---
 
-> **Implementation deltas (reviewed 2026-08-13).** This document is the requirements
+> **Implementation deltas (reviewed 2026-08-14).** This document is the requirements
 > baseline. Where the shipped product intentionally deviates, the deviation is
 > listed here so the spec is never read as a description of current behavior:
 >
