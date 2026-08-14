@@ -23,7 +23,10 @@ const SYNC_STEPS = [
 ] as const;
 
 export function SyncDemo() {
-  const { ref, active, activate } = useScrollFocus<HTMLDivElement>(".hp-step");
+  const { ref, active, activate } = useScrollFocus<HTMLDivElement>(
+    SYNC_STEPS.length,
+  );
+  const step = SYNC_STEPS[active];
 
   return (
     <div className="hp-flow-layout" ref={ref}>
@@ -41,46 +44,45 @@ export function SyncDemo() {
           <DocLinks files={["background-automation.md", "architecture.md"]} />
         </div>
 
-        {SYNC_STEPS.map((s, i) => (
-          <div
-            key={s.code}
-            className="hp-step"
-            data-active={active === i}
-            aria-current={active === i ? "step" : undefined}
-            role="button"
-            tabIndex={0}
-            onClick={() => activate(i)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                activate(i);
-              }
-            }}
-          >
-            <p className="hp-step-kicker">{s.kicker}</p>
-            <h3>{s.title}</h3>
-            <p>{s.body}</p>
-          </div>
-        ))}
+        <div
+          className="hp-admin-tab-selector hp-sync-tab-selector"
+          aria-label="Sync stages"
+        >
+          {SYNC_STEPS.map((s, i) => (
+            <button
+              key={s.code}
+              type="button"
+              className={`hp-admin-step-btn ${active === i ? "active" : ""}`}
+              aria-pressed={active === i}
+              onClick={() => activate(i)}
+            >
+              {s.title}
+            </button>
+          ))}
+        </div>
+
+        <div className="hp-story hp-story-step" aria-live="polite">
+          <span className="hp-story-kicker">{step.kicker}</span>
+          <h3>{step.title}</h3>
+          <p className="hp-sync-state-code">{step.code}</p>
+          <p>{step.body}</p>
+        </div>
       </div>
 
       <div className="hp-flow-visual">
         <div className="hp-sync-pipeline" aria-label="Sync pipeline stages">
           {SYNC_STEPS.map((s, i) => (
-            <button
+            <div
               key={s.code}
-              type="button"
-              className="hp-sync-stage hp-sync-stage-btn"
+              className="hp-sync-stage"
               data-active={active === i}
-              aria-pressed={active === i}
-              onClick={() => activate(i)}
             >
               <span className="hp-sync-stage-index">{i + 1}</span>
-              <span className="hp-sync-stage-body">
+              <div>
                 <strong>{s.title}</strong>
-                <span className="hp-sync-state-code">{s.code}</span>
-              </span>
-            </button>
+                <p className="hp-sync-state-code">{s.code}</p>
+              </div>
+            </div>
           ))}
 
           <div className="hp-sync-receipt" data-active={active === 2}>

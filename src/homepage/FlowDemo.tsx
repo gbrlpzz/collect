@@ -198,19 +198,6 @@ export function FlowDemo() {
 
   useEffect(() => () => timersRef.current.forEach(clearTimeout), []);
 
-  const reset = () => {
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
-    setDraft({});
-    setObservation(null);
-    setSeedObservations(initialSampleObservations);
-    setRound((value) => value + 1);
-    setPhase("home");
-    setActiveTab("home");
-    setCollectorStep(0);
-    setJumpKey(undefined);
-  };
-
   const handleTabClick = (tab: ContributorTab) => {
     setActiveTab(tab);
     if (tab === "home") {
@@ -329,16 +316,6 @@ export function FlowDemo() {
           <h3>{narrative.title}</h3>
           <p>{narrative.body}</p>
         </div>
-
-        <div className="hp-auto-bar">
-          <button className="text-button" type="button" onClick={reset}>
-            <Icon name="refresh" size={15} /> Reset flow to start
-          </button>
-        </div>
-
-        <p className="hp-demo-note">
-          Interactive preview — no data is saved to a server.
-        </p>
       </div>
 
       <div className="hp-iphone-wrap">

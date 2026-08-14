@@ -570,29 +570,6 @@ body {
 .hp-sync-stage + .hp-sync-stage {
   border-top: 1px solid var(--separator-light);
 }
-.hp-sync-stage-btn {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  font: inherit;
-  color: inherit;
-  text-align: left;
-  width: 100%;
-  cursor: pointer;
-}
-.hp-sync-stage-btn:hover:not([data-active="true"]) {
-  opacity: 0.8;
-  background: var(--grouped);
-}
-.hp-sync-stage-btn:focus-visible {
-  outline: 2px solid var(--text);
-  outline-offset: 2px;
-}
-.hp-sync-stage-body {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
 .hp-sync-stage-index {
   flex: 0 0 auto;
   width: 28px;
@@ -892,6 +869,14 @@ section[id] {
   border-top: 1px solid var(--separator-light);
   border-bottom: 1px solid var(--separator-light);
 }
+/* Step sections: the story area gives the sticky visual scroll room and the
+   auto click-through a beat to linger on. */
+.hp-story-step {
+  min-height: 34vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 .hp-story-kicker {
   display: block;
   margin-bottom: 3px;
@@ -911,56 +896,6 @@ section[id] {
   color: var(--secondary);
   font-size: 0.8125rem;
   line-height: 1.45;
-}
-
-/* ---------- Persistent Step Blocks (sticky + scroll focus) ---------- */
-/* All step content stays on screen; the active step is focused by a left
-   rail while the companion visual stays sticky on the right. */
-.hp-step {
-  min-height: 38vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 24px 0 24px 20px;
-  border-left: 2px solid var(--separator-light);
-  cursor: pointer;
-  max-width: 27rem;
-}
-.hp-step:hover {
-  border-left-color: var(--secondary);
-}
-.hp-step[data-active="true"] {
-  border-left-color: var(--text);
-}
-.hp-step-kicker {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--tertiary);
-  font-size: 0.6875rem;
-  font-weight: 650;
-  letter-spacing: 0.055em;
-  text-transform: uppercase;
-}
-.hp-step h3 {
-  font-size: 1.125rem;
-  font-weight: 650;
-  margin: 0 0 8px;
-  letter-spacing: -0.01em;
-  color: var(--secondary);
-  transition: color 0.15s ease;
-}
-.hp-step[data-active="true"] h3 {
-  color: var(--text);
-}
-.hp-step > p {
-  margin: 0;
-  color: var(--secondary);
-  font-size: 0.8125rem;
-  line-height: 1.5;
-}
-.hp-step:focus-visible {
-  outline: 2px solid var(--text);
-  outline-offset: 4px;
 }
 
 .hp-iphone-wrap {
@@ -2334,9 +2269,6 @@ section[id] {
   }
   .hp-preview-copy {
     max-width: 100%;
-  }
-  .hp-step {
-    min-height: 26vh;
   }
   .hp-footer-inner {
     grid-template-columns: 1fr;

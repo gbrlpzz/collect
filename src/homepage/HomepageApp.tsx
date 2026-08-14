@@ -302,7 +302,7 @@ export function HomepageApp() {
     ref: adminStepsRef,
     active: adminStep,
     activate: activateAdminStep,
-  } = useScrollFocus<HTMLDivElement>(".hp-step");
+  } = useScrollFocus<HTMLDivElement>(ADMIN_SCENES.length);
   const adminTab: AdminSceneTab = ADMIN_SCENES[adminStep].tab;
 
   return (
@@ -360,27 +360,30 @@ export function HomepageApp() {
                   <DocLinks files={["flows.md", "spec.md"]} />
                 </div>
 
-                {ADMIN_SCENES.map((scene, i) => (
-                  <div
-                    key={scene.tab}
-                    className="hp-step"
-                    data-active={adminStep === i}
-                    aria-current={adminStep === i ? "step" : undefined}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => activateAdminStep(i)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        activateAdminStep(i);
-                      }
-                    }}
-                  >
-                    <p className="hp-step-kicker">{scene.kicker}</p>
-                    <h3>{scene.title}</h3>
-                    <p>{scene.body}</p>
-                  </div>
-                ))}
+                <div
+                  className="hp-admin-tab-selector"
+                  aria-label="Administrator steps"
+                >
+                  {ADMIN_SCENES.map((scene, i) => (
+                    <button
+                      key={scene.tab}
+                      type="button"
+                      className={`hp-admin-step-btn ${
+                        adminStep === i ? "active" : ""
+                      }`}
+                      aria-pressed={adminStep === i}
+                      onClick={() => activateAdminStep(i)}
+                    >
+                      {scene.kicker}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="hp-story hp-story-step" aria-live="polite">
+                  <span className="hp-story-kicker">Administrator Console</span>
+                  <h3>{ADMIN_SCENES[adminStep].title}</h3>
+                  <p>{ADMIN_SCENES[adminStep].body}</p>
+                </div>
               </div>
 
               <div className="hp-flow-visual">
