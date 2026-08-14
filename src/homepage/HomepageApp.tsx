@@ -75,14 +75,13 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
   return (
     <section className="hp-hero" id="top" aria-labelledby="hero-title">
       <div className="hp-hero-inner">
-        <h1 id="hero-title">
-          Field data collection that never loses a record.
-        </h1>
+        <h1 id="hero-title">Field observations you can trust.</h1>
 
         <p className="hp-hero-lede">
-          Structured observations and unmodified media commit to local device
-          storage before touching the network, syncing automatically when
-          connectivity returns.
+          collect is an offline web app for field surveys and research. Record
+          observations, photos, and GPS coordinates on your phone without
+          cellular signal. Everything saves locally first, then syncs
+          automatically with verified receipts.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>

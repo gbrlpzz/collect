@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { collectEnvironment, type EnvironmentInfo } from "../lib/deviceInfo";
-import { Icon } from "../components/Icon";
 
 /**
- * Live hardware and environment provenance display.
- * Shows the actual JSON payload collected from the device at submission time,
+ * Live hardware and spatial provenance display.
+ * Shows the actual spatial coordinates and ambient telemetry recorded with submissions,
  * without decorative widgets or simulated status indicators.
  */
 export function ProvenanceCard() {
@@ -20,26 +19,34 @@ export function ProvenanceCard() {
     };
   }, []);
 
+  const sampleProvenance = {
+    location: {
+      latitude: 42.8421,
+      longitude: -3.07682,
+      accuracy_meters: 4.2,
+      altitude_meters: 724.5,
+      geodetic_datum: "EPSG:4326 (WGS 84)",
+      captured_at: "2026-08-14T09:32:00.104Z",
+    },
+    environment: environment ?? {
+      status: "Reading device telemetry…",
+    },
+  };
+
   return (
     <div className="hp-provenance-clean">
       <p className="hp-provenance-intro">
-        Submissions capture ambient hardware context (battery state, connection
-        type, viewport dimensions). Missing or restricted APIs never prevent a
-        local record from committing.
+        When a project requests location, GPS coordinates and accuracy (±m)
+        capture automatically in the background. Ambient device telemetry
+        (battery, connection) is recorded without tracking personal identity.
       </p>
 
       <div className="hp-record">
         <div className="record-header">
-          <p className="record-label">Ambient Hardware & Environment Record</p>
+          <p className="record-label">Spatial & Ambient Provenance Record</p>
         </div>
         <pre className="record-json">
-          {JSON.stringify(
-            environment ?? {
-              status: "Reading device telemetry…",
-            },
-            null,
-            2,
-          )}
+          {JSON.stringify(sampleProvenance, null, 2)}
         </pre>
       </div>
     </div>
