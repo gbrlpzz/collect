@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { AuthScreen } from "./components/AuthScreen";
 import { ConsentScreen } from "./components/ConsentScreen";
 import { ContributorHome } from "./components/ContributorHome";
@@ -365,6 +366,7 @@ export default function App() {
           </button>
         </div>
       )}
+      <Analytics />
     </div>
   );
 }

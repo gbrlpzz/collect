@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { FlowDemo } from "./FlowDemo";
 import { SyncDemo } from "./SyncDemo";
 import { PackageBrowser } from "./PackageBrowser";
@@ -688,6 +689,7 @@ export function HomepageApp() {
           </p>
         </div>
       </footer>
+      <Analytics />
     </div>
   );
 }
