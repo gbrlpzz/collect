@@ -76,14 +76,13 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
     <section className="hp-hero" id="top" aria-labelledby="hero-title">
       <div className="hp-hero-inner">
         <h1 id="hero-title">
-          Field data collection that never loses a record.
+          Trustworthy field evidence. Offline-first by design.
         </h1>
 
         <p className="hp-hero-lede">
-          An offline-first platform for scientific fieldwork and expeditions.
-          Structured observations and raw media commit to device storage before
-          touching the network, syncing automatically upon durable server
-          receipt.
+          Capture structured observations, raw media, and ambient provenance in
+          zero-connectivity environments. Records commit to device storage
+          first, syncing automatically upon durable server receipt.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
