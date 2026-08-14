@@ -6,12 +6,22 @@
  * sendMagicLink guard, which refuses to send a broken link when VITE_APP_URL
  * is missing.
  */
-export function appUrl(): string {
+function appOrigin(): string {
   const url = Deno.env.get("APP_URL")?.trim();
   if (!url) {
     throw new Response("APP_URL is not configured on this deployment", {
       status: 500,
     });
   }
-  return url;
+  return url.replace(/\/+$/, "");
+}
+
+/**
+ * The installed field app entry point. The single deployment serves the app
+ * under /app (the marketing homepage lives at /), so every magic-link,
+ * device-link, and reminder redirect must target /app to reach the surface
+ * that actually processes the auth callback.
+ */
+export function appEntryUrl(): string {
+  return `${appOrigin()}/app`;
 }

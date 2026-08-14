@@ -1,6 +1,6 @@
 import { corsHeaders, json, options } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
-import { appUrl } from "../_shared/config.ts";
+import { appEntryUrl } from "../_shared/config.ts";
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return options();
@@ -62,7 +62,7 @@ Deno.serve(async (request) => {
 
     let invitedUserId: string | null = null;
     const inviteResult = await service.auth.admin.inviteUserByEmail(email, {
-      redirectTo: appUrl(),
+      redirectTo: appEntryUrl(),
     });
     if (!inviteResult.error) invitedUserId = inviteResult.data.user?.id ?? null;
     else if (!/already|registered|exists/i.test(inviteResult.error.message)) {
@@ -117,7 +117,7 @@ Deno.serve(async (request) => {
           type: "magiclink",
           email,
           options: {
-            redirect_to: appUrl(),
+            redirect_to: appEntryUrl(),
           },
         }),
       });
