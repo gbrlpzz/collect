@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Icon } from "../components/Icon";
-
-const DOCS = (file: string) =>
-  `https://github.com/gbrlpzz/collect/blob/main/docs/${file}`;
+import { DocLinks } from "./DocLinks";
 
 type SyncStepKey = "saved" | "probe" | "media" | "synced" | "conflict";
 
@@ -174,21 +172,15 @@ export function SyncDemo() {
           locally before network dispatch, chunked media uploads resume across
           drops, and local records mark synced only upon signed server receipt.
         </p>
-        <p className="hp-doc-link">
-          <a
-            href={DOCS("background-automation.md")}
-            target="_blank"
-            rel="noopener"
-          >
-            Background automation spec
-            <Icon name="arrow-right" size={13} />
-          </a>
-          <span className="hp-doc-separator">·</span>
-          <a href={DOCS("architecture.md")} target="_blank" rel="noopener">
-            System architecture doc
-            <Icon name="arrow-right" size={13} />
-          </a>
-        </p>
+        <DocLinks
+          docs={[
+            {
+              file: "background-automation.md",
+              label: "Background automation",
+            },
+            { file: "architecture.md", label: "Sync architecture" },
+          ]}
+        />
       </div>
 
       <div className="hp-sync-explorer">

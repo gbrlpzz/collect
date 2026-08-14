@@ -6,11 +6,11 @@ import { PreviewForm } from "./PreviewForm";
 import { AdminWalkthrough } from "./AdminWalkthrough";
 import { AttentionDemo } from "./AttentionDemo";
 import { ProvenanceCard } from "./ProvenanceCard";
+import { DocLinks, DOCS } from "./DocLinks";
 import { Icon, type IconName } from "../components/Icon";
 import { CollectBrand } from "../components/CollectBrand";
 
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
-const DOCS = (file: string) => `${GITHUB_URL}/blob/main/docs/${file}`;
 
 function TopBar() {
   return (
@@ -76,13 +76,13 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
     <section className="hp-hero" id="top" aria-labelledby="hero-title">
       <div className="hp-hero-inner">
         <h1 id="hero-title">
-          Trustworthy field evidence. Offline-first by design.
+          Field data collection that never loses a record.
         </h1>
 
         <p className="hp-hero-lede">
-          Capture structured observations, raw media, and ambient provenance in
-          zero-connectivity environments. Records commit to device storage
-          first, syncing automatically upon durable server receipt.
+          Structured observations and unmodified media commit to local device
+          storage before touching the network, syncing automatically when
+          connectivity returns.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -232,18 +232,6 @@ function DifferentiationSummary() {
   );
 }
 
-/** A small per-section pointer to the relevant technical documentation. */
-function DocLink({ file, label }: { file: string; label?: string }) {
-  return (
-    <p className="hp-doc-link">
-      <a href={DOCS(file)} target="_blank" rel="noopener">
-        {label ?? "Technical documentation"}
-        <Icon name="arrow-right" size={13} />
-      </a>
-    </p>
-  );
-}
-
 export function HomepageApp() {
   const [draftEmail, setDraftEmail] = useState("");
   const [adminTab, setAdminTab] = useState<"setup" | "contributors" | "export">(
@@ -269,7 +257,7 @@ export function HomepageApp() {
         <Hero onEmailSubmit={captureEmail} />
         <DifferentiationSummary />
 
-        {/* Real Field Collection inside iPhone Mockup */}
+        {/* Field Collection inside iPhone Mockup */}
         <section
           className="hp-section hp-section-paper"
           id="collection"
@@ -305,8 +293,12 @@ export function HomepageApp() {
                     Publish version-locked schemas, issue single-use pairing
                     codes, and monitor contributor sync status in real time.
                   </p>
-                  <DocLink file="flows.md" label="Administrator workflow doc" />
-                  <DocLink file="spec.md" label="Product & schema spec" />
+                  <DocLinks
+                    docs={[
+                      { file: "flows.md", label: "Administrator workflow" },
+                      { file: "spec.md", label: "Product & schema spec" },
+                    ]}
+                  />
                 </div>
 
                 <div className="hp-admin-tab-selector">
@@ -385,17 +377,22 @@ export function HomepageApp() {
         >
           <div className="hp-section-inner">
             <div className="section-heading">
-              <p className="eyebrow">Data Integrity & Privacy</p>
+              <p className="eyebrow">Data Integrity</p>
               <h2 id="integrity-title">
-                Verifiable attention scoring and strict privacy boundaries.
+                Verify contributor attention without biasing research data.
               </h2>
               <p>
-                Interleaved instruction checks evaluate surveyor focus in
-                memory, stripping questions and answers before storage.
-                Submissions remain account-isolated with zero AI alterations.
+                Interleaved checks evaluate contributor focus. Prompts and
+                responses are stripped in memory, preserving only a
+                guess-adjusted reliability metric alongside ambient device
+                telemetry.
               </p>
-              <DocLink file="attention-qa.md" label="Attention QA doc" />
-              <DocLink file="privacy.md" label="Privacy & data handling doc" />
+              <DocLinks
+                docs={[
+                  { file: "attention-qa.md", label: "Attention verification" },
+                  { file: "privacy.md", label: "Privacy & data handling" },
+                ]}
+              />
             </div>
 
             <div className="hp-integrity-grid">
@@ -485,10 +482,14 @@ export function HomepageApp() {
                 DataCite 4.4 metadata, and unmodified media with SHA-256
                 checksums into a single verifiable archive.
               </p>
-              <DocLink file="export-format.md" label="Export format doc" />
-              <DocLink
-                file="dataset-standards.md"
-                label="FAIR dataset standards doc"
+              <DocLinks
+                docs={[
+                  { file: "export-format.md", label: "Export format spec" },
+                  {
+                    file: "dataset-standards.md",
+                    label: "FAIR dataset standards",
+                  },
+                ]}
               />
             </div>
             <PackageBrowser />

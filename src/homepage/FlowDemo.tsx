@@ -3,6 +3,7 @@ import { Collector } from "../components/Collector";
 import { ContributorHome } from "../components/ContributorHome";
 import { TopBar } from "../components/TopBar";
 import { Icon } from "../components/Icon";
+import { DocLinks } from "./DocLinks";
 import { projectFields } from "../data/schemaFixtures";
 import type { Observation, Project } from "../types";
 
@@ -85,15 +86,15 @@ const initialSampleObservations: Observation[] = [
 const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
   home: {
     title: "Field Home",
-    body: "Displays active project context, local queue counts, sync indicators, and primary collection actions.",
+    body: "Shows active survey guidance, offline sync status, and a single dominant action to begin collecting.",
   },
   flow: {
     title: "Guided Step Flow",
-    body: "Presents one field per view with auto-advancing single-choice options, touch-friendly controls, and keyboard-safe viewport handling.",
+    body: "One clear question per screen with large touch targets for gloves and sunlight, native inputs, and keyboard-safe viewports.",
   },
   media: {
     title: "Raw Media Capture",
-    body: "Stores photos and audio as unmodified local files with SHA-256 checksums, bypassing client-side compression.",
+    body: "Stores photos and audio as unmodified original files with SHA-256 integrity hashes, bypassing compression.",
   },
 };
 
@@ -248,23 +249,16 @@ export function FlowDemo() {
         <div className="section-heading">
           <p className="eyebrow">Field Collection</p>
           <h2 id="collection-title">
-            Distraction-free capture. Built for zero connectivity.
+            Designed for bright sun, cold hands, and zero signal.
           </h2>
           <p>
-            A focused contributor interface featuring single-step progression,
-            high-contrast touch targets, native device pickers, and raw media
-            capture.
+            One calm question at a time. High-contrast typography that cuts
+            through glare, oversized touch targets for gloved fingers, and
+            immediate local commit on every step.
           </p>
-          <p className="hp-doc-link">
-            <a
-              href="https://github.com/gbrlpzz/collect/blob/main/docs/flows.md"
-              target="_blank"
-              rel="noopener"
-            >
-              Contributor workflow doc
-              <Icon name="arrow-right" size={13} />
-            </a>
-          </p>
+          <DocLinks
+            docs={[{ file: "flows.md", label: "Contributor workflow" }]}
+          />
         </div>
 
         <div className="hp-admin-tab-selector hp-contrib-tab-selector">

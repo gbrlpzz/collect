@@ -799,7 +799,7 @@ body {
 
 /* ---------- Common Section Layout ---------- */
 .hp-section {
-  padding: clamp(60px, 8vh, 92px) 24px;
+  padding: clamp(64px, 9vh, 96px) 24px;
 }
 .hp-section-paper {
   background: var(--paper);
@@ -811,21 +811,87 @@ body {
   margin: 0 auto;
 }
 .section-heading {
-  max-width: 44rem;
+  max-width: 46rem;
   margin-bottom: 28px;
 }
 .section-heading h2 {
-  margin-top: 6px;
-  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  margin: 6px 0 0;
+  font-size: clamp(1.625rem, 2.6vw, 2.125rem);
   letter-spacing: -0.035em;
   font-weight: 750;
-  line-height: 1.15;
+  line-height: 1.12;
+  color: var(--text);
 }
 .section-heading > p:not(.eyebrow) {
-  margin-top: 8px;
+  margin: 10px 0 0;
   color: var(--secondary);
   font-size: 0.9375rem;
-  line-height: 1.52;
+  line-height: 1.55;
+}
+
+/* Unified Technical Documentation Links */
+.hp-doc-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 14px;
+}
+.hp-doc-link-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.hp-doc-sep {
+  color: var(--separator);
+  font-size: 0.8125rem;
+  user-select: none;
+}
+.hp-doc-anchor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--secondary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.hp-doc-anchor code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--tertiary);
+  background: var(--grouped);
+  padding: 2px 6px;
+  border-radius: 5px;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+.hp-doc-anchor .hp-doc-label {
+  font-size: 0.75rem;
+  font-weight: 550;
+  color: var(--secondary);
+}
+.hp-doc-anchor svg {
+  color: var(--tertiary);
+  transition:
+    transform 0.15s ease,
+    color 0.15s ease;
+}
+.hp-doc-anchor:hover {
+  color: var(--text);
+}
+.hp-doc-anchor:hover code {
+  color: var(--text);
+  background: var(--grouped-strong, rgba(118, 118, 128, 0.4));
+}
+.hp-doc-anchor:hover .hp-doc-label {
+  color: var(--text);
+}
+.hp-doc-anchor:hover svg {
+  color: var(--text);
+  transform: translateX(2px);
 }
 .hp-doc-link {
   margin-top: 14px;
