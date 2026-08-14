@@ -81,9 +81,8 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
         <h1 id="hero-title">Field observations you can trust.</h1>
 
         <p className="hp-hero-lede">
-          An offline-first web app for field surveys and research expeditions.
-          Record structured observations, original photos, and GPS coordinates
-          on your phone with zero cellular signal.
+          Record structured observations, photos, and GPS coordinates offline on
+          any phone.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -114,11 +113,6 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
             Try the live collector ↓
           </a>
         </div>
-
-        <p className="hp-hero-deployment-note">
-          Zero app store downloads. Administrators set up surveys on desktop or
-          mobile; field teams open the URL and enter an 8-character code.
-        </p>
       </div>
     </section>
   );
@@ -296,13 +290,14 @@ export function HomepageApp() {
                 <div className="section-heading">
                   <p className="eyebrow">Setup & Operations</p>
                   <h2 id="admin-title">
-                    Lock survey versions. Pair field devices without passwords.
+                    Lock survey versions. Monitor sync progress across the
+                    fleet.
                   </h2>
                   <p>
-                    Published surveys are locked to protect past data. Field
-                    researchers link their phones in seconds with single-use
-                    8-character codes — no account creation, no password resets
-                    in the field.
+                    Author locked survey contracts, onboard researchers with
+                    single-use 8-character codes, and monitor fleet sync
+                    readiness — tracking received observations, pending device
+                    queues, and attention scores in real time.
                   </p>
                   <DocLinks files={["flows.md", "spec.md"]} />
                 </div>
@@ -320,7 +315,7 @@ export function HomepageApp() {
                     className={`hp-admin-step-btn ${adminTab === "contributors" ? "active" : ""}`}
                     onClick={() => setAdminTab("contributors")}
                   >
-                    Device Pairing
+                    Fleet Readiness
                   </button>
                   <button
                     type="button"
@@ -345,20 +340,21 @@ export function HomepageApp() {
                   )}
                   {adminTab === "contributors" && (
                     <>
-                      <h3>Passwordless device pairing</h3>
+                      <h3>Real-time fleet sync & progress monitoring</h3>
                       <p>
-                        Field teams enter a single-use 8-character code to link
-                        device storage without managing accounts or passwords.
+                        Track incoming observations, unsynced device queues, and
+                        contributor attention reliability scores across all
+                        field teams in real time.
                       </p>
                     </>
                   )}
                   {adminTab === "export" && (
                     <>
-                      <h3>Team readiness & export</h3>
+                      <h3>Verified publication checkpoints</h3>
                       <p>
-                        Monitor incoming observations, track contributor
-                        attention metrics, and export self-contained research
-                        archives.
+                        Review received observations, monitor contributor
+                        attention, and export self-contained research archives
+                        once all devices report complete.
                       </p>
                     </>
                   )}
@@ -391,77 +387,86 @@ export function HomepageApp() {
                 During 8-hour field transects, fatigue causes rapid tapping
                 without reading. collect interleaves subtle instruction checks
                 to measure focus, stripping questions and answers in memory
-                before database commit. Ambient hardware telemetry records
-                context without tracking personal identity.
+                before database commit. Device context and GPS coordinates
+                record verifiable provenance.
               </p>
               <DocLinks files={["attention-qa.md", "privacy.md"]} />
             </div>
 
             <div className="hp-integrity-grid">
-              <div className="hp-integrity-card">
-                <div className="hp-integrity-card-header">
-                  <h3>Attention Verification</h3>
-                  <p>Evaluated in memory and stripped before database commit</p>
+              {/* Left rail: Attention QA + 4 Privacy Boundaries */}
+              <div className="hp-integrity-left-rail">
+                <div className="hp-integrity-card">
+                  <div className="hp-integrity-card-header">
+                    <h3>Attention Verification</h3>
+                    <p>
+                      Evaluated in memory and stripped before database commit
+                    </p>
+                  </div>
+                  <AttentionDemo />
                 </div>
-                <AttentionDemo />
-              </div>
-              <div className="hp-integrity-card">
-                <div className="hp-integrity-card-header">
-                  <h3>Device Telemetry & Provenance</h3>
-                  <p>Non-identifying context that never blocks local commit</p>
-                </div>
-                <ProvenanceCard />
-              </div>
-            </div>
 
-            {/* Privacy & Storage Boundaries from docs/privacy.md */}
-            <div
-              className="hp-fact-grid"
-              style={{ "--fact-cols": 4 } as React.CSSProperties}
-            >
-              <div className="hp-fact-card">
-                <div className="hp-fact-header">
-                  <Icon name="lock" size={16} />
-                  <strong>Account-Scoped Ledger</strong>
+                <div className="hp-privacy-stack">
+                  <div className="hp-fact-card">
+                    <div className="hp-fact-header">
+                      <Icon name="lock" size={16} />
+                      <strong>Account-Scoped Ledger</strong>
+                    </div>
+                    <p>
+                      IndexedDB is strictly scoped per authenticated user (
+                      <code>collect-local-v1-userId</code>), preventing
+                      cross-account leaks.
+                    </p>
+                  </div>
+
+                  <div className="hp-fact-card">
+                    <div className="hp-fact-header">
+                      <Icon name="shield" size={16} />
+                      <strong>Server-Enforced Consent</strong>
+                    </div>
+                    <p>
+                      The sync backend rejects submissions from accounts without
+                      active, unrevoked participant consent.
+                    </p>
+                  </div>
+
+                  <div className="hp-fact-card">
+                    <div className="hp-fact-header">
+                      <Icon name="file" size={16} />
+                      <strong>Verbatim Provenance</strong>
+                    </div>
+                    <p>
+                      Observations and media blobs are stored verbatim as
+                      entered, with zero AI transformation or lossy
+                      preprocessing.
+                    </p>
+                  </div>
+
+                  <div className="hp-fact-card">
+                    <div className="hp-fact-header">
+                      <Icon name="download" size={16} />
+                      <strong>Local Recovery Archive</strong>
+                    </div>
+                    <p>
+                      Unsynced observations can be exported directly from device
+                      storage to a self-contained ZIP archive at any time.
+                    </p>
+                  </div>
                 </div>
-                <p>
-                  IndexedDB storage is strictly scoped per authenticated user (
-                  <code>collect-local-v1-userId</code>), preventing data leakage
-                  across accounts.
-                </p>
               </div>
 
-              <div className="hp-fact-card">
-                <div className="hp-fact-header">
-                  <Icon name="shield" size={16} />
-                  <strong>Server-Enforced Consent</strong>
+              {/* Right rail: Spatial & Device Provenance */}
+              <div className="hp-integrity-right-rail">
+                <div className="hp-integrity-card">
+                  <div className="hp-integrity-card-header">
+                    <h3>Device & Spatial Provenance</h3>
+                    <p>
+                      Device model, OS, and GPS coordinates recorded per
+                      observation
+                    </p>
+                  </div>
+                  <ProvenanceCard />
                 </div>
-                <p>
-                  The sync backend strictly rejects submissions from accounts
-                  without active, unrevoked participant consent.
-                </p>
-              </div>
-
-              <div className="hp-fact-card">
-                <div className="hp-fact-header">
-                  <Icon name="file" size={16} />
-                  <strong>Verbatim Provenance</strong>
-                </div>
-                <p>
-                  Field inputs and media blobs are recorded verbatim as entered,
-                  with zero AI transformation or lossy preprocessing.
-                </p>
-              </div>
-
-              <div className="hp-fact-card">
-                <div className="hp-fact-header">
-                  <Icon name="download" size={16} />
-                  <strong>Local Recovery Archive</strong>
-                </div>
-                <p>
-                  Unsynced observations can be exported directly from device
-                  storage to a self-contained ZIP archive at any time.
-                </p>
               </div>
             </div>
           </div>

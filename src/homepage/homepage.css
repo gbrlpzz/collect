@@ -1576,33 +1576,50 @@ main [id] {
    ========================================================================= */
 .hp-integrity-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 1fr);
   gap: 20px;
-  align-items: stretch;
+  align-items: start;
+}
+.hp-integrity-left-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.hp-integrity-right-rail {
+  display: flex;
+  flex-direction: column;
+}
+.hp-privacy-stack {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.hp-privacy-stack .hp-fact-card {
+  padding: 14px 14px 12px;
 }
 .hp-integrity-card {
   border: 1px solid var(--separator-light);
   border-radius: 16px;
   background: var(--paper);
-  padding: 24px;
+  padding: 20px 20px 18px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
   display: flex;
   flex-direction: column;
 }
 .hp-integrity-card-header {
-  margin-bottom: 16px;
-  padding-bottom: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--separator-light);
 }
 .hp-integrity-card-header h3 {
-  font-size: 1.0625rem;
+  font-size: 1rem;
   font-weight: 650;
   color: var(--text);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   letter-spacing: -0.01em;
 }
 .hp-integrity-card-header p {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--secondary);
   line-height: 1.4;
   margin: 0;
@@ -1612,56 +1629,55 @@ main [id] {
 .hp-attention-clean {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
 }
 .hp-attention-flow {
   display: flex;
   flex-direction: column;
 }
 .hp-attention-prompt-box {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 .hp-attention-title {
-  font-size: 1.0625rem;
+  font-size: 0.9375rem;
   font-weight: 650;
   color: var(--text);
-  margin: 4px 0 6px;
-  letter-spacing: -0.015em;
+  margin: 3px 0 4px;
+  letter-spacing: -0.01em;
   line-height: 1.35;
 }
 .hp-attention-desc {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--secondary);
-  line-height: 1.45;
+  line-height: 1.4;
   margin: 0;
 }
 .hp-attention-choices {
   display: grid;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 6px;
+  margin-top: 8px;
 }
 .hp-attention-result-clean {
   display: flex;
   flex-direction: column;
 }
 .hp-result-summary {
-  padding: 12px 14px;
-  border-radius: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
   background: var(--canvas);
   border: 1px solid var(--separator-light);
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 .hp-result-summary p {
   margin: 0;
-  font-size: 0.8125rem;
-  line-height: 1.45;
+  font-size: 0.75rem;
+  line-height: 1.4;
   color: var(--text);
 }
 .hp-record-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 .hp-record {
   display: flex;
@@ -1671,23 +1687,23 @@ main [id] {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 .record-label {
   color: var(--secondary);
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 650;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 .record-json {
   margin: 0;
-  padding: 12px;
+  padding: 10px 12px;
   border: 1px solid var(--separator-light);
   border-radius: 10px;
   background: var(--canvas);
   font-size: 0.6875rem;
-  line-height: 1.45;
+  line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -1704,13 +1720,12 @@ main [id] {
 .hp-provenance-clean {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
 }
 .hp-provenance-intro {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--secondary);
-  line-height: 1.5;
-  margin: 0 0 14px;
+  line-height: 1.45;
+  margin: 0 0 10px;
 }
 
 /* Contributor Tab Selector */
@@ -2076,6 +2091,9 @@ main [id] {
     max-width: 100%;
   }
   .hp-integrity-grid {
+    grid-template-columns: 1fr;
+  }
+  .hp-privacy-stack {
     grid-template-columns: 1fr;
   }
   .hp-preview-layout {
