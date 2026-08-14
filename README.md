@@ -181,9 +181,11 @@ npm run provision -- --issue-magic-link
 ```
 
 Service-role keys and database passwords never enter the client bundle.
-Every privileged operation runs inside an Edge Function. See
-[docs/deployment.md](docs/deployment.md) for the full guide, including the
-optional GitHub Actions deploy workflow.
+Every privileged operation runs inside an Edge Function. The frontend deploys
+automatically through the Vercel Git integration on every push to `main`;
+migrations and Edge Functions are applied through the Supabase MCP or CLI
+(`npm run provision`). See [docs/deployment.md](docs/deployment.md) for the
+full guide.
 
 ## Documentation
 
