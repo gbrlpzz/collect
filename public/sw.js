@@ -1,7 +1,7 @@
 // collect service worker: precached app shell + runtime cache-first assets.
 // The hashed asset list is emitted by the Vite build (precache-manifest.json)
 // so an installed app loads offline from the first launch.
-const CACHE = "collect-shell-v4";
+const CACHE = "collect-shell-v5";
 const CORE = [
   "/",
   "/manifest.webmanifest",
@@ -82,16 +82,27 @@ self.addEventListener("fetch", (event) => {
   if (requestUrl.origin !== self.location.origin) return;
 
   if (event.request.mode === "navigate") {
+    // Two surfaces share one deployment: the marketing homepage at "/" and
+    // the installed field app at "/app". Cache each navigation under its own
+    // shell key and fall back to that key offline, so a contributor who last
+    // opened the homepage is never served the wrong shell in the field.
+    const shell = requestUrl.pathname.startsWith("/app")
+      ? "/index.html"
+      : "/homepage.html";
     event.respondWith(
       fetch(event.request)
         .then((response) => {
           if (response.ok) {
             const copy = response.clone();
-            void caches.open(CACHE).then((cache) => cache.put("/", copy));
+            void caches.open(CACHE).then((cache) => cache.put(shell, copy));
           }
           return response;
         })
-        .catch(() => caches.match("/")),
+        .catch(() =>
+          caches
+            .match(shell)
+            .then((cached) => cached ?? caches.match("/index.html")),
+        ),
     );
     return;
   }

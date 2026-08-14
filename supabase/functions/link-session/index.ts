@@ -1,5 +1,6 @@
 import { corsHeaders, json, options } from "../_shared/cors.ts";
 import { errorMessage, requireUser, serviceClient } from "../_shared/auth.ts";
+import { appUrl } from "../_shared/config.ts";
 import { sha256 } from "../_shared/hash.ts";
 
 function randomCode(): string {
@@ -64,6 +65,9 @@ Deno.serve(async (request) => {
       }
       const service = serviceClient();
       const codeHash = await sha256(code);
+      // Resolve the redirect target before consuming the single-use code so a
+      // misconfigured deployment cannot burn a valid code and then fail.
+      const redirectTo = appUrl();
       // Consume in the same statement that validates the one-time code. Two
       // containers racing the same code can never both receive a session.
       const { data: userId } = await service.rpc("consume_session_link_code", {
@@ -99,8 +103,7 @@ Deno.serve(async (request) => {
           type: "magiclink",
           email,
           options: {
-            redirectTo: Deno.env.get("APP_URL") ??
-              "https://collect-tawny.vercel.app",
+            redirectTo,
           },
         });
       if (linkError || !link?.properties?.hashed_token) {

@@ -214,7 +214,7 @@ export function syncNow({
             // transient failures stay retryable. One failed observation never
             // blocks the rest of the queue.
             const actionRequired =
-              /unknown schema|revoked|forbidden|not authorized|permission|conflict|corrupt|assignment is not active|belongs to another|immutable|does not match the published schema|is not a published option|not configured as the first administrator|size does not match|checksum|integrity|invalid option|not active|closed/i.test(
+              /unknown schema|revoked|consent|forbidden|not authorized|permission|conflict|corrupt|assignment is not active|belongs to another|immutable|does not match the published schema|is not a published option|not configured as the first administrator|size does not match|checksum|integrity|invalid option|not active|closed/i.test(
                 message,
               );
             await recordOutboxFailure(observation.id, message, actionRequired);

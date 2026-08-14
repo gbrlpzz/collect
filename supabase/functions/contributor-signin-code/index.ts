@@ -220,14 +220,20 @@ async function issueCode(
     // still share the returned code in person.
   }
 
-  await service.from("audit_events").insert({
-    organization_id: organizationId,
-    project_id: projectId,
-    actor_id: actorId,
-    action: actorId
-      ? "contributor_signin_code_issued"
-      : "contributor_signin_code_requested",
-    metadata: { email, user_id: userId },
-  });
+  try {
+    await service.from("audit_events").insert({
+      organization_id: organizationId,
+      project_id: projectId,
+      actor_id: actorId,
+      action: actorId
+        ? "contributor_signin_code_issued"
+        : "contributor_signin_code_requested",
+      metadata: { email, user_id: userId },
+    });
+  } catch {
+    // The audit trail is best-effort. A code is already stored (and possibly
+    // emailed) at this point; a transient audit failure must never turn a
+    // successful mint into an error for the caller.
+  }
   return { code, emailed };
 }

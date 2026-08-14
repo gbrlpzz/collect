@@ -1,5 +1,6 @@
 import { corsHeaders, json, options } from "../_shared/cors.ts";
 import { errorMessage, isEmailAllowed, requireUser } from "../_shared/auth.ts";
+import { appUrl } from "../_shared/config.ts";
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return options();
@@ -54,7 +55,7 @@ Deno.serve(async (request) => {
 
     // Create the account (invite email) or reuse an existing one.
     const inviteResult = await service.auth.admin.inviteUserByEmail(email, {
-      redirectTo: Deno.env.get("APP_URL") ?? "https://collect-tawny.vercel.app",
+      redirectTo: appUrl(),
     });
     if (
       inviteResult.error &&

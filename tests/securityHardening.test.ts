@@ -1,13 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-
-function csvCell(value: unknown): string {
-  if (value === null || value === undefined) return '""';
-  const rawText = typeof value === "string" ? value : JSON.stringify(value);
-  const text = /^[=+\-@\t\r]/.test(rawText) ? `'${rawText}` : rawText;
-  return `"${text.replaceAll('"', '""')}"`;
-}
+import { csvCell } from "../supabase/functions/_shared/csv.ts";
 
 describe("Security hardening", () => {
   describe("CSV Formula Injection Neutralization", () => {
@@ -50,6 +44,34 @@ describe("Security hardening", () => {
 
       // Verify covering index
       expect(content).toContain("submissions_project_status_received_idx");
+    });
+
+    it("sign-in-code IP throttle returns a real boolean (fails closed)", () => {
+      const content = readFileSync(
+        resolve(
+          __dirname,
+          "../supabase/migrations/20260814150000_fix_signin_code_ip_throttle.sql",
+        ),
+        "utf-8",
+      );
+
+      // The variable that receives RETURNING request_count must be an
+      // integer, and the function must return a boolean derived from it so
+      // the anonymous self-service path can never fail open.
+      expect(content).toContain("recorded integer");
+      expect(content).toContain("returning request_count");
+      expect(content).toContain("return coalesce(recorded, 0) > 0;");
+    });
+
+    it("self-service audit rows are no longer dropped by a NOT NULL org", () => {
+      const content = readFileSync(
+        resolve(
+          __dirname,
+          "../supabase/migrations/20260814151000_allow_null_audit_organization.sql",
+        ),
+        "utf-8",
+      );
+      expect(content).toContain("alter column organization_id drop not null");
     });
   });
 });

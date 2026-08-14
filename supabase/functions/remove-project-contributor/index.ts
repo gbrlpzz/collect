@@ -72,7 +72,7 @@ Deno.serve(async (request) => {
       .from("project_invites")
       .update({ status: "revoked" })
       .eq("project_id", projectId)
-      .ilike("email", email)
+      .eq("email", email)
       .eq("status", "pending");
 
     if (resolvedId) {

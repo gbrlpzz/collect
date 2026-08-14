@@ -96,7 +96,11 @@ function validateFields(
         if (typeof singleValue !== "string") {
           return `${label} must be one choice`;
         }
-        if (!optionIsKnown(field, singleValue) && singleValue !== "other") {
+        const hasOtherOption = (field.options ?? []).some(
+          (option) => option.value === "other" || option.id?.endsWith("-other"),
+        );
+        const isPublishedOther = singleValue === "other" && hasOtherOption;
+        if (!optionIsKnown(field, singleValue) && !isPublishedOther) {
           return `${label} is not a published option`;
         }
       }
@@ -263,6 +267,21 @@ async function createSubmission(
     );
   }
 
+  // The automatic attention check is provenance, never research data. Reject
+  // any client that smuggles the reserved key into the payload (defense in
+  // depth on top of the client-side strip).
+  if (
+    payload &&
+    typeof payload === "object" &&
+    !Array.isArray(payload) &&
+    "_attention" in payload
+  ) {
+    return invalid(
+      "Attention metadata is not part of the research payload",
+      422,
+    );
+  }
+
   const canonicalPayloadHash = await sha256(canonicalJson(payload));
   const suppliedHash = typeof body.payload_hash === "string"
     ? body.payload_hash
@@ -373,6 +392,7 @@ async function createSubmission(
   const collectedAfterRemoteClose = access.project.status !== "active";
   const { error: submissionError } = await service.from("submissions").insert({
     id: submissionId,
+    status: "RECEIVED",
     project_id: projectId,
     schema_id: schema.id,
     contributor_id: userId,
