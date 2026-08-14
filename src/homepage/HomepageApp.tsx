@@ -197,7 +197,6 @@ function DifferentiationSummary() {
     proof: string;
     href: string;
     cta: string;
-    doc: string;
   }> = [
     {
       icon: "shield",
@@ -207,7 +206,6 @@ function DifferentiationSummary() {
       proof: "commit before network with verified receipt",
       href: "#sync",
       cta: "Inspect sync pipeline",
-      doc: "background-automation.md",
     },
     {
       icon: "camera",
@@ -217,7 +215,6 @@ function DifferentiationSummary() {
       proof: "raw originals with SHA-256 checksums",
       href: "#collection",
       cta: "View media capture",
-      doc: "dataset-standards.md",
     },
     {
       icon: "check",
@@ -227,7 +224,6 @@ function DifferentiationSummary() {
       proof: "in-memory checks and isolated payloads",
       href: "#integrity",
       cta: "Test attention check",
-      doc: "attention-qa.md",
     },
     {
       icon: "archive",
@@ -237,7 +233,6 @@ function DifferentiationSummary() {
       proof: "DataCite 4.4, GeoJSON and JSONL",
       href: "#data",
       cta: "Browse export package",
-      doc: "export-format.md",
     },
   ];
 
@@ -263,6 +258,14 @@ function DifferentiationSummary() {
             four technical guarantees that protect your data from capture to
             archive:
           </p>
+          <DocLinks
+            files={[
+              "background-automation.md",
+              "dataset-standards.md",
+              "attention-qa.md",
+              "export-format.md",
+            ]}
+          />
         </div>
 
         <div className="hp-diff-grid">
@@ -278,15 +281,6 @@ function DifferentiationSummary() {
                 {item.cta}
                 <Icon name="arrow-right" size={14} />
               </a>
-              <span className="hp-diff-doc">
-                <a
-                  href={DOCS(item.doc)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  docs/{item.doc}
-                </a>
-              </span>
             </div>
           ))}
         </div>
@@ -469,7 +463,7 @@ export function HomepageApp() {
             </div>
 
             <div className="hp-integrity-grid">
-              {/* Left rail: Attention QA + 4 Privacy Boundaries */}
+              {/* Left rail: Attention QA + Storage Boundaries */}
               <div className="hp-integrity-left-rail">
                 <div className="hp-integrity-card">
                   <div className="hp-integrity-card-header">
@@ -481,28 +475,41 @@ export function HomepageApp() {
                   <AttentionDemo />
                 </div>
 
-                <div className="hp-privacy-stack">
-                  <div className="hp-fact-card">
-                    <div className="hp-fact-header">
-                      <Icon name="lock" size={16} />
-                      <strong>Account-Scoped Ledger</strong>
-                    </div>
+                <div className="hp-integrity-card hp-privacy-card">
+                  <div className="hp-integrity-card-header">
+                    <h3>Ledger & Consent Boundaries</h3>
                     <p>
-                      IndexedDB is strictly scoped per authenticated user (
-                      <code>collect-local-v1-userId</code>), preventing data
-                      leaks across shared field devices.
+                      Client storage isolation and server-side authorization
                     </p>
                   </div>
-
-                  <div className="hp-fact-card">
-                    <div className="hp-fact-header">
-                      <Icon name="shield" size={16} />
-                      <strong>Server-Enforced Consent</strong>
+                  <div className="hp-privacy-list">
+                    <div className="hp-privacy-row">
+                      <div className="hp-privacy-icon">
+                        <Icon name="lock" size={15} />
+                      </div>
+                      <div className="hp-privacy-content">
+                        <strong>Account-Scoped Storage</strong>
+                        <p>
+                          IndexedDB is strictly scoped per authenticated user (
+                          <code>collect-local-v1-userId</code>), preventing data
+                          leaks across shared field devices.
+                        </p>
+                      </div>
                     </div>
-                    <p>
-                      The sync backend strictly rejects submissions from
-                      accounts without active, unrevoked participant consent.
-                    </p>
+
+                    <div className="hp-privacy-row">
+                      <div className="hp-privacy-icon">
+                        <Icon name="shield" size={15} />
+                      </div>
+                      <div className="hp-privacy-content">
+                        <strong>Server-Enforced Consent</strong>
+                        <p>
+                          The sync backend strictly rejects submissions from
+                          accounts without active, unrevoked participant
+                          consent.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -534,7 +541,8 @@ export function HomepageApp() {
             <div className="section-heading">
               <p className="eyebrow">Archival & Export</p>
               <h2 id="data-title">
-                Deposit-ready research packages for Zenodo and peer review.
+                Deposit-ready research packages for open repositories and peer
+                review.
               </h2>
               <p>
                 Export packages bundle canonical JSONL, CSV, RFC 7946 GeoJSON,
@@ -566,7 +574,7 @@ export function HomepageApp() {
                 <p>
                   Native <code>datacite.json</code> metadata kernel with DOI
                   identifiers, organizational creators, and license declarations
-                  for repository deposit (Zenodo / Figshare).
+                  for repository deposit and institutional archiving.
                 </p>
               </div>
 

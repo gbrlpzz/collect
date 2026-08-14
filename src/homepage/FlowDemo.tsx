@@ -29,8 +29,8 @@ const demoFields = projectFields
 
 const demoProject: Project = {
   id: "demo-project",
-  organization: "Liminal Research",
-  organizationMark: "L",
+  organization: "Field Research",
+  organizationMark: "F",
   name: "Example Survey",
   description: "",
   instructions: "",

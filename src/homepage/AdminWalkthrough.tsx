@@ -11,8 +11,8 @@ export type { AdminTab };
 
 const adminDemoProject: Project = {
   id: "valpuesta-fieldwork",
-  organization: "Liminal Research",
-  organizationMark: "L",
+  organization: "Field Research",
+  organizationMark: "F",
   name: "Example Survey",
   description: "Structural assessment survey.",
   instructions: "",

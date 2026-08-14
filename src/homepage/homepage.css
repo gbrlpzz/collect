@@ -1664,21 +1664,53 @@ section[id] {
   height: 100%;
   flex: 1;
 }
-.hp-privacy-stack {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+.hp-privacy-card {
   flex: 1;
-  align-items: stretch;
 }
-.hp-privacy-stack .hp-fact-card {
-  padding: 14px 14px 12px;
-  height: 100%;
+.hp-privacy-list {
   display: flex;
   flex-direction: column;
+  gap: 14px;
+  margin-top: 4px;
 }
-.hp-privacy-stack .hp-fact-card p {
-  flex: 1;
+.hp-privacy-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.hp-privacy-icon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--grouped);
+  color: var(--text);
+  margin-top: 1px;
+}
+.hp-privacy-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hp-privacy-content strong {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--text);
+}
+.hp-privacy-content p {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--secondary);
+}
+.hp-privacy-content code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  background: var(--grouped);
+  padding: 1px 4px;
+  border-radius: 4px;
 }
 .hp-integrity-card {
   border: 1px solid var(--separator-light);
@@ -2175,9 +2207,6 @@ section[id] {
     max-width: 100%;
   }
   .hp-integrity-grid {
-    grid-template-columns: 1fr;
-  }
-  .hp-privacy-stack {
     grid-template-columns: 1fr;
   }
   .hp-preview-layout {
