@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FlowDemo } from "./FlowDemo";
 import { SyncDemo } from "./SyncDemo";
 import { PackageBrowser } from "./PackageBrowser";
@@ -13,6 +13,40 @@ import { CollectBrand } from "../components/CollectBrand";
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 
 function TopBar() {
+  const [activeSection, setActiveSection] = useState<string>("");
+
+  useEffect(() => {
+    const sectionIds = [
+      "collection",
+      "guarantees",
+      "sync",
+      "admin",
+      "integrity",
+      "data",
+    ];
+
+    const handleScroll = () => {
+      const scrollPos = window.scrollY + 140;
+      let current = "";
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (el) {
+          const top = el.offsetTop;
+          const height = el.offsetHeight;
+          if (scrollPos >= top && scrollPos < top + height) {
+            current = id;
+            break;
+          }
+        }
+      }
+      setActiveSection(current);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <header className="hp-topbar">
       <div className="hp-topbar-inner">
@@ -21,22 +55,40 @@ function TopBar() {
         </a>
 
         <nav className="hp-nav" aria-label="Sections">
-          <a className="hp-nav-link" href="#collection">
+          <a
+            className={`hp-nav-link ${activeSection === "collection" ? "active" : ""}`}
+            href="#collection"
+          >
             Collector
           </a>
-          <a className="hp-nav-link" href="#guarantees">
+          <a
+            className={`hp-nav-link ${activeSection === "guarantees" ? "active" : ""}`}
+            href="#guarantees"
+          >
             Guarantees
           </a>
-          <a className="hp-nav-link" href="#sync">
+          <a
+            className={`hp-nav-link ${activeSection === "sync" ? "active" : ""}`}
+            href="#sync"
+          >
             Sync
           </a>
-          <a className="hp-nav-link" href="#admin">
+          <a
+            className={`hp-nav-link ${activeSection === "admin" ? "active" : ""}`}
+            href="#admin"
+          >
             Setup
           </a>
-          <a className="hp-nav-link" href="#integrity">
+          <a
+            className={`hp-nav-link ${activeSection === "integrity" ? "active" : ""}`}
+            href="#integrity"
+          >
             Integrity
           </a>
-          <a className="hp-nav-link" href="#data">
+          <a
+            className={`hp-nav-link ${activeSection === "data" ? "active" : ""}`}
+            href="#data"
+          >
             Dataset
           </a>
         </nav>
@@ -273,7 +325,7 @@ export function HomepageApp() {
 
         {/* 1. Field Collection inside iPhone Mockup (Directly under Hero) */}
         <section
-          className="hp-section hp-section-paper"
+          className="hp-section hp-section-canvas"
           id="collection"
           aria-labelledby="collection-title"
         >
@@ -286,15 +338,19 @@ export function HomepageApp() {
         <DifferentiationSummary />
 
         {/* 3. Synchronization State Machine */}
-        <section className="hp-section" id="sync" aria-labelledby="sync-title">
+        <section
+          className="hp-section hp-section-canvas"
+          id="sync"
+          aria-labelledby="sync-title"
+        >
           <div className="hp-section-inner">
             <SyncDemo />
           </div>
         </section>
 
-        {/* 4. Admin Operations & Schema (Dark Evening Mockup) */}
+        {/* 4. Admin Operations & Schema */}
         <section
-          className="hp-section hp-section-admin"
+          className="hp-section hp-section-paper"
           id="admin"
           aria-labelledby="admin-title"
         >
@@ -387,7 +443,7 @@ export function HomepageApp() {
 
         {/* 5. Integrity & Privacy */}
         <section
-          className="hp-section"
+          className="hp-section hp-section-canvas"
           id="integrity"
           aria-labelledby="integrity-title"
         >
@@ -561,7 +617,7 @@ export function HomepageApp() {
 
         {/* 7. Request Access / Pilot Form */}
         <section
-          className="hp-section"
+          className="hp-section hp-section-canvas"
           id="preview"
           aria-labelledby="preview-title"
         >
