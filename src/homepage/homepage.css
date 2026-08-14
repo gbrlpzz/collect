@@ -1137,21 +1137,6 @@ main [id] {
   font-size: 0.6875rem !important;
   color: var(--secondary) !important;
 }
-.hp-app-viewport .privacy-disclosure {
-  border-radius: 14px !important;
-  background: var(--paper) !important;
-  border: 1px solid var(--separator-light) !important;
-  padding: 10px 14px !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
-}
-.hp-app-viewport .privacy-disclosure summary {
-  font-size: 0.75rem !important;
-  font-weight: 600 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  cursor: pointer !important;
-}
 
 /* Floating Glass Bottom Dock (+ Add observation) */
 .hp-app-viewport .primary-action-dock {
