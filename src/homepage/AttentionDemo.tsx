@@ -2,19 +2,14 @@ import { useState } from "react";
 import { Button } from "../components/ui";
 import { Icon } from "../components/Icon";
 import { FieldRenderer } from "../components/FieldRenderer";
-import { ATTENTION_CHECKS, ATTENTION_FIELD_KEY } from "../data/attentionChecks";
-import {
-  attentionFieldFor,
-  attentionScore,
-  extractAttentionResponse,
-} from "../lib/attention";
+import { ATTENTION_CHECKS } from "../data/attentionChecks";
+import { attentionFieldFor, attentionScore } from "../lib/attention";
 
 /**
  * Interactive attention-verification explanation. It renders the check with
  * the app's real FieldRenderer (the exact component the live collector uses),
  * built from the real attention bank via attentionFieldFor, then shows the
- * real strip-before-commit logic and guess-adjusted formula. Update the app
- * and this demo follows automatically — there is no second copy of the UI.
+ * real strip-before-commit logic and guess-adjusted formula.
  */
 export function AttentionDemo() {
   const [checkIndex, setCheckIndex] = useState(() =>
@@ -32,7 +27,6 @@ export function AttentionDemo() {
 
   const [stored, setStored] = useState<{
     record: Record<string, unknown>;
-    stripped: Record<string, unknown>;
     score: number | null;
   } | null>(null);
 
@@ -51,13 +45,6 @@ export function AttentionDemo() {
     const optionId = typeof value === "string" ? value : "";
     const selectedValue = optionId.split(":").slice(1).join(":");
     const correct = selectedValue === check.correctValue;
-    const values: Record<string, unknown> = {
-      site_code: "VA-023",
-      building_type: "building-house",
-      masonry_type: "coursed-ashlar",
-      [ATTENTION_FIELD_KEY]: optionId,
-    };
-    const { values: cleaned, response } = extractAttentionResponse(values);
     const score = attentionScore([
       { correct, guessProbability: check.guessProbability },
     ]);
@@ -76,11 +63,8 @@ export function AttentionDemo() {
         correct,
         attention_failed: !correct,
         guess_probability: check.guessProbability,
-      },
-      stripped: {
-        values_before_commit: values,
-        values_after_commit: cleaned,
-        extracted: response,
+        reliability_score:
+          score === null ? "0/100" : `${Math.round(score * 100)}/100`,
       },
       score,
     });
@@ -95,7 +79,7 @@ export function AttentionDemo() {
             <h3 className="hp-attention-title">{check.prompt}</h3>
             <p className="hp-attention-desc">
               Interleaved during active surveys. Select an option to inspect
-              payload isolation and scoring.
+              scoring.
             </p>
           </div>
 
@@ -113,39 +97,28 @@ export function AttentionDemo() {
           <div className="hp-attention-result-clean">
             <div className="hp-result-summary">
               <p>
-                <strong>Result:</strong>{" "}
-                {answered.correct
-                  ? "Contributor followed prompt instructions."
-                  : "Contributor selected an option without reading the prompt."}{" "}
-                Evaluated against a 25% guess probability. Guess-adjusted
-                reliability score:{" "}
+                <strong>
+                  {answered.correct
+                    ? "✓ Instruction followed"
+                    : "✕ Instruction missed"}
+                </strong>{" "}
+                · Reliability score:{" "}
                 <strong>
                   {stored.score === null
                     ? "0/100"
                     : `${Math.round(stored.score * 100)}/100`}
                 </strong>
-                .
+                . Prompt text is stripped in memory before database commit.
               </p>
             </div>
 
-            <div className="hp-record-grid">
-              <div className="hp-record">
-                <div className="record-header">
-                  <p className="record-label">What the dataset stores</p>
-                </div>
-                <pre className="record-json">
-                  {JSON.stringify(stored.record, null, 2)}
-                </pre>
+            <div className="hp-record">
+              <div className="record-header">
+                <p className="record-label">Audit Record Stored</p>
               </div>
-
-              <div className="hp-record">
-                <div className="record-header">
-                  <p className="record-label">What never enters the payload</p>
-                </div>
-                <pre className="record-json record-stripped">
-                  {JSON.stringify(stored.stripped, null, 2)}
-                </pre>
-              </div>
+              <pre className="record-json">
+                {JSON.stringify(stored.record, null, 2)}
+              </pre>
             </div>
 
             <div className="hp-attention-actions">

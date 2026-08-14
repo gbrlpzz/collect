@@ -156,22 +156,19 @@ describe("AttentionDemo — real bank and real strip logic", () => {
     expect(screen.getAllByRole("button", { name: /./ }).length).toBe(4);
   });
 
-  it("shows the stored record and the stripped payload after answering", async () => {
+  it("shows the stored audit record and reliability score after answering", async () => {
     render(<AttentionDemo />);
     const options = screen.getAllByRole("button", { name: /./ });
     fireEvent.click(options[0]);
     await waitFor(() =>
-      expect(screen.getByText(/what the dataset stores/i)).toBeTruthy(),
+      expect(screen.getByText(/audit record stored/i)).toBeTruthy(),
     );
     expect(screen.getByText(/check_key/i)).toBeTruthy();
-    expect(screen.getByText(/never enters the payload/i)).toBeTruthy();
-    // The stripped view must not contain the question text anywhere.
-    const code = document.querySelectorAll("pre");
-    const stripped = Array.from(code).find((el) =>
-      el.textContent?.includes("values_after_commit"),
-    );
-    expect(stripped).toBeTruthy();
-    expect(stripped!.textContent).not.toContain("What is");
+    expect(screen.getByText(/reliability_score/i)).toBeTruthy();
+    // The stored audit record must not contain the prompt question text anywhere.
+    const code = document.querySelector("pre");
+    expect(code).toBeTruthy();
+    expect(code!.textContent).not.toContain("What is");
   });
 });
 

@@ -1673,15 +1673,10 @@ main [id] {
   line-height: 1.4;
   color: var(--text);
 }
-.hp-record-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 10px;
-}
 .hp-record {
   display: flex;
   flex-direction: column;
+  margin-bottom: 10px;
 }
 .record-header {
   display: flex;
@@ -1708,12 +1703,8 @@ main [id] {
   word-break: break-word;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
-.record-stripped {
-  background: var(--grouped);
-  border-color: transparent;
-}
 .hp-attention-actions {
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 /* Clean Provenance Card */
