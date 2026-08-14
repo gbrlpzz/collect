@@ -2,6 +2,7 @@ import type { SVGProps } from "react";
 
 export type IconName =
   | "arrow-left"
+  | "arrow-down"
   | "chevron-left"
   | "arrow-right"
   | "archive"
@@ -11,6 +12,8 @@ export type IconName =
   | "chevron-right"
   | "cloud"
   | "download"
+  | "clock"
+  | "phone"
   | "file"
   | "folder"
   | "globe"
@@ -60,6 +63,26 @@ export function Icon({
   };
 
   switch (name) {
+    case "arrow-down":
+      return (
+        <svg {...common}>
+          <path d="M12 5v14M19 12l-7 7-7-7" />
+        </svg>
+      );
+    case "clock":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 3" />
+        </svg>
+      );
+    case "phone":
+      return (
+        <svg {...common}>
+          <rect x="5" y="2" width="14" height="20" rx="3" />
+          <path d="M11 18h2" />
+        </svg>
+      );
     case "arrow-left":
       return (
         <svg {...common}>

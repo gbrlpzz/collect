@@ -89,21 +89,15 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
       <div className="hp-hero-inner">
         <div className="hp-hero-badge">
           <span className="status-dot" aria-hidden="true" />
-          <span>Field data collection · Offline-first PWA</span>
+          <span>Offline-first field data collection</span>
         </div>
 
-        <h1 id="hero-title">
-          Fieldwork without connectivity.
-          <br />
-          <span className="hp-hero-accent">Evidence without ambiguity.</span>
-        </h1>
+        <h1 id="hero-title">Field collection that never loses a record.</h1>
 
         <p className="hp-hero-lede">
-          collect is an offline-first field application for scientific research
-          and building assessments. It commits observations and uncompressed
-          media to local storage before touching the network, verifies surveyor
-          attention without biasing research variables, and exports
-          publication-ready FAIR archives.
+          An offline-first PWA for field research and surveys. Collect
+          structured observations and raw photos with zero signal — saved
+          securely on-device and synced automatically when connected.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -130,8 +124,8 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
         )}
 
         <div className="hp-hero-actions">
-          <a className="text-button" href="#admin">
-            Walk through the field workflow ↓
+          <a className="text-button" href="#collection">
+            Test the live collection sandbox ↓
           </a>
         </div>
       </div>
@@ -143,19 +137,19 @@ function DifferentiationSummary() {
   const items = [
     {
       title: "Durable local receipts",
-      desc: "Atomic IndexedDB transactions write structured values and raw binary photos to device storage before showing “Saved on this device”. No observation is discarded before an explicit server receipt.",
+      desc: "Atomic IndexedDB writes commit form data and raw binary photos before showing “Saved on this device”. Observations are never lost.",
     },
     {
-      title: "Immutable schema versions",
-      desc: "Published question sets are permanent. Historical observations retain their original schema version; changes create a new version without corrupting past fieldwork records.",
+      title: "Immutable schemas",
+      desc: "Published surveys are permanent. Historical observations retain their original schema version without drift or corruption.",
     },
     {
-      title: "Attention checks as provenance",
-      desc: "Curated verification questions test surveyor alertness in the field. Question text never enters the schema and answers are stripped before commit, leaving only an untampered vigilance score.",
+      title: "Attention QA provenance",
+      desc: "Randomized vigilance checks test surveyor focus. Answers are stripped before commit, recording only a guess-adjusted reliability score.",
     },
     {
-      title: "Single-use device linking",
-      desc: "Field contributors pair iOS Safari or installed PWAs in seconds using 8-character single-use codes. No passwords, no App Store accounts, no credentials stored on field devices.",
+      title: "Single-use device links",
+      desc: "Pair field devices in seconds using 8-character codes. Zero passwords, zero App Store accounts, zero stored credentials.",
     },
   ];
 
@@ -419,22 +413,22 @@ export function HomepageApp() {
             <div className="section-heading">
               <p className="eyebrow">Step 3 · Provenance & Quality</p>
               <h2 id="integrity-title">
-                Verify contributor attention without altering research payloads.
+                Verify surveyor attention and context without research bias.
               </h2>
               <p>
-                Cognitive attention checks test surveyor focus during long
-                transects. The answer is stripped before database commit, and
-                the guess-adjusted score is stored in observation provenance
-                alongside automatic device environment telemetry.
+                Surveyor fatigue during long shifts causes random answers.
+                collect interleaves unannounced attention checks and strips them
+                at the device boundary before commit, computing a guess-adjusted
+                reliability index alongside ambient hardware telemetry.
               </p>
             </div>
             <div className="hp-integrity-grid">
               <div className="hp-integrity-card">
                 <div className="hp-integrity-card-header">
-                  <h3>Attention Verification QA</h3>
+                  <h3>Cognitive Attention QA</h3>
                   <p>
-                    Question never stored in schema · Answer stripped before
-                    commit
+                    Answer stripped before commit · Guess-adjusted reliability
+                    index
                   </p>
                 </div>
                 <AttentionDemo />
@@ -443,7 +437,7 @@ export function HomepageApp() {
                 <div className="hp-integrity-card-header">
                   <h3>Hardware & Environment Telemetry</h3>
                   <p>
-                    Automatic telemetry capture · Never blocks local receipt
+                    Passive environment telemetry · Non-blocking local receipt
                   </p>
                 </div>
                 <ProvenanceCard />
