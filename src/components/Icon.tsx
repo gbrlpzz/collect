@@ -19,6 +19,7 @@ export type IconName =
   | "github"
   | "globe"
   | "info"
+  | "key"
   | "location"
   | "lock"
   | "mic"
@@ -179,6 +180,13 @@ export function Icon({
         <svg {...common}>
           <circle cx="12" cy="12" r="9" />
           <path d="M12 11v5M12 8h.01" />
+        </svg>
+      );
+    case "key":
+      return (
+        <svg {...common}>
+          <circle cx="7.5" cy="15.5" r="4.5" />
+          <path d="M10.8 12.2 20 3M15.5 7.5l3 3" />
         </svg>
       );
     case "location":
