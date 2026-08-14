@@ -28,11 +28,11 @@ const demoFields = projectFields
 
 const demoProject: Project = {
   id: "demo-project",
-  organization: "Liminal Research Group",
+  organization: "Liminal Research",
   organizationMark: "L",
-  name: "Vernacular buildings — Valpuesta",
-  description: "A synthetic survey used on this page.",
-  instructions: "Answer the demo questions — nothing is recorded.",
+  name: "Example Survey",
+  description: "",
+  instructions: "",
   status: "active",
   schemaVersion: 1,
   license: "CC-BY-4.0",
@@ -84,16 +84,16 @@ const initialSampleObservations: Observation[] = [
 
 const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
   home: {
-    title: "Field Home & Offline State",
-    body: "Opens on the assigned project with offline sync status and '+ Add observation' anchored in the bottom dock.",
+    title: "Field Home",
+    body: "Displays active project context, local queue counts, sync indicators, and primary collection actions.",
   },
   flow: {
-    title: "One Calm Question per Screen",
-    body: "One question per screen with large touch targets for gloves and sunlight, with auto-advancing choices.",
+    title: "Guided Step Flow",
+    body: "Presents one field per view with auto-advancing single-choice options, touch-friendly controls, and keyboard-safe viewport handling.",
   },
   media: {
-    title: "Original media, preserved as captured",
-    body: "Photos and audio are stored as the original files with SHA-256 integrity hashes — never recompressed, downsampled, or transcribed in the collection path.",
+    title: "Raw Media Capture",
+    body: "Stores photos and audio as unmodified local files with SHA-256 checksums, bypassing client-side compression.",
   },
 };
 
@@ -248,12 +248,12 @@ export function FlowDemo() {
         <div className="section-heading">
           <p className="eyebrow">Step 1 · Field Collection</p>
           <h2 id="collection-title">
-            One calm question at a time. Built for zero signal.
+            Distraction-free capture. Built for zero connectivity.
           </h2>
           <p>
-            The collector presents one question per screen with large touch
-            targets for gloves and sunlight, native date pickers, and raw photo
-            capture. Tap the choices and test the flow yourself.
+            A focused contributor interface featuring single-step progression,
+            high-contrast touch targets, native device pickers, and raw media
+            capture.
           </p>
           <p className="hp-doc-link">
             <a
@@ -287,7 +287,7 @@ export function FlowDemo() {
             className={`hp-admin-step-btn ${activeTab === "media" ? "active" : ""}`}
             onClick={() => handleTabClick("media")}
           >
-            3. Original Media
+            3. Raw Media
           </button>
         </div>
 

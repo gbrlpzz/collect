@@ -91,10 +91,10 @@ export function AttentionDemo() {
       {!answered ? (
         <div className="hp-attention-flow">
           <div className="hp-attention-prompt-box">
-            <span className="eyebrow">Interactive Verification Question</span>
+            <span className="eyebrow">Verification Check</span>
             <h3 className="hp-attention-title">{check.prompt}</h3>
             <p className="hp-attention-desc">
-              Appears unannounced during surveys. Answer below to inspect
+              Interleaved during active surveys. Select an option to inspect
               payload isolation and scoring.
             </p>
           </div>
@@ -115,10 +115,10 @@ export function AttentionDemo() {
               <p>
                 <strong>Result:</strong>{" "}
                 {answered.correct
-                  ? "Correct. Contributor followed the explicit prompt directive."
-                  : "Failed. Contributor tapped without reading the prompt."}{" "}
-                The raw question is evaluated against collect’s server bank with
-                a 25% guess probability. The guess-adjusted attention score is{" "}
+                  ? "Contributor followed prompt instructions."
+                  : "Contributor selected an option without reading the prompt."}{" "}
+                Evaluated against a 25% guess probability. Guess-adjusted
+                reliability score:{" "}
                 <strong>
                   {stored.score === null
                     ? "0/100"
@@ -150,7 +150,7 @@ export function AttentionDemo() {
 
             <div className="hp-attention-actions">
               <Button variant="secondary" onClick={handleNext}>
-                <Icon name="refresh" size={15} /> Try another question
+                <Icon name="refresh" size={15} /> Try another check
               </Button>
             </div>
           </div>

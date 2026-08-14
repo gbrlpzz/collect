@@ -84,9 +84,9 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
         </h1>
 
         <p className="hp-hero-lede">
-          Offline-first field data collection for research and operational
-          fieldwork. Observations and original media commit to device storage
-          before touching the network, then sync automatically.
+          Structured observations and unmodified media commit to local device
+          storage before touching the network, syncing automatically when
+          connectivity returns.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -114,7 +114,7 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
 
         <div className="hp-hero-actions">
           <a className="text-button" href="#collection">
-            Test live collection sandbox ↓
+            Try the live collector ↓
           </a>
         </div>
       </div>
@@ -134,90 +134,88 @@ function DifferentiationSummary() {
   }> = [
     {
       icon: "shield",
-      title: "Never loses a record",
+      title: "Local-first durability",
       claim:
-        "Observations and original files commit to device storage before any network attempt; a record is only ever marked synced once the server issues its durable receipt.",
-      proof: "commit before network · receipt-gated SYNCED",
+        "Observations and media commit to IndexedDB before any network attempt, updating to synced only upon server confirmation.",
+      proof: "commit before network · verified receipt",
       href: "#sync",
-      cta: "See the sync pipeline",
+      cta: "Inspect sync pipeline",
       doc: "background-automation.md",
     },
     {
       icon: "camera",
-      title: "Original media preserved",
+      title: "Unmodified media originals",
       claim:
-        "Photos and audio keep their original files, hashed with SHA-256, never recompressed or downsampled in the collection path.",
-      proof: "uncompressed originals · SHA-256",
+        "Photos and audio retain capture quality with SHA-256 checksums, with no collection-path recompression.",
+      proof: "raw originals · SHA-256 checksums",
       href: "#collection",
-      cta: "See the media step",
+      cta: "View media capture",
       doc: "dataset-standards.md",
     },
     {
       icon: "check",
-      title: "Research integrity built in",
+      title: "Isolated attention checks",
       claim:
-        "Attention checks are stripped before commit and published schemas are immutable, so finalized evidence stays clean and reproducible.",
-      proof: "stripped before commit · immutable versions",
+        "Periodic checks evaluate contributor focus in memory, stripping questions and answers before database commit.",
+      proof: "in-memory checks · isolated payloads",
       href: "#integrity",
-      cta: "Inspect the payload",
+      cta: "Test attention check",
       doc: "attention-qa.md",
     },
     {
       icon: "archive",
-      title: "FAIR archives, ready to deposit",
+      title: "FAIR export archives",
       claim:
-        "Checkpoint exports package JSONL, CSV, GeoJSON, DataCite 4.4 metadata, and original media into one self-contained ZIP.",
+        "Checkpoint exports package canonical JSONL, CSV, RFC 7946 GeoJSON, DataCite 4.4 metadata, and raw media into a single archive.",
       proof: "DataCite 4.4 · GeoJSON · JSONL",
       href: "#data",
-      cta: "Open the dataset",
+      cta: "Browse export package",
       doc: "export-format.md",
     },
   ];
 
   const stats = [
-    { value: "3-stage", label: "background sync" },
-    { value: "SHA-256", label: "media integrity hashes" },
-    { value: "8-char", label: "single-use device codes" },
+    { value: "3-stage", label: "verified sync pipeline" },
+    { value: "SHA-256", label: "media integrity checksums" },
+    { value: "8-character", label: "passwordless device codes" },
     { value: "Apache-2.0", label: "open source · self-hostable" },
   ];
 
   return (
-    <section className="hp-diff-section" aria-label="Core strengths">
+    <section className="hp-diff-section" aria-label="Core guarantees">
       <div className="hp-diff-inner">
         <div className="hp-diff-heading">
-          <p className="eyebrow">The difference</p>
-          <h2>Built for data you can defend.</h2>
+          <p className="eyebrow">Guarantees</p>
+          <h2>Built for defensible field evidence.</h2>
           <p>
-            collect is an offline-first PWA for structured fieldwork. Four
-            guarantees set it apart — and each is demonstrated live on this
-            page.
+            An offline-first platform engineered for hostile connectivity,
+            verifiable provenance, and direct archive deposit.
           </p>
         </div>
 
         <div className="hp-diff-grid">
           {items.map((item) => (
-            <a className="hp-diff-card" href={item.href} key={item.title}>
+            <div className="hp-diff-card" key={item.title}>
               <span className="hp-diff-icon" aria-hidden="true">
                 <Icon name={item.icon} size={18} />
               </span>
               <h3>{item.title}</h3>
               <p>{item.claim}</p>
               <span className="hp-diff-proof">{item.proof}</span>
-              <span className="hp-diff-cta">
+              <a className="hp-diff-cta" href={item.href}>
                 {item.cta}
                 <Icon name="arrow-right" size={14} />
-              </span>
+              </a>
               <span className="hp-diff-doc">
                 <a
                   href={DOCS(item.doc)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(event) => event.stopPropagation()}
                 >
                   docs/{item.doc}
                 </a>
               </span>
-            </a>
+            </div>
           ))}
         </div>
 
@@ -288,14 +286,12 @@ export function HomepageApp() {
             <div className="hp-flow-layout">
               <div className="hp-flow-copy">
                 <div className="section-heading">
-                  <p className="eyebrow">Synchronization Architecture</p>
-                  <h2 id="sync-title">
-                    Sync is a state machine, not a best effort.
-                  </h2>
+                  <p className="eyebrow">Synchronization</p>
+                  <h2 id="sync-title">Deterministic sync state machine.</h2>
                   <p>
-                    A submission moves through explicit states — each one a
-                    verifiable fact. Nothing uploads before it exists on device,
-                    and nothing is marked sent before the server says so.
+                    Submissions transition through verifiable states. Records
+                    commit to local storage before network dispatch and mark
+                    synced only when the server returns a finalization receipt.
                   </p>
                   <DocLink
                     file="background-automation.md"
@@ -309,19 +305,19 @@ export function HomepageApp() {
 
                 <ul className="hp-sync-principles">
                   <li>
-                    <strong>Commit first.</strong> Payload, media, and outbox
-                    operations write to IndexedDB before any network attempt —{" "}
-                    <code>SAVED_LOCAL</code>, shown as “Saved on this device”.
+                    <strong>Commit first.</strong> Structured payload, media
+                    metadata, and outbox operations write to IndexedDB before
+                    any network request.
                   </li>
                   <li>
-                    <strong>Resumable media.</strong> Original files upload as
-                    tus chunked transfers with SHA-256 hashes; a flaky link
-                    resumes where it stopped.
+                    <strong>Resumable media.</strong> Original files upload via
+                    chunked tus transfers with SHA-256 checksums, resuming
+                    across broken connections.
                   </li>
                   <li>
-                    <strong>Receipt-gated SYNCED.</strong> The server finalizes
-                    and returns a receipt naming the exact submission id. Only
-                    that flips the local record to <code>SYNCED</code>.
+                    <strong>Receipt-gated finalization.</strong> The server
+                    validates and returns a signed receipt naming the submission
+                    ID before local state updates to <code>SYNCED</code>.
                   </li>
                 </ul>
               </div>
@@ -331,11 +327,10 @@ export function HomepageApp() {
                   <div className="hp-sync-stage">
                     <span className="hp-sync-stage-index">1</span>
                     <div>
-                      <strong>Saved on this device</strong>
+                      <strong>Saved locally</strong>
                       <p className="hp-sync-state-code">SAVED_LOCAL</p>
                       <p>
-                        Payload and <code>submit:&lt;id&gt;</code> commit to the
-                        local outbox.
+                        Payload and outbox operations commit to device storage.
                       </p>
                     </div>
                   </div>
@@ -347,7 +342,7 @@ export function HomepageApp() {
                         SYNCING_METADATA → SYNCING_MEDIA
                       </p>
                       <p>
-                        Metadata first, then original media over resumable tus
+                        Metadata transfers first, followed by chunked media
                         uploads.
                       </p>
                     </div>
@@ -355,11 +350,11 @@ export function HomepageApp() {
                   <div className="hp-sync-stage">
                     <span className="hp-sync-stage-index">3</span>
                     <div>
-                      <strong>Synced</strong>
+                      <strong>Finalized</strong>
                       <p className="hp-sync-state-code">FINALIZING → SYNCED</p>
                       <p>
-                        The server writes a durable receipt; only then{" "}
-                        <code>SYNCED</code>.
+                        Server records durable receipt before local state flips
+                        to <code>SYNCED</code>.
                       </p>
                     </div>
                   </div>
@@ -374,9 +369,8 @@ export function HomepageApp() {
   "status": "COMPLETE"
 }`}</pre>
                     <p>
-                      Marked <code>SYNCED</code> only when the receipt names
-                      your submission id — request start or upload completion is
-                      never enough.
+                      A record marks <code>SYNCED</code> only when the server
+                      receipt confirms the exact submission ID.
                     </p>
                   </div>
                 </div>
@@ -395,13 +389,13 @@ export function HomepageApp() {
             <div className="hp-flow-layout">
               <div className="hp-flow-copy">
                 <div className="section-heading">
-                  <p className="eyebrow">Step 2 · Setup & Schema</p>
+                  <p className="eyebrow">Setup & Administration</p>
                   <h2 id="admin-title">
-                    Define immutable schemas and pair field devices.
+                    Immutable schemas and instant device pairing.
                   </h2>
                   <p>
-                    Author versioned surveys, generate single-use 8-character
-                    pairing codes, and trigger publication checkpoints.
+                    Publish version-locked schemas, issue single-use pairing
+                    codes, and monitor contributor sync status in real time.
                   </p>
                   <DocLink file="flows.md" label="Administrator workflow doc" />
                   <DocLink file="spec.md" label="Product & schema spec" />
@@ -435,29 +429,30 @@ export function HomepageApp() {
                   <span className="hp-story-kicker">Administrator Console</span>
                   {adminTab === "setup" && (
                     <>
-                      <h3>Immutable question schema</h3>
+                      <h3>Immutable schema versioning</h3>
                       <p>
-                        Field definitions are locked on publish. Modifying a
-                        survey creates a new version without altering past
+                        Published field definitions are locked. Schema updates
+                        create a new version without altering historical
                         observations.
                       </p>
                     </>
                   )}
                   {adminTab === "contributors" && (
                     <>
-                      <h3>Passwordless device link</h3>
+                      <h3>Passwordless device pairing</h3>
                       <p>
-                        Field researchers enter an 8-character code once to pair
-                        their phone’s storage without passwords or accounts.
+                        Field teams enter a single-use 8-character code to link
+                        device storage without managing accounts or passwords.
                       </p>
                     </>
                   )}
                   {adminTab === "export" && (
                     <>
-                      <h3>Verified sync readiness</h3>
+                      <h3>Team readiness & export</h3>
                       <p>
-                        Review received observations, monitor contributor
-                        attention, and export self-contained research archives.
+                        Monitor incoming observations, track contributor
+                        attention metrics, and export self-contained research
+                        archives.
                       </p>
                     </>
                   )}
@@ -482,14 +477,14 @@ export function HomepageApp() {
         >
           <div className="hp-section-inner">
             <div className="section-heading">
-              <p className="eyebrow">Step 3 · Provenance & Quality</p>
+              <p className="eyebrow">Data Integrity</p>
               <h2 id="integrity-title">
-                Verify surveyor focus and context without research bias.
+                Verify contributor attention without biasing research data.
               </h2>
               <p>
-                Unannounced checks test surveyor focus during long transects.
-                Answers are stripped before commit, recording only a
-                guess-adjusted reliability score alongside ambient hardware
+                Interleaved checks evaluate contributor focus. Prompts and
+                responses are stripped in memory, preserving only a
+                guess-adjusted reliability metric alongside ambient device
                 telemetry.
               </p>
               <DocLink file="attention-qa.md" label="Attention QA doc" />
@@ -498,18 +493,15 @@ export function HomepageApp() {
             <div className="hp-integrity-grid">
               <div className="hp-integrity-card">
                 <div className="hp-integrity-card-header">
-                  <h3>Cognitive Attention QA</h3>
-                  <p>
-                    Question never stored in schema · Answer stripped before
-                    commit
-                  </p>
+                  <h3>Attention Verification</h3>
+                  <p>Evaluated in memory · Stripped prior to database commit</p>
                 </div>
                 <AttentionDemo />
               </div>
               <div className="hp-integrity-card">
                 <div className="hp-integrity-card-header">
-                  <h3>Ambient Environment Telemetry</h3>
-                  <p>Automatic hardware context · Never blocks local receipt</p>
+                  <h3>Device Telemetry & Provenance</h3>
+                  <p>Non-identifying context · Never blocks local commit</p>
                 </div>
                 <ProvenanceCard />
               </div>
@@ -525,14 +517,14 @@ export function HomepageApp() {
         >
           <div className="hp-section-inner">
             <div className="section-heading">
-              <p className="eyebrow">Step 4 · Archival & Publication</p>
+              <p className="eyebrow">Archival & Export</p>
               <h2 id="data-title">
-                Self-contained research archives ready for repository deposit.
+                Self-contained research archives for repository deposit.
               </h2>
               <p>
-                Checkpoint archives include canonical JSONL, CSV, RFC 7946
-                GeoJSON, DataCite 4.4 kernel metadata, and original media with
-                SHA-256 hashes.
+                Export packages bundle canonical JSONL, CSV, RFC 7946 GeoJSON,
+                DataCite 4.4 metadata, and unmodified media with SHA-256
+                checksums into a single verifiable archive.
               </p>
               <DocLink file="export-format.md" label="Export format doc" />
               <DocLink
@@ -542,8 +534,8 @@ export function HomepageApp() {
             </div>
             <PackageBrowser />
             <p className="hp-section-note">
-              Live checkpoint inspection from <code>docs/demo-dataset</code>.
-              Specified in{" "}
+              Inspecting reference checkpoint package from{" "}
+              <code>docs/demo-dataset</code>, conforming to{" "}
               <a href={DOCS("export-format.md")} target="_blank" rel="noopener">
                 docs/export-format.md
               </a>
@@ -560,14 +552,14 @@ export function HomepageApp() {
         >
           <div className="hp-section-inner hp-preview-layout">
             <div className="hp-preview-copy">
-              <p className="eyebrow">Research Preview & Feedback</p>
+              <p className="eyebrow">Research Preview</p>
               <h2 id="preview-title">
-                Explore a pilot for your fieldwork or expedition.
+                Request preview access for your fieldwork.
               </h2>
               <p>
-                We are testing collect with academic researchers and field
-                teams. Request preview access to test custom schemas, or clone
-                and self-host the open-source repository directly.
+                We are onboarding research teams and field campaigns. Request
+                access to run custom schemas, or clone the repository to
+                self-host.
               </p>
             </div>
             <div className="hp-preview-card">
@@ -592,10 +584,10 @@ export function HomepageApp() {
             <div>
               <span className="hp-footer-heading">Lifecycle</span>
               <a href="#collection">1. Field Collection</a>
-              <a href="#sync">Sync architecture</a>
+              <a href="#sync">Sync pipeline</a>
               <a href="#admin">2. Setup & Schema</a>
-              <a href="#integrity">3. Integrity & QA</a>
-              <a href="#data">4. Data Package</a>
+              <a href="#integrity">3. Data Integrity</a>
+              <a href="#data">4. FAIR Export</a>
               <a href="#preview">Request access</a>
               <a href="/" target="_blank" rel="noopener noreferrer">
                 Sign in — contributor

@@ -2054,6 +2054,13 @@ main [id] {
 }
 
 @media (max-width: 820px) {
+  .hp-iphone-wrap {
+    display: none;
+  }
+  .hp-auto-bar,
+  .hp-demo-note {
+    display: none;
+  }
   .hp-package {
     grid-template-columns: 1fr;
   }

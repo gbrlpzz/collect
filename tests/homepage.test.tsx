@@ -40,7 +40,7 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
     render(<FlowDemo />);
     // The real flow opens on the authentic field home screen with project intro and add observation action.
     expect(screen.getByText("Fieldwork")).toBeTruthy();
-    expect(screen.getByText("Vernacular buildings — Valpuesta")).toBeTruthy();
+    expect(screen.getByText("Example Survey")).toBeTruthy();
     expect(
       screen.getByRole("button", { name: /add observation/i }),
     ).toBeTruthy();
@@ -127,7 +127,7 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
 
     // The real ContributorHome appears after save.
     await waitFor(() => expect(homeReached()).toBe(true));
-    expect(screen.getByText("Vernacular buildings — Valpuesta")).toBeTruthy();
+    expect(screen.getByText("Example Survey")).toBeTruthy();
     expect(screen.getByText(/Saved here/i)).toBeTruthy();
 
     // The demo never persists anything: no storage, no IndexedDB.

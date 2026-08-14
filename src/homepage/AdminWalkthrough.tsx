@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AdminProject, type AdminTab } from "../components/AdminDashboard";
 import { TopBar } from "../components/TopBar";
 import { Icon } from "../components/Icon";
@@ -11,13 +11,11 @@ export type { AdminTab };
 
 const adminDemoProject: Project = {
   id: "valpuesta-fieldwork",
-  organization: "Liminal Research Group",
+  organization: "Liminal Research",
   organizationMark: "L",
-  name: "Vernacular buildings — Valpuesta",
-  description:
-    "Occupancy, masonry condition, and structural assessment survey.",
-  instructions:
-    "Record building type, occupancy status, and field photographs.",
+  name: "Example Survey",
+  description: "Structural assessment survey.",
+  instructions: "",
   status: "active",
   schemaVersion: 1,
   license: "CC-BY-4.0",
@@ -132,6 +130,18 @@ export function AdminWalkthrough({
 }) {
   const [project, setProject] = useState<Project>(adminDemoProject);
   const [view, setView] = useState<"project" | "list">("project");
+  const mainShellRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const scrollDown = () => {
+      if (mainShellRef.current) {
+        mainShellRef.current.scrollTop = mainShellRef.current.scrollHeight;
+      }
+    };
+    scrollDown();
+    const timer = window.setTimeout(scrollDown, 40);
+    return () => window.clearTimeout(timer);
+  }, [initialTab, view]);
 
   const handleTabChange = (nextTab: AdminTab) => {
     onTabChange?.(nextTab);
@@ -164,7 +174,7 @@ export function AdminWalkthrough({
                 isPreview={true}
               />
 
-              <div className="main-shell">
+              <div className="main-shell" ref={mainShellRef}>
                 {view === "list" ? (
                   <main className="page page-admin">
                     <div className="page-heading">

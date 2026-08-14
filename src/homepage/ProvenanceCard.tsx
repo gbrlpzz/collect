@@ -23,9 +23,9 @@ export function ProvenanceCard() {
   return (
     <div className="hp-provenance-clean">
       <p className="hp-provenance-intro">
-        Every observation captures non-fingerprinting ambient device context. If
-        any browser API is restricted or unavailable, the submission still
-        commits to IndexedDB without error.
+        Submissions capture ambient hardware context (battery state, connection
+        type, viewport dimensions). Missing or restricted APIs never prevent a
+        local record from committing.
       </p>
 
       <div className="hp-record">

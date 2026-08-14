@@ -30,11 +30,11 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
     const trimmedEmail = email.trim();
     const trimmedUseCase = useCase.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmedEmail)) {
-      setError("Enter a valid email address so we can reply.");
+      setError("Enter a valid work email address.");
       return;
     }
     if (trimmedUseCase.length > 0 && trimmedUseCase.length < 10) {
-      setError("If you add a use case, give it a sentence or two.");
+      setError("Please provide a short sentence describing your fieldwork.");
       return;
     }
 
@@ -91,7 +91,7 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
         </span>
         <h3>Request received.</h3>
         <p>
-          We read every request. You'll hear from us at{" "}
+          We review every request. You'll hear from us at{" "}
           <strong>{email.trim()}</strong>.
         </p>
       </div>
@@ -127,7 +127,7 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
           onChange={(event) => setUseCase(event.target.value)}
           rows={4}
           maxLength={4000}
-          placeholder="e.g. We run a building survey in a valley with patchy coverage — three teams, photos + GPS, published as a dataset."
+          placeholder="e.g. Building survey across 3 field teams with photos, GPS coordinates, and offline sync."
         />
       </label>
       {error && (
@@ -144,7 +144,7 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
         >
           {sending ? "Sending…" : "Request access"}
         </Button>
-        <p className="hp-form-note">We reply to every request.</p>
+        <p className="hp-form-note">We review and respond to every request.</p>
       </div>
     </form>
   );
