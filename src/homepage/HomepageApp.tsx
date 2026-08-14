@@ -5,7 +5,7 @@ import { PreviewForm } from "./PreviewForm";
 import { AdminWalkthrough } from "./AdminWalkthrough";
 import { AttentionDemo } from "./AttentionDemo";
 import { ProvenanceCard } from "./ProvenanceCard";
-import { Icon } from "../components/Icon";
+import { Icon, type IconName } from "../components/Icon";
 
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 const DOCS = (file: string) => `${GITHUB_URL}/blob/main/docs/${file}`;
@@ -31,6 +31,9 @@ function TopBar() {
         <nav className="hp-nav" aria-label="Sections">
           <a className="hp-nav-link" href="#collection">
             Collector
+          </a>
+          <a className="hp-nav-link" href="#sync">
+            Sync
           </a>
           <a className="hp-nav-link" href="#admin">
             Setup
@@ -89,9 +92,9 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
         </h1>
 
         <p className="hp-hero-lede">
-          Offline-first field data collection. Saves observations and
-          uncompressed photos to device storage before touching the network,
-          syncing automatically when connected.
+          Offline-first field data collection for research and operational
+          fieldwork. Observations and original media commit to device storage
+          before touching the network, then sync automatically.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -128,33 +131,94 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
 }
 
 function DifferentiationSummary() {
-  const items = [
+  const items: Array<{
+    icon: IconName;
+    title: string;
+    claim: string;
+    proof: string;
+    href: string;
+    cta: string;
+  }> = [
     {
-      title: "Durable local receipts",
-      desc: "Form data and raw photos commit to IndexedDB before any network attempt. Observations are never lost.",
+      icon: "shield",
+      title: "Never loses a record",
+      claim:
+        "Observations and original files commit to device storage before any network attempt; a record is only ever marked synced once the server issues its durable receipt.",
+      proof: "commit before network · receipt-gated SYNCED",
+      href: "#sync",
+      cta: "See the sync pipeline",
     },
     {
-      title: "Immutable schemas",
-      desc: "Published forms are locked. Historical observations always keep their original schema version without drift.",
+      icon: "camera",
+      title: "Original media preserved",
+      claim:
+        "Photos and audio keep their original files, hashed with SHA-256, never recompressed or downsampled in the collection path.",
+      proof: "uncompressed originals · SHA-256",
+      href: "#collection",
+      cta: "See the media step",
     },
     {
-      title: "Attention QA",
-      desc: "Unannounced checks verify surveyor focus. Answers are stripped before commit to keep research variables clean.",
+      icon: "check",
+      title: "Research integrity built in",
+      claim:
+        "Attention checks are stripped before commit and published schemas are immutable, so finalized evidence stays clean and reproducible.",
+      proof: "stripped before commit · immutable versions",
+      href: "#integrity",
+      cta: "Inspect the payload",
     },
     {
-      title: "Single-use device links",
-      desc: "Pair field devices with 8-character codes. Zero passwords, zero App Store accounts, zero stored credentials.",
+      icon: "archive",
+      title: "FAIR archives, ready to deposit",
+      claim:
+        "Checkpoint exports package JSONL, CSV, GeoJSON, DataCite 4.4 metadata, and original media into one self-contained ZIP.",
+      proof: "DataCite 4.4 · GeoJSON · JSONL",
+      href: "#data",
+      cta: "Open the dataset",
     },
   ];
 
+  const stats = [
+    { value: "3-stage", label: "background sync" },
+    { value: "SHA-256", label: "media integrity hashes" },
+    { value: "8-char", label: "single-use device codes" },
+    { value: "Apache-2.0", label: "open source · self-hostable" },
+  ];
+
   return (
-    <section className="hp-diff-section" aria-label="Core differentiation">
+    <section className="hp-diff-section" aria-label="Core strengths">
       <div className="hp-diff-inner">
+        <div className="hp-diff-heading">
+          <p className="eyebrow">The difference</p>
+          <h2>Built for data you can defend.</h2>
+          <p>
+            collect is an offline-first PWA for structured fieldwork. Four
+            guarantees set it apart — and each is demonstrated live on this
+            page.
+          </p>
+        </div>
+
         <div className="hp-diff-grid">
           {items.map((item) => (
-            <div className="hp-diff-card" key={item.title}>
+            <a className="hp-diff-card" href={item.href} key={item.title}>
+              <span className="hp-diff-icon" aria-hidden="true">
+                <Icon name={item.icon} size={18} />
+              </span>
               <h3>{item.title}</h3>
-              <p>{item.desc}</p>
+              <p>{item.claim}</p>
+              <span className="hp-diff-proof">{item.proof}</span>
+              <span className="hp-diff-cta">
+                {item.cta}
+                <Icon name="arrow-right" size={14} />
+              </span>
+            </a>
+          ))}
+        </div>
+
+        <div className="hp-diff-stats">
+          {stats.map((stat) => (
+            <div className="hp-diff-stat" key={stat.value}>
+              <strong>{stat.value}</strong>
+              <span>{stat.label}</span>
             </div>
           ))}
         </div>
@@ -196,6 +260,85 @@ export function HomepageApp() {
         >
           <div className="hp-section-inner">
             <FlowDemo />
+          </div>
+        </section>
+
+        {/* Sync Architecture */}
+        <section className="hp-section" id="sync" aria-labelledby="sync-title">
+          <div className="hp-section-inner">
+            <div className="hp-flow-layout">
+              <div className="hp-flow-copy">
+                <div className="section-heading">
+                  <p className="eyebrow">Synchronization Architecture</p>
+                  <h2 id="sync-title">
+                    A three-stage pipeline that ends in a server receipt.
+                  </h2>
+                  <p>
+                    Sync is treated as a data path, not an afterthought: nothing
+                    is uploaded before it exists on device, and nothing is
+                    marked sent before the server says so.
+                  </p>
+                </div>
+
+                <ul className="hp-sync-principles">
+                  <li>
+                    <strong>Commit first.</strong> Payload, media, and outbox
+                    operations write to IndexedDB before any network attempt.
+                  </li>
+                  <li>
+                    <strong>Resumable media.</strong> Original files upload over
+                    tus; a flaky link continues where it stopped instead of
+                    restarting.
+                  </li>
+                  <li>
+                    <strong>Receipt-gated status.</strong> <code>SYNCED</code>{" "}
+                    is written only when the server finalizes the submission —
+                    never on request start or upload completion.
+                  </li>
+                  <li>
+                    <strong>Server is the source of truth.</strong> Reachability
+                    is never guessed from <code>navigator.onLine</code>, and
+                    installed-PWA storage stays isolated until the server
+                    mediates.
+                  </li>
+                </ul>
+              </div>
+
+              <div className="hp-flow-visual">
+                <div className="hp-sync-pipeline" aria-label="Sync stages">
+                  <div className="hp-sync-stage">
+                    <span className="hp-sync-stage-index">1</span>
+                    <div>
+                      <strong>Metadata</strong>
+                      <p>
+                        Structured payload and submission receipt op commit to
+                        the local outbox.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="hp-sync-stage">
+                    <span className="hp-sync-stage-index">2</span>
+                    <div>
+                      <strong>Media</strong>
+                      <p>
+                        Original files upload as resumable tus transfers with
+                        integrity hashes.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="hp-sync-stage">
+                    <span className="hp-sync-stage-index">3</span>
+                    <div>
+                      <strong>Finalization</strong>
+                      <p>
+                        The server writes a durable receipt; only then does the
+                        local record become <code>SYNCED</code>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -406,6 +549,7 @@ export function HomepageApp() {
             <div>
               <span className="hp-footer-heading">Lifecycle</span>
               <a href="#collection">1. Field Collection</a>
+              <a href="#sync">Sync architecture</a>
               <a href="#admin">2. Setup & Schema</a>
               <a href="#integrity">3. Integrity & QA</a>
               <a href="#data">4. Data Package</a>
