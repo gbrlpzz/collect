@@ -31,7 +31,6 @@ export function ProvenanceCard() {
 
       <div className="hp-record">
         <div className="record-header">
-          <span className="record-dot record-dot-stored" />
           <p className="record-label">Ambient Hardware & Environment Record</p>
         </div>
         <pre className="record-json">

@@ -129,7 +129,6 @@ export function AttentionDemo() {
             <div className="hp-record-grid">
               <div className="hp-record">
                 <div className="record-header">
-                  <span className="record-dot record-dot-stored" />
                   <p className="record-label">What the dataset stores</p>
                 </div>
                 <pre className="record-json">
@@ -139,7 +138,6 @@ export function AttentionDemo() {
 
               <div className="hp-record">
                 <div className="record-header">
-                  <span className="record-dot record-dot-stripped" />
                   <p className="record-label">What never enters the payload</p>
                 </div>
                 <pre className="record-json record-stripped">

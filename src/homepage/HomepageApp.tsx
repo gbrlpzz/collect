@@ -29,11 +29,11 @@ function TopBar() {
         </a>
 
         <nav className="hp-nav" aria-label="Sections">
-          <a className="hp-nav-link" href="#admin">
-            Setup
-          </a>
           <a className="hp-nav-link" href="#collection">
             Collector
+          </a>
+          <a className="hp-nav-link" href="#admin">
+            Setup
           </a>
           <a className="hp-nav-link" href="#integrity">
             Integrity
@@ -51,7 +51,7 @@ function TopBar() {
             rel="noopener noreferrer"
             aria-label="GitHub Repository"
           >
-            <Icon name="github" size={20} />
+            <Icon name="github" size={18} />
             <span className="hp-github-text">GitHub</span>
           </a>
           <a className="button button-primary button-small" href="#preview">
@@ -81,17 +81,17 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
     <section className="hp-hero" id="top" aria-labelledby="hero-title">
       <div className="hp-hero-inner">
         <div className="hp-hero-badge">
-          <span className="status-dot" aria-hidden="true" />
           <span>Open Source Research Preview · Apache-2.0</span>
         </div>
 
-        <h1 id="hero-title">Field collection that never loses a record.</h1>
+        <h1 id="hero-title">
+          Field data collection that never loses a record.
+        </h1>
 
         <p className="hp-hero-lede">
-          An offline-first tool for scientific fieldwork and survey teams.
-          Observations and uncompressed media commit to local device storage
-          before touching the network, syncing automatically when connection
-          returns.
+          An offline-first application for scientific research and field
+          surveys. Observations and raw photos commit to device storage before
+          touching the network, syncing automatically when connection returns.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -295,7 +295,18 @@ export function HomepageApp() {
         <Hero onEmailSubmit={captureEmail} />
         <DifferentiationSummary />
 
-        {/* Step 1: Admin Operations & Schema (Dark Mobile Mockup) */}
+        {/* Step 1: Real Field Collection inside iPhone Mockup */}
+        <section
+          className="hp-section hp-section-paper"
+          id="collection"
+          aria-labelledby="collection-title"
+        >
+          <div className="hp-section-inner">
+            <FlowDemo />
+          </div>
+        </section>
+
+        {/* Step 2: Admin Operations & Schema (Dark Mobile Mockup) */}
         <section
           className="hp-section hp-section-dark"
           id="admin"
@@ -305,7 +316,7 @@ export function HomepageApp() {
             <div className="hp-flow-layout">
               <div className="hp-flow-copy">
                 <div className="section-heading hp-admin-heading">
-                  <p className="eyebrow">Step 1 · Setup & Fleet Pairing</p>
+                  <p className="eyebrow">Step 2 · Fleet Setup & Schema</p>
                   <h2 id="admin-title">
                     Define immutable schemas and pair field devices.
                   </h2>
@@ -386,17 +397,6 @@ export function HomepageApp() {
           </div>
         </section>
 
-        {/* Step 2: Real Field Collection inside iPhone Mockup */}
-        <section
-          className="hp-section hp-section-paper"
-          id="collection"
-          aria-labelledby="collection-title"
-        >
-          <div className="hp-section-inner">
-            <FlowDemo />
-          </div>
-        </section>
-
         {/* Step 3: Integrity & Provenance */}
         <section
           className="hp-section"
@@ -407,7 +407,7 @@ export function HomepageApp() {
             <div className="section-heading">
               <p className="eyebrow">Step 3 · Provenance & Quality</p>
               <h2 id="integrity-title">
-                Verify surveyor attention and context without research bias.
+                Verify surveyor focus and context without research bias.
               </h2>
               <p>
                 Surveyor fatigue during long shifts causes random answers.
@@ -472,7 +472,7 @@ export function HomepageApp() {
         {/* Value Differentiation & Comparison Matrix */}
         <ComparisonSection />
 
-        {/* Request Access / Deploy */}
+        {/* Request Access / Pilot Form */}
         <section
           className="hp-section"
           id="preview"
@@ -520,8 +520,8 @@ export function HomepageApp() {
           <nav className="hp-footer-links" aria-label="Footer">
             <div>
               <span className="hp-footer-heading">Lifecycle</span>
-              <a href="#admin">1. Setup & Schema</a>
-              <a href="#collection">2. Field Collection</a>
+              <a href="#collection">1. Field Collection</a>
+              <a href="#admin">2. Fleet Setup & Schema</a>
               <a href="#integrity">3. Integrity & QA</a>
               <a href="#data">4. Data Package</a>
               <a href="#preview">Request test access</a>
