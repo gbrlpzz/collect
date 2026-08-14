@@ -221,6 +221,20 @@ export async function requestDeviceLinkCode(): Promise<{
 }
 
 /**
+ * Self-service sign-in code: ask the server to mint and email a fresh
+ * contributor code for this address. Invite-only — the server answers
+ * uniformly whether or not the address has an account, so the login screen
+ * never reveals which addresses exist.
+ */
+export async function requestContributorSigninCode(email: string): Promise<void> {
+  if (!supabase) throw new Error("Supabase is not configured");
+  await invokeFunction(supabase, "contributor-signin-code", {
+    action: "request",
+    email,
+  });
+}
+
+/**
  * Exchange a device-link code (shown on a signed-in web app) for a session in
  * the CURRENT container. The returned token_hash is single-use and short-lived.
  */
