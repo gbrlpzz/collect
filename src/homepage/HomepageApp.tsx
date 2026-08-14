@@ -130,7 +130,7 @@ function DifferentiationSummary() {
       title: "Local-first durability",
       claim:
         "Observations and media commit to IndexedDB before any network attempt, updating to synced only upon server confirmation.",
-      proof: "commit before network · verified receipt",
+      proof: "commit before network with verified receipt",
       href: "#sync",
       cta: "Inspect sync pipeline",
       doc: "background-automation.md",
@@ -140,7 +140,7 @@ function DifferentiationSummary() {
       title: "Unmodified media originals",
       claim:
         "Photos and audio retain capture quality with SHA-256 checksums, with no collection-path recompression.",
-      proof: "raw originals · SHA-256 checksums",
+      proof: "raw originals with SHA-256 checksums",
       href: "#collection",
       cta: "View media capture",
       doc: "dataset-standards.md",
@@ -150,7 +150,7 @@ function DifferentiationSummary() {
       title: "Isolated attention checks",
       claim:
         "Periodic checks evaluate contributor focus in memory, stripping questions and answers before database commit.",
-      proof: "in-memory checks · isolated payloads",
+      proof: "in-memory checks and isolated payloads",
       href: "#integrity",
       cta: "Test attention check",
       doc: "attention-qa.md",
@@ -160,7 +160,7 @@ function DifferentiationSummary() {
       title: "FAIR export archives",
       claim:
         "Checkpoint exports package canonical JSONL, CSV, RFC 7946 GeoJSON, DataCite 4.4 metadata, and raw media into a single archive.",
-      proof: "DataCite 4.4 · GeoJSON · JSONL",
+      proof: "DataCite 4.4, GeoJSON and JSONL",
       href: "#data",
       cta: "Browse export package",
       doc: "export-format.md",
@@ -171,7 +171,7 @@ function DifferentiationSummary() {
     { value: "3-stage", label: "verified sync pipeline" },
     { value: "SHA-256", label: "media integrity checksums" },
     { value: "8-character", label: "passwordless device codes" },
-    { value: "Apache-2.0", label: "open source · self-hostable" },
+    { value: "Apache-2.0", label: "open source and self-hostable" },
   ];
 
   return (
@@ -385,14 +385,14 @@ export function HomepageApp() {
               <div className="hp-integrity-card">
                 <div className="hp-integrity-card-header">
                   <h3>Attention Verification</h3>
-                  <p>Evaluated in memory · Stripped prior to database commit</p>
+                  <p>Evaluated in memory and stripped before database commit</p>
                 </div>
                 <AttentionDemo />
               </div>
               <div className="hp-integrity-card">
                 <div className="hp-integrity-card-header">
                   <h3>Device Telemetry & Provenance</h3>
-                  <p>Non-identifying context · Never blocks local commit</p>
+                  <p>Non-identifying context that never blocks local commit</p>
                 </div>
                 <ProvenanceCard />
               </div>
@@ -609,7 +609,7 @@ export function HomepageApp() {
               </a>
             </div>
           </nav>
-          <p className="hp-footer-legal">© 2026 Gabriele Pizzi · Apache-2.0</p>
+          <p className="hp-footer-legal">© 2026 Gabriele Pizzi — Apache-2.0</p>
         </div>
       </footer>
     </div>

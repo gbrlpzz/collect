@@ -3,15 +3,14 @@ export const DOCS = (file: string) => `${GITHUB_URL}/blob/main/docs/${file}`;
 
 export function DocLinks({ files }: { files: string[] }) {
   return (
-    <p className="hp-doc-ref">
-      {files.map((file, idx) => (
-        <span key={file}>
-          {idx > 0 && " · "}
+    <div className="hp-doc-ref" aria-label="Related technical documentation">
+      {files.map((file) => (
+        <div key={file} className="hp-doc-ref-item">
           <a href={DOCS(file)} target="_blank" rel="noopener noreferrer">
             docs/{file}
           </a>
-        </span>
+        </div>
       ))}
-    </p>
+    </div>
   );
 }

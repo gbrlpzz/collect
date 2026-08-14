@@ -656,9 +656,14 @@ body {
 
 /* Documentation Reference Links */
 .hp-doc-ref {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   margin: 12px 0 0;
+}
+.hp-doc-ref-item {
   font-size: 0.75rem;
-  color: var(--tertiary);
+  line-height: 1.4;
 }
 .hp-doc-ref a {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;

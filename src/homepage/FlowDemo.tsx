@@ -296,7 +296,7 @@ export function FlowDemo() {
         </div>
 
         <p className="hp-demo-note">
-          Live app frontend · click it yourself · nothing is recorded
+          Interactive preview — no data is saved to a server.
         </p>
       </div>
 

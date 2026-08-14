@@ -196,7 +196,7 @@ export function AdminWalkthrough({
                       >
                         <div className="project-row-copy">
                           <strong>{project.name}</strong>
-                          <span>{project.organization} · Active</span>
+                          <span>Active</span>
                         </div>
                         <div className="project-row-meta">
                           <span>104 sent</span>
