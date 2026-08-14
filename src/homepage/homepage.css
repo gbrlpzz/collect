@@ -5,6 +5,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-snap-type: y proximity;
   scrollbar-gutter: stable;
   height: auto;
   min-height: 100%;
@@ -268,14 +269,17 @@ body {
 /* ---------- Hero Section ---------- */
 .hp-hero {
   position: relative;
-  min-height: calc(70svh - 52px);
+  min-height: calc(78svh - 52px);
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: clamp(64px, 10vh, 104px) 24px clamp(48px, 8vh, 80px);
+  padding: clamp(76px, 12vh, 120px) 24px clamp(56px, 9vh, 88px);
   border-bottom: 1px solid var(--separator-light);
   overflow: hidden;
   background: var(--paper);
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+  scroll-margin-top: 72px;
 }
 .hp-hero-bg {
   position: absolute;
@@ -410,9 +414,12 @@ body {
 
 /* ---------- Differentiation Summary Grid ---------- */
 .hp-diff-section {
-  padding: clamp(56px, 8vh, 84px) 24px;
+  padding: clamp(72px, 10vh, 104px) 24px;
   border-bottom: 1px solid var(--separator-light);
   background: var(--paper);
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+  scroll-margin-top: 72px;
 }
 .hp-diff-inner {
   width: min(100%, 1080px);
@@ -711,7 +718,10 @@ body {
 
 /* ---------- Common Section Layout ---------- */
 .hp-section {
-  padding: clamp(64px, 9vh, 96px) 24px;
+  padding: clamp(76px, 11vh, 112px) 24px;
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+  scroll-margin-top: 72px;
 }
 .hp-section-paper {
   background: var(--paper);
@@ -799,6 +809,8 @@ section[id] {
   justify-content: center;
   align-items: flex-start;
   width: 100%;
+  position: sticky;
+  top: 84px;
 }
 
 .hp-admin-tab-selector {
@@ -864,6 +876,8 @@ section[id] {
   align-items: center;
   justify-content: center;
   width: 100%;
+  position: sticky;
+  top: 84px;
 }
 .hp-iphone {
   position: relative;

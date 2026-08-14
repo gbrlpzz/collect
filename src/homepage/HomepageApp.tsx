@@ -148,11 +148,9 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
           </h1>
 
           <p className="hp-hero-lede">
-            An offline-first data collection app built for scientific
-            expeditions and field research. Record structured observations,
-            unmodified photos, and spatial telemetry with zero cellular
-            connectivity — backed by an atomic local ledger and deposit-ready
-            FAIR exports.
+            An offline-first field collection app for research teams. Record
+            structured observations, raw photos, and GPS coordinates on any
+            phone beyond cellular reach.
           </p>
 
           <form className="hp-capture" onSubmit={submit} noValidate>
