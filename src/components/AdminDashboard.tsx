@@ -30,6 +30,28 @@ import {
   schemaFieldTypes,
 } from "../lib/schema";
 
+/**
+ * Platform-menu behavior: a menu dismisses on outside tap or Escape. Attach
+ * once when the details menu opens; listeners are removed when it closes.
+ */
+function dismissMenuOnOutside(details: HTMLDetailsElement): void {
+  const dismiss = (event: Event) => {
+    if (event instanceof KeyboardEvent) {
+      if (event.key === "Escape") details.removeAttribute("open");
+      return;
+    }
+    if (!details.contains(event.target as Node))
+      details.removeAttribute("open");
+  };
+  const release = () => {
+    window.removeEventListener("pointerdown", dismiss);
+    window.removeEventListener("keydown", dismiss);
+  };
+  window.addEventListener("pointerdown", dismiss);
+  window.addEventListener("keydown", dismiss);
+  details.addEventListener("toggle", () => release(), { once: true });
+}
+
 interface AdminDashboardProps {
   project: Project;
   projects?: Project[];
@@ -166,7 +188,14 @@ export function AdminProject({
           <h1>{project.name}</h1>
           <p className="lede">{project.description}</p>
         </div>
-        <details className="admin-project-actions" ref={projectActionsRef}>
+        <details
+          className="admin-project-actions"
+          ref={projectActionsRef}
+          onToggle={(event) => {
+            if (event.currentTarget.open)
+              dismissMenuOnOutside(event.currentTarget);
+          }}
+        >
           <summary aria-label="Project actions">
             <Icon name="more" size={20} />
             <span className="visually-hidden">Project actions</span>
@@ -760,7 +789,6 @@ function ContributorsPanel({
     null,
   );
   const [removing, setRemoving] = useState(false);
-  const actionsRef = useRef<HTMLDetailsElement | null>(null);
 
   const invite = async (email: string) => {
     setInviting(true);
@@ -860,7 +888,6 @@ function ContributorsPanel({
                 )}
                 <details
                   className="admin-project-actions"
-                  ref={actionsRef}
                   onToggle={(event) => {
                     const details = event.currentTarget;
                     // Keep only one row menu open at a time.
@@ -886,6 +913,7 @@ function ContributorsPanel({
                       "menu-up",
                       roomBelow < menuHeight + 8 && roomAbove > roomBelow,
                     );
+                    dismissMenuOnOutside(details);
                   }}
                 >
                   <summary aria-label={`Actions for ${row.email}`}>
@@ -895,8 +923,10 @@ function ContributorsPanel({
                     {!row.invitedOnly && (
                       <button
                         type="button"
-                        onClick={() => {
-                          actionsRef.current?.removeAttribute("open");
+                        onClick={(event) => {
+                          event.currentTarget
+                            .closest("details")
+                            ?.removeAttribute("open");
                           setProfileRow(row);
                         }}
                       >
@@ -906,19 +936,28 @@ function ContributorsPanel({
                     )}
                     <button
                       type="button"
-                      onClick={() => {
-                        actionsRef.current?.removeAttribute("open");
+                      onClick={(event) => {
+                        event.currentTarget
+                          .closest("details")
+                          ?.removeAttribute("open");
                         void resend(row.email);
                       }}
                     >
                       <Icon name="send" size={17} />
                       Resend invitation
                     </button>
+                    <span
+                      className="menu-separator"
+                      role="separator"
+                      aria-hidden="true"
+                    />
                     <button
                       type="button"
                       className="action-danger"
-                      onClick={() => {
-                        actionsRef.current?.removeAttribute("open");
+                      onClick={(event) => {
+                        event.currentTarget
+                          .closest("details")
+                          ?.removeAttribute("open");
                         setRemovalRow(row);
                       }}
                     >
