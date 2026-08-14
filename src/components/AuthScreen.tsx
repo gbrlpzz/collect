@@ -498,88 +498,88 @@ export function AuthScreen({
                             : "Sign in"}
                       </Button>
                     )}
-                    <button
-                      type="button"
-                      className="text-button"
-                      onClick={() => {
-                        setRequestOpen((current) => !current);
-                        setRequestSent(false);
-                        setRequestError(null);
-                      }}
-                    >
-                      {requestOpen ? "Hide" : "Request a new code by email"}{" "}
-                      <Icon name="arrow-right" size={15} />
-                    </button>
-                    {requestOpen && (
-                      <div className="auth-code-request">
-                        {requestSent ? (
-                          <p className="auth-sent-note" role="status">
-                            If an account exists, a code is on its way to that
-                            address.
-                          </p>
-                        ) : (
-                          <form
-                            onSubmit={(event) => {
-                              event.preventDefault();
-                              void requestCode();
-                            }}
-                          >
-                            <div className="auth-label">
-                              <label htmlFor="auth-request-email">
-                                Email address
-                              </label>
-                              <input
-                                id="auth-request-email"
-                                className="field-input"
-                                type="email"
-                                required
-                                value={requestEmail}
-                                onChange={(event) => {
-                                  setRequestEmail(event.target.value);
-                                  setRequestError(null);
-                                }}
-                                placeholder="you@example.com"
-                                autoComplete="email"
-                                inputMode="email"
-                                autoCapitalize="none"
-                                spellCheck={false}
-                              />
-                            </div>
-                            {requestError && (
-                              <p className="auth-error" role="alert">
-                                {requestError}
-                              </p>
-                            )}
-                            <Button
-                              type="submit"
-                              variant="secondary"
-                              fullWidth
-                              disabled={requestBusy || !requestEmail.trim()}
-                              busy={requestBusy}
-                            >
-                              {requestBusy
-                                ? "Sending…"
-                                : "Send me a sign-in code"}
-                            </Button>
-                          </form>
-                        )}
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      className="text-button"
-                      onClick={() => {
-                        setEntryMode(isAdmin ? "link" : "password");
-                        setCode("");
-                        setCodeError(null);
-                      }}
-                    >
-                      {isAdmin
-                        ? "Sign in with email instead"
-                        : "Sign in with a password instead"}{" "}
-                      <Icon name="arrow-right" size={15} />
-                    </button>
                   </form>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => {
+                      setRequestOpen((current) => !current);
+                      setRequestSent(false);
+                      setRequestError(null);
+                    }}
+                  >
+                    {requestOpen ? "Hide" : "Request a new code by email"}{" "}
+                    <Icon name="arrow-right" size={15} />
+                  </button>
+                  {requestOpen && (
+                    <div className="auth-code-request">
+                      {requestSent ? (
+                        <p className="auth-sent-note" role="status">
+                          If an account exists, a code is on its way to that
+                          address.
+                        </p>
+                      ) : (
+                        <form
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            void requestCode();
+                          }}
+                        >
+                          <div className="auth-label">
+                            <label htmlFor="auth-request-email">
+                              Email address
+                            </label>
+                            <input
+                              id="auth-request-email"
+                              className="field-input"
+                              type="email"
+                              required
+                              value={requestEmail}
+                              onChange={(event) => {
+                                setRequestEmail(event.target.value);
+                                setRequestError(null);
+                              }}
+                              placeholder="you@example.com"
+                              autoComplete="email"
+                              inputMode="email"
+                              autoCapitalize="none"
+                              spellCheck={false}
+                            />
+                          </div>
+                          {requestError && (
+                            <p className="auth-error" role="alert">
+                              {requestError}
+                            </p>
+                          )}
+                          <Button
+                            type="submit"
+                            variant="secondary"
+                            fullWidth
+                            disabled={requestBusy || !requestEmail.trim()}
+                            busy={requestBusy}
+                          >
+                            {requestBusy
+                              ? "Sending…"
+                              : "Send me a sign-in code"}
+                          </Button>
+                        </form>
+                      )}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => {
+                      setEntryMode(isAdmin ? "link" : "password");
+                      setCode("");
+                      setCodeError(null);
+                    }}
+                  >
+                    {isAdmin
+                      ? "Sign in with email instead"
+                      : "Sign in with a password instead"}{" "}
+                    <Icon name="arrow-right" size={15} />
+                  </button>
                 </div>
               ) : (
                 <form

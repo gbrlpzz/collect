@@ -7,9 +7,18 @@ import { Icon } from "../components/Icon";
  * Email and inquiry details are required so we can properly route and respond.
  * Inserts one row into the private preview_requests queue (RLS: anonymous insert only).
  */
-const FORM_ENDPOINT =
-  "https://lrqlrufwrytpwhgclmyo.supabase.co/rest/v1/preview_requests";
-const FORM_KEY = "sb_publishable_BAsTV49V04O0WZVtVgohqg_BD5JReFE";
+const DEFAULT_SUPABASE_URL = "https://lrqlrufwrytpwhgclmyo.supabase.co";
+const DEFAULT_PUBLISHABLE_KEY =
+  "sb_publishable_BAsTV49V04O0WZVtVgohqg_BD5JReFE";
+
+const baseUrl = (
+  import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL
+).replace(/\/+$/, "");
+const FORM_ENDPOINT = `${baseUrl}/rest/v1/preview_requests`;
+const FORM_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  DEFAULT_PUBLISHABLE_KEY;
 
 export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
   const [email, setEmail] = useState(initialEmail);
