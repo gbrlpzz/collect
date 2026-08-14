@@ -1,5 +1,5 @@
+import { useState } from "react";
 import { DocLinks } from "./DocLinks";
-import { useScrollStep } from "./useScrollStep";
 
 const SYNC_STEPS = [
   {
@@ -23,14 +23,11 @@ const SYNC_STEPS = [
 ] as const;
 
 export function SyncDemo() {
-  const { ref, active, activate } = useScrollStep<HTMLDivElement>(
-    SYNC_STEPS.length,
-    "sync",
-  );
+  const [active, setActive] = useState(0);
   const step = SYNC_STEPS[active];
 
   return (
-    <div className="hp-flow-layout" ref={ref}>
+    <div className="hp-flow-layout">
       <div className="hp-flow-copy">
         <div className="section-heading">
           <p className="eyebrow">Synchronization</p>
@@ -55,7 +52,7 @@ export function SyncDemo() {
               type="button"
               className={`hp-admin-step-btn ${active === i ? "active" : ""}`}
               aria-pressed={active === i}
-              onClick={() => activate(i)}
+              onClick={() => setActive(i)}
             >
               {s.title}
             </button>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { FlowDemo, type ContributorTab } from "./FlowDemo";
 import { SyncDemo } from "./SyncDemo";
@@ -11,7 +11,6 @@ import { DocLinks, DOCS } from "./DocLinks";
 import { Icon, type IconName } from "../components/Icon";
 import { CollectBrand } from "../components/CollectBrand";
 import { useSectionSpy } from "./useSectionSpy";
-import { useScrollStep } from "./useScrollStep";
 
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 
@@ -274,11 +273,10 @@ function DifferentiationSummary() {
   );
 }
 
-const CONTRIB_TABS: ContributorTab[] = ["home", "flow", "media"];
-
 export function HomepageApp() {
   const [draftEmail, setDraftEmail] = useState("");
   const [contribTab, setContribTab] = useState<ContributorTab>("home");
+  const [adminTab, setAdminTab] = useState<AdminSceneTab>("setup");
 
   const captureEmail = (email: string) => {
     setDraftEmail(email);
@@ -301,19 +299,6 @@ export function HomepageApp() {
     "data",
     "preview",
   ]);
-  const { ref: collectionRef, active: collectionStep } =
-    useScrollStep<HTMLElement>(CONTRIB_TABS.length, "collection");
-  const {
-    ref: adminStepsRef,
-    active: adminStep,
-    activate: activateAdminStep,
-  } = useScrollStep<HTMLDivElement>(ADMIN_SCENES.length, "admin");
-  const adminTab: AdminSceneTab = ADMIN_SCENES[adminStep].tab;
-
-  useEffect(() => {
-    setContribTab(CONTRIB_TABS[collectionStep]);
-  }, [collectionStep]);
-
   return (
     <div className="hp-shell">
       <TopBar activeSection={activeSection} />
@@ -322,7 +307,6 @@ export function HomepageApp() {
 
         {/* 1. Field Collection inside iPhone Mockup (Directly under Hero) */}
         <section
-          ref={collectionRef}
           className="hp-section hp-section-canvas"
           id="collection"
           aria-labelledby="collection-title"
@@ -353,7 +337,7 @@ export function HomepageApp() {
           aria-labelledby="admin-title"
         >
           <div className="hp-section-inner">
-            <div className="hp-flow-layout" ref={adminStepsRef}>
+            <div className="hp-flow-layout">
               <div className="hp-flow-copy">
                 <div className="section-heading">
                   <p className="eyebrow">Setup & Operations</p>
@@ -379,10 +363,10 @@ export function HomepageApp() {
                       key={scene.tab}
                       type="button"
                       className={`hp-admin-step-btn ${
-                        adminStep === i ? "active" : ""
+                        adminTab === scene.tab ? "active" : ""
                       }`}
-                      aria-pressed={adminStep === i}
-                      onClick={() => activateAdminStep(i)}
+                      aria-pressed={adminTab === scene.tab}
+                      onClick={() => setAdminTab(scene.tab)}
                     >
                       {scene.kicker}
                     </button>
@@ -391,8 +375,15 @@ export function HomepageApp() {
 
                 <div className="hp-story hp-story-step" aria-live="polite">
                   <span className="hp-story-kicker">Administrator Console</span>
-                  <h3>{ADMIN_SCENES[adminStep].title}</h3>
-                  <p>{ADMIN_SCENES[adminStep].body}</p>
+                  <h3>
+                    {
+                      ADMIN_SCENES.find((scene) => scene.tab === adminTab)
+                        ?.title
+                    }
+                  </h3>
+                  <p>
+                    {ADMIN_SCENES.find((scene) => scene.tab === adminTab)?.body}
+                  </p>
                 </div>
               </div>
 

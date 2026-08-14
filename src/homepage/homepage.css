@@ -782,8 +782,6 @@ section[id] {
   justify-content: center;
   align-items: flex-start;
   width: 100%;
-  position: sticky;
-  top: 84px;
 }
 
 /* Sub-level under the Guided Flow tab: the supported input types. */
@@ -869,8 +867,8 @@ section[id] {
   border-top: 1px solid var(--separator-light);
   border-bottom: 1px solid var(--separator-light);
 }
-/* Step sections: the story area gives the sticky visual scroll room and the
-   auto click-through a beat to linger on. */
+/* Step sections: the story area keeps the two columns balanced at the top
+   and gives the auto click-through a beat to linger on. */
 .hp-story-step {
   min-height: 34vh;
   display: flex;
@@ -904,8 +902,6 @@ section[id] {
   align-items: center;
   justify-content: center;
   width: 100%;
-  position: sticky;
-  top: 84px;
 }
 .hp-iphone {
   position: relative;
