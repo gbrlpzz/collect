@@ -4,18 +4,21 @@ import { Icon } from "./Icon";
 import {
   AttentionScoreRing,
   Button,
+  ConfirmationDialog,
   Divider,
   EmailPrompt,
   Eyebrow,
   IconButton,
   InfoDisclosure,
 } from "./ui";
+import { ContributorProfileSheet } from "./ContributorProfileSheet";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
 import { formatExactTime, formatRelativeTime } from "../lib/formatTime";
 import { useReadiness } from "../lib/useReadiness";
 import {
   createSchemaDraft,
   publishSchemaDraft,
+  removeProjectContributor,
   sendProjectInvite,
   sendProjectPing,
   type ContributorReadiness,
@@ -750,6 +753,14 @@ function ContributorsPanel({
 }) {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
+  const [profileRow, setProfileRow] = useState<ContributorReadiness | null>(
+    null,
+  );
+  const [removalRow, setRemovalRow] = useState<ContributorReadiness | null>(
+    null,
+  );
+  const [removing, setRemoving] = useState(false);
+  const actionsRef = useRef<HTMLDetailsElement | null>(null);
 
   const invite = async (email: string) => {
     setInviting(true);
@@ -775,6 +786,31 @@ function ContributorsPanel({
       onToast(`Reminder sent to ${email}`);
     } catch {
       onToast("Email reminders need a configured mail provider");
+    }
+  };
+
+  const resend = async (email: string) => {
+    try {
+      await sendProjectInvite(projectId, email, "contributor", true);
+      onToast(`Invitation sent to ${email}`);
+      refresh();
+    } catch {
+      onToast("The invitation link could not be sent");
+    }
+  };
+
+  const remove = async () => {
+    if (!removalRow) return;
+    setRemoving(true);
+    try {
+      await removeProjectContributor(projectId, removalRow.email);
+      onToast(`Removed ${removalRow.email} from the project`);
+      setRemovalRow(null);
+      refresh();
+    } catch {
+      onToast("The contributor could not be removed");
+    } finally {
+      setRemoving(false);
     }
   };
 
@@ -813,7 +849,7 @@ function ContributorsPanel({
                     size={38}
                   />
                 ) : null}
-                {!row.ready && (
+                {!row.ready && !row.invitedOnly && (
                   <Button
                     variant="quiet"
                     icon="send"
@@ -822,6 +858,78 @@ function ContributorsPanel({
                     Remind
                   </Button>
                 )}
+                <details
+                  className="admin-project-actions"
+                  ref={actionsRef}
+                  onToggle={(event) => {
+                    const details = event.currentTarget;
+                    // Keep only one row menu open at a time.
+                    if (!details.open) return;
+                    for (const other of document.querySelectorAll(
+                      ".contributor-row details[open]",
+                    )) {
+                      if (other !== details)
+                        (other as HTMLDetailsElement).removeAttribute("open");
+                    }
+                    // The menu may open past the roster box, but it must
+                    // never run off the bottom of the window: flip it upward
+                    // when there is more room above the row than below it.
+                    const menu =
+                      details.querySelector<HTMLElement>(
+                        ".admin-project-actions-menu",
+                      );
+                    if (!menu) return;
+                    const bubbleRect = details.getBoundingClientRect();
+                    const menuHeight = menu.offsetHeight;
+                    const roomBelow = window.innerHeight - bubbleRect.bottom;
+                    const roomAbove = bubbleRect.top;
+                    details.classList.toggle(
+                      "menu-up",
+                      roomBelow < menuHeight + 8 && roomAbove > roomBelow,
+                    );
+                  }}
+                >
+                  <summary aria-label={`Actions for ${row.email}`}>
+                    <Icon name="more" size={20} />
+                  </summary>
+                  <div className="admin-project-actions-menu">
+                    {!row.invitedOnly && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          actionsRef.current?.removeAttribute("open");
+                          setProfileRow(row);
+                        }}
+                      >
+                        <Icon name="person" size={17} />
+                        View profile
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        actionsRef.current?.removeAttribute("open");
+                        void resend(row.email);
+                      }}
+                    >
+                      <Icon name="send" size={17} />
+                      Resend invitation
+                    </button>
+                    <button
+                      type="button"
+                      className="action-danger"
+                      onClick={() => {
+                        actionsRef.current?.removeAttribute("open");
+                        setRemovalRow(row);
+                      }}
+                    >
+                      <Icon name="x" size={17} />
+                      {row.invitedOnly
+                        ? "Revoke invitation"
+                        : "Remove contributor"}
+                    </button>
+                  </div>
+                </details>
               </div>
             ))
           ) : (
@@ -845,6 +953,35 @@ function ContributorsPanel({
             confirmLabel="Send invite"
             onSubmit={(email) => void invite(email)}
             onCancel={() => setInviteOpen(false)}
+          />
+        )}
+        {profileRow && !profileRow.invitedOnly && (
+          <ContributorProfileSheet
+            projectId={projectId}
+            row={profileRow}
+            onClose={() => setProfileRow(null)}
+          />
+        )}
+        {removalRow && (
+          <ConfirmationDialog
+            title={
+              removalRow.invitedOnly
+                ? "Revoke this invitation?"
+                : "Remove this contributor?"
+            }
+            message={
+              removalRow.invitedOnly
+                ? `${removalRow.email} has not joined yet. The pending invitation will be revoked and can be re-sent later.`
+                : `${removalRow.email} will lose access to this project immediately. Their submitted observations remain in the project dataset and their profile is kept.`
+            }
+            confirmLabel={
+              removalRow.invitedOnly
+                ? "Revoke invitation"
+                : "Remove contributor"
+            }
+            destructive
+            onConfirm={() => void remove()}
+            onCancel={() => setRemovalRow(null)}
           />
         )}
       </section>
