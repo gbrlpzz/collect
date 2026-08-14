@@ -192,7 +192,10 @@ async function main() {
     throw new Error("BOOTSTRAP_ADMIN_EMAIL must be a valid email address.");
   }
 
-  const redirectUrls = [appUrl];
+  // The single-deployment layout serves the app at /app (homepage at /).
+  // Magic links return to that path, so it must be in the allow-list.
+  const appPath = `${appUrl}/app`;
+  const redirectUrls = [appUrl, appPath];
   const extraRedirectUrls = process.env.SUPABASE_REDIRECT_URLS?.split(",")
     .map((value) => value.trim())
     .filter(Boolean);

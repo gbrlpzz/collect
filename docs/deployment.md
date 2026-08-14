@@ -160,7 +160,10 @@ Production settings are codified in `supabase/config.toml` (auth section +
 `supabase/templates/*.html`); apply them with `supabase config push` once the
 project is linked. The production project currently has these applied:
 
-- **Site URL / redirect allow-list**: `https://collect-tawny.vercel.app`.
+- **Site URL**: `https://collect-tawny.vercel.app` (single deployment:
+  homepage at `/`, app at `/app`).
+- **Redirect allow-list**: `https://collect-tawny.vercel.app`,
+  `https://collect-tawny.vercel.app/app` (magic links return to the app path).
 - **Invite-only accounts**: `disable_signup = true` — the generic sign-in
   screen can never create accounts; only administrator invitations do.
 - **Bridge codes**: contributor sign-in and device-link codes share one
