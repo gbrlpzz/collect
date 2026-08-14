@@ -65,6 +65,25 @@ Deno.serve(async (request) => {
       }
       const service = serviceClient();
       const codeHash = await sha256(code);
+      // Rate-limit code guessing by source IP so one host cannot brute-force
+      // the 8-character space inside a code's short TTL. The per-code attempt
+      // counter cannot fire for an unknown code (its hash is unknowable
+      // without the code itself), so this shared per-IP budget is the
+      // effective control for the exchange path.
+      const ip =
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
+      const { data: attemptAllowed } = await service
+        .rpc("bump_signin_code_request", { p_ip_hash: await sha256(ip) })
+        .maybeSingle();
+      if (attemptAllowed === false) {
+        return json(
+          {
+            error:
+              "Too many sign-in attempts. Wait a few minutes and try again.",
+          },
+          { status: 429 },
+        );
+      }
       // Resolve the redirect target before consuming the single-use code so a
       // misconfigured deployment cannot burn a valid code and then fail.
       const redirectTo = appEntryUrl();
