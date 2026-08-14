@@ -850,12 +850,25 @@ main [id] {
 /* The floating action dock and collector action bar are position:fixed in
    the mobile app; inside the phone they are anchored to the viewport. */
 .hp-app-viewport .primary-action-dock,
-.hp-app-viewport .admin-context-actions,
+.hp-app-viewport .admin-context-actions {
+  position: absolute !important;
+  left: 14px !important;
+  right: 14px !important;
+  bottom: 14px !important;
+  z-index: 25 !important;
+}
+/* The collector action bar is a floating pill dock in the mobile app
+   (width calc(100% - 24px), 12px side margins, 8px bottom). The app's own
+   mobile rule combines width+margin with left/right insets, producing a
+   right-shifted bar that overflows the phone; pin it to the dock geometry
+   the app renders on a real 375px device. */
 .hp-app-viewport .flow-actions {
   position: absolute !important;
-  left: 16px !important;
-  right: 16px !important;
-  bottom: 14px !important;
+  left: 12px !important;
+  right: 12px !important;
+  bottom: 8px !important;
+  width: auto !important;
+  margin: 0 !important;
   z-index: 25 !important;
 }
 .hp-app-viewport .collector-page,
