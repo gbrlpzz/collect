@@ -13,9 +13,9 @@ import type { Observation, Project } from "../types";
  * recorded anywhere: draft state lives in this component's memory only, and
  * the demo schema trims the location step so no permission is ever asked.
  *
- * The demo can play itself: when it scrolls into view it walks the real UI
- * step by step (typing, answering, saving), and the visitor can take over at
- * any moment — one tap stops the automaton and hands over the phone.
+ * It is a 100% interactive "click it yourself" sandbox where visitors directly
+ * answer questions, tap glove-friendly capsules, test tri-state uncertainty,
+ * and experience the durable local receipt and background synchronization.
  */
 
 /** Demo schema = the real fixture, with location trimmed and photos optional. */
@@ -73,7 +73,7 @@ const NARRATION: Record<string, { title: string; body: string }> = {
   },
   building_type: {
     title: "Answers carry you forward",
-    body: "Single answers auto-advance after about 200 ms; capsule targets are 56 pt, comfortable in gloves.",
+    body: "Single answers auto-advance after about 200 ms; capsule targets are 52 pt, comfortable in gloves.",
   },
   building_condition: {
     title: "Typed values, stable ids",
@@ -120,68 +120,11 @@ const SYNC_PHASES = [
 
 type Phase = "collecting" | "home";
 type SyncStage = 0 | 1 | 2 | 3;
-type AutoState = "idle" | "playing" | "done";
 
 const reducedMotion =
   typeof window !== "undefined" && window.matchMedia
     ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
     : false;
-
-/** React ignores plain `.value` assignment; use the native input setter. */
-function setNativeValue(element: HTMLInputElement, value: string) {
-  const prototype = Object.getPrototypeOf(element);
-  Object.getOwnPropertyDescriptor(prototype, "value")?.set?.call(
-    element,
-    value,
-  );
-  element.dispatchEvent(new Event("input", { bubbles: true }));
-  element.dispatchEvent(new Event("change", { bubbles: true }));
-}
-
-/** One step of the self-playing walk, driving the real controls. */
-function autoStep(root: HTMLElement, lastTitle: string): "continue" | "done" {
-  const title =
-    root
-      .querySelector<HTMLElement>(".flow-body .step-title")
-      ?.textContent?.trim() ?? "";
-  if (!title) return "done";
-  const sameStep = title === lastTitle;
-  const primary = Array.from(
-    root.querySelectorAll<HTMLButtonElement>(".flow-actions button"),
-  ).find((button) =>
-    /continue|skip|save observation/i.test(button.textContent ?? ""),
-  );
-  const option = root.querySelector<HTMLElement>(
-    ".choice-button, .tri-state button",
-  );
-
-  if (title === "Site code") {
-    const input = root.querySelector<HTMLInputElement>("#site_code");
-    if (input) setNativeValue(input, "VA-023");
-    if (primary && !primary.disabled) primary.click();
-    return "continue";
-  }
-  if (title === "Date observed") {
-    const input = root.querySelector<HTMLInputElement>('input[type="date"]');
-    if (input) setNativeValue(input, "2026-08-10");
-    return "continue";
-  }
-  // An unchanged step after an option click is a multi-select or the final
-  // attention check: press the primary action instead of picking more options.
-  if (sameStep && option && primary && !primary.disabled) {
-    primary.click();
-    return "continue";
-  }
-  if (option) {
-    (option as HTMLButtonElement).click();
-    return "continue";
-  }
-  if (primary && !primary.disabled) {
-    primary.click();
-    return "continue";
-  }
-  return "continue";
-}
 
 function StatusBar() {
   return (
@@ -260,12 +203,9 @@ export function FlowDemo() {
   const [observation, setObservation] = useState<Observation | null>(null);
   const [narrativeKey, setNarrativeKey] = useState<string>("site_section");
   const [syncStage, setSyncStage] = useState<SyncStage>(0);
-  const [autoState, setAutoState] = useState<AutoState>("idle");
   const timersRef = useRef<number[]>([]);
   const screenRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
-  const lastTitleRef = useRef("");
-  const interactedRef = useRef(false);
 
   // The narration follows whatever the real flow is showing: watch the step
   // title inside the phone and map it back to the schema field key.
@@ -291,79 +231,9 @@ export function FlowDemo() {
 
   useEffect(() => () => timersRef.current.forEach(clearTimeout), []);
 
-  const stopAuto = () => {
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
-    setAutoState((state) => (state === "playing" ? "idle" : state));
-  };
-
-  // The automaton drives the real UI without hijacking page scroll. It stops
-  // the moment the visitor touches the phone (or presses a key), handing over control.
-  useEffect(() => {
-    if (autoState !== "playing") return;
-    const root = screenRef.current;
-    if (!root) return;
-    const tick = () => {
-      const next = autoStep(root, lastTitleRef.current);
-      lastTitleRef.current =
-        root
-          .querySelector<HTMLElement>(".flow-body .step-title")
-          ?.textContent?.trim() ?? "";
-      if (next === "done" || phase === "home") {
-        setAutoState("done");
-        return;
-      }
-      timersRef.current.push(window.setTimeout(tick, 1250));
-    };
-    timersRef.current.push(window.setTimeout(tick, 900));
-    return stopAuto;
-  }, [autoState, phase, round]);
-
-  // Start the self-play once the demo scrolls into view — unless the
-  // visitor prefers reduced motion or has already interacted.
-  useEffect(() => {
-    const frame = frameRef.current;
-    if (
-      !frame ||
-      reducedMotion ||
-      interactedRef.current ||
-      typeof IntersectionObserver === "undefined"
-    ) {
-      return;
-    }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          observer.disconnect();
-          setAutoState("playing");
-        }
-      },
-      { threshold: 0.3 },
-    );
-    observer.observe(frame);
-    return () => observer.disconnect();
-  }, []);
-
-  // Any real user interaction inside the phone takes over from the automaton.
-  useEffect(() => {
-    const frame = frameRef.current;
-    if (!frame || autoState !== "playing") return;
-    const takeOver = () => {
-      interactedRef.current = true;
-      stopAuto();
-    };
-    frame.addEventListener("pointerdown", takeOver, { capture: true });
-    frame.addEventListener("keydown", takeOver, { capture: true });
-    return () => {
-      frame.removeEventListener("pointerdown", takeOver, { capture: true });
-      frame.removeEventListener("keydown", takeOver, { capture: true });
-    };
-  }, [autoState]);
-
   const reset = () => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
-    lastTitleRef.current = "";
     setDraft({});
     setSavedValues(null);
     setObservation(null);
@@ -371,12 +241,6 @@ export function FlowDemo() {
     setNarrativeKey("site_section");
     setRound((value) => value + 1);
     setPhase("collecting");
-  };
-
-  const watchAgain = () => {
-    reset();
-    interactedRef.current = false;
-    setAutoState("playing");
   };
 
   const handleSubmit = (values: Record<string, unknown>) => {
@@ -398,7 +262,6 @@ export function FlowDemo() {
       timersRef.current.push(
         window.setTimeout(() => {
           setSyncStage(3);
-          setAutoState("done");
           setObservation((current) =>
             current ? { ...current, status: "SYNCED" } : current,
           );
@@ -411,7 +274,6 @@ export function FlowDemo() {
       window.setTimeout(() => setSyncStage(2), 3400),
       window.setTimeout(() => {
         setSyncStage(3);
-        setAutoState("done");
         setObservation((current) =>
           current ? { ...current, status: "SYNCED" } : current,
         );
@@ -425,8 +287,20 @@ export function FlowDemo() {
   return (
     <div className="hp-flow-layout" ref={frameRef}>
       <div className="hp-flow-copy">
+        <div className="section-heading">
+          <p className="eyebrow">Step 2 · Field Collection</p>
+          <h2 id="collection-title">
+            One calm question at a time. Built for zero signal.
+          </h2>
+          <p>
+            The collector presents one question per screen with 52pt touch
+            targets for gloves and sunlight, native date pickers, and raw photo
+            capture. Tap the choices and test the flow yourself.
+          </p>
+        </div>
+
         <div className="hp-story" aria-live="polite">
-          <span className="hp-story-kicker">Active Step Insight</span>
+          <span className="hp-story-kicker">Active Question Insight</span>
           <h3>{narrative.title}</h3>
           <p>{narrative.body}</p>
 
@@ -476,26 +350,13 @@ export function FlowDemo() {
         </div>
 
         <div className="hp-auto-bar">
-          {autoState === "playing" && (
-            <p className="hp-auto-note">
-              <span className="status-dot" aria-hidden="true" /> The demo is
-              playing itself — tap the phone to take over.
-            </p>
-          )}
-          {autoState === "done" && !interactedRef.current && (
-            <button className="text-button" type="button" onClick={watchAgain}>
-              <Icon name="refresh" size={15} /> Watch again
-            </button>
-          )}
-          {autoState === "idle" && (
-            <button className="text-button" type="button" onClick={watchAgain}>
-              <Icon name="play" size={15} /> Watch it fill itself
-            </button>
-          )}
+          <button className="text-button" type="button" onClick={reset}>
+            <Icon name="refresh" size={15} /> Reset flow to start
+          </button>
         </div>
 
         <p className="hp-demo-note">
-          Live app frontend · zero permission asked · nothing is recorded
+          Live app frontend · click it yourself · nothing is recorded
         </p>
       </div>
 
