@@ -1,22 +1,26 @@
 import { useState } from "react";
 import { Button } from "../components/ui";
 import { Icon } from "../components/Icon";
+import { FieldRenderer } from "../components/FieldRenderer";
+import { ATTENTION_CHECKS, ATTENTION_FIELD_KEY } from "../data/attentionChecks";
 import {
-  ATTENTION_CHECKS,
-  ATTENTION_FIELD_KEY,
-  shuffleOptions,
-} from "../data/attentionChecks";
-import { attentionScore, extractAttentionResponse } from "../lib/attention";
+  attentionFieldFor,
+  attentionScore,
+  extractAttentionResponse,
+} from "../lib/attention";
 
 /**
- * Interactive attention-verification explanation. Uses the app's real check bank,
- * real option shuffling, real strip-before-commit logic, and real guess-adjusted formula.
- * Displays the JSON records directly without decorative widgets.
+ * Interactive attention-verification explanation. It renders the check with
+ * the app's real FieldRenderer (the exact component the live collector uses),
+ * built from the real attention bank via attentionFieldFor, then shows the
+ * real strip-before-commit logic and guess-adjusted formula. Update the app
+ * and this demo follows automatically — there is no second copy of the UI.
  */
 export function AttentionDemo() {
   const [checkIndex, setCheckIndex] = useState(() =>
     Math.floor(Math.random() * ATTENTION_CHECKS.length),
   );
+  const [selected, setSelected] = useState<string | null>(null);
   const [answered, setAnswered] = useState<{
     checkKey: string;
     selectedValue: string;
@@ -24,7 +28,7 @@ export function AttentionDemo() {
   } | null>(null);
 
   const check = ATTENTION_CHECKS[checkIndex];
-  const options = shuffleOptions(check);
+  const field = attentionFieldFor(check);
 
   const [stored, setStored] = useState<{
     record: Record<string, unknown>;
@@ -38,33 +42,37 @@ export function AttentionDemo() {
       next = (next + 1) % ATTENTION_CHECKS.length;
     }
     setCheckIndex(next);
+    setSelected(null);
     setAnswered(null);
     setStored(null);
   };
 
-  const handleAnswer = (value: string) => {
-    const correct = value === check.correctValue;
+  const handleAnswer = (value: unknown) => {
+    const optionId = typeof value === "string" ? value : "";
+    const selectedValue = optionId.split(":").slice(1).join(":");
+    const correct = selectedValue === check.correctValue;
     const values: Record<string, unknown> = {
       site_code: "VA-023",
       building_type: "building-house",
       masonry_type: "coursed-ashlar",
-      [ATTENTION_FIELD_KEY]: `${check.key}:${value}`,
+      [ATTENTION_FIELD_KEY]: optionId,
     };
     const { values: cleaned, response } = extractAttentionResponse(values);
     const score = attentionScore([
       { correct, guessProbability: check.guessProbability },
     ]);
 
+    setSelected(optionId);
     setAnswered({
       checkKey: check.key,
-      selectedValue: value,
+      selectedValue,
       correct,
     });
 
     setStored({
       record: {
         check_key: check.key,
-        selected_value: value,
+        selected_value: selectedValue,
         correct,
         attention_failed: !correct,
         guess_probability: check.guessProbability,
@@ -91,19 +99,14 @@ export function AttentionDemo() {
             </p>
           </div>
 
-          <div className="hp-attention-choices">
-            {options.map((option) => (
-              <button
-                type="button"
-                className="choice-button"
-                key={option.value}
-                onClick={() => handleAnswer(option.value)}
-              >
-                <span>{option.label}</span>
-                <span className="choice-check" />
-              </button>
-            ))}
-          </div>
+          <FieldRenderer
+            field={field}
+            value={selected}
+            onChange={handleAnswer}
+            onCaptureLocation={() => undefined}
+            onAddPhoto={() => undefined}
+            required
+          />
         </div>
       ) : (
         stored && (

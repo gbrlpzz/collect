@@ -1,92 +1,127 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { AdminProject, type AdminTab } from "../components/AdminDashboard";
+import { TopBar } from "../components/TopBar";
 import { Icon } from "../components/Icon";
-import { AttentionScoreRing, Button, Eyebrow } from "../components/ui";
+import { Eyebrow } from "../components/ui";
+import { projectFields } from "../data/schemaFixtures";
+import type { ContributorReadiness } from "../lib/adminBackend";
+import type { Project } from "../types";
 
-type AdminTab = "setup" | "contributors" | "export";
+export type { AdminTab };
 
-interface ContributorItem {
-  id: string;
-  name: string;
-  email: string;
-  submissions: number;
-  lastActive: string;
-  attentionScore: number;
-  synced: boolean;
-}
+const adminDemoProject: Project = {
+  id: "valpuesta-fieldwork",
+  organization: "Liminal Research Group",
+  organizationMark: "L",
+  name: "Vernacular buildings — Valpuesta",
+  description:
+    "Occupancy, masonry condition, and structural assessment survey.",
+  instructions:
+    "Record building type, occupancy status, and field photographs.",
+  status: "active",
+  schemaVersion: 1,
+  license: "CC-BY-4.0",
+  contactEmail: "valpuesta@liminal-lab.org",
+  datasetIdentifier: "10.5281/zenodo.0000000",
+  contributors: 3,
+  completeSubmissions: 104,
+  lastReceived: "2026-08-14T09:32:00.000Z",
+  fields: projectFields,
+};
 
-const CONTRIBUTORS: ContributorItem[] = [
+const adminDemoReadinessRows: ContributorReadiness[] = [
   {
-    id: "DEV-VAL-01",
-    name: "Elena R.",
+    id: "user-1",
     email: "elena@liminal-lab.org",
-    submissions: 42,
-    lastActive: "1m ago",
-    attentionScore: 96,
-    synced: true,
+    status: "Active",
+    ready: true,
+    pending: 0,
+    lastSeen: new Date(Date.now() - 1000 * 60).toISOString(),
+    received: 42,
+    attentionScore: 95,
+    attentionChecksTotal: 42,
+    attentionCorrectTotal: 40,
+    consentGranted: true,
   },
   {
-    id: "DEV-VAL-02",
-    name: "Marcus T.",
+    id: "user-2",
     email: "marcus@liminal-lab.org",
-    submissions: 38,
-    lastActive: "4m ago",
+    status: "Active",
+    ready: true,
+    pending: 0,
+    lastSeen: new Date(Date.now() - 1000 * 60 * 4).toISOString(),
+    received: 38,
     attentionScore: 100,
-    synced: true,
+    attentionChecksTotal: 38,
+    attentionCorrectTotal: 38,
+    consentGranted: true,
   },
   {
-    id: "DEV-RTE-09",
-    name: "Claire B.",
+    id: "user-3",
     email: "claire@liminal-lab.org",
-    submissions: 24,
-    lastActive: "12m ago",
+    status: "Syncing",
+    ready: false,
+    pending: 1,
+    lastSeen: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+    received: 24,
     attentionScore: 88,
-    synced: false,
+    attentionChecksTotal: 24,
+    attentionCorrectTotal: 21,
+    consentGranted: true,
   },
 ];
 
-interface SchemaFieldItem {
-  key: string;
-  label: string;
-  type: string;
-  required: boolean;
-  options?: string[];
-}
-
-const SCHEMA_FIELDS: SchemaFieldItem[] = [
-  {
-    key: "site_code",
-    label: "Site code",
-    type: "Text",
-    required: true,
-  },
-  {
-    key: "building_type",
-    label: "Building type",
-    type: "Single choice",
-    required: true,
-    options: ["House", "Barn", "Chapel", "Workshop"],
-  },
-  {
-    key: "building_occupancy",
-    label: "Is the building occupied?",
-    type: "Tri-state",
-    required: true,
-  },
-  {
-    key: "site_photos",
-    label: "Field photographs",
-    type: "Photo",
-    required: false,
-  },
-];
-
-const CODE_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-function randomCode(): string {
-  let result = "";
-  for (let i = 0; i < 8; i++) {
-    result += CODE_CHARS.charAt(Math.floor(Math.random() * CODE_CHARS.length));
-  }
-  return `${result.slice(0, 4)}-${result.slice(4)}`;
+function DarkStatusBar() {
+  return (
+    <div className="hp-status-bar hp-status-bar-dark" aria-hidden="true">
+      <span className="hp-status-time">9:41</span>
+      <span className="hp-status-icons">
+        <svg viewBox="0 0 18 12" width="18" height="12" fill="currentColor">
+          <rect x="0" y="8" width="3" height="4" rx="0.8" />
+          <rect x="4.5" y="5.5" width="3" height="6.5" rx="0.8" />
+          <rect x="9" y="3" width="3" height="9" rx="0.8" />
+          <rect x="13.5" y="0.5" width="3" height="11.5" rx="0.8" />
+        </svg>
+        <svg
+          viewBox="0 0 16 12"
+          width="16"
+          height="12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+        >
+          <path d="M1.5 8.5a9.5 9.5 0 0 1 13 0" />
+          <path d="M4 6.2a6.4 6.4 0 0 1 8 0" />
+          <path d="M6.5 4a3.6 3.6 0 0 1 3 0" />
+        </svg>
+        <svg
+          viewBox="0 0 25 12"
+          width="25"
+          height="12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.1"
+        >
+          <rect x="0.6" y="0.6" width="21" height="10.8" rx="3" />
+          <rect
+            x="2.2"
+            y="2.2"
+            width="15"
+            height="7.6"
+            rx="1.6"
+            fill="currentColor"
+            stroke="none"
+          />
+          <path
+            d="M23.5 4v4a2 2 0 0 0 0-4Z"
+            fill="currentColor"
+            stroke="none"
+          />
+        </svg>
+      </span>
+    </div>
+  );
 }
 
 export function AdminWalkthrough({
@@ -96,209 +131,88 @@ export function AdminWalkthrough({
   initialTab?: AdminTab;
   onTabChange?: (tab: AdminTab) => void;
 }) {
-  const [tab, setTab] = useState<AdminTab>(initialTab);
-  const [selectedKey, setSelectedKey] = useState<string>("building_type");
-  const [deviceCode, setDeviceCode] = useState("K9XP-4M7B");
-  const [copiedCode, setCopiedCode] = useState(false);
-  const [exported, setExported] = useState(false);
+  const [project, setProject] = useState<Project>(adminDemoProject);
+  const [view, setView] = useState<"project" | "list">("project");
 
-  useEffect(() => {
-    setTab(initialTab);
-  }, [initialTab]);
-
-  const handleTabClick = (nextTab: AdminTab) => {
-    setTab(nextTab);
+  const handleTabChange = (nextTab: AdminTab) => {
     onTabChange?.(nextTab);
   };
 
-  const generateNewCode = () => {
-    setDeviceCode(randomCode());
-    setCopiedCode(false);
-  };
-
-  const copyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(deviceCode.replace("-", ""));
-      setCopiedCode(true);
-      setTimeout(() => setCopiedCode(false), 2000);
-    } catch {
-      // fallback
-    }
-  };
-
-  const triggerExport = () => {
-    setExported(true);
-    setTimeout(() => setExported(false), 3000);
-  };
-
-  const selectedField = SCHEMA_FIELDS.find((f) => f.key === selectedKey);
-
   return (
-    <div className="hp-admin-console" data-mode="admin" data-surface="admin">
-      <div className="hp-console-header">
-        <div className="admin-project-header">
-          <div>
-            <div className="admin-project-title-meta">
-              <Eyebrow>Liminal Research Group · Active</Eyebrow>
-            </div>
-            <h1>Vernacular buildings — Valpuesta</h1>
-          </div>
-          <span className="hp-console-badge">Admin</span>
-        </div>
+    <div className="hp-iphone-wrap">
+      <div className="hp-iphone hp-iphone-dark">
+        <div className="hp-iphone-screen hp-iphone-screen-dark">
+          <div className="hp-dynamic-island" aria-hidden="true" />
+          <DarkStatusBar />
 
-        <div className="admin-metrics">
-          <div>
-            <span>Received</span>
-            <strong>104</strong>
-          </div>
-          <div>
-            <span>Contributors</span>
-            <strong>3</strong>
-          </div>
-          <div>
-            <span>Last sync</span>
-            <strong title="Today at 09:32">09:32</strong>
-          </div>
-        </div>
-
-        <div
-          className="admin-tabs"
-          role="tablist"
-          aria-label="Project administration"
-        >
-          {(["setup", "contributors", "export"] as AdminTab[]).map((item) => (
-            <button
-              key={item}
-              type="button"
-              role="tab"
-              aria-selected={tab === item}
-              className={tab === item ? "tab-active" : ""}
-              onClick={() => handleTabClick(item)}
+          <div
+            className="hp-app-viewport"
+            data-mode="admin"
+            data-surface="admin"
+            data-preview="true"
+          >
+            <div
+              className="app-shell"
+              data-mode="admin"
+              data-surface="admin"
+              data-view={view === "list" ? "admin" : "admin-project"}
+              data-preview="true"
             >
-              {item === "setup"
-                ? "1. Form Schema"
-                : item === "contributors"
-                  ? "2. Device Pairing"
-                  : "3. Checkpoint Export"}
-            </button>
-          ))}
-        </div>
-      </div>
+              <TopBar
+                mode="admin"
+                view={view === "list" ? "admin" : "admin-project"}
+                onNavigate={() => setView("list")}
+                isPreview={true}
+              />
 
-      <div className="hp-console-body">
-        {tab === "setup" && (
-          <div className="hp-console-panel">
-            <div className="schema-list">
-              {SCHEMA_FIELDS.map((field, idx) => (
-                <div
-                  className={`schema-field-row ${
-                    selectedKey === field.key ? "schema-field-row-active" : ""
-                  }`}
-                  key={field.key}
-                  onClick={() => setSelectedKey(field.key)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ")
-                      setSelectedKey(field.key);
-                  }}
-                >
-                  <span className="schema-index">{idx + 1}</span>
-                  <div>
-                    <strong>{field.label}</strong>
-                    <span>{field.key}</span>
-                  </div>
-                  <span className="schema-type">{field.type}</span>
-                  <span className="schema-required">
-                    {field.required ? "Required" : "Optional"}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {selectedField && selectedField.options && (
-              <div className="hp-schema-detail-card">
-                <div className="hp-schema-detail-header">
-                  <strong>{selectedField.label}</strong>
-                  <code>{selectedField.key}</code>
-                </div>
-                <div className="hp-schema-options-pills">
-                  {selectedField.options.map((opt) => (
-                    <span className="chip" key={opt}>
-                      {opt}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {tab === "contributors" && (
-          <div className="hp-console-panel">
-            <div className="hp-admin-pairing-box">
-              <span className="builder-config-title">
-                Single-use device link code
-              </span>
-              <div className="hp-pairing-code-display">
-                <span className="hp-pairing-code">{deviceCode}</span>
-                <div className="hp-pairing-controls">
-                  <Button variant="secondary" onClick={copyCode}>
-                    <Icon name={copiedCode ? "check" : "file"} size={13} />
-                    {copiedCode ? "Copied" : "Copy"}
-                  </Button>
-                  <Button variant="secondary" onClick={generateNewCode}>
-                    <Icon name="refresh" size={13} /> New
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <div className="contributor-list">
-              {CONTRIBUTORS.map((c) => (
-                <div className="contributor-row" key={c.id}>
-                  <div className="contributor-copy">
-                    <strong>{c.name}</strong>
-                    <span>
-                      {c.submissions} submissions · {c.lastActive}
-                    </span>
-                  </div>
-                  <AttentionScoreRing
-                    score={c.attentionScore}
-                    total={c.submissions}
+              <div className="main-shell">
+                {view === "list" ? (
+                  <main className="page page-admin">
+                    <div className="page-heading">
+                      <Eyebrow>Projects</Eyebrow>
+                      <h1>Field projects</h1>
+                    </div>
+                    <div className="project-list">
+                      <button
+                        type="button"
+                        className="project-row"
+                        onClick={() => setView("project")}
+                      >
+                        <div className="project-row-copy">
+                          <strong>{project.name}</strong>
+                          <span>{project.organization} · Active</span>
+                        </div>
+                        <div className="project-row-meta">
+                          <span>104 sent</span>
+                          <Icon name="chevron-right" size={16} />
+                        </div>
+                      </button>
+                    </div>
+                  </main>
+                ) : (
+                  <AdminProject
+                    project={project}
+                    previewRows={adminDemoReadinessRows}
+                    initialTab={initialTab}
+                    onTabChange={handleTabChange}
+                    onBack={() => setView("list")}
+                    onToast={() => undefined}
+                    onExport={() => undefined}
+                    onSchemaPublished={(updated) => setProject(updated)}
+                    onToggleStatus={() =>
+                      setProject((p) => ({
+                        ...p,
+                        status: p.status === "active" ? "closed" : "active",
+                      }))
+                    }
                   />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {tab === "export" && (
-          <div className="hp-console-panel">
-            <div className="export-readiness">
-              <div className="readiness-bar">
-                <span style={{ width: "100%" }} />
-              </div>
-              <div>
-                <span>3 of 3 contributors fully synced</span>
-                <strong>104 submissions · uncompressed media ready</strong>
+                )}
               </div>
             </div>
-
-            <div className="admin-context-actions admin-context-actions-single">
-              <Button
-                variant="primary"
-                icon="download"
-                onClick={triggerExport}
-                fullWidth
-              >
-                {exported
-                  ? "Generated archive (1.4 MB)"
-                  : "Export checkpoint archive (ZIP)"}
-              </Button>
-            </div>
           </div>
-        )}
+
+          <div className="hp-home-indicator" aria-hidden="true" />
+        </div>
       </div>
     </div>
   );

@@ -411,6 +411,28 @@ export async function removeProjectContributor(
   });
 }
 
+export async function mintContributorSigninCode(
+  projectId: string,
+  email: string,
+): Promise<{ code: string; expiresInSeconds: number; emailed: boolean }> {
+  const client = requireClient();
+  const data = await invokeFunction(
+    client,
+    "contributor-signin-code",
+    { action: "create", project_id: projectId, email },
+    z.object({
+      code: z.string(),
+      expires_in_seconds: z.number().optional(),
+      emailed: z.boolean().optional(),
+    }),
+  );
+  return {
+    code: String(data?.code ?? ""),
+    expiresInSeconds: Number(data?.expires_in_seconds ?? 1200),
+    emailed: Boolean(data?.emailed),
+  };
+}
+
 export async function sendProjectPing(
   projectId: string,
   contributorId: string,

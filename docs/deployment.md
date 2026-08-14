@@ -113,7 +113,7 @@ Always create a new timestamped migration file in `supabase/migrations/` when up
 ### 2. Deploy Edge Functions
 
 ```bash
-for fn in   health   claim-invites   device-status   link-session   send-admin-invite   send-project-invite   send-project-ping   export-checkpoint   sync-submission   bootstrap-workspace
+for fn in   health   claim-invites   device-status   link-session   contributor-signin-code   send-admin-invite   send-project-invite   send-project-ping   export-checkpoint   sync-submission   bootstrap-workspace
 do
   supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF"
 done
@@ -135,15 +135,30 @@ supabase secrets set   RESEND_API_KEY=re_...   MAIL_FROM='Collect <fieldwork@exa
 
 ## Configuring Supabase Auth
 
-1. In Supabase Studio, open **Authentication → URL Configuration**.
-2. Set **Site URL** to your canonical HTTPS URL (`https://collect.example.org`).
-3. In **Email Templates → Magic Link**, use the template from [`magic-link-email-template.html`](magic-link-email-template.html).
-4. Ensure the template contains:
-   ```html
-   <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email"
-     >Open collect</a
-   >
-   ```
+Production settings are codified in `supabase/config.toml` (auth section +
+`supabase/templates/*.html`); apply them with `supabase config push` once the
+project is linked. The production project currently has these applied:
+
+- **Site URL / redirect allow-list**: `https://collect-tawny.vercel.app`.
+- **Invite-only accounts**: `disable_signup = true` — the generic sign-in
+  screen can never create accounts; only administrator invitations do.
+- **Email OTP**: 6-digit codes, 10-minute expiry (matches the app's entry UI).
+
+The branded email templates (invite, magic link, confirmation, recovery,
+email-change, reauthentication) live in `supabase/templates/`. Customizing
+them through the Supabase API requires either a paid plan or a custom SMTP
+provider; on the free tier with the default mailer, template edits are
+rejected (`Email template modification is not available for free tier
+projects`). Once a custom SMTP provider (e.g. Resend SMTP) is configured,
+run `supabase config push` to publish the templates. Until then, Supabase
+sends its default-styled emails.
+
+### Edge Function secrets
+
+`contributor-signin-code` sends codes through the same Resend helper as
+`send-project-ping` (`RESEND_API_KEY`, `MAIL_FROM`). Delivery is advisory:
+if the secrets are missing the administrator still sees the issued code and
+can share it in person.
 
 ---
 

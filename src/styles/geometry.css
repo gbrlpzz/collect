@@ -310,9 +310,6 @@ h3 {
 .project-footnote {
   margin-top: var(--space-6);
 }
-.privacy-disclosure {
-  margin-top: var(--space-6);
-}
 
 /* Contributor roster actions and the administrator profile sheet */
 .contributor-row .admin-project-actions {
@@ -1593,23 +1590,6 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 .project-instructions {
   margin: 0;
 }
-.privacy-disclosure {
-  overflow: hidden;
-  padding: 0;
-  border: 1px solid var(--separator-light);
-  border-radius: var(--group-radius);
-  background: var(--paper);
-}
-.privacy-disclosure summary {
-  min-height: var(--row-height);
-  gap: 10px;
-  padding: var(--space-3) var(--space-4);
-  color: var(--text);
-  list-style: none;
-}
-.privacy-disclosure summary::-webkit-details-marker {
-  display: none;
-}
 .privacy-summary-copy {
   min-width: 0;
   flex: 1;
@@ -1624,9 +1604,6 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   color: var(--secondary);
   font-size: 0.75rem;
   font-weight: 400;
-}
-.privacy-disclosure[open] summary > svg:last-child {
-  transform: rotate(180deg);
 }
 .privacy-facts {
   margin: 0;
@@ -1780,9 +1757,7 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 .admin-project-actions-menu {
   max-width: min(280px, calc(100vw - 24px));
 }
-.schema-field-row {
-  grid-template-columns: minmax(0, 1fr);
-}
+
 .schema-field-row > div span {
   font-family: inherit;
   font-size: 0.75rem;

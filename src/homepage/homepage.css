@@ -421,7 +421,7 @@ main [id] {
   line-height: 1.45;
 }
 
-/* ---------- Collector Phone Mockup (Step 1) ---------- */
+/* ---------- Shared iPhone Mockup Shell ---------- */
 .hp-iphone-wrap {
   display: flex;
   flex-direction: column;
@@ -431,39 +431,51 @@ main [id] {
 }
 .hp-iphone {
   position: relative;
-  width: 340px;
+  width: 375px;
   max-width: 100%;
-  height: 480px;
-  border-radius: 36px;
+  height: 740px;
+  border-radius: 48px;
   background: #1c1c1e;
   box-shadow:
-    0 20px 48px -10px rgba(0, 0, 0, 0.22),
-    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 28px 70px -14px rgba(0, 0, 0, 0.28),
+    0 8px 24px rgba(0, 0, 0, 0.1),
     inset 0 0 0 1.5px rgba(255, 255, 255, 0.16),
     inset 0 0 2px 2px rgba(0, 0, 0, 0.8);
-  padding: 7px;
+  padding: 9px;
   box-sizing: border-box;
   margin: 0 auto;
+}
+.hp-iphone-dark {
+  background: #000000;
+  box-shadow:
+    0 28px 70px -14px rgba(0, 0, 0, 0.6),
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.2),
+    inset 0 0 2px 2px rgba(0, 0, 0, 0.95);
 }
 .hp-iphone-screen {
   position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  border-radius: 29px;
+  border-radius: 39px;
   background: var(--canvas);
   display: flex;
   flex-direction: column;
   transform: translateZ(0);
   contain: layout paint;
 }
+.hp-iphone-screen-dark {
+  background: #000000;
+  color: #f5f5f7;
+}
 .hp-dynamic-island {
   position: absolute;
-  top: 7px;
+  top: 9px;
   left: 50%;
-  z-index: 30;
-  width: 78px;
-  height: 20px;
+  z-index: 40;
+  width: 92px;
+  height: 24px;
   transform: translateX(-50%);
   border-radius: 999px;
   background: #000000;
@@ -471,38 +483,48 @@ main [id] {
 }
 .hp-status-bar {
   position: relative;
-  z-index: 25;
-  height: 36px;
-  flex: 0 0 36px;
+  z-index: 35;
+  height: 42px;
+  flex: 0 0 42px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 20px;
   color: #000000;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   background: transparent;
 }
+.hp-status-bar-dark {
+  color: #ffffff;
+}
 .hp-status-icons {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 .hp-home-indicator {
   position: absolute;
-  bottom: 5px;
+  bottom: 7px;
   left: 50%;
-  z-index: 35;
-  width: 100px;
-  height: 3.5px;
+  z-index: 40;
+  width: 124px;
+  height: 4px;
   transform: translateX(-50%);
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.7);
   pointer-events: none;
 }
+.hp-iphone-screen-dark .hp-home-indicator {
+  background: rgba(255, 255, 255, 0.6);
+}
 
-/* Collector Viewport strictly contained inside Phone */
+/* =========================================================================
+   
+/* =========================================================================
+   REAL APP EMBEDDED VIEWPORT (AUTHENTIC APPLE HIG MOBILE SURFACES)
+   ========================================================================= */
 .hp-app-viewport {
   position: relative;
   z-index: 10;
@@ -515,6 +537,8 @@ main [id] {
   overflow: hidden;
   transform: translateZ(0);
 }
+
+/* Contained App Shell */
 .hp-app-viewport .app-shell {
   position: relative !important;
   min-height: 100% !important;
@@ -524,22 +548,70 @@ main [id] {
   background: transparent !important;
   overflow: hidden !important;
 }
+
+/* Hide topbar when viewing admin project (matches real mobile app where navigation bar replaces topbar) */
+.hp-app-viewport .topbar-admin-project {
+  display: none !important;
+}
+
+/* Floating Glass TopBar for Contributor / Admin List */
 .hp-app-viewport .topbar {
   position: relative !important;
   top: auto !important;
   left: auto !important;
   right: auto !important;
-  z-index: 10 !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  padding: 0 10px !important;
-  background: var(--canvas) !important;
-  border-bottom: 1px solid var(--separator-light) !important;
+  z-index: 20 !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  padding: 4px 14px 0 !important;
+  background: transparent !important;
+  border-bottom: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 .hp-app-viewport .topbar-inner {
   height: 44px !important;
-  padding: 0 4px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
 }
+.hp-app-viewport .topbar .wordmark,
+.hp-app-viewport .topbar .account-button,
+.hp-app-viewport .topbar .sync-indicator {
+  border: 1px solid var(--separator-light) !important;
+  background: var(--glass) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+}
+.hp-app-viewport .topbar .wordmark {
+  height: 38px !important;
+  padding: 0 14px !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+.hp-app-viewport .topbar .sync-indicator {
+  height: 38px !important;
+  padding: 0 12px !important;
+  border-radius: 999px !important;
+  font-size: 0.75rem !important;
+  font-weight: 550 !important;
+}
+.hp-app-viewport .topbar .account-button {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+}
+
+/* Main Shell Scroll Container */
 .hp-app-viewport .main-shell {
   flex: 1 1 0 !important;
   min-height: 0 !important;
@@ -550,13 +622,305 @@ main [id] {
   -webkit-overflow-scrolling: touch !important;
   padding: 0 !important;
 }
+
+/* Page Layout inside Viewport */
+.hp-app-viewport .page {
+  padding: 12px 16px 100px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  box-sizing: border-box !important;
+}
+
+/* Back Row Navigation Bar */
+.hp-app-viewport .back-row {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 38px !important;
+  margin-bottom: 8px !important;
+}
+.hp-app-viewport .back-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-height: 36px !important;
+  padding: 0 14px !important;
+  border-radius: 999px !important;
+  border: 1px solid var(--separator-light) !important;
+  background: var(--grouped) !important;
+  color: var(--text) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Admin Project Header */
+.hp-app-viewport .admin-project-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin-bottom: 12px !important;
+}
+.hp-app-viewport .admin-project-header h1 {
+  font-size: 1.25rem !important;
+  font-weight: 750 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.2 !important;
+  margin: 2px 0 4px 0 !important;
+}
+.hp-app-viewport .admin-project-header .lede {
+  font-size: 0.8125rem !important;
+  color: var(--secondary) !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+.hp-app-viewport .admin-project-actions {
+  position: relative !important;
+  flex: 0 0 auto !important;
+}
+.hp-app-viewport .admin-project-actions > summary {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 50% !important;
+  background: var(--grouped) !important;
+  border: 1px solid var(--separator-light) !important;
+  color: var(--text) !important;
+  cursor: pointer !important;
+  list-style: none !important;
+}
+.hp-app-viewport .admin-project-actions > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+/* Admin Metrics Grid */
+.hp-app-viewport .admin-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 8px !important;
+  padding: 10px 0 !important;
+  margin-bottom: 12px !important;
+  border-top: 1px solid var(--separator-light) !important;
+  border-bottom: 1px solid var(--separator-light) !important;
+}
+.hp-app-viewport .admin-metrics > div {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+.hp-app-viewport .admin-metrics span {
+  font-size: 0.625rem !important;
+  color: var(--secondary) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  font-weight: 600 !important;
+}
+.hp-app-viewport .admin-metrics strong {
+  font-size: 1.0625rem !important;
+  font-weight: 750 !important;
+  color: var(--text) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* Admin Segmented Pill Tabs */
+.hp-app-viewport .admin-tabs {
+  display: flex !important;
+  width: 100% !important;
+  gap: 4px !important;
+  padding: 3px !important;
+  margin-bottom: 14px !important;
+  border-radius: 999px !important;
+  background: var(--grouped) !important;
+  border: 1px solid var(--separator-light) !important;
+  box-sizing: border-box !important;
+}
+.hp-app-viewport .admin-tabs button {
+  flex: 1 !important;
+  min-height: 32px !important;
+  padding: 0 8px !important;
+  border-radius: 999px !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--secondary) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+.hp-app-viewport .admin-tabs button.tab-active {
+  background: var(--paper) !important;
+  color: var(--text) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Schema Viewer & Inset Lists */
+.hp-app-viewport .schema-list,
+.hp-app-viewport .contributor-list,
+.hp-app-viewport .recent-observation-list,
+.hp-app-viewport .project-list {
+  border-radius: 16px !important;
+  border: 1px solid var(--separator-light) !important;
+  background: var(--paper) !important;
+  overflow: hidden !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+.hp-app-viewport .schema-field-row {
+  display: grid !important;
+  grid-template-columns: 24px minmax(0, 1fr) auto auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 14px !important;
+  min-height: 48px !important;
+  border-bottom: 1px solid var(--separator-light) !important;
+  box-sizing: border-box !important;
+}
+.hp-app-viewport .schema-field-row:last-child {
+  border-bottom: none !important;
+}
+.hp-app-viewport .schema-field-row .schema-index {
+  font-family: ui-monospace, monospace !important;
+  font-size: 0.75rem !important;
+  color: var(--tertiary) !important;
+}
+.hp-app-viewport .schema-field-row strong {
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
+}
+.hp-app-viewport .schema-field-row span {
+  font-size: 0.6875rem !important;
+  color: var(--secondary) !important;
+}
+.hp-app-viewport .schema-type {
+  font-size: 0.6875rem !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  background: var(--grouped) !important;
+  color: var(--secondary) !important;
+}
+.hp-app-viewport .schema-required {
+  font-size: 0.6875rem !important;
+  font-weight: 550 !important;
+  color: var(--tertiary) !important;
+}
+
+/* Floating Glass Bottom Action Dock (Field Home & Admin Context) */
+.hp-app-viewport .primary-action-dock,
+.hp-app-viewport .admin-context-actions {
+  position: absolute !important;
+  z-index: 30 !important;
+  bottom: 14px !important;
+  left: 14px !important;
+  right: 14px !important;
+  width: auto !important;
+  padding: 6px !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  box-shadow:
+    0 10px 30px -4px rgba(0, 0, 0, 0.18),
+    0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  display: block !important;
+}
+.hp-app-viewport .primary-action-dock .button,
+.hp-app-viewport .admin-context-actions .button {
+  min-height: 48px !important;
+  border-radius: 999px !important;
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+  width: 100% !important;
+}
+
+/* Dark Mode Viewport (Admin Console) */
+.hp-app-viewport[data-mode="admin"],
+.hp-app-viewport .app-shell[data-mode="admin"] {
+  background: #000000 !important;
+  color: #f5f5f7 !important;
+}
+.hp-app-viewport[data-mode="admin"] .back-button {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
+}
+.hp-app-viewport[data-mode="admin"] .admin-project-actions > summary {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
+}
+.hp-app-viewport[data-mode="admin"] .admin-metrics {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+.hp-app-viewport[data-mode="admin"] .admin-metrics span {
+  color: #aeaeb2 !important;
+}
+.hp-app-viewport[data-mode="admin"] .admin-metrics strong {
+  color: #ffffff !important;
+}
+.hp-app-viewport[data-mode="admin"] .admin-tabs {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+.hp-app-viewport[data-mode="admin"] .admin-tabs button {
+  color: #aeaeb2 !important;
+}
+.hp-app-viewport[data-mode="admin"] .admin-tabs button.tab-active {
+  background: #2c2c2e !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+}
+.hp-app-viewport[data-mode="admin"] .schema-list,
+.hp-app-viewport[data-mode="admin"] .contributor-list,
+.hp-app-viewport[data-mode="admin"] .project-list {
+  background: #1c1c1e !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+.hp-app-viewport[data-mode="admin"] .schema-field-row,
+.hp-app-viewport[data-mode="admin"] .contributor-row,
+.hp-app-viewport[data-mode="admin"] .project-row {
+  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+}
+.hp-app-viewport[data-mode="admin"] .schema-field-row strong,
+.hp-app-viewport[data-mode="admin"] .contributor-row strong,
+.hp-app-viewport[data-mode="admin"] .project-row strong {
+  color: #ffffff !important;
+}
+.hp-app-viewport[data-mode="admin"] .schema-field-row span,
+.hp-app-viewport[data-mode="admin"] .contributor-row span,
+.hp-app-viewport[data-mode="admin"] .project-row span {
+  color: #aeaeb2 !important;
+}
+.hp-app-viewport[data-mode="admin"] .schema-type {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #aeaeb2 !important;
+}
+.hp-app-viewport[data-mode="admin"] .schema-required {
+  color: #8e8e93 !important;
+}
+.hp-app-viewport[data-mode="admin"] .admin-context-actions {
+  background: rgba(30, 30, 32, 0.88) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.6) !important;
+}
+.hp-app-viewport[data-mode="admin"] .admin-context-actions .button {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Collector Guided Flow Containment */
 .hp-app-viewport .collector-page,
 .hp-app-viewport .collector-flow {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  bottom: auto !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
   z-index: 1 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -566,83 +930,50 @@ main [id] {
   width: 100% !important;
   max-width: 100% !important;
   overflow: hidden !important;
-  justify-content: space-between !important;
+  background: var(--canvas) !important;
 }
 .hp-app-viewport .collector-topbar {
-  flex: 0 0 42px !important;
-  height: 42px !important;
-  min-height: 42px !important;
+  position: relative !important;
+  z-index: 15 !important;
+  flex: 0 0 52px !important;
+  height: 52px !important;
+  min-height: 52px !important;
   display: grid !important;
-  grid-template-columns: 28px minmax(0, 1fr) 44px !important;
+  grid-template-columns: 38px minmax(0, 1fr) 56px !important;
   align-items: center !important;
-  padding: 0 10px !important;
+  padding: 0 12px !important;
   border-bottom: 1px solid var(--separator-light) !important;
   background: var(--canvas) !important;
-  gap: 6px !important;
+  gap: 8px !important;
 }
 .hp-app-viewport .collector-topbar .back-button {
-  width: 28px !important;
-  height: 28px !important;
-  min-height: 28px !important;
-  min-width: 28px !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  min-width: 36px !important;
   padding: 0 !important;
   border-radius: 50% !important;
   background: var(--grouped) !important;
+  border: 1px solid var(--separator-light) !important;
   color: var(--text) !important;
   display: grid !important;
   place-items: center !important;
-  border: none !important;
   cursor: pointer !important;
-  justify-self: start !important;
-}
-.hp-app-viewport .collector-topbar .back-button-label {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  overflow: hidden !important;
-  clip: rect(0 0 0 0) !important;
-  white-space: nowrap !important;
 }
 .hp-app-viewport .collector-topbar .collector-title {
-  min-width: 0 !important;
-  width: 100% !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  justify-content: center !important;
   text-align: center !important;
-  overflow: hidden !important;
 }
 .hp-app-viewport .collector-topbar .collector-title span {
-  font-size: 0.5625rem !important;
+  font-size: 0.625rem !important;
   color: var(--secondary) !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
 }
 .hp-app-viewport .collector-topbar .collector-title strong {
-  font-size: 0.75rem !important;
+  font-size: 0.8125rem !important;
   font-weight: 650 !important;
   color: var(--text) !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
-.hp-app-viewport .collector-topbar .collector-save-state {
-  font-size: 0.5625rem !important;
-  color: var(--secondary) !important;
-  text-align: right !important;
-}
-.hp-app-viewport .flow-progress {
-  flex: 0 0 2px !important;
-  height: 2px !important;
-  width: 100% !important;
-  background: var(--separator-light) !important;
-}
-.hp-app-viewport .flow-progress span {
-  display: block !important;
-  height: 100% !important;
-  background: var(--accent) !important;
 }
 .hp-app-viewport .flow-body {
   flex: 1 1 0 !important;
@@ -651,334 +982,256 @@ main [id] {
   overflow-x: hidden !important;
   display: flex !important;
   flex-direction: column !important;
+  padding: 0 !important;
+  padding-bottom: 96px !important;
 }
 .hp-app-viewport .flow-step {
   flex: 1 1 auto !important;
-  padding: 14px 12px 10px !important;
+  padding: 24px 18px 18px !important;
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
 }
-.hp-app-viewport .flow-step .step-title {
-  font-size: 1.1875rem !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.03em !important;
-  line-height: 1.15 !important;
-  margin: 0 0 4px 0 !important;
-  color: var(--text) !important;
-}
-.hp-app-viewport .flow-step .step-description {
-  font-size: 0.75rem !important;
-  color: var(--secondary) !important;
-  line-height: 1.35 !important;
-  margin: 0 0 8px 0 !important;
-}
 .hp-app-viewport .choice-button {
-  min-height: 38px !important;
-  padding: 0 12px !important;
-  font-size: 0.75rem !important;
+  min-height: 48px !important;
+  padding: 0 18px !important;
+  font-size: 0.875rem !important;
+  font-weight: 550 !important;
   border-radius: 999px !important;
+  border: 1.5px solid var(--separator-light) !important;
+  background: var(--paper) !important;
+}
+.hp-app-viewport .choice-button.choice-selected {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
 }
 .hp-app-viewport .flow-actions {
-  flex: 0 0 auto !important;
-  position: sticky !important;
+  position: absolute !important;
   bottom: 0 !important;
-  z-index: 20 !important;
-  padding: 8px 12px 18px !important;
-  background: rgba(245, 245, 247, 0.94) !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 25 !important;
+  padding: 12px 18px 24px !important;
+  background: rgba(245, 245, 247, 0.92) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
   border-top: 1px solid var(--separator-light) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  gap: 6px !important;
+  gap: 10px !important;
   box-sizing: border-box !important;
 }
 .hp-app-viewport .flow-actions .flow-continue {
   flex: 1 1 auto !important;
-  min-height: 38px !important;
+  min-height: 48px !important;
   border-radius: 999px !important;
-  font-size: 0.8125rem !important;
+  font-size: 0.9375rem !important;
   font-weight: 600 !important;
+  background: #000000 !important;
+  color: #ffffff !important;
 }
 .hp-app-viewport .flow-actions .flow-back {
   flex: 0 0 auto !important;
-  min-height: 38px !important;
-  min-width: 64px !important;
+  min-height: 48px !important;
+  min-width: 80px !important;
   border-radius: 999px !important;
-  font-size: 0.75rem !important;
+  font-size: 0.875rem !important;
 }
+
+/* Field Home View & Cards */
 .hp-app-viewport .page-contributor {
-  padding: 12px 12px 24px !important;
+  padding: 8px 14px 100px !important;
   overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+.hp-app-viewport .page-heading-home {
+  margin-bottom: 2px !important;
+}
+.hp-app-viewport .page-heading-home h1 {
+  font-size: 1.5rem !important;
+  font-weight: 750 !important;
+  letter-spacing: -0.03em !important;
+  margin: 0 !important;
+}
+.hp-app-viewport .project-intro {
+  padding: 14px 16px !important;
+  border-radius: 16px !important;
+  background: var(--paper) !important;
+  border: 1px solid var(--separator-light) !important;
+  margin: 0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+.hp-app-viewport .project-intro h2 {
+  font-size: 1.0625rem !important;
+  font-weight: 700 !important;
+  margin: 2px 0 4px !important;
+}
+.hp-app-viewport .project-intro p {
+  font-size: 0.8125rem !important;
+  color: var(--secondary) !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+.hp-app-viewport .project-list-detail {
+  margin: 0 !important;
+}
+.hp-app-viewport .project-list-detail .list-row {
+  width: 100% !important;
+  padding: 12px 14px !important;
+  border-radius: 14px !important;
+  background: var(--paper) !important;
+  border: 1px solid var(--separator-light) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+.hp-app-viewport .project-list-detail .list-row strong {
+  display: block !important;
+  font-size: 0.8125rem !important;
+  color: var(--text) !important;
+}
+.hp-app-viewport .project-list-detail .list-row span {
+  font-size: 0.6875rem !important;
+  color: var(--secondary) !important;
+}
+.hp-app-viewport .collection-status {
+  margin: 0 !important;
+}
+.hp-app-viewport .collection-status h2 {
+  font-size: 0.75rem !important;
+  font-weight: 650 !important;
+  color: var(--tertiary) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  margin: 0 0 6px 4px !important;
+}
+.hp-app-viewport .recent-observation-list {
+  border-radius: 14px !important;
+  background: var(--paper) !important;
+  border: 1px solid var(--separator-light) !important;
+  overflow: hidden !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+.hp-app-viewport .recent-observation-row {
+  padding: 10px 14px !important;
+  border-bottom: 1px solid var(--separator-light) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+.hp-app-viewport .recent-observation-row:last-child {
+  border-bottom: none !important;
+}
+.hp-app-viewport .recent-observation-row strong {
+  font-size: 0.8125rem !important;
+  color: var(--text) !important;
+}
+.hp-app-viewport .recent-observation-row span {
+  font-size: 0.6875rem !important;
+  color: var(--secondary) !important;
 }
 
-/* ---------- Compact Admin Dashboard Console (Step 2) ---------- */
-.hp-admin-console {
-  width: 100%;
-  border-radius: 18px;
-  background: #1c1c1e;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+/* Floating Glass Bottom Dock (+ Add observation) */
+.hp-app-viewport .primary-action-dock {
+  position: absolute !important;
+  z-index: 30 !important;
+  bottom: 14px !important;
+  left: 14px !important;
+  right: 14px !important;
+  padding: 6px !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
   box-shadow:
-    0 20px 48px -10px rgba(0, 0, 0, 0.45),
-    0 4px 12px rgba(0, 0, 0, 0.2);
-  padding: 18px 16px;
-  color: #f5f5f7;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+    0 10px 30px -4px rgba(0, 0, 0, 0.18),
+    0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  display: block !important;
 }
-.hp-console-header {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.hp-app-viewport .primary-action-dock .button {
+  min-height: 48px !important;
+  border-radius: 999px !important;
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+  width: 100% !important;
+  background: #000000 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
 }
-.hp-admin-console .admin-project-header {
+
+/* ---------- Contributor Field Home: Instructions & Footer polish ---------- */
+.hp-app-viewport .project-guidance {
+  padding: 14px 16px !important;
+  border-radius: 16px !important;
+  background: var(--paper) !important;
+  border: 1px solid var(--separator-light) !important;
+  margin: 0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+.hp-app-viewport .project-guidance h2 {
+  font-size: 0.75rem !important;
+  font-weight: 650 !important;
+  color: var(--tertiary) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  margin: 0 0 4px !important;
+}
+.hp-app-viewport .project-instructions {
+  font-size: 0.8125rem !important;
+  color: var(--secondary) !important;
+  line-height: 1.45 !important;
+  margin: 0 !important;
+}
+/* The app's "by gbrlpzz" credit is part of the real app shell, but it has no
+   place inside a marketing phone mockup — keep the field surface clean. */
+.hp-app-viewport .app-credit {
+  display: none !important;
+}
+
+/* ---------- Demo narrative bar & payload disclosure ---------- */
+.hp-auto-bar {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: 8px;
+  margin-top: 10px;
 }
-.hp-admin-console .admin-project-header h1 {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #ffffff;
-  line-height: 1.2;
-  margin: 2px 0 0;
+.hp-demo-note {
+  margin: 10px 0 0;
+  color: var(--tertiary);
+  font-size: 0.75rem;
 }
-.hp-console-badge {
-  font-size: 0.625rem;
-  font-weight: 650;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #aeaeb2;
+.hp-payload {
+  margin-top: 12px;
+  border-top: 1px solid var(--separator-light);
+  padding-top: 10px;
+  font-size: 0.75rem;
 }
-.hp-admin-console .admin-metrics {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  padding: 8px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-.hp-admin-console .admin-metrics span {
-  font-size: 0.625rem;
-  color: #aeaeb2;
-}
-.hp-admin-console .admin-metrics strong {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: #ffffff;
-  font-variant-numeric: tabular-nums;
-}
-.hp-admin-console .admin-tabs {
-  display: flex;
-  gap: 3px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  padding: 2px;
-}
-.hp-admin-console .admin-tabs button {
-  flex: 1;
-  min-height: 28px;
-  padding: 0 8px;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: #aeaeb2;
-  font-size: 0.6875rem;
+.hp-payload summary {
+  cursor: pointer;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  color: var(--secondary);
 }
-.hp-admin-console .admin-tabs button.tab-active {
-  background: #2c2c2e;
-  color: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-}
-
-.hp-console-body {
-  display: flex;
-  flex-direction: column;
-}
-.hp-console-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.hp-admin-console .schema-list {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-}
-.hp-admin-console .schema-field-row {
-  min-height: 38px;
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto auto;
-  gap: 8px;
-  align-items: center;
-  padding: 6px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  cursor: pointer;
-}
-.hp-admin-console .schema-field-row:last-child {
-  border-bottom: none;
-}
-.hp-admin-console .schema-field-row:hover,
-.hp-admin-console .schema-field-row.schema-field-row-active {
-  background: rgba(255, 255, 255, 0.08);
-}
-.hp-admin-console .schema-index {
-  font-family: ui-monospace, monospace;
-  font-size: 0.625rem;
-  color: #8e8e93;
-}
-.hp-admin-console .schema-field-row strong {
-  font-size: 0.75rem;
-  color: #ffffff;
-}
-.hp-admin-console .schema-field-row span {
-  font-size: 0.625rem;
-  color: #8e8e93;
-}
-.hp-admin-console .schema-type {
-  font-size: 0.6875rem;
-  color: #aeaeb2;
-}
-.hp-admin-console .schema-required {
-  font-size: 0.625rem;
-  color: #8e8e93;
-}
-.hp-admin-console .hp-schema-detail-card {
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-.hp-admin-console .hp-schema-detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-.hp-admin-console .hp-schema-detail-header strong {
-  font-size: 0.75rem;
-  color: #ffffff;
-}
-.hp-admin-console .hp-schema-detail-header code {
-  font-size: 0.625rem;
-  color: #aeaeb2;
-}
-.hp-admin-console .hp-schema-options-pills {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-  margin-top: 6px;
-}
-.hp-admin-console .hp-schema-options-pills .chip {
-  font-size: 0.625rem;
-  padding: 2px 7px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  border-radius: 999px;
-}
-
-.hp-admin-console .hp-admin-pairing-box {
+.hp-payload pre {
+  margin-top: 8px;
   padding: 12px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-.hp-admin-console .builder-config-title {
-  display: block;
+  border-radius: 12px;
+  background: var(--grouped);
   font-size: 0.6875rem;
-  font-weight: 650;
-  color: #aeaeb2;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-bottom: 6px;
+  line-height: 1.5;
+  overflow: auto;
 }
-.hp-admin-console .hp-pairing-code-display {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.hp-admin-console .hp-pairing-code {
-  font-size: 1.25rem;
-  font-weight: 750;
-  color: #ffffff;
-  letter-spacing: 0.08em;
-  font-family: ui-monospace, monospace;
-}
-.hp-admin-console .hp-pairing-controls {
-  display: flex;
-  gap: 4px;
-}
-.hp-admin-console .hp-pairing-controls .button {
-  min-height: 28px;
-  padding: 0 10px;
-  font-size: 0.6875rem;
-}
-
-.hp-admin-console .contributor-list {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-}
-.hp-admin-console .contributor-row {
-  min-height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-.hp-admin-console .contributor-copy strong {
-  display: block;
-  font-size: 0.75rem;
-  color: #ffffff;
-}
-.hp-admin-console .contributor-copy span {
-  font-size: 0.6875rem;
-  color: #aeaeb2;
-}
-
-.hp-admin-console .export-readiness {
-  padding: 12px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.hp-admin-console .readiness-bar {
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-}
-.hp-admin-console .readiness-bar span {
-  display: block;
-  height: 100%;
-  background: #ffffff;
-}
-.hp-admin-console .export-readiness span {
-  font-size: 0.6875rem;
-  color: #aeaeb2;
-}
-.hp-admin-console .export-readiness strong {
-  font-size: 0.8125rem;
-  color: #ffffff;
+.hp-payload p {
+  margin: 8px 0 0;
+  color: var(--secondary);
+  line-height: 1.45;
 }
 
 /* =========================================================================

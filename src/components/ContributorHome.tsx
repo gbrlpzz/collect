@@ -201,54 +201,6 @@ export function ContributorHome({
               </div>
             </section>
           )}
-
-          <details className="privacy-disclosure">
-            <summary>
-              <Icon name="lock" size={17} />
-              <span className="privacy-summary-copy">
-                <strong>Data and privacy</strong>
-              </span>
-              <Icon name="chevron-down" size={16} />
-            </summary>
-            <dl className="privacy-facts">
-              <div>
-                <dt>Observation</dt>
-                <dd>Your answers, save time, timezone, and schema version.</dd>
-              </div>
-              <div>
-                <dt>Location</dt>
-                <dd>
-                  Coordinates, accuracy, and capture time. Projects that declare
-                  a location field require Location Services before collection.
-                </dd>
-              </div>
-              <div>
-                <dt>Device</dt>
-                <dd>
-                  A random install ID plus device, operating system, browser,
-                  screen, connection, battery, and language information used for
-                  provenance and recovery.
-                </dd>
-              </div>
-              <div>
-                <dt>Media</dt>
-                <dd>Original photos and audio you choose to add.</dd>
-              </div>
-              <div>
-                <dt>Access</dt>
-                <dd>
-                  Only the assigned project and its authorized administrators.
-                </dd>
-              </div>
-              <div>
-                <dt>Transfer</dt>
-                <dd>
-                  Data stays on this device until synchronization and goes only
-                  to this project&rsquo;s server.
-                </dd>
-              </div>
-            </dl>
-          </details>
         </>
       ) : (
         <div className="empty-list-state">

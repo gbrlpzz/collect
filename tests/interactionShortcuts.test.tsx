@@ -29,6 +29,7 @@ const authMocks = vi.hoisted(() => ({
   requestDeviceLinkCode: vi
     .fn()
     .mockResolvedValue({ code: "AB2D9KQX", expiresInSeconds: 120 }),
+  requestContributorSigninCode: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("../src/lib/supabaseClient", () => ({
@@ -42,6 +43,7 @@ vi.mock("../src/lib/supabaseClient", () => ({
   setPassword: authMocks.setPassword,
   linkDeviceSession: authMocks.linkDeviceSession,
   requestDeviceLinkCode: authMocks.requestDeviceLinkCode,
+  requestContributorSigninCode: authMocks.requestContributorSigninCode,
 }));
 
 const project: Project = {
@@ -63,8 +65,29 @@ describe("low-friction primary actions", () => {
   it("leaves the entry keyboard closed until the person chooses a field", () => {
     render(<AuthScreen configured role="contributor" />);
 
-    expect(screen.getByLabelText("Email address")).toBeTruthy();
+    expect(screen.getByLabelText(/8-character code/i)).toBeTruthy();
     expect(document.activeElement).toBe(document.body);
+  });
+
+  it("opens on the code entry for contributors and requests a fresh code by email", async () => {
+    render(<AuthScreen configured role="contributor" />);
+    expect(screen.getByLabelText(/8-character code/i)).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /request a new code by email/i }),
+    );
+    const emailInput = screen.getByLabelText("Email address");
+    fireEvent.change(emailInput, {
+      target: { value: "field@example.com" },
+    });
+    fireEvent.submit(emailInput.closest("form")!);
+
+    await waitFor(() =>
+      expect(authMocks.requestContributorSigninCode).toHaveBeenCalledWith(
+        "field@example.com",
+      ),
+    );
+    expect(screen.getByText(/if an account exists/i)).toBeTruthy();
   });
 
   it("signs in with email and password from the focused email field", async () => {
@@ -88,7 +111,7 @@ describe("low-friction primary actions", () => {
   });
 
   it("falls back to a magic link and auto-verifies the email code", async () => {
-    render(<AuthScreen configured role="contributor" />);
+    render(<AuthScreen configured role="admin" />);
     const emailInput = screen.getByLabelText("Email address");
     fireEvent.change(emailInput, { target: { value: "field@example.com" } });
     fireEvent.submit(emailInput.closest("form")!);
@@ -137,12 +160,6 @@ describe("low-friction primary actions", () => {
 
   it("links this device with the code shown on the signed-in device", async () => {
     render(<AuthScreen configured role="contributor" />);
-    fireEvent.click(screen.getByText("Other sign-in options"));
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: /use a code from a signed-in device/i,
-      }),
-    );
     const codeInput = screen.getByLabelText(/8-character code/i);
     fireEvent.change(codeInput, { target: { value: "ab2d9kqx" } });
 
@@ -163,7 +180,9 @@ describe("low-friction primary actions", () => {
     try {
       render(<AuthScreen configured role="contributor" />);
       expect(screen.getByLabelText(/8-character code/i)).toBeTruthy();
-      expect(screen.getByText(/generate a code in profile/i)).toBeTruthy();
+      expect(
+        screen.getByText(/enter the code your administrator issued/i),
+      ).toBeTruthy();
       expect(
         screen.queryByRole("button", { name: /link this device/i }),
       ).toBeNull();

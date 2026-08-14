@@ -36,14 +36,14 @@ afterEach(() => {
  */
 
 describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
-  it("renders the real Collector with the app's own copy", () => {
+  it("renders the real Field Home with the app's own copy", () => {
     render(<FlowDemo />);
-    // The real flow opens on the section intro, then the required identifier.
-    expect(screen.getByText("Site observation")).toBeTruthy();
+    // The real flow opens on the authentic field home screen with project intro and add observation action.
+    expect(screen.getByText("Fieldwork")).toBeTruthy();
+    expect(screen.getByText("Vernacular buildings — Valpuesta")).toBeTruthy();
     expect(
-      screen.getByText("Capture the place before recording its condition."),
+      screen.getByRole("button", { name: /add observation/i }),
     ).toBeTruthy();
-    expect(screen.getByRole("button", { name: /^continue$/i })).toBeTruthy();
     // The iPhone chrome is present.
     expect(document.querySelector(".hp-iphone-screen")).toBeTruthy();
     expect(document.querySelector(".hp-dynamic-island")).toBeTruthy();
@@ -51,6 +51,8 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
 
   it("runs the full flow on the real home screen, syncs to Sent, and records nothing", async () => {
     render(<FlowDemo />);
+    // Start from the authentic Field Home by tapping Add observation
+    fireEvent.click(screen.getByRole("button", { name: /add observation/i }));
     const viewport = () => document.querySelector(".hp-app-viewport")!;
 
     const stepTitle = () =>
@@ -136,9 +138,11 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
     ).toEqual([]);
 
     // Background sync simulation completes on the real home screen.
-    await waitFor(() => expect(screen.getByText("Sent")).toBeTruthy(), {
-      timeout: 8000,
-    });
+    await waitFor(
+      () =>
+        expect(screen.getAllByText("Sent").length).toBeGreaterThanOrEqual(1),
+      { timeout: 8000 },
+    );
     storageEmpty();
   }, 15000);
 });

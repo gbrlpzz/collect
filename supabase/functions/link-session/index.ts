@@ -70,6 +70,15 @@ Deno.serve(async (request) => {
         p_code_hash: codeHash,
       });
       if (typeof userId !== "string") {
+        // Count the failed try so a guessed code invalidates after a small
+        // number of attempts instead of being brute-forced inside its TTL.
+        try {
+          await service.rpc("bump_session_link_attempt", {
+            p_code_hash: codeHash,
+          });
+        } catch {
+          // Best effort; the exchange is rejected either way.
+        }
         return json(
           { error: "That sign-in code is invalid or expired" },
           { status: 404 },

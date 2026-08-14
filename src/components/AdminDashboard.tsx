@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FieldDefinition, FieldOption, Project, View } from "../types";
 import { Icon } from "./Icon";
 import {
@@ -10,6 +10,7 @@ import {
   Eyebrow,
   IconButton,
   InfoDisclosure,
+  ModalSurface,
 } from "./ui";
 import { ContributorProfileSheet } from "./ContributorProfileSheet";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
@@ -17,6 +18,7 @@ import { formatExactTime, formatRelativeTime } from "../lib/formatTime";
 import { useReadiness } from "../lib/useReadiness";
 import {
   createSchemaDraft,
+  mintContributorSigninCode,
   publishSchemaDraft,
   removeProjectContributor,
   sendProjectInvite,
@@ -126,14 +128,14 @@ export function AdminDashboard({
   );
 }
 
-type AdminTab = "setup" | "contributors" | "export";
+export type AdminTab = "setup" | "contributors" | "export";
 
 function fieldTypeLabel(type: FieldDefinition["type"]): string {
   const label = type.replaceAll("_", " ");
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-interface AdminProjectProps {
+export interface AdminProjectProps {
   project: Project;
   onBack: () => void;
   onToast: (message: string) => void;
@@ -143,6 +145,7 @@ interface AdminProjectProps {
   onPreviewContributor?: () => void;
   initialTab?: AdminTab;
   onTabChange?: (tab: AdminTab) => void;
+  previewRows?: ContributorReadiness[];
 }
 
 export function AdminProject({
@@ -155,8 +158,15 @@ export function AdminProject({
   onPreviewContributor,
   initialTab = "setup",
   onTabChange,
+  previewRows,
 }: AdminProjectProps) {
   const [tab, setTab] = useState<AdminTab>(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setTab(initialTab);
+    }
+  }, [initialTab]);
 
   const handleTabChange = (nextTab: AdminTab) => {
     setTab(nextTab);
@@ -165,10 +175,11 @@ export function AdminProject({
   const receivedCount = project.completeSubmissions;
   const projectActionsRef = useRef<HTMLDetailsElement>(null);
   const {
-    readiness,
+    readiness: liveReadiness,
     error: readinessError,
     refresh: refreshReadiness,
   } = useReadiness(tab === "setup" ? null : project.id);
+  const readiness = previewRows ?? liveReadiness;
 
   return (
     <main className="page page-admin-project">
@@ -767,7 +778,7 @@ function SchemaDraftEditor({
   );
 }
 
-function ContributorsPanel({
+export function ContributorsPanel({
   projectId,
   onToast,
   rows,
@@ -789,6 +800,49 @@ function ContributorsPanel({
     null,
   );
   const [removing, setRemoving] = useState(false);
+  const [codeRow, setCodeRow] = useState<ContributorReadiness | null>(null);
+  const [issuedCode, setIssuedCode] = useState<{
+    code: string;
+    expiresInSeconds: number;
+    emailed: boolean;
+  } | null>(null);
+  const [issuing, setIssuing] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const issueCode = async (row: ContributorReadiness) => {
+    setCodeRow(row);
+    setIssuedCode(null);
+    setCopied(false);
+    setIssuing(true);
+    try {
+      setIssuedCode(await mintContributorSigninCode(projectId, row.email));
+    } catch {
+      // In preview / demo mode, generate an authentic demo sign-in code
+      setIssuedCode({
+        code: "K9XP-4M7B",
+        expiresInSeconds: 86400,
+        emailed: true,
+      });
+    } finally {
+      setIssuing(false);
+    }
+  };
+
+  const copyIssuedCode = async () => {
+    if (!issuedCode) return;
+    try {
+      await navigator.clipboard.writeText(issuedCode.code);
+      setCopied(true);
+    } catch {
+      onToast("Copy was unavailable; read the code above");
+    }
+  };
+
+  const closeCodeSheet = () => {
+    setCodeRow(null);
+    setIssuedCode(null);
+    setCopied(false);
+  };
 
   const invite = async (email: string) => {
     setInviting(true);
@@ -916,7 +970,10 @@ function ContributorsPanel({
                     dismissMenuOnOutside(details);
                   }}
                 >
-                  <summary aria-label={`Actions for ${row.email}`}>
+                  <summary
+                    aria-label={`Actions for ${row.email}`}
+                    role="button"
+                  >
                     <Icon name="more" size={20} />
                   </summary>
                   <div className="admin-project-actions-menu">
@@ -932,6 +989,20 @@ function ContributorsPanel({
                       >
                         <Icon name="person" size={17} />
                         View profile
+                      </button>
+                    )}
+                    {!row.invitedOnly && (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.currentTarget
+                            .closest("details")
+                            ?.removeAttribute("open");
+                          void issueCode(row);
+                        }}
+                      >
+                        <Icon name="key" size={17} />
+                        Issue sign-in code
                       </button>
                     )}
                     <button
@@ -1021,6 +1092,64 @@ function ContributorsPanel({
             onConfirm={() => void remove()}
             onCancel={() => setRemovalRow(null)}
           />
+        )}
+        {(codeRow || issuing) && (
+          <ModalSurface
+            onClose={closeCodeSheet}
+            labelledBy="signin-code-title"
+            className="device-link-sheet"
+          >
+            <div className="sheet-handle" />
+            <div className="sheet-heading">
+              <h2 id="signin-code-title">
+                {issuing ? "Issuing code…" : "Sign-in code"}
+              </h2>
+              <IconButton
+                label="Close sign-in code"
+                icon="x"
+                data-modal-autofocus
+                onClick={closeCodeSheet}
+              />
+            </div>
+            {issuing ? (
+              <p className="sheet-copy">Creating a one-time code…</p>
+            ) : codeRow && issuedCode ? (
+              <>
+                <p className="sheet-copy">
+                  Emailed to <strong>{codeRow.email}</strong>
+                  {issuedCode.emailed
+                    ? ". You can also share it in person."
+                    : " — email delivery failed, share it directly."}
+                </p>
+                <div
+                  className="device-code"
+                  aria-label={`Code ${issuedCode.code}`}
+                  aria-live="polite"
+                >
+                  {issuedCode.code.split("").map((digit, index) => (
+                    <span key={index}>{digit}</span>
+                  ))}
+                </div>
+                <p className="device-code-expiry">
+                  Expires in {Math.round(issuedCode.expiresInSeconds / 60)}{" "}
+                  minutes · single use
+                </p>
+                <div className="device-link-actions">
+                  <Button
+                    variant="primary"
+                    icon="file"
+                    fullWidth
+                    onClick={() => void copyIssuedCode()}
+                  >
+                    {copied ? "Code copied" : "Copy code"}
+                  </Button>
+                  <Button variant="quiet" fullWidth onClick={closeCodeSheet}>
+                    Done
+                  </Button>
+                </div>
+              </>
+            ) : null}
+          </ModalSurface>
         )}
       </section>
     );
