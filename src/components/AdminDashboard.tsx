@@ -11,6 +11,7 @@ import {
   IconButton,
   InfoDisclosure,
 } from "./ui";
+import { ContributorProfileSheet } from "./ContributorProfileSheet";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
 import { formatExactTime, formatRelativeTime } from "../lib/formatTime";
 import { useReadiness } from "../lib/useReadiness";
@@ -23,7 +24,6 @@ import {
   type ContributorReadiness,
   type SchemaDraft,
 } from "../lib/adminBackend";
-import { ContributorProfileSheet } from "./ContributorProfileSheet";
 import {
   createFieldForType,
   fieldWithType,
@@ -119,6 +119,8 @@ interface AdminProjectProps {
   onSchemaPublished: (project: Project) => void;
   onToggleStatus: () => void;
   onPreviewContributor?: () => void;
+  initialTab?: AdminTab;
+  onTabChange?: (tab: AdminTab) => void;
 }
 
 export function AdminProject({
@@ -129,8 +131,15 @@ export function AdminProject({
   onSchemaPublished,
   onToggleStatus,
   onPreviewContributor,
+  initialTab = "setup",
+  onTabChange,
 }: AdminProjectProps) {
-  const [tab, setTab] = useState<AdminTab>("setup");
+  const [tab, setTab] = useState<AdminTab>(initialTab);
+
+  const handleTabChange = (nextTab: AdminTab) => {
+    setTab(nextTab);
+    onTabChange?.(nextTab);
+  };
   const receivedCount = project.completeSubmissions;
   const projectActionsRef = useRef<HTMLDetailsElement>(null);
   const {
@@ -212,7 +221,7 @@ export function AdminProject({
             aria-controls={`admin-panel-${item}`}
             tabIndex={tab === item ? 0 : -1}
             className={tab === item ? "tab-active" : ""}
-            onClick={() => setTab(item)}
+            onClick={() => handleTabChange(item)}
             onKeyDown={(event) => {
               if (event.key !== "ArrowLeft" && event.key !== "ArrowRight")
                 return;
@@ -853,14 +862,30 @@ function ContributorsPanel({
                   className="admin-project-actions"
                   ref={actionsRef}
                   onToggle={(event) => {
+                    const details = event.currentTarget;
                     // Keep only one row menu open at a time.
-                    if (!event.currentTarget.open) return;
+                    if (!details.open) return;
                     for (const other of document.querySelectorAll(
                       ".contributor-row details[open]",
                     )) {
-                      if (other !== event.currentTarget)
+                      if (other !== details)
                         (other as HTMLDetailsElement).removeAttribute("open");
                     }
+                    // The menu may open past the roster box, but it must
+                    // never run off the bottom of the window: flip it upward
+                    // when there is more room above the row than below it.
+                    const menu = details.querySelector<HTMLElement>(
+                      ".admin-project-actions-menu",
+                    );
+                    if (!menu) return;
+                    const bubbleRect = details.getBoundingClientRect();
+                    const menuHeight = menu.offsetHeight;
+                    const roomBelow = window.innerHeight - bubbleRect.bottom;
+                    const roomAbove = bubbleRect.top;
+                    details.classList.toggle(
+                      "menu-up",
+                      roomBelow < menuHeight + 8 && roomAbove > roomBelow,
+                    );
                   }}
                 >
                   <summary aria-label={`Actions for ${row.email}`}>

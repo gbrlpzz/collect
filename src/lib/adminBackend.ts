@@ -500,7 +500,7 @@ export function buildReadinessRows(
       : null;
     // Readiness is automatic: every known device must have reported a clean
     // state (durable outbox empty, fieldwork marked complete by the client
-    // heartbeat). Contributors never press a separate “finished syncing”
+    // heartbeat). Contributors never press a separate "finished syncing"
     // control just to make an already-empty queue visible to admins.
     const ready =
       devices.length > 0 &&

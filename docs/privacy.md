@@ -22,6 +22,53 @@ This document explains what data `collect` records, where it is stored, and how 
 
 ## Storage boundaries
 
+```mermaid
+flowchart TB
+  accTitle: Privacy Architecture and Data Trust Boundaries
+  accDescr: Diagram illustrating storage boundaries, cryptographic isolation, and privacy protections across local device storage and the server backend.
+
+  subgraph ClientDevice["📱 Contributor Device (Private Boundary)"]
+    subgraph AppSandbox["Browser / PWA Application Sandbox"]
+      ScopedDB[("IndexedDB: collect-local-v1-userId<br/>• Scoped strictly per account<br/>• Isolated between browser & PWA")]
+      LocalDrafts["Local Drafts & Unsubmitted Blobs<br/>(Never sent to network)"]
+      ConsentCache["Accepted Consent Version Token"]
+    end
+    LocalExport["Manual Local Export ZIP<br/>(Emergency fallback)"]
+    ScopedDB -.-> LocalExport
+  end
+
+  subgraph NetworkTransit["🔒 In-Transit (TLS 1.3 Encryption)"]
+    PayloadStream["Structured Submissions + SHA-256 Hashes"]
+    TUSStream["Resumable Binary Media Streams"]
+  end
+
+  subgraph ServerBackend["☁️ Supabase Cloud Backend (Protected Boundary)"]
+    subgraph EdgeLayer["Edge Functions (Service Role Isolated)"]
+      ConsentGuard["Consent Enforcement Gate<br/>(Rejects submissions if unconsented)"]
+      Stripper["Attention check separation & verification"]
+    end
+
+    subgraph PostgresDB["PostgreSQL Database with RLS"]
+      RLSControl["Row-Level Security Enforcement"]
+      SubmissionsStore[("Finalized Submissions (Immutable)")]
+      AuditStore[("Project Audit Logs")]
+      NoAIGuarantee["Zero AI Training / Zero Third-Party Trackers"]
+    end
+
+    subgraph StorageBuckets["Private Storage"]
+      MediaStore[("collect-media<br/>(Private, Signed URL access only)")]
+    end
+  end
+
+  ScopedDB -->|"User taps Save & Sync triggers"| NetworkTransit
+  NetworkTransit --> ConsentGuard
+  ConsentGuard --> Stripper
+  Stripper --> RLSControl
+  RLSControl --> SubmissionsStore
+  RLSControl --> AuditStore
+  TUSStream --> MediaStore
+```
+
 ### 1. Local device storage (IndexedDB)
 
 - **Account isolation**: Each user account uses an independent IndexedDB database (`collect-local-v1-<userId>`).

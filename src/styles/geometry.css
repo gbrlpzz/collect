@@ -64,7 +64,9 @@
   --tracking-wordmark: -0.045em;
 }
 
-:root[data-collect-surface="admin"] {
+:root[data-collect-surface="admin"],
+.app-shell[data-mode="admin"],
+.hp-iphone-dark {
   color-scheme: dark;
   --canvas: #000000;
   --paper: #1c1c1e;
@@ -93,6 +95,10 @@ html,
 body {
   min-height: 100%;
   background: var(--canvas);
+  /* Installed PWA: never rubber-band the page when there is nothing to
+     scroll. Long screens still scroll normally; only the empty overscroll
+     (the iOS bounce with no overflowing content) is removed. */
+  overscroll-behavior: none;
 }
 html {
   color-scheme: light;
@@ -385,6 +391,12 @@ h3 {
   border-radius: var(--group-radius);
   background: var(--paper);
   box-shadow: none;
+}
+/* The roster's per-row action menu is absolutely positioned below the row;
+   let it escape the grouped box instead of being clipped away. The rounded
+   corners stay clean because the rows themselves carry no background. */
+.contributor-list {
+  overflow: visible;
 }
 .project-row-wrap + .project-row-wrap,
 .list-row + .list-row,
@@ -1316,7 +1328,9 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
     --grouped: rgba(118, 118, 128, 0.2);
     --focus-ring: rgba(0, 0, 0, 0.38);
   }
-  :root[data-collect-surface="admin"] {
+  :root[data-collect-surface="admin"],
+  .app-shell[data-mode="admin"],
+  .hp-iphone-dark {
     --text: #ffffff;
     --secondary: #f2f2f7;
     --tertiary: #d1d1d6;
@@ -1714,7 +1728,7 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 }
 .admin-project-actions-menu {
   position: absolute;
-  top: 48px;
+  top: calc(100% + 8px);
   right: 0;
   z-index: 20;
   width: max-content;
@@ -1724,6 +1738,13 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   border-radius: 13px;
   background: var(--paper);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+/* Contributor-row dropdowns must never be clipped by the grouped roster
+   box: when there is more room above the row than below it, the menu flips
+   upward so every action stays visible. */
+.admin-project-actions.menu-up .admin-project-actions-menu {
+  top: auto;
+  bottom: calc(100% + 8px);
 }
 .admin-project-actions-menu button {
   width: 100%;
@@ -1779,8 +1800,64 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 .contributor-row .button-quiet {
   flex: 0 0 auto;
 }
+.contributor-row .admin-project-actions {
+  flex: 0 0 auto;
+}
+.admin-project-actions-menu .action-danger {
+  color: var(--destructive);
+}
 .contributor-list + .info-disclosure {
   margin-top: var(--space-3);
+}
+
+/* Administrator contributor-profile sheet (research record, devices,
+   attention history — read through the admin's own RLS privileges). */
+.profile-section {
+  margin-bottom: var(--space-5);
+}
+.profile-section h3 {
+  margin-bottom: var(--space-2);
+  color: var(--secondary);
+  font-size: var(--type-footnote);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.profile-attention-list {
+  border-top: 1px solid var(--separator-light);
+}
+.attention-row {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--separator-light);
+}
+.attention-row-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.attention-row-copy strong {
+  overflow: hidden;
+  font-size: var(--type-footnote);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.attention-row-copy span {
+  color: var(--secondary);
+  font-size: var(--type-caption);
+}
+.attention-outcome {
+  flex: 0 0 auto;
+  font-size: var(--type-caption);
+  font-weight: 600;
+}
+.attention-outcome-failed {
+  color: var(--destructive);
 }
 .export-panel > .button {
   margin-top: var(--space-2);

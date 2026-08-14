@@ -39,6 +39,54 @@ The single-flight synchronization manager triggers on:
 5. Mutex lease expiration / recovery.
 6. Manual tap on **Retry**.
 
+```mermaid
+flowchart TD
+  accTitle: Background Synchronization Lifecycle
+  accDescr: Lifecycle coordination flow showing trigger events, reachability checks, multi-tab lease election, media transfer, and error isolation.
+
+  subgraph Triggers["⚡ Execution Triggers"]
+    T1["Save Observation"]
+    T2["App Launch / Resume"]
+    T3["Network 'online' Event"]
+    T4["Scheduled Due-Work Timer"]
+    T5["Expired Lease Recovery"]
+    T6["Manual User 'Retry'"]
+  end
+
+  T1 & T2 & T3 & T4 & T5 & T6 --> Coordinator["Single-Flight Coordinator"]
+
+  Coordinator --> ActiveCheck{Worker active in this tab?}
+  ActiveCheck -->|Yes| EnqueueRequest[Coalesce Request & Yield]
+  ActiveCheck -->|No| ProbeHealth["GET /health Reachability Probe<br/>(Ignores navigator.onLine)"]
+
+  ProbeHealth --> ProbeResult{Healthy 200 OK?}
+  ProbeResult -->|No| Backoff["Exponential Backoff with Jitter"]
+  Backoff --> Sleep["Wait for Next Trigger / Timer"]
+
+  ProbeResult -->|Yes| LeaseElection["Cross-Tab Mutex Lease Election"]
+  LeaseElection --> LeaseGranted{Lease Acquired?}
+  LeaseGranted -->|No / Held by other tab| Sleep
+
+  LeaseGranted -->|Yes| ReadQueue["Read Pending Outbox Items from IndexedDB"]
+
+  ReadQueue --> QueueEmpty{Items in Outbox?}
+  QueueEmpty -->|No| ReleaseLease["Release Mutex Lease"] --> Sleep
+
+  QueueEmpty -->|Yes| ProcessItem["Process Submission Item"]
+  ProcessItem --> TransferMedia["TUS Resumable Media Chunk Upload"]
+  TransferMedia --> Finalize["POST /sync-submission (Signed Finalization)"]
+
+  Finalize --> IngestResult{Response Status}
+  IngestResult -->|200 Success| CommitSync["Mark Local Submission SYNCED<br/>Remove from Outbox Queue"]
+  CommitSync --> ReadQueue
+
+  IngestResult -->|4xx Permanent Conflict| MarkActionReq["Mark Submission ACTION_REQUIRED<br/>(Isolate item; do not block queue)"]
+  MarkActionReq --> ReadQueue
+
+  IngestResult -->|5xx / Network Drop| AbortPass["Release Lease & Schedule Backoff"]
+  AbortPass --> Backoff
+```
+
 ### Coordination and safeguards
 
 - **Reachability check**: Probes the `/health` endpoint with a timeout; ignores `navigator.onLine`.
@@ -56,6 +104,34 @@ The single-flight synchronization manager triggers on:
 - Upload progress tracks per media item.
 - Server validates file size and checksums before completing finalization.
 - Original media files are never recompressed.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Contributor as Device Storage
+  participant Client as TUS Upload Client
+  participant IDB as Local IndexedDB
+  participant Storage as Supabase Storage (collect-media)
+  participant Edge as Edge Function (sync-submission)
+
+  Contributor->>IDB: Select Photo/Audio → Commit Blob immediately
+  IDB->>Client: Background worker computes SHA-256 checksum
+  Client->>Storage: HEAD /storage/v1/object/collect-media/...
+  alt Object already exists with matching size & checksum
+    Storage-->>Client: 200 OK (Skip upload)
+  else Object missing or partial
+    Storage-->>Client: 404 Not Found or 206 Partial Content
+    Client->>Storage: POST /storage/v1/upload/resumable (Initiate TUS session)
+    Storage-->>Client: 201 Created (Upload-Location URL)
+    loop Upload binary chunks
+      Client->>Storage: PATCH Upload-Location (Offset, binary chunk)
+      Storage-->>Client: 204 No Content (Upload-Offset updated)
+    end
+    Storage-->>Client: 200 OK (Upload finalized)
+  end
+  Client->>Edge: Include media_id & verified SHA-256 in finalization payload
+  Edge-->>Client: Verified and attached to submission
+```
 
 ---
 

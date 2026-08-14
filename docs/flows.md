@@ -6,6 +6,51 @@ This document describes the primary user workflows and system state transitions 
 
 ## Contributor workflow
 
+```mermaid
+flowchart TD
+  accTitle: Contributor Field Workflow
+  accDescr: Step-by-step workflow of a contributor from onboarding, offline form filling with attention checks, atomic local commit, to background sync.
+
+  Start([Email Invitation]) --> Auth[Sign In: Magic Link or Link Code]
+  Auth --> Consent[Accept Versioned Consent]
+  Consent --> SyncSchemas[Cache Assigned Projects & Schemas to IndexedDB]
+
+  subgraph Fieldwork["📱 Fieldwork Capture (Fully Offline)"]
+    SyncSchemas --> OpenCollector[Tap 'Add observation']
+    OpenCollector --> ResumeOrNew{Existing Draft?}
+    ResumeOrNew -->|Yes| ResumeDraft[Resume In-Progress Draft]
+    ResumeOrNew -->|No| InitDraft[Initialize New Draft in IndexedDB]
+    ResumeDraft --> QuestionLoop
+    InitDraft --> QuestionLoop
+
+    subgraph QuestionLoop["Guided One-Field Capture"]
+      RenderField[Display Active Field] --> AnswerField[Contributor Answers]
+      AnswerField --> AutoOrManual{Field Type}
+      AutoOrManual -->|Single Choice| AutoAdvance[Auto-Advance Next Field]
+      AutoOrManual -->|Text / Number / Date / Media| TapContinue[Tap Continue]
+      AutoAdvance --> NextCheck{More Fields?}
+      TapContinue --> NextCheck
+      NextCheck -->|Yes| RenderField
+      NextCheck -->|Inline Attention Check| AttentionStep[Answer Instruction Check]
+      AttentionStep --> StripAttention[Strip Check from Research Payload]
+      StripAttention --> NextCheck
+    end
+
+    NextCheck -->|No| ReviewScreen[Final Review & Verification]
+    ReviewScreen --> TapSave[Tap 'Save observation']
+    TapSave --> AtomicCommit[Atomic IndexedDB Transaction<br/>• Payload & Metadata<br/>• Media Blobs<br/>• Outbox Task]
+    AtomicCommit --> LocalReceipt[Show 'Saved on this device']
+  end
+
+  subgraph Transfer["☁️ Background Sync"]
+    LocalReceipt --> HealthProbe{/health OK?}
+    HealthProbe -->|No| RetryBackoff[Exponential Retry Backoff]
+    HealthProbe -->|Yes| MediaUpload[TUS Resumable Media Chunk Upload]
+    MediaUpload --> FinalizeCall[POST /sync-submission]
+    FinalizeCall --> ServerReceipt[Show 'Synced']
+  end
+```
+
 ### 1. Onboarding and sign-in
 
 1. The administrator invites the contributor to a project by email.
@@ -48,6 +93,38 @@ This document describes the primary user workflows and system state transitions 
 
 ## Administrator workflow
 
+```mermaid
+flowchart TD
+  accTitle: Administrator Project and Governance Workflow
+  accDescr: Complete administrator workflow from project creation, schema authoring, live preview, publication, contributor management, readiness tracking, to FAIR checkpoint export.
+
+  Start([Admin Login]) --> CreateProject[Create Project Record]
+  CreateProject --> SetMetadata[Define Metadata: Name, Instructions, License, Contact, DOI]
+  SetMetadata --> DefineSchema[Add Typed Fields: Text, Numbers, Choices, Location, Photos, Audio]
+  DefineSchema --> LivePreview[Test Form in Live Interactive Preview]
+  LivePreview --> Satisfied{Form Ready?}
+  Satisfied -->|No| DefineSchema
+  Satisfied -->|Yes| PublishSchema[Publish Schema Version<br/>🔒 Immutable Data Contract]
+
+  PublishSchema --> InviteTeam[Invite Contributors by Email]
+
+  subgraph Monitor["📊 Field Monitoring & Quality Governance"]
+    InviteTeam --> Dashboard[Open Project Dashboard]
+    Dashboard --> TrackReadiness[Review Contributor Device Readiness<br/>• Active Draft Counts<br/>• Pending Outbox Submissions<br/>• Last Seen Timestamps]
+    TrackReadiness --> CheckSignals[Inspect Advisory Attention Check Summaries]
+    CheckSignals --> SendReminders[Send Fieldwork Ping / Email Reminder if needed]
+  end
+
+  subgraph Export["📦 Data Preservation & Checkpoint"]
+    Dashboard --> SelectCutoff[Select Checkpoint Cutoff Timestamp]
+    SelectCutoff --> EdgeExport[Trigger /export-checkpoint Edge Function]
+    EdgeExport --> FilterComplete[Filter Complete Finalized Submissions ≤ Cutoff]
+    FilterComplete --> BuildBundle[Bundle JSONL, CSV, GeoJSON, Media Originals, Schemas, DataCite 4.4]
+    BuildBundle --> ChecksumManifest[Generate SHA-256 Checksums in manifest.json]
+    ChecksumManifest --> DownloadZIP[Download Immutable FAIR Archive ZIP]
+  end
+```
+
 ### 1. Creating and publishing projects
 
 1. Enter the project name (the only mandatory field).
@@ -76,6 +153,38 @@ This document describes the primary user workflows and system state transitions 
 
 ## Authentication matrix
 
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Admin as Administrator
+  actor Contributor as Contributor
+  participant Safari as Safari Browser
+  participant PWA as Installed iOS PWA
+  participant Edge as Edge Function (link-session)
+  participant Auth as Supabase Auth / DB
+
+  Admin->>Auth: Send Project Invitation to Contributor Email
+  Auth-->>Contributor: Email with Magic Link
+  Contributor->>Safari: Opens Magic Link in Safari
+  Safari->>Auth: Authenticate session token
+  Safari->>Contributor: Displays Web App Interface
+
+  Note over Contributor,PWA: iOS Container Boundary: Installed PWA has separate storage
+  Contributor->>Safari: Taps 'Add to Home Screen'
+  Contributor->>Safari: Opens Profile → "Sign in another device"
+  Safari->>Edge: POST /link-session (action: 'create')
+  Edge->>Auth: Store SHA-256 hash of 8-char code (10m TTL)
+  Edge-->>Safari: Return 8-character code (e.g. ABCD-1234)
+  Safari-->>Contributor: Displays code on screen
+
+  Contributor->>PWA: Opens Home Screen App & enters code
+  PWA->>Edge: POST /link-session (action: 'claim', code)
+  Edge->>Auth: Match hash, burn single-use code, issue session tokens
+  Edge-->>PWA: Return Auth Access & Refresh Tokens
+  PWA->>PWA: Initialize local IndexedDB store (collect-local-v1-userId)
+  PWA-->>Contributor: Ready for offline fieldwork
+```
+
 | Client context                 | Primary method                   | Fallback method               |
 | :----------------------------- | :------------------------------- | :---------------------------- |
 | **Desktop / mobile browser**   | Passwordless magic link          | Password or 6-digit email OTP |
@@ -98,6 +207,33 @@ Mobile viewports require strict keyboard management:
 ---
 
 ## Observation state transitions
+
+```mermaid
+stateDiagram-v2
+  accTitle: Observation Lifecycle State Machine
+  accDescr: States through which an observation passes from initial draft creation to local commitment, outbox queuing, transmission, and final server receipt or action required.
+
+  [*] --> Draft: User taps 'Add observation'
+
+  Draft --> Draft: Autosave field changes to IndexedDB
+  Draft --> [*]: User intentionally discards draft
+
+  Draft --> SavedOnThisDevice: User taps 'Save observation'<br/>(Atomic IndexedDB commit)
+
+  state SavedOnThisDevice {
+    [*] --> WaitingToSend: Outbox entry registered
+    WaitingToSend --> Sending: Health probe OK & Mutex lease acquired
+    Sending --> WaitingToSend: Transient error (Network drop / Backoff)
+  }
+
+  Sending --> Synced: Server issues finalization receipt<br/>(Immutable research record)
+  Sending --> ActionRequired: Permanent conflict (Schema revoked / Media missing)
+
+  ActionRequired --> WaitingToSend: User repairs or retries
+  ActionRequired --> LocalExport: User exports emergency device ZIP
+
+  Synced --> [*]: Preserved in Checkpoint Export
+```
 
 | State                    | Definition                                                 | User action                                |
 | :----------------------- | :--------------------------------------------------------- | :----------------------------------------- |

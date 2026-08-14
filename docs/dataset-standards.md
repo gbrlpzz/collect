@@ -6,6 +6,34 @@ Every `collect` checkpoint export is a self-contained research archive. The arch
 
 ## 1. FAIR principles in collect
 
+```mermaid
+flowchart TD
+  accTitle: FAIR Data Architecture and Checkpoint Pipeline
+  accDescr: Diagram showing how schemas with semantic URIs, field observations, DataCite metadata, and integrity checksums assemble into a FAIR checkpoint.
+
+  subgraph SchemaAuthoring["1. Semantic Schema Authoring"]
+    Fields["Field Definitions<br/>• Types, Units & Labels<br/>• Semantic URIs (Ontologies)"] --> Publish["Publish Schema Version v1..vN<br/>(Immutable Database Contracts)"]
+  end
+
+  subgraph FieldEvidence["2. Structured Field Evidence"]
+    Observations["Field Submissions<br/>(Raw Values & Provenance)"]
+    Media["Original Media Blobs<br/>(Photos & Audio Uncompressed)"]
+    Attention["Attention Check Results<br/>(Advisory Quality Provenance)"]
+  end
+
+  subgraph FAIRAssembler["3. FAIR Packaging Engine (/export-checkpoint)"]
+    Publish & Observations & Media & Attention --> Engine["Export Processing Engine"]
+
+    Engine --> DataOut["Canonical Data Layers<br/>• data/submissions.jsonl<br/>• data/submissions.csv<br/>• data/submissions.geojson<br/>• data/media.csv"]
+    Engine --> MetaOut["FAIR Metadata<br/>• dataset/datacite.json (DataCite 4.4)<br/>• dataset/data-dictionary.json (Ontology)<br/>• dataset/README.md (Citation terms)"]
+    Engine --> SchemaOut["Schema History<br/>• schema/schema-v1.json<br/>• schema/schema-v2.json"]
+    Engine --> MediaOut["Original Media<br/>• media/{sub_id}/{media_id}"]
+
+    DataOut & MetaOut & SchemaOut & MediaOut --> Manifest["manifest.json<br/>(Deterministic SHA-256 Hashes)"]
+    Manifest --> ZIP["📦 Standalone FAIR Checkpoint ZIP<br/>(Permanent Deposit to Zenodo / Dryad)"]
+  end
+```
+
 | Principle             | Implementation in `collect`                                                                                      | Package location                                                  |
 | :-------------------- | :--------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------- |
 | **F — Findable**      | DataCite 4.4 kernel metadata, persistent project identifiers, human-readable README.                             | `dataset/datacite.json`, `dataset/README.md`, `manifest.json`     |

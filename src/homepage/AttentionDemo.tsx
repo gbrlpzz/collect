@@ -9,9 +9,9 @@ import {
 import { attentionScore, extractAttentionResponse } from "../lib/attention";
 
 /**
- * Interactive attention-verification demo. Uses the app's real check bank,
- * its real option shuffling, its real strip-before-commit logic, and its
- * real guess-adjusted score formula — nothing is re-implemented here.
+ * Interactive attention-verification explanation. Uses the app's real check bank,
+ * real option shuffling, real strip-before-commit logic, and real guess-adjusted formula.
+ * Displays the JSON records directly without decorative widgets.
  */
 export function AttentionDemo() {
   const [checkIndex, setCheckIndex] = useState(() =>
@@ -25,7 +25,6 @@ export function AttentionDemo() {
 
   const check = ATTENTION_CHECKS[checkIndex];
   const options = shuffleOptions(check);
-  const previousCheckIndexRef = checkIndex;
 
   const [stored, setStored] = useState<{
     record: Record<string, unknown>;
@@ -33,31 +32,35 @@ export function AttentionDemo() {
     score: number | null;
   } | null>(null);
 
-  const runAnother = () => {
+  const handleNext = () => {
     let next = Math.floor(Math.random() * ATTENTION_CHECKS.length);
-    if (next === previousCheckIndexRef && ATTENTION_CHECKS.length > 1) {
+    if (next === checkIndex && ATTENTION_CHECKS.length > 1) {
       next = (next + 1) % ATTENTION_CHECKS.length;
     }
     setCheckIndex(next);
     setAnswered(null);
+    setStored(null);
   };
 
-  const answer = (value: string) => {
+  const handleAnswer = (value: string) => {
     const correct = value === check.correctValue;
     const values: Record<string, unknown> = {
       site_code: "VA-023",
       building_type: "building-house",
+      masonry_type: "coursed-ashlar",
       [ATTENTION_FIELD_KEY]: `${check.key}:${value}`,
     };
     const { values: cleaned, response } = extractAttentionResponse(values);
     const score = attentionScore([
       { correct, guessProbability: check.guessProbability },
     ]);
+
     setAnswered({
       checkKey: check.key,
       selectedValue: value,
       correct,
     });
+
     setStored({
       record: {
         check_key: check.key,
@@ -76,23 +79,25 @@ export function AttentionDemo() {
   };
 
   return (
-    <div className="hp-attention">
+    <div className="hp-attention-clean">
       {!answered ? (
-        <div className="hp-attention-question">
-          <div className="hp-attention-header">
-            <span className="chip">Quick check</span>
-            <span className="hp-attention-hint">
-              Answer to see the QA proof
-            </span>
+        <div className="hp-attention-flow">
+          <div className="hp-attention-prompt-box">
+            <span className="eyebrow">Interactive Verification Question</span>
+            <h3 className="hp-attention-title">{check.prompt}</h3>
+            <p className="hp-attention-desc">
+              Appears unannounced during surveys. Answer below to inspect
+              payload isolation and scoring.
+            </p>
           </div>
-          <h3>{check.prompt}</h3>
-          <div className="hp-attention-options">
+
+          <div className="hp-attention-choices">
             {options.map((option) => (
               <button
                 type="button"
                 className="choice-button"
                 key={option.value}
-                onClick={() => answer(option.value)}
+                onClick={() => handleAnswer(option.value)}
               >
                 <span>{option.label}</span>
                 <span className="choice-check" />
@@ -102,41 +107,36 @@ export function AttentionDemo() {
         </div>
       ) : (
         stored && (
-          <div className="hp-attention-result">
-            <div className="hp-attention-banner">
-              <span
-                className={`hp-attention-status-badge ${answered.correct ? "hp-status-correct" : "hp-status-incorrect"}`}
-              >
-                <Icon name={answered.correct ? "check" : "x"} size={16} />
-                <span>
-                  {answered.correct
-                    ? "Verified correct against collect's bank"
-                    : "Missed check — recorded as failed"}
-                </span>
-              </span>
-              <div className="hp-score-badge">
-                <span className="hp-score-label">Guess-adjusted score</span>
-                <strong className="hp-score-value">
+          <div className="hp-attention-result-clean">
+            <div className="hp-result-summary">
+              <p>
+                <strong>Result:</strong>{" "}
+                {answered.correct
+                  ? "Correct. Contributor followed the explicit prompt directive."
+                  : "Failed. Contributor tapped without reading the prompt."}{" "}
+                The raw question is evaluated against collect’s server bank with
+                a 25% guess probability. The guess-adjusted attention score is{" "}
+                <strong>
                   {stored.score === null
-                    ? "no score yet"
+                    ? "0/100"
                     : `${Math.round(stored.score * 100)}/100`}
                 </strong>
-              </div>
+                .
+              </p>
             </div>
 
             <div className="hp-record-grid">
               <div className="hp-record">
                 <div className="record-header">
-                  <span className="record-dot record-dot-stored" />
                   <p className="record-label">What the dataset stores</p>
                 </div>
                 <pre className="record-json">
                   {JSON.stringify(stored.record, null, 2)}
                 </pre>
               </div>
+
               <div className="hp-record">
                 <div className="record-header">
-                  <span className="record-dot record-dot-stripped" />
                   <p className="record-label">What never enters the payload</p>
                 </div>
                 <pre className="record-json record-stripped">
@@ -145,22 +145,9 @@ export function AttentionDemo() {
               </div>
             </div>
 
-            <p className="muted">
-              {answered.correct
-                ? "Correct — verified server-side against collect's own bank. This observation contributes one correct answer to the contributor's guess-adjusted attention score:"
-                : "Incorrect — verified server-side against collect's own bank. One missed check lowers the contributor's guess-adjusted attention score:"}{" "}
-              <strong>
-                {stored.score === null
-                  ? "no score yet"
-                  : `${Math.round(stored.score * 100)}/100`}
-              </strong>{" "}
-              (0 = indistinguishable from blind guessing, 100 = perfect). The
-              score is exported with the dataset.
-            </p>
-
             <div className="hp-attention-actions">
-              <Button variant="secondary" onClick={runAnother}>
-                <Icon name="refresh" size={15} /> Run another check
+              <Button variant="secondary" onClick={handleNext}>
+                <Icon name="refresh" size={15} /> Try another question
               </Button>
             </div>
           </div>
