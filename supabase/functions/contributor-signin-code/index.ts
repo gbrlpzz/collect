@@ -7,6 +7,7 @@ import {
 } from "../_shared/auth.ts";
 import { sha256 } from "../_shared/hash.ts";
 import { sendEmail } from "../_shared/mail.ts";
+import { bumpIpRateLimit } from "../_shared/rateLimit.ts";
 
 const CODE_TTL_SECONDS = 20 * 60;
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -130,13 +131,7 @@ Deno.serve(async (request) => {
       }
       // Per-IP throttle so one source cannot hammer many addresses. Answer
       // uniformly either way so the screen never reveals the limit.
-      const ip =
-        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-          "";
-      const { data: allowed } = await service
-        .rpc("bump_signin_code_request", { p_ip_hash: await sha256(ip) })
-        .maybeSingle();
-      if (allowed === false) {
+      if (!(await bumpIpRateLimit(request, service))) {
         return json({ accepted: true });
       }
       // Self-service is invite-only: mint only for addresses that already

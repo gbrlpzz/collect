@@ -73,5 +73,20 @@ describe("Security hardening", () => {
       );
       expect(content).toContain("alter column organization_id drop not null");
     });
+
+    it("removes the inert per-code failed-attempt counter", () => {
+      const content = readFileSync(
+        resolve(
+          __dirname,
+          "../supabase/migrations/20260814152000_remove_vestigial_attempt_counter.sql",
+        ),
+        "utf-8",
+      );
+      expect(content).toContain(
+        "drop function if exists public.bump_session_link_attempt(text)",
+      );
+      expect(content).toContain("drop column if exists attempts");
+      expect(content).not.toContain("and attempts < 10");
+    });
   });
 });

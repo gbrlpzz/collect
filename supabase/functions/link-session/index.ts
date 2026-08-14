@@ -1,6 +1,7 @@
 import { corsHeaders, json, options } from "../_shared/cors.ts";
 import { errorMessage, requireUser, serviceClient } from "../_shared/auth.ts";
 import { appEntryUrl } from "../_shared/config.ts";
+import { bumpIpRateLimit } from "../_shared/rateLimit.ts";
 import { sha256 } from "../_shared/hash.ts";
 
 function randomCode(): string {
@@ -64,18 +65,9 @@ Deno.serve(async (request) => {
         );
       }
       const service = serviceClient();
-      const codeHash = await sha256(code);
-      // Rate-limit code guessing by source IP so one host cannot brute-force
-      // the 8-character space inside a code's short TTL. The per-code attempt
-      // counter cannot fire for an unknown code (its hash is unknowable
-      // without the code itself), so this shared per-IP budget is the
-      // effective control for the exchange path.
-      const ip =
-        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
-      const { data: attemptAllowed } = await service
-        .rpc("bump_signin_code_request", { p_ip_hash: await sha256(ip) })
-        .maybeSingle();
-      if (attemptAllowed === false) {
+      // A short-lived code is unguessable in practice (32^8), but a per-IP
+      // budget still keeps one host from hammering the exchange endpoint.
+      if (!(await bumpIpRateLimit(request, service))) {
         return json(
           {
             error:
@@ -84,6 +76,7 @@ Deno.serve(async (request) => {
           { status: 429 },
         );
       }
+      const codeHash = await sha256(code);
       // Resolve the redirect target before consuming the single-use code so a
       // misconfigured deployment cannot burn a valid code and then fail.
       const redirectTo = appEntryUrl();
@@ -93,15 +86,6 @@ Deno.serve(async (request) => {
         p_code_hash: codeHash,
       });
       if (typeof userId !== "string") {
-        // Count the failed try so a guessed code invalidates after a small
-        // number of attempts instead of being brute-forced inside its TTL.
-        try {
-          await service.rpc("bump_session_link_attempt", {
-            p_code_hash: codeHash,
-          });
-        } catch {
-          // Best effort; the exchange is rejected either way.
-        }
         return json(
           { error: "That sign-in code is invalid or expired" },
           { status: 404 },
