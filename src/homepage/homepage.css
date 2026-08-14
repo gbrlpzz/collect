@@ -1682,16 +1682,7 @@ main [id] {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.hp-package-file-note {
-  margin-left: auto;
-  color: var(--tertiary);
-  font-style: normal;
-  font-size: 0.5625rem;
-  font-weight: 500;
-  padding: 2px 5px;
-  border-radius: 3px;
-  background: var(--grouped);
-}
+
 .hp-package-icon {
   width: 13px;
   height: 13px;

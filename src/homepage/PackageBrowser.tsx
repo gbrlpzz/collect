@@ -78,9 +78,6 @@ export function PackageBrowser() {
                 >
                   <FileTypeIcon path={file.path} />
                   <span className="hp-package-file-name">{file.path}</span>
-                  {file.note && (
-                    <span className="hp-package-file-note">{file.note}</span>
-                  )}
                 </button>
               );
             })}
@@ -108,11 +105,6 @@ export function PackageBrowser() {
                     >
                       <FileTypeIcon path={file.path} />
                       <span className="hp-package-file-name">{name}</span>
-                      {file.note && (
-                        <span className="hp-package-file-note">
-                          {file.note}
-                        </span>
-                      )}
                     </button>
                   );
                 })}
@@ -134,9 +126,6 @@ export function PackageBrowser() {
                 >
                   <FileTypeIcon path={file.path} />
                   <span className="hp-package-file-name">{file.path}</span>
-                  {file.note && (
-                    <span className="hp-package-file-note">{file.note}</span>
-                  )}
                 </button>
               );
             })}

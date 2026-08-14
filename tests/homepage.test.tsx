@@ -268,6 +268,26 @@ describe("PreviewForm — research preview email CTA", () => {
 });
 
 describe("HomepageApp — promotional home with email CTA", () => {
+  it("treats an RLS-rejected duplicate as already-listed", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({
+        code: "42501",
+        message: "new row violates row-level security policy",
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<PreviewForm />);
+    fireEvent.change(screen.getByLabelText(/work email/i), {
+      target: { value: "dup@lab.org" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /request access/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/already on the preview list/i)).toBeTruthy(),
+    );
+  });
+
   it("prefills the research-preview form from the hero capture", async () => {
     const { container } = render(<HomepageApp />);
     const heroInput = container.querySelector(

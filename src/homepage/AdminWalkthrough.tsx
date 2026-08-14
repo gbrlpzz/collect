@@ -21,7 +21,7 @@ const adminDemoProject: Project = {
   status: "active",
   schemaVersion: 1,
   license: "CC-BY-4.0",
-  contactEmail: "valpuesta@liminal-lab.org",
+  contactEmail: "valpuesta@example.com",
   contributors: 3,
   completeSubmissions: 104,
   lastReceived: "2026-08-14T09:32:00.000Z",
@@ -31,7 +31,7 @@ const adminDemoProject: Project = {
 const adminDemoReadinessRows: ContributorReadiness[] = [
   {
     id: "user-1",
-    email: "elena@liminal-lab.org",
+    email: "elena@example.com",
     status: "Active",
     ready: true,
     pending: 0,
@@ -44,7 +44,7 @@ const adminDemoReadinessRows: ContributorReadiness[] = [
   },
   {
     id: "user-2",
-    email: "marcus@liminal-lab.org",
+    email: "marcus@example.com",
     status: "Active",
     ready: true,
     pending: 0,
@@ -57,7 +57,7 @@ const adminDemoReadinessRows: ContributorReadiness[] = [
   },
   {
     id: "user-3",
-    email: "claire@liminal-lab.org",
+    email: "claire@example.com",
     status: "Syncing",
     ready: false,
     pending: 1,

@@ -56,13 +56,25 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
           source: "homepage",
         }),
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        // PostgREST surfaces RLS rejections (e.g. duplicates) as 401 with a
+        // 42501 code in the body — surface the code so the caller can tell a
+        // duplicate from a real outage.
+        let code = "";
+        try {
+          const data = (await response.json()) as { code?: string };
+          code = data?.code ?? "";
+        } catch {
+          // non-JSON error body
+        }
+        throw new Error(`HTTP ${response.status}${code ? `:${code}` : ""}`);
+      }
       setSent(true);
     } catch (error) {
-      const status =
-        error instanceof Error ? Number(error.message.replace(/\D/g, "")) : 0;
+      const message = error instanceof Error ? error.message : "";
+      const isDuplicate = message.includes("42501") || message.includes("409");
       setError(
-        status === 409 || status === 42501
+        isDuplicate
           ? "This address is already on the preview list — we'll be in touch."
           : "Couldn't reach the server right now. Please try again in a moment.",
       );
@@ -102,7 +114,7 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
           autoComplete="email"
           required
           maxLength={320}
-          placeholder="you@your-institution.org"
+          placeholder="you@example.com"
         />
       </label>
       <label className="field">

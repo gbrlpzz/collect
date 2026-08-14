@@ -98,7 +98,7 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
             autoComplete="email"
             required
             maxLength={320}
-            placeholder="you@institution.org"
+            placeholder="you@example.com"
             aria-label="Institutional email"
           />
           <button className="button button-primary" type="submit">
