@@ -6,64 +6,17 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
-    <script>
-      // Two installable identities share this shell. The role is fixed before
-      // React paints so the PWA chrome never follows the device appearance.
-      (function () {
-        var role = new URLSearchParams(window.location.search).get("role");
-        var admin = role === "admin";
-        var surface = admin ? "admin" : "contributor";
-        document.documentElement.dataset.collectSurface = surface;
-        document.documentElement.style.colorScheme = admin ? "dark" : "light";
-
-        var manifest = document.createElement("link");
-        manifest.rel = "manifest";
-        manifest.href = admin
-          ? "/manifest-admin.webmanifest"
-          : "/manifest.webmanifest";
-        document.head.appendChild(manifest);
-
-        var theme = document.createElement("meta");
-        theme.name = "theme-color";
-        theme.content = admin ? "#000000" : "#f5f5f7";
-        document.head.appendChild(theme);
-
-        var statusBar = document.createElement("meta");
-        statusBar.name = "apple-mobile-web-app-status-bar-style";
-        statusBar.content = admin ? "black-translucent" : "default";
-        document.head.appendChild(statusBar);
-
-        var touch = document.createElement("link");
-        touch.rel = "apple-touch-icon";
-        touch.href = admin
-          ? "/apple-touch-icon-admin.png"
-          : "/apple-touch-icon.png";
-        document.head.appendChild(touch);
-
-        var icon = document.createElement("link");
-        icon.rel = "icon";
-        icon.type = "image/svg+xml";
-        icon.href = admin ? "/icon-admin.svg" : "/icon.svg";
-        document.head.appendChild(icon);
-
-        var title = document.createElement("meta");
-        title.name = "apple-mobile-web-app-title";
-        title.content = admin ? "collect Admin" : "collect";
-        document.head.appendChild(title);
-        document.title = admin
-          ? "collect Admin — field operations"
-          : "collect — trustworthy field evidence, offline on any phone";
-      })();
-    </script>
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#f5f5f7" />
     <meta
       name="description"
       content="An offline-first field collection app for research teams. Record structured observations, raw photos, and GPS coordinates on any phone beyond cellular reach."
     />
     <title>collect — trustworthy field evidence, offline on any phone</title>
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/homepage/main.tsx"></script>
   </body>
 </html>

@@ -92,21 +92,21 @@ flowchart TB
 
 ## Client code boundaries
 
-| Path                          | Responsibility                                                                                                          |
-| :---------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
-| `src/App.tsx`                 | Root shell, surface routing, and code-split chunk loading                                                               |
-| `src/app/useAppController.ts` | Session lifecycle, active project selection, and state orchestration                                                    |
-| `src/app/submission.ts`       | Local validation and atomic commit transaction boundary                                                                 |
-| `src/app/syncController.ts`   | Queue execution, upload workers, and item failure isolation                                                             |
-| `src/app/useSyncLifecycle.ts` | Lifecycle event listeners and single-flight sync coordination                                                           |
-| `src/app/recovery.ts`         | Local ZIP package builder for unsynced device data                                                                      |
-| `src/components/`             | Contributor and administrator feature views                                                                             |
-| `src/components/ui/`          | Shared accessible UI controls, dialogs, and sheets                                                                      |
-| `src/lib/localDatabase.ts`    | IndexedDB transaction wrappers and database initialization                                                              |
-| `src/lib/localStore.ts`       | Domain operations, media blob storage, outbox, and migrations                                                           |
-| `src/lib/syncProtocol.ts`     | Shared synchronization types and protocol definitions                                                                   |
-| `src/styles/`                 | Foundation CSS tokens, geometry layers, and mobile viewport styling                                                     |
-| `src/homepage/`               | Marketing homepage (`homepage.html`), a second Vite entry that mounts the app's real components and links to these docs |
+| Path                          | Responsibility                                                                                                       |
+| :---------------------------- | :------------------------------------------------------------------------------------------------------------------- |
+| `src/App.tsx`                 | Root shell, surface routing, and code-split chunk loading                                                            |
+| `src/app/useAppController.ts` | Session lifecycle, active project selection, and state orchestration                                                 |
+| `src/app/submission.ts`       | Local validation and atomic commit transaction boundary                                                              |
+| `src/app/syncController.ts`   | Queue execution, upload workers, and item failure isolation                                                          |
+| `src/app/useSyncLifecycle.ts` | Lifecycle event listeners and single-flight sync coordination                                                        |
+| `src/app/recovery.ts`         | Local ZIP package builder for unsynced device data                                                                   |
+| `src/components/`             | Contributor and administrator feature views                                                                          |
+| `src/components/ui/`          | Shared accessible UI controls, dialogs, and sheets                                                                   |
+| `src/lib/localDatabase.ts`    | IndexedDB transaction wrappers and database initialization                                                           |
+| `src/lib/localStore.ts`       | Domain operations, media blob storage, outbox, and migrations                                                        |
+| `src/lib/syncProtocol.ts`     | Shared synchronization types and protocol definitions                                                                |
+| `src/styles/`                 | Foundation CSS tokens, geometry layers, and mobile viewport styling                                                  |
+| `src/homepage/`               | Marketing homepage (`index.html`), the root Vite entry that mounts the app's real components and links to these docs |
 
 Feature components never query IndexedDB directly or invoke privileged server endpoints without an adapter. Contributor views do not download administrator code chunks.
 

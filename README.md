@@ -147,7 +147,7 @@ npm run dev
 ```
 
 Without backend environment variables the app opens a clearly labeled local
-interface preview. The marketing homepage (`homepage.html`) is a second Vite
+interface preview. The marketing homepage (`index.html`) is the root Vite
 entry in the same bundle; it mounts the app's real components, so interface
 changes mirror into its live demo.
 
