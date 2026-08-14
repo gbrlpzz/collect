@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { collectEnvironment, type EnvironmentInfo } from "../lib/deviceInfo";
+import { Icon } from "../components/Icon";
 
 /**
  * Live provenance card: reads the visitor's device with the app's own
@@ -44,23 +45,36 @@ export function ProvenanceCard() {
 
   return (
     <div className="hp-provenance">
-      <div className="hp-provenance-status">
-        <span className="status-dot" aria-hidden="true" />
-        <span>
-          {environment ? "Reading your device — live" : "Reading your device…"}
-        </span>
+      <div className="hp-provenance-header">
+        <div className="hp-provenance-status">
+          <span className="status-dot" aria-hidden="true" />
+          <span>
+            {environment
+              ? "Reading your device — live"
+              : "Reading your device…"}
+          </span>
+        </div>
+        <span className="hp-provenance-badge">Automatic Provenance</span>
       </div>
+
       <div className="hp-provenance-facts">
         {rows.map(([label, value]) => (
-          <div key={label}>
-            <span>{label}</span>
-            <strong>{value}</strong>
+          <div className="hp-provenance-fact-row" key={label}>
+            <span className="hp-fact-label">{label}</span>
+            <strong className="hp-fact-value">{value}</strong>
           </div>
         ))}
       </div>
-      <pre className="record-json">
-        {JSON.stringify(environment ?? { reading: true }, null, 2)}
-      </pre>
+
+      <details className="hp-payload hp-provenance-payload">
+        <summary>
+          <Icon name="file" size={15} />
+          <span>View raw provenance JSON</span>
+        </summary>
+        <pre className="record-json">
+          {JSON.stringify(environment ?? { reading: true }, null, 2)}
+        </pre>
+      </details>
     </div>
   );
 }

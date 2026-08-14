@@ -1,105 +1,109 @@
 # User and system flows
 
-This document describes the primary workflows and the system transitions that support them. Interface labels are written in **bold**; implementation states and identifiers use `code`.
+This document describes the primary user workflows and system state transitions in `collect`. UI labels appear in **bold**; code symbols and states appear in `code`.
 
-## Contributor flow
+---
 
-### First use
+## Contributor workflow
 
-1. An administrator invites the contributor to a project.
-2. The contributor opens the invitation or requests a passwordless email link.
-3. After authentication, the contributor reviews the current consent summary and explicitly accepts or declines.
-4. On iPhone, the contributor can add the app to the Home Screen. The installed app uses a separate iOS storage container and therefore requires its own session.
-5. The contributor opens the installed app and enters a single-use device code created from a signed-in browser or another signed-in device.
-6. The app persists assigned project metadata and the published schema for offline use.
+### 1. Onboarding and sign-in
 
-### Collect an observation
+1. The administrator invites the contributor to a project by email.
+2. The contributor opens the link and authenticates via magic link or password.
+3. The contributor reviews the privacy disclosure and accepts the versioned consent.
+4. On iOS, the contributor adds `collect` to the Home Screen. Because iOS runs installed web apps in an isolated storage container, the app requires its own authentication session.
+5. The contributor opens the installed app and enters an 8-character device code generated from the signed-in browser (**Profile → Sign in another device**).
+6. The app downloads assigned project definitions and published schemas into IndexedDB for offline use.
 
-1. Tap **Add observation**.
-2. The client creates or resumes a durable draft.
-3. Complete one field at a time. Single-choice fields may advance automatically; text, number, media, and multiple-choice fields wait for an explicit action.
-4. Leave an optional field empty and tap **Skip**. Optional fields do not receive automatic keyboard focus.
-5. If the schema declares a location field, the client requires contextual location access before showing any questions; otherwise it never requests location.
-6. At any point, tap **Home** to leave the flow while keeping the draft locally. From Home, **Resume observation** continues it; **Discard and start new** confirms deletion of the draft and its draft-scoped media.
-7. Drafts never enter the synchronization outbox and are never uploaded as observations.
-8. Tap **Save observation**.
-9. The client validates required fields and commits the submission, media, and outbox operations atomically.
-10. Only after that transaction succeeds does the interface show **Saved on this device**.
+### 2. Capturing an observation
 
-### Synchronize
+1. Tap **Add observation** on the project card.
+2. The client opens or resumes a durable draft in IndexedDB.
+3. Complete one field at a time. Single-choice fields advance automatically; text, numbers, dates, and media wait for manual advance (**Continue**).
+4. Skip empty optional fields by tapping **Skip**. The software keyboard never focuses empty optional fields automatically.
+5. If the schema includes a location field, the app requests location permissions before questions begin.
+6. Tap **Home** at any time to pause. The draft remains safe locally. From the home screen, tap **Resume observation** or **Discard and start new**.
+7. Tap **Save observation** on the final screen.
+8. The client validates required fields and commits the submission, media blobs, and outbox operations in a single IndexedDB transaction.
+9. The interface displays **Saved on this device** only after this local transaction completes.
 
-1. The lifecycle controller detects due outbox work.
-2. The client probes the server rather than trusting `navigator.onLine`.
-3. A cross-tab lease elects one synchronization owner.
-4. The client sends metadata, resumes or starts media uploads, confirms media, and requests finalization.
-5. The server validates identity, project access, consent, schema version, payload integrity, media completeness, and idempotency.
-6. The server returns a receipt naming the finalized submission.
-7. The client verifies the receipt identity and changes the local record to `SYNCED`.
-8. Failures classified as transient retry automatically. Permanent conflicts become `ACTION_REQUIRED` and remain visible until resolved.
+### 3. Background synchronization
 
-### Recover local work
+1. The lifecycle manager detects pending work in the outbox.
+2. The client checks server reachability via the `/health` endpoint.
+3. A cross-tab mutex lease elects one active sync worker.
+4. The client uploads metadata, sends media files via resumable TUS, and calls the finalization endpoint.
+5. The server validates contributor consent, project membership, payload hashes, and media completeness.
+6. The server returns a signed finalization receipt.
+7. The client matches the receipt and updates the local record status to `SYNCED`.
+8. Transient errors retry automatically with exponential backoff. Irrecoverable conflicts transition to `ACTION_REQUIRED`.
 
-1. Open **Profile → Data and privacy → Export local data copy**, or use recovery mode before authentication if the database cannot be opened normally.
-2. The client reads durable stores directly and packages unsynced submissions, media, drafts, projects, outbox operations, and receipts.
-3. The resulting recovery export stays local to the user-selected destination. It is not uploaded automatically and is not equivalent to a server checkpoint.
+### 4. Local data recovery
 
-## Administrator flow
+1. Open **Profile → Data and privacy → Export local data copy** (or use the pre-login recovery mode).
+2. The client reads IndexedDB directly and exports a ZIP archive of unsynced drafts, submissions, media blobs, and logs.
+3. The recovery archive saves directly to the device storage.
 
-### Create and publish a project
+---
 
-1. Enter the project name. This is the only required identity field.
-2. Optionally disclose and enter the description, field instructions, workspace name, license, dataset contact, and dataset identifier.
-3. Define typed fields. Data keys and less common configuration remain under **Advanced**.
-4. Preview the exact contributor flow without persisting preview observations.
-5. Publish the schema. Published versions are immutable.
-6. Add contributor email addresses or invite people later from the project.
+## Administrator workflow
 
-### Monitor fieldwork
+### 1. Creating and publishing projects
 
-1. The dashboard loads the project roster and the latest server-visible device status.
-2. Readiness aggregates every known device for each contributor.
-3. The interface prioritizes contributors or records that need action; healthy synchronization details remain collapsed.
-4. Attention summaries are advisory quality metadata. They do not change, rank, reject, or remove observations automatically.
-5. An administrator can send a reminder, review technical details, or export a checkpoint.
+1. Enter the project name (the only mandatory field).
+2. Optionally enter field instructions, dataset license (SPDX identifier), contact email, and DOI.
+3. Add typed fields (text, numbers, choice lists, coordinates, photos, audio).
+4. Test the form in the live interactive preview.
+5. Publish the schema. Published schema versions are immutable.
+6. Invite contributors by entering their email addresses.
 
-### Export a checkpoint
+### 2. Monitoring fieldwork
 
-1. The administrator requests an export at a server cutoff timestamp.
-2. The server selects only complete submissions finalized at or before the cutoff.
-3. The export function gathers immutable schema versions, records, media, contributor metadata, readiness, consent, and attention data.
-4. The function creates a manifest, canonical JSONL, convenience formats, FAIR-supporting metadata, and integrity hashes.
-5. The checkpoint record stores the cutoff and package metadata.
-6. The administrator downloads a self-contained ZIP. A checkpoint describes server-visible truth; offline devices may still contain unseen work.
+1. Open the project dashboard to review contributor rosters and device readiness.
+2. Readiness aggregates active drafts and unsynced outbox counts across all known contributor devices.
+3. The dashboard highlights items needing attention; healthy background sync details remain collapsed.
+4. Review advisory attention summaries (quality metadata that never alters or deletes research records).
+5. Send email reminders to contributors with pending unsynced records.
 
-## Authentication flows
+### 3. Exporting checkpoint archives
 
-| Context             | Primary path                               | Alternatives                                                          |
-| ------------------- | ------------------------------------------ | --------------------------------------------------------------------- |
-| Browser             | Passwordless email link                    | Password or six-digit email code when the email template provides one |
-| Installed iOS app   | Eight-character device-link code           | Password, email link, or email code                                   |
-| New invited account | Invitation link followed by password setup | Deployment-specific email-code path                                   |
+1. Select **Export checkpoint** at a chosen cutoff timestamp.
+2. The server filters complete submissions finalized at or before the cutoff.
+3. The export engine bundles JSONL data, CSV tables, GeoJSON layers, raw media, schemas, and DataCite metadata into a ZIP file.
+4. The administrator downloads the immutable checkpoint archive.
 
-Device-link codes are short-lived, single-use, and stored server-side only as SHA-256 digests. They bridge authentication, not local drafts or browser storage.
+---
 
-## Software keyboard flow
+## Authentication matrix
 
-The application treats the software keyboard as part of the mobile viewport:
+| Client context                 | Primary method                   | Fallback method               |
+| :----------------------------- | :------------------------------- | :---------------------------- |
+| **Desktop / mobile browser**   | Passwordless magic link          | Password or 6-digit email OTP |
+| **Installed iOS PWA**          | 8-character device-link code     | Password or magic link        |
+| **New contributor invitation** | Invitation link + password setup | Direct email OTP              |
 
-1. One app-level `visualViewport` controller publishes the visible height and top offset.
-2. Forms, authentication, sheets, dialogs, and persistent action bars follow that viewport.
-3. The primary action remains above the keyboard.
-4. Secondary navigation is reduced while typing.
-5. Empty optional fields do not summon the keyboard automatically.
+Device-link codes are single-use, expire quickly, and exist on the server only as SHA-256 hashes.
 
-This behavior is a product invariant because mobile is the primary interface.
+---
 
-## State summary
+## Software keyboard handling
 
-| State                | Meaning                                                                              | User action                                           |
-| -------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------- |
-| Draft                | The observation is still editable and has not crossed the local submission boundary. | Return Home, continue later, or discard deliberately. |
-| Saved on this device | The local atomic commit succeeded. Server transfer may still be pending.             | Continue fieldwork; synchronization is automatic.     |
-| Waiting to send      | Durable outbox work exists but no transfer is active.                                | Usually none.                                         |
-| Sending              | One synchronization owner is processing due work.                                    | Usually none.                                         |
-| Synced               | A matching server finalization receipt exists.                                       | None.                                                 |
-| Action required      | A permanent conflict or missing local requirement prevents automatic completion.     | Open the record or recovery details.                  |
+Mobile viewports require strict keyboard management:
+
+1. An app-level `visualViewport` listener tracks viewport height and offset changes.
+2. Form containers and modal sheets dynamically adjust to visible screen space.
+3. The primary action button remains visible above the software keyboard.
+4. Empty optional fields do not autofocus to prevent unnecessary keyboard popups.
+
+---
+
+## Observation state transitions
+
+| State                    | Definition                                                 | User action                                |
+| :----------------------- | :--------------------------------------------------------- | :----------------------------------------- |
+| **Draft**                | Observation is open for editing in local IndexedDB.        | Resume editing or deliberately discard.    |
+| **Saved on this device** | Committed atomically to local IndexedDB; outbox is queued. | Continue fieldwork. Transfer is automatic. |
+| **Waiting to send**      | Outbox entry is queued; waiting for network or lease.      | None required.                             |
+| **Sending**              | Active sync worker is uploading metadata or media.         | None required.                             |
+| **Synced**               | Server finalized the record and issued a durable receipt.  | None. Record is safely preserved.          |
+| **Action required**      | Permanent conflict or missing media blocks upload.         | Open Sync details to inspect or recover.   |

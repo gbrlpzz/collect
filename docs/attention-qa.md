@@ -1,132 +1,102 @@
 # Attention verification
 
-`collect` includes one low-complexity instruction check in each observation. The server validates the answer, stores an explicit pass/fail result, and maintains an advisory contributor-level summary.
+`collect` embeds one simple instruction check into each observation. The server validates the answer, records an explicit pass/fail result, and maintains an advisory quality score for each contributor.
 
-The mechanism is intended to help a research team interpret possible inattention. It is not an automatic exclusion rule, competence assessment, or substitute for protocol-specific data-quality review.
+This mechanism helps research teams detect inattentive responses. It is **not** an automated filter or exclusion rule. It never discards research observations.
 
-## End-to-end flow
+---
+
+## Workflow
 
 ```text
-select a random configured check
-  → shuffle options
-  → choose a random position among the research fields
-  → separate the synthetic answer from research values
-  → commit the answer as provenance
-  → validate against the server bank
-  → record one idempotent result
-  → update the advisory summary
+Select random check from local bank
+  → Shuffle option order
+  → Insert after a random research field
+  → Contributor answers question
+  → Strip synthetic field from research payload
+  → Commit check key and selected answer to IndexedDB
+  → Server verifies answer against authoritative bank
+  → Server updates contributor advisory score atomically
 ```
 
-## Check bank
+---
 
-The repository contains a default bank of 30 four-option questions in:
+## Question bank design
 
-- `src/data/attentionChecks.ts` for offline rendering;
-- `supabase/migrations/20260812140000_attention_checks.sql` for server validation.
+The default question bank contains 30 four-choice questions stored in:
 
-Each entry has a stable key, prompt, options, correct value, and blind-guess probability. Client and server entries must remain synchronized. The default prompts are generated from their correct option, for example, “For this attention check, select ‘Blue’.” This construction makes the instruction and answer internally consistent.
+- `src/data/attentionChecks.ts` (offline client bank).
+- `supabase/migrations/20260812140000_attention_checks.sql` (server validation table).
 
-The default bank uses literal selection instructions rather than knowledge questions. It therefore avoids geographic, seasonal, scientific, and personal assumptions. Before translating or replacing it, review every check for:
+Each check contains a stable key, prompt, option list, correct value, and guess probability ($p = 0.25$).
 
-- interface language and translation;
-- expected literacy and numeracy;
-- prompt-answer consistency;
-- disability and accessibility implications;
-- respondent age and education;
-- the research protocol’s ethics and consent requirements.
+Example check:
 
-An instruction can be simple without being accessible to every population. Deployments should replace or disable unsuitable entries.
+> "For this attention check, select **Blue**."
+> Options: `[Red, Blue, Green, Yellow]`
 
-## Injection
+The default bank uses direct selection instructions rather than knowledge questions. It avoids assumptions about culture, education, or scientific background.
 
-- One check is selected randomly per observation.
-- A short rolling history excludes the five most recent checks when alternatives
-  are available.
-- Options are shuffled for each presentation.
-- The check appears after a randomly selected research field. A short rolling
-  history excludes the three most recent insertion boundaries when alternatives
-  are available. A form with only one field necessarily presents the check
-  after that field.
-- The reserved field key is `_attention`.
-- The contributor sees the explicit label **Attention check** and the complete instruction.
-
-The administrator preview includes the same interaction, but preview responses are not persisted.
+---
 
 ## Separation from research data
 
-The selected option identifier encodes `checkKey:selectedValue`. Before the research payload is hashed and stored, `extractAttentionResponse()`:
+The attention check is provenance metadata, not scientific data:
 
-1. removes `_attention` from the typed research values;
-2. carries `checkKey` and `selectedValue` separately on the durable submission.
+1. The client reserves the field key `_attention`.
+2. Before hashing or persisting the research payload, `extractAttentionResponse()` strips `_attention` from the dataset.
+3. The durable submission stores only the stable `checkKey` and `selectedValue`.
+4. Check prompt text is never stored in observation rows.
 
-The prompt text is not copied into the observation payload, attention response row, or checkpoint data. The stable key remains in exports so a deployment can interpret the result against its documented bank.
+---
 
-## Server validation
+## Server validation and scoring
 
-`sync-submission`:
+The `sync-submission` Edge Function:
 
-1. selects the active server-side check by key;
-2. compares the selected value with `correct_value`;
-3. writes one `attention_responses` row per submission with server-derived `correct` and `passed` values;
-4. sets `submissions.attention_failed`;
-5. calls `recompute_attention_score()`.
+1. Retrieves the active check by key from PostgreSQL.
+2. Compares the submitted answer with `correct_value`.
+3. Inserts an idempotent record into `public.attention_responses`.
+4. Sets `submissions.attention_failed` (`true` if incorrect, `false` if correct).
+5. Invokes `recompute_attention_score()` to recalculate the contributor's score.
 
-The server does not trust a client-provided correctness flag. Retries are idempotent.
+### Chance-adjusted scoring formula
 
-## Score
-
-For checks with guess probability \(p\), the contributor-level score is:
+The contributor score adjusts for blind guessing:
 
 \[
-\text{score} =
-\max\left(0,
-\frac{\text{observed correct} - \text{expected by chance}}
-{\text{total} - \text{expected by chance}}
-\right)
+\text{score} = \max\left(0, \frac{\text{observed correct} - \text{expected by chance}}{\text{total checks} - \text{expected by chance}}\right) \times 100
 \]
 
-The stored value is clamped to 0–100. With four-option checks, \(p = 0.25\).
+With 4 options ($p = 0.25$):
 
-| Result             | Interpretation                                                                |
-| ------------------ | ----------------------------------------------------------------------------- |
-| No checks          | No score; displayed as unavailable                                            |
-| 100                | Every recorded check was correct                                              |
-| 0                  | Performance does not exceed the configured chance baseline, or falls below it |
-| Intermediate value | Guess-adjusted proportion above chance                                        |
+| Result           | Meaning                                                      |
+| :--------------- | :----------------------------------------------------------- |
+| **No checks**    | Displayed as unavailable (`null`).                           |
+| **100**          | All attention checks answered correctly.                     |
+| **0**            | Accuracy is at or below the random chance baseline ($25\%$). |
+| **Intermediate** | Normalized accuracy above chance.                            |
 
-Small samples are unstable. The interface and exports therefore include the number of checks as well as the score. A single value must not be used to rank contributors or discard observations automatically.
+---
 
-## Visibility and export
+## Data visibility and exports
 
-- Contributors see their score and count in Profile with an explanation.
-- Administrators can see the advisory summary while reviewing readiness.
-- `data/attention.csv` contains per-submission `correct` and `passed` results.
-- `data/contributors.csv` contains aggregate score and count fields.
-- `submissions.attention_failed` provides a direct record-level flag.
+- **Contributors**: View their aggregate score and total checks in **Profile**.
+- **Administrators**: View advisory summaries in the readiness dashboard.
+- **Export packages**:
+  - `data/attention.csv`: Per-submission audit log (`submission_id`, `check_key`, `selected_value`, `passed`).
+  - `data/contributors.csv`: Contributor summaries (`attention_score`, `attention_checks_total`, `attention_correct_total`).
 
-The application never changes, removes, or refuses a local observation because of an incorrect check. A missing or invalid response is advisory provenance rather than an ingestion gate.
+---
 
-## Invariants
+## Technical invariants
 
-1. Correctness is derived by the server.
-2. `_attention` never remains in the research payload.
-3. One response row exists per submission.
-4. Retry cannot double-count a response.
-5. The score is explanatory metadata, not an automatic decision.
-6. Every prompt names exactly one option, and that option is the configured correct value.
-7. Question suitability remains a deployment responsibility.
+1. **Server authority**: The server derives correctness against its own table; client claims are ignored.
+2. **Payload isolation**: Attention answers never pollute the research payload or data dictionary.
+3. **Idempotency**: Retried submissions cannot duplicate score contributions.
+4. **Advisory status**: Attention failures never block ingestion or delete observations.
 
-## Configure the bank
-
-To add or change a check:
-
-1. create a new migration rather than editing an applied migration;
-2. update the client bank with the same stable key and options;
-3. set the correct value and probability explicitly;
-4. add tests for rendering, stripping, and server interpretation;
-5. document the deployment-specific validation and translation process.
-
-To stop server interpretation of an existing check, set its `active` value to `false` through an ordered migration.
+---
 
 ## Related documentation
 

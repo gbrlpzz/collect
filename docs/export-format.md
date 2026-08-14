@@ -1,56 +1,65 @@
 # Checkpoint export format
 
-A **checkpoint** is an immutable snapshot of complete submissions finalized by
-the server at or before one cutoff timestamp. Exporting twice creates two
-checkpoint records and two independent packages. Each package remains
-interpretable without the application.
+A **checkpoint** is an immutable server snapshot of complete submissions finalized at or before a specified cutoff timestamp. Each export creates a new checkpoint record and an independent, self-contained ZIP archive.
 
-## Package layout
+---
+
+## Package structure
 
 ```text
 project-name_checkpoint-YYYY-MM-DD.zip
 ├── manifest.json
 ├── schema/
 │   ├── schema-v1.json
-│   └── schema-v2.json          # every published schema version used in the dataset
+│   └── schema-v2.json          # Every immutable schema version used in this dataset
 ├── data/
-│   ├── submissions.jsonl       # canonical: one complete submission per line
-│   ├── submissions.csv         # convenience flat view (payload as JSON column)
-│   ├── media.csv               # media metadata with export paths
-│   ├── contributors.csv        # roster, invites, consent, attention, readiness
-│   ├── attention.csv           # per-submission attention-check results
-│   └── submissions.geojson     # point features from top-level `location` fields
+│   ├── submissions.jsonl       # Canonical dataset: one complete JSON object per line
+│   ├── submissions.csv         # Flat CSV view (nested payloads stored as JSON strings)
+│   ├── media.csv               # Media metadata and export paths
+│   ├── contributors.csv        # Contributor roster, consent status, and readiness
+│   ├── attention.csv           # Attention-check audit results
+│   └── submissions.geojson     # Point features from observations with location fields
 ├── dataset/
 │   ├── datacite.json           # DataCite 4.4 kernel metadata (DOI-ready)
-│   ├── data-dictionary.json    # every published field: type, options, unit, semantic_uri
-│   └── README.md               # license, contact, identifier, FAIR notes
+│   ├── data-dictionary.json    # Complete dictionary of fields, units, and ontology hooks
+│   └── README.md               # Dataset documentation, license, and contact details
 └── media/
     └── {submission_id}/
-        └── {media_id}{ext}     # original files, never recompressed
+        └── {media_id}{ext}     # Original raw media files (never recompressed)
 ```
 
-## manifest.json
+---
+
+## Top-level files
+
+### 1. `manifest.json`
+
+Contains checkpoint metadata, dataset counts, and SHA-256 integrity checksums:
 
 ```json
 {
   "export_format_version": "1",
   "software_version": "0.1.2",
   "project": {
-    "id": "...",
-    "organization_id": "...",
-    "name": "...",
+    "id": "project-uuid",
+    "organization_id": "org-uuid",
+    "name": "Forest Ecology Survey",
     "status": "active"
   },
-  "organization": { "id": "...", "name": "...", "logo_path": null },
-  "checkpoint_id": "uuid",
+  "organization": {
+    "id": "org-uuid",
+    "name": "Field Research Lab",
+    "logo_path": null
+  },
+  "checkpoint_id": "checkpoint-uuid",
   "created_at": "2026-08-10T09:00:00.000Z",
   "cutoff_server_timestamp": "2026-08-10T09:00:00.000Z",
   "schema_versions": [1, 2],
   "submission_count": 12,
   "media_count": 31,
   "hashes": {
-    "submissions_jsonl_sha256": "hex",
-    "media_csv_sha256": "hex"
+    "submissions_jsonl_sha256": "sha256-hex-hash",
+    "media_csv_sha256": "sha256-hex-hash"
   },
   "dataset": {
     "license": "CC-BY-4.0",
@@ -72,12 +81,13 @@ project-name_checkpoint-YYYY-MM-DD.zip
 }
 ```
 
-The `note` is a contract: a checkpoint is a server-truth snapshot, never a
-claim that offline devices have no unseen data.
+---
 
-## data/submissions.jsonl (canonical)
+## Data files (`data/`)
 
-One JSON object per line, ordered by `server_received_at`:
+### 1. `data/submissions.jsonl` (Canonical)
+
+The primary machine-readable format. Each line represents one complete submission ordered by `server_received_at`:
 
 ```json
 {
@@ -122,85 +132,44 @@ One JSON object per line, ordered by `server_received_at`:
 }
 ```
 
-Notes:
+### 2. `data/submissions.geojson`
 
-- `payload` is the typed field payload exactly as validated against its schema
-  version. Repeatable groups are arrays of objects; choice fields store stable
-  option ids (`{ "value": "...", "otherText": "..." }` when "Other" is used);
-  numbers store `{ "value": 3, "unit": "people" }`.
-- `status` is always `COMPLETE` in a checkpoint; `corrects_submission_id`
-  links corrected copies while the original stays in the audit history.
-- `attention_failed` is the server-derived record-level attention signal.
-  Interpret it with the configured bank, contributor totals, and research
-  protocol. It is not an automatic exclusion rule. The prompt text is not
-  copied into the response row; see `data/attention.csv`.
-- `environment` carries the automatically recorded provenance (device model,
-  OS, browser, screen, orientation, connection, battery, timezone).
-- Media is never recompressed or renamed beyond a sanitized extension derived
-  from the original filename (or the MIME type when the filename has none).
+Contains point features extracted from top-level `location` fields with full property metadata.
 
-## data/submissions.geojson
+### 3. `data/submissions.csv` and `data/media.csv`
 
-One `Point` feature per submission whose top-level `payload.location` is a
-valid `{ latitude, longitude, accuracy }`. Properties carry the submission
-metadata plus the full payload, so the GeoJSON is usable on its own.
+Tabular exports for spreadsheet tools. Structured sub-objects and arrays remain serialized as JSON strings to avoid data loss.
 
-## data/submissions.csv and media.csv
+### 4. `data/attention.csv`
 
-Convenience flat views. Nested/repeated structures are **not** flattened away:
-`payload` is a JSON column and `media` is a JSON column, so the CSV round-trips
-without losing structure. JSONL remains canonical.
-
-## data/attention.csv
-
-One row per submission that contained an attention check:
-
-- `passed` is the explicit server-derived pass/fail result;
-- `correct` is retained as the canonical historical field and always matches `passed`;
-- `check_key` and `selected_value` make the result auditable against the versioned check bank.
+Contains audit records for all attention checks completed in this dataset:
 
 ```text
 submission_id, contributor_id, project_id, check_key, selected_value, correct, guess_probability, created_at
 ```
 
-`correct` is the server-computed truth against its own bank; the question
-text is never exported. The contributor-level guess-adjusted score and totals
-appear in `contributors.csv` (`attention_score`, `attention_checks_total`,
-`attention_correct_total`, `attention_last_at`), alongside the consent record
-(`consent_version`, `consent_granted_at`, `consent_revoked_at`) and the
-administrator-set `quality_score`.
-
-## Integrity
-
-- `manifest.json` hashes the canonical JSONL and media CSV (SHA-256).
-- Media files are included from the private storage bucket at export time; a
-  checkpoint only exists if every referenced object was downloadable.
-- The checkpoint row in the database records `cutoff_server_timestamp`,
-  `submission_count`, `media_count`, `schema_versions`, and the contributor
-  readiness snapshot for provenance.
-
-## FAIR data standards
-
-Checkpoints carry metadata that supports findability, accessibility,
-interoperability, and reuse:
-
-| FAIR principle    | Where it lives in the package                                                                                                                                                                       |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Findable**      | `dataset/datacite.json` (DataCite 4.4 kernel metadata for DOI registration/repository ingestion), `dataset/README.md`, project identity in `manifest.json`                                          |
-| **Accessible**    | self-contained ZIP with no external references; optional persistent identifier on the project (`dataset_identifier`) is carried into DataCite `identifier` and the README                           |
-| **Interoperable** | JSONL/CSV/GeoJSON data, immutable schema history (`schema/`), `dataset/data-dictionary.json` with per-field `semantic_uri` mapping hooks, units, and option code lists                              |
-| **Reusable**      | license and dataset contact travel with every checkpoint (`manifest.json`, DataCite, README); historical observations keep their schema version; attention/consent/readiness provenance is included |
-
-Project administrators set **license**, **dataset contact email**, and an optional
-**dataset identifier (DOI/URL)** when creating a project; they are embedded in
-every export. Licenses are stored as SPDX identifiers where possible
-(`CC0-1.0`, `CC-BY-4.0`, `CC-BY-SA-4.0`, `ODbL-1.0`, or a custom value).
-
-Checkpoints remain immutable snapshots: the same data exported twice yields two
-packages, each with its own DataCite metadata and cutoff timestamp.
+The check prompt is never stored in observation rows; only the stable `check_key` is exported.
 
 ---
 
-See [FAIR-supporting dataset metadata](dataset-standards.md) for the metadata
-carried in `dataset/datacite.json`, `dataset/data-dictionary.json`, and
-`dataset/README.md`.
+## Research metadata (`dataset/`)
+
+- **`dataset/datacite.json`**: DataCite 4.4 kernel metadata schema, ready for DOI registration (e.g. Zenodo, Figshare).
+- **`dataset/data-dictionary.json`**: Machine-readable listing of all fields across every schema version, including units, choice codes, and `semantic_uri` ontology links.
+- **`dataset/README.md`**: Human-readable guide containing project description, license terms, contact emails, and citation guidelines.
+
+---
+
+## Data integrity guarantees
+
+1. **Deterministic hashing**: `manifest.json` contains SHA-256 hashes of `data/submissions.jsonl` and `data/media.csv`.
+2. **Media completeness**: A checkpoint succeeds only if every referenced media file downloads successfully from storage.
+3. **Immutability**: Checkpoint records cannot be updated. Generating a new export creates a separate archive.
+
+---
+
+## Related documentation
+
+- [FAIR dataset standards](dataset-standards.md)
+- [Attention verification](attention-qa.md)
+- [Architecture](architecture.md)

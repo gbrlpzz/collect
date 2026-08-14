@@ -18,15 +18,9 @@ import type { Observation, Project } from "../types";
  * any moment — one tap stops the automaton and hands over the phone.
  */
 
-/** Demo schema: the real fixture, narrowed to the moments that matter here. */
-const DEMO_KEYS = new Set([
-  "site_section",
-  "site_code",
-  "site_photos",
-  "building_type",
-]);
+/** Demo schema = the real fixture, with location trimmed and photos optional. */
 const demoFields = projectFields
-  .filter((field) => DEMO_KEYS.has(field.key))
+  .filter((field) => field.type !== "location")
   .map((field) =>
     field.key === "site_photos"
       ? {
@@ -37,7 +31,7 @@ const demoFields = projectFields
       : field,
   );
 
-export const demoProject: Project = {
+const demoProject: Project = {
   id: "demo-project",
   organization: "Demo field organization",
   organizationMark: "D",
@@ -58,7 +52,7 @@ export const demoProject: Project = {
 /** Story copy keyed by the real schema field keys (label→key map below). */
 const NARRATION: Record<string, { title: string; body: string }> = {
   site_section: {
-    title: "Capture the site",
+    title: "One question at a time",
     body: "Section intros are full-screen steps, not headers on a long form — one calm question per screen.",
   },
   site_code: {
@@ -87,7 +81,7 @@ const NARRATION: Record<string, { title: string; body: string }> = {
   },
   building_occupancy: {
     title: "Uncertainty is data",
-    body: "Yes / No / Unknown — \u201cUnknown\u201d is an honest answer, not a missing value.",
+    body: "Yes / No / Unknown — “Unknown” is an honest answer, not a missing value.",
   },
   provenance_section: {
     title: "Recorded, never asked",
@@ -242,48 +236,18 @@ function StatusBar() {
   );
 }
 
-function IPhone({
-  children,
-  zoom,
-  phoneRef,
-}: {
-  children: React.ReactNode;
-  zoom?: number | null;
-  phoneRef?: React.Ref<HTMLDivElement>;
-}) {
+function IPhone({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      ref={phoneRef}
-      className="hp-iphone"
-      style={zoom ? { zoom } : undefined}
-    >
-      <div
-        className="hp-iphone-buttons hp-iphone-buttons-left"
-        aria-hidden="true"
-      >
-        <span className="hp-btn hp-btn-mute" />
-        <span className="hp-btn hp-btn-vol-up" />
-        <span className="hp-btn hp-btn-vol-down" />
-      </div>
-      <div
-        className="hp-iphone-buttons hp-iphone-buttons-right"
-        aria-hidden="true"
-      >
-        <span className="hp-btn hp-btn-power" />
-      </div>
-      <div className="hp-iphone-frame">
-        <div className="hp-iphone-screen">
-          <div className="hp-dynamic-island" aria-hidden="true" />
-          <StatusBar />
-          {children}
-          <div className="hp-home-indicator" aria-hidden="true" />
-        </div>
+    <div className="hp-iphone">
+      <div className="hp-iphone-screen">
+        <div className="hp-dynamic-island" aria-hidden="true" />
+        <StatusBar />
+        {children}
+        <div className="hp-home-indicator" aria-hidden="true" />
       </div>
     </div>
   );
 }
-
-const PHONE_HEIGHT = 868;
 
 export function FlowDemo() {
   const [round, setRound] = useState(0);
@@ -297,11 +261,9 @@ export function FlowDemo() {
   const [narrativeKey, setNarrativeKey] = useState<string>("site_section");
   const [syncStage, setSyncStage] = useState<SyncStage>(0);
   const [autoState, setAutoState] = useState<AutoState>("idle");
-  const [fitZoom, setFitZoom] = useState<number | null>(null);
   const timersRef = useRef<number[]>([]);
   const screenRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
-  const phoneRef = useRef<HTMLDivElement>(null);
   const lastTitleRef = useRef("");
   const interactedRef = useRef(false);
 
@@ -329,101 +291,32 @@ export function FlowDemo() {
 
   useEffect(() => () => timersRef.current.forEach(clearTimeout), []);
 
-  // The phone stays within the viewport height: scale it down on short
-  // screens (desktop only; the CSS media queries handle phones).
-  useEffect(() => {
-    const compute = () => {
-      if (typeof window === "undefined" || window.innerWidth <= 560) {
-        setFitZoom(null);
-        return;
-      }
-      const available = window.innerHeight - 150;
-      setFitZoom(available < PHONE_HEIGHT ? available / PHONE_HEIGHT : null);
-    };
-    compute();
-    window.addEventListener("resize", compute);
-    return () => window.removeEventListener("resize", compute);
-  }, []);
-
-  // While the demo plays itself, the page stands still: scroll is locked
-  // and the phone is centered in the viewport. Scroll resumes after the
-  // walk has gone through every action (save + finalization), or the
-  // moment the visitor takes over. A safety timer prevents a trap.
-  useEffect(() => {
-    const root = document.documentElement;
-    const body = document.body;
-    if (autoState === "playing") {
-      // Align first, then freeze the document with the iOS-safe fixed-body
-      // pattern. Explicit coordinates are more reliable than scrollIntoView
-      // when the phone is scaled or the layout is stacked in landscape.
-      const phone = phoneRef.current;
-      if (phone) {
-        const phoneRect = phone.getBoundingClientRect();
-        const target = Math.max(
-          0,
-          window.scrollY +
-            phoneRect.top +
-            phoneRect.height / 2 -
-            window.innerHeight / 2,
-        );
-        const previousBehavior = root.style.scrollBehavior;
-        root.style.scrollBehavior = "auto";
-        window.scrollTo({ top: target, left: 0, behavior: "auto" });
-        root.style.scrollBehavior = previousBehavior;
-      }
-      const scrollY = window.scrollY;
-      root.classList.add("hp-lock");
-      body.dataset.hpScrollY = String(scrollY);
-      body.style.top = `-${scrollY}px`;
-      body.classList.add("hp-lock-body");
-      const safety = window.setTimeout(() => {
-        stopAuto();
-      }, 45000);
-      return () => {
-        window.clearTimeout(safety);
-        const previousY = Number(body.dataset.hpScrollY ?? scrollY);
-        body.classList.remove("hp-lock-body");
-        delete body.dataset.hpScrollY;
-        body.style.top = "";
-        root.classList.remove("hp-lock");
-        window.scrollTo(0, previousY);
-      };
-    }
-    if (autoState === "done" && syncStage === 3) {
-      root.classList.remove("hp-lock");
-    }
-    return undefined;
-  }, [autoState, syncStage]);
-
   const stopAuto = () => {
-    // The automaton has its own tick timer. Keep sync timers alive if the
-    // visitor takes over after the local receipt appears.
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
     setAutoState((state) => (state === "playing" ? "idle" : state));
   };
 
-  // The automaton drives the real UI. It stops the moment the visitor
-  // touches the phone (or presses a key), handing over control. The tick
-  // loop owns a single chained timer so stopping it never touches the sync
-  // timers; the "done" state is set by the sync completion instead.
+  // The automaton drives the real UI without hijacking page scroll. It stops
+  // the moment the visitor touches the phone (or presses a key), handing over control.
   useEffect(() => {
-    if (autoState !== "playing" || phase !== "collecting") return;
+    if (autoState !== "playing") return;
     const root = screenRef.current;
     if (!root) return;
-    let tickTimer = 0;
     const tick = () => {
       const next = autoStep(root, lastTitleRef.current);
       lastTitleRef.current =
         root
           .querySelector<HTMLElement>(".flow-body .step-title")
           ?.textContent?.trim() ?? "";
-      if (next === "done") {
+      if (next === "done" || phase === "home") {
         setAutoState("done");
         return;
       }
-      tickTimer = window.setTimeout(tick, 1050);
+      timersRef.current.push(window.setTimeout(tick, 1250));
     };
-    tickTimer = window.setTimeout(tick, 1200);
-    return () => window.clearTimeout(tickTimer);
+    timersRef.current.push(window.setTimeout(tick, 900));
+    return stopAuto;
   }, [autoState, phase, round]);
 
   // Start the self-play once the demo scrolls into view — unless the
@@ -445,7 +338,7 @@ export function FlowDemo() {
           setAutoState("playing");
         }
       },
-      { threshold: 0.05 },
+      { threshold: 0.3 },
     );
     observer.observe(frame);
     return () => observer.disconnect();
@@ -509,20 +402,20 @@ export function FlowDemo() {
           setObservation((current) =>
             current ? { ...current, status: "SYNCED" } : current,
           );
-        }, 800),
+        }, 1200),
       );
       return;
     }
     timersRef.current.push(
-      window.setTimeout(() => setSyncStage(1), 900),
-      window.setTimeout(() => setSyncStage(2), 1700),
+      window.setTimeout(() => setSyncStage(1), 1800),
+      window.setTimeout(() => setSyncStage(2), 3400),
       window.setTimeout(() => {
         setSyncStage(3);
         setAutoState("done");
         setObservation((current) =>
           current ? { ...current, status: "SYNCED" } : current,
         );
-      }, 3000),
+      }, 5400),
     );
   };
 
@@ -533,7 +426,7 @@ export function FlowDemo() {
     <div className="hp-flow-layout" ref={frameRef}>
       <div className="hp-flow-copy">
         <div className="hp-story" aria-live="polite">
-          <span className="hp-story-kicker">While you fill it in</span>
+          <span className="hp-story-kicker">Active Step Insight</span>
           <h3>{narrative.title}</h3>
           <p>{narrative.body}</p>
 
@@ -602,12 +495,12 @@ export function FlowDemo() {
         </div>
 
         <p className="hp-demo-note">
-          Live app frontend · no permission asked · nothing is recorded
+          Live app frontend · zero permission asked · nothing is recorded
         </p>
       </div>
 
       <div className="hp-iphone-wrap">
-        <IPhone zoom={fitZoom} phoneRef={phoneRef}>
+        <IPhone>
           <div className="hp-app-viewport" ref={screenRef}>
             {phase === "collecting" ? (
               <Collector
@@ -629,10 +522,10 @@ export function FlowDemo() {
                 observations={[observation]}
                 hasDraft={false}
                 onStartObservation={reset}
-                onOpenSync={() => undefined}
                 onChooseProject={() => undefined}
                 onResumeObservation={reset}
                 onDiscardAndStartObservation={reset}
+                onOpenSync={() => undefined}
               />
             ) : null}
           </div>

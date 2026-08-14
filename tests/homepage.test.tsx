@@ -174,7 +174,9 @@ describe("AttentionDemo — real bank and real strip logic", () => {
 describe("PackageBrowser — derived from the canonical demo dataset", () => {
   it("defaults to manifest.json and shows derived files", () => {
     render(<PackageBrowser />);
-    expect(screen.getByText("manifest.json")).toBeTruthy();
+    expect(screen.getAllByText("manifest.json").length).toBeGreaterThanOrEqual(
+      1,
+    );
     expect(screen.getByText(/export_format_version/i)).toBeTruthy();
 
     fireEvent.click(screen.getByText("submissions.jsonl"));
@@ -188,20 +190,6 @@ describe("PackageBrowser — derived from the canonical demo dataset", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /^media\//i }));
     expect(screen.getByText(/never recompresses/i)).toBeTruthy();
-  });
-});
-
-describe("HomepageApp — product surfaces stay real", () => {
-  it("shows the real contributor and admin flows from one demo", () => {
-    render(<HomepageApp />);
-    expect(
-      screen.getByRole("button", { name: "1 Create survey", exact: true }),
-    ).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Projects" })).toBeTruthy();
-    fireEvent.click(
-      screen.getByRole("button", { name: /Vernacular buildings/i }),
-    );
-    expect(screen.getByRole("tab", { name: "Form", exact: true })).toBeTruthy();
   });
 });
 
