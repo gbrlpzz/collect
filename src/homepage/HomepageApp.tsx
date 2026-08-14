@@ -146,7 +146,8 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
           </h1>
 
           <p className="hp-hero-lede">
-            Fieldwork that arrives complete, verified, and ready to publish.
+            Installs from the browser, no app store. Evidence arrives ready to
+            publish.
           </p>
 
           <form className="hp-capture" onSubmit={submit} noValidate>
