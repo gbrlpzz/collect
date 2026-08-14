@@ -133,13 +133,20 @@ export function AdminWalkthrough({
   const mainShellRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const scrollDown = () => {
-      if (mainShellRef.current) {
-        mainShellRef.current.scrollTop = mainShellRef.current.scrollHeight;
+    const scrollToTabs = () => {
+      const container = mainShellRef.current;
+      if (!container) return;
+      const tabsEl = container.querySelector<HTMLElement>(".admin-tabs");
+      if (tabsEl) {
+        const offset =
+          tabsEl.getBoundingClientRect().top -
+          container.getBoundingClientRect().top +
+          container.scrollTop;
+        container.scrollTop = Math.max(0, offset - 8);
       }
     };
-    scrollDown();
-    const timer = window.setTimeout(scrollDown, 40);
+    scrollToTabs();
+    const timer = window.setTimeout(scrollToTabs, 40);
     return () => window.clearTimeout(timer);
   }, [initialTab, view]);
 
