@@ -1,93 +1,32 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { AdminProject, type AdminTab } from "../components/AdminDashboard";
+import { TopBar } from "../components/TopBar";
 import { Icon } from "../components/Icon";
-import { AttentionScoreRing, Button, Eyebrow } from "../components/ui";
+import { Eyebrow } from "../components/ui";
+import { projectFields } from "../data/schemaFixtures";
+import type { Project } from "../types";
 
-export type AdminTab = "setup" | "contributors" | "export";
+export type { AdminTab };
 
-interface ContributorItem {
-  id: string;
-  name: string;
-  email: string;
-  submissions: number;
-  lastActive: string;
-  attentionScore: number;
-  synced: boolean;
-}
-
-const CONTRIBUTORS: ContributorItem[] = [
-  {
-    id: "DEV-VAL-01",
-    name: "Elena R.",
-    email: "elena@liminal-lab.org",
-    submissions: 42,
-    lastActive: "1m ago",
-    attentionScore: 96,
-    synced: true,
-  },
-  {
-    id: "DEV-VAL-02",
-    name: "Marcus T.",
-    email: "marcus@liminal-lab.org",
-    submissions: 38,
-    lastActive: "4m ago",
-    attentionScore: 100,
-    synced: true,
-  },
-  {
-    id: "DEV-RTE-09",
-    name: "Claire B.",
-    email: "claire@liminal-lab.org",
-    submissions: 24,
-    lastActive: "12m ago",
-    attentionScore: 88,
-    synced: false,
-  },
-];
-
-interface SchemaFieldItem {
-  key: string;
-  label: string;
-  type: string;
-  required: boolean;
-  options?: string[];
-}
-
-const SCHEMA_FIELDS: SchemaFieldItem[] = [
-  {
-    key: "site_code",
-    label: "Site code",
-    type: "Text",
-    required: true,
-  },
-  {
-    key: "building_type",
-    label: "Building type",
-    type: "Single choice",
-    required: true,
-    options: ["House", "Barn", "Chapel", "Workshop"],
-  },
-  {
-    key: "building_occupancy",
-    label: "Is the building occupied?",
-    type: "Tri-state",
-    required: true,
-  },
-  {
-    key: "site_photos",
-    label: "Field photographs",
-    type: "Photo",
-    required: false,
-  },
-];
-
-const CODE_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-function randomCode(): string {
-  let result = "";
-  for (let i = 0; i < 8; i++) {
-    result += CODE_CHARS.charAt(Math.floor(Math.random() * CODE_CHARS.length));
-  }
-  return `${result.slice(0, 4)}-${result.slice(4)}`;
-}
+const adminDemoProject: Project = {
+  id: "valpuesta-fieldwork",
+  organization: "Liminal Research Group",
+  organizationMark: "L",
+  name: "Vernacular buildings — Valpuesta",
+  description:
+    "Occupancy, masonry condition, and structural assessment survey.",
+  instructions:
+    "Record building type, occupancy status, and field photographs.",
+  status: "active",
+  schemaVersion: 1,
+  license: "CC-BY-4.0",
+  contactEmail: "valpuesta@liminal-lab.org",
+  datasetIdentifier: "10.5281/zenodo.0000000",
+  contributors: 3,
+  completeSubmissions: 104,
+  lastReceived: "2026-08-14T09:32:00.000Z",
+  fields: projectFields,
+};
 
 function DarkStatusBar() {
   return (
@@ -149,45 +88,8 @@ export function AdminWalkthrough({
   initialTab?: AdminTab;
   onTabChange?: (tab: AdminTab) => void;
 }) {
-  const [tab, setTab] = useState<AdminTab>(initialTab);
-  const [selectedKey, setSelectedKey] = useState<string>("building_type");
-  const [deviceCode, setDeviceCode] = useState("K9XP-4M7B");
-  const [copiedCode, setCopiedCode] = useState(false);
-  const [exported, setExported] = useState(false);
-  const [activeStatus, setActiveStatus] = useState<"active" | "closed">(
-    "active",
-  );
-
-  useEffect(() => {
-    setTab(initialTab);
-  }, [initialTab]);
-
-  const handleTabClick = (nextTab: AdminTab) => {
-    setTab(nextTab);
-    onTabChange?.(nextTab);
-  };
-
-  const generateNewCode = () => {
-    setDeviceCode(randomCode());
-    setCopiedCode(false);
-  };
-
-  const copyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(deviceCode.replace("-", ""));
-      setCopiedCode(true);
-      setTimeout(() => setCopiedCode(false), 2000);
-    } catch {
-      // fallback
-    }
-  };
-
-  const triggerExport = () => {
-    setExported(true);
-    setTimeout(() => setExported(false), 3000);
-  };
-
-  const selectedField = SCHEMA_FIELDS.find((f) => f.key === selectedKey);
+  const [project, setProject] = useState<Project>(adminDemoProject);
+  const [view, setView] = useState<"project" | "list">("project");
 
   return (
     <div className="hp-iphone-wrap">
@@ -197,221 +99,65 @@ export function AdminWalkthrough({
           <DarkStatusBar />
 
           <div
-            className="hp-app-viewport hp-admin-viewport"
+            className="hp-app-viewport"
             data-mode="admin"
             data-surface="admin"
+            data-preview="true"
           >
-            <div className="hp-admin-mobile-content">
-              <div className="back-row">
-                <button
-                  type="button"
-                  className="back-button hp-bubble-btn"
-                  aria-label="Projects"
-                >
-                  <Icon name="chevron-left" size={16} />
-                </button>
-                <span className="hp-crumb-text">Projects</span>
-              </div>
+            <div
+              className="app-shell"
+              data-mode="admin"
+              data-surface="admin"
+              data-view={view === "list" ? "admin" : "admin-project"}
+              data-preview="true"
+            >
+              <TopBar
+                mode="admin"
+                view={view === "list" ? "admin" : "admin-project"}
+                onNavigate={() => setView("list")}
+                isPreview={true}
+              />
 
-              <div className="admin-project-header">
-                <div>
-                  <div className="admin-project-title-meta">
-                    <Eyebrow>
-                      Liminal Research Group ·{" "}
-                      {activeStatus === "closed" ? "Closed" : "Active"}
-                    </Eyebrow>
-                  </div>
-                  <h1>Vernacular buildings — Valpuesta</h1>
-                </div>
-
-                <details className="admin-project-actions">
-                  <summary
-                    className="hp-bubble-btn"
-                    aria-label="Project actions"
-                  >
-                    <Icon name="more" size={18} />
-                  </summary>
-                  <div className="admin-project-actions-menu">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setActiveStatus((s) =>
-                          s === "active" ? "closed" : "active",
-                        )
-                      }
-                    >
-                      <Icon
-                        name={activeStatus === "active" ? "lock" : "refresh"}
-                        size={15}
-                      />
-                      {activeStatus === "active"
-                        ? "Close collection"
-                        : "Reopen collection"}
-                    </button>
-                  </div>
-                </details>
-              </div>
-
-              <div className="admin-metrics">
-                <div>
-                  <span>Received</span>
-                  <strong>104</strong>
-                </div>
-                <div>
-                  <span>Contributors</span>
-                  <strong>3</strong>
-                </div>
-                <div>
-                  <span>Last sync</span>
-                  <strong title="Today at 09:32">09:32</strong>
-                </div>
-              </div>
-
-              <div
-                className="admin-tabs hp-pill-tabs"
-                role="tablist"
-                aria-label="Project administration"
-              >
-                {(["setup", "contributors", "export"] as AdminTab[]).map(
-                  (item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      role="tab"
-                      aria-selected={tab === item}
-                      className={tab === item ? "tab-active" : ""}
-                      onClick={() => handleTabClick(item)}
-                    >
-                      {item === "setup"
-                        ? "1. Schema"
-                        : item === "contributors"
-                          ? "2. Pairing"
-                          : "3. Export"}
-                    </button>
-                  ),
-                )}
-              </div>
-
-              <div className="hp-admin-tab-body">
-                {tab === "setup" && (
-                  <div className="hp-console-panel">
-                    <div className="schema-list">
-                      {SCHEMA_FIELDS.map((field, idx) => (
-                        <div
-                          className={`schema-field-row ${
-                            selectedKey === field.key
-                              ? "schema-field-row-active"
-                              : ""
-                          }`}
-                          key={field.key}
-                          onClick={() => setSelectedKey(field.key)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ")
-                              setSelectedKey(field.key);
-                          }}
-                        >
-                          <span className="schema-index">{idx + 1}</span>
-                          <div>
-                            <strong>{field.label}</strong>
-                            <span>{field.key}</span>
-                          </div>
-                          <span className="schema-type">{field.type}</span>
-                          <span className="schema-required">
-                            {field.required ? "Req." : "Opt."}
-                          </span>
-                        </div>
-                      ))}
+              <div className="main-shell">
+                {view === "list" ? (
+                  <main className="page page-admin">
+                    <div className="page-heading">
+                      <Eyebrow>Projects</Eyebrow>
+                      <h1>Field projects</h1>
                     </div>
-
-                    {selectedField && selectedField.options && (
-                      <div className="hp-schema-detail-card">
-                        <div className="hp-schema-detail-header">
-                          <strong>{selectedField.label}</strong>
-                          <code>{selectedField.key}</code>
-                        </div>
-                        <div className="hp-schema-options-pills">
-                          {selectedField.options.map((opt) => (
-                            <span className="chip hp-pill-chip" key={opt}>
-                              {opt}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {tab === "contributors" && (
-                  <div className="hp-console-panel">
-                    <div className="hp-admin-pairing-box">
-                      <span className="builder-config-title">
-                        Single-use device link code
-                      </span>
-                      <div className="hp-pairing-code-display">
-                        <span className="hp-pairing-code">{deviceCode}</span>
-                        <div className="hp-pairing-controls">
-                          <Button variant="secondary" onClick={copyCode}>
-                            <Icon
-                              name={copiedCode ? "check" : "file"}
-                              size={13}
-                            />
-                            {copiedCode ? "Copied" : "Copy"}
-                          </Button>
-                          <Button variant="secondary" onClick={generateNewCode}>
-                            <Icon name="refresh" size={13} /> New
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="contributor-list">
-                      {CONTRIBUTORS.map((c) => (
-                        <div className="contributor-row" key={c.id}>
-                          <div className="contributor-copy">
-                            <strong>{c.name}</strong>
-                            <span>
-                              {c.submissions} submissions · {c.lastActive}
-                            </span>
-                          </div>
-                          <AttentionScoreRing
-                            score={c.attentionScore}
-                            total={c.submissions}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {tab === "export" && (
-                  <div className="hp-console-panel">
-                    <div className="export-readiness">
-                      <div className="readiness-bar">
-                        <span style={{ width: "100%" }} />
-                      </div>
-                      <div>
-                        <span>3 of 3 contributors fully synced</span>
-                        <strong>
-                          104 submissions · uncompressed media ready
-                        </strong>
-                      </div>
-                    </div>
-
-                    <div className="admin-context-actions admin-context-actions-single">
-                      <Button
-                        variant="primary"
-                        icon="download"
-                        onClick={triggerExport}
-                        fullWidth
+                    <div className="project-list">
+                      <button
+                        type="button"
+                        className="project-row"
+                        onClick={() => setView("project")}
                       >
-                        {exported
-                          ? "Generated archive (1.4 MB)"
-                          : "Export checkpoint archive (ZIP)"}
-                      </Button>
+                        <div className="project-row-copy">
+                          <strong>{project.name}</strong>
+                          <span>{project.organization} · Active</span>
+                        </div>
+                        <div className="project-row-meta">
+                          <span>104 sent</span>
+                          <Icon name="chevron-right" size={16} />
+                        </div>
+                      </button>
                     </div>
-                  </div>
+                  </main>
+                ) : (
+                  <AdminProject
+                    project={project}
+                    initialTab={initialTab}
+                    onTabChange={onTabChange}
+                    onBack={() => setView("list")}
+                    onToast={() => undefined}
+                    onExport={() => undefined}
+                    onSchemaPublished={(updated) => setProject(updated)}
+                    onToggleStatus={() =>
+                      setProject((p) => ({
+                        ...p,
+                        status: p.status === "active" ? "closed" : "active",
+                      }))
+                    }
+                  />
                 )}
               </div>
             </div>

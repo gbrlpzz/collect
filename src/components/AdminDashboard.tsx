@@ -126,7 +126,7 @@ export function AdminDashboard({
   );
 }
 
-type AdminTab = "setup" | "contributors" | "export";
+export type AdminTab = "setup" | "contributors" | "export";
 
 function fieldTypeLabel(type: FieldDefinition["type"]): string {
   const label = type.replaceAll("_", " ");
