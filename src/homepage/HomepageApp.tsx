@@ -599,13 +599,10 @@ export function HomepageApp() {
           <div className="hp-section-inner hp-preview-layout">
             <div className="hp-preview-copy">
               <p className="eyebrow">Research Preview</p>
-              <h2 id="preview-title">
-                Equip your next field campaign or expedition.
-              </h2>
+              <h2 id="preview-title">Equip your next expedition.</h2>
               <p>
-                We are onboarding research teams, ecological surveys, and field
-                expeditions. Request preview access to test custom schemas, or
-                clone the repository to self-host.
+                Request preview access to test custom schemas, or clone the
+                repository to self-host.
               </p>
             </div>
             <div className="hp-preview-card">

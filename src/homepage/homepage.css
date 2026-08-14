@@ -2104,8 +2104,8 @@ section[id] {
   width: min(100%, 1080px);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  gap: clamp(32px, 5vw, 64px);
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: clamp(24px, 4vw, 56px);
 }
 .hp-footer-brand p {
   margin-top: 8px;
@@ -2202,6 +2202,10 @@ section[id] {
   .hp-preview-copy {
     max-width: 100%;
   }
+  .hp-footer-inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
 }
 
 @media (max-width: 820px) {
@@ -2255,6 +2259,9 @@ section[id] {
   }
   .hp-fact-grid {
     grid-template-columns: 1fr;
+  }
+  .hp-footer {
+    padding: 44px 16px 28px;
   }
   .hp-footer-inner {
     grid-template-columns: 1fr;
