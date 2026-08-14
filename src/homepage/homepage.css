@@ -260,20 +260,24 @@ body {
   width: min(100%, 720px);
   margin: 0 auto;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .hp-hero h1 {
   margin-top: 0;
-  font-size: clamp(2.25rem, 4.2vw, 3.375rem);
-  line-height: 1.06;
+  font-size: clamp(2.35rem, 4.8vw, 3.65rem);
+  line-height: 1.05;
   letter-spacing: -0.04em;
   font-weight: 750;
   color: var(--text);
+  max-width: 22ch;
 }
 .hp-hero-lede {
-  max-width: 38rem;
+  max-width: 36rem;
   margin: 20px auto 0;
   color: var(--secondary);
-  font-size: clamp(0.9375rem, 1.4vw, 1.0625rem);
+  font-size: clamp(0.9375rem, 1.35vw, 1.0625rem);
   line-height: 1.55;
 }
 .hp-capture {
@@ -296,9 +300,13 @@ body {
   background: var(--paper);
   color: var(--text);
   font-size: 0.875rem;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 .hp-capture-input:focus {
   border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
   outline: none;
 }
 .hp-capture-error {
@@ -311,17 +319,25 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 24px;
+  margin-top: 22px;
 }
 .hp-hero-actions .text-button {
   font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--secondary);
+  font-weight: 600;
+  color: var(--text);
   text-decoration: none;
-  transition: color 0.15s ease;
+  transition: opacity 0.15s ease;
 }
 .hp-hero-actions .text-button:hover {
-  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.hp-hero-deployment-note {
+  max-width: 32rem;
+  margin: 20px auto 0;
+  font-size: 0.8125rem;
+  color: var(--tertiary);
+  line-height: 1.45;
 }
 
 /* ---------- Differentiation Summary Grid ---------- */
@@ -375,6 +391,9 @@ body {
   border-color: var(--text);
   transform: translateY(-2px);
   box-shadow: 0 10px 28px -12px rgba(0, 0, 0, 0.22);
+}
+.hp-diff-card:active {
+  transform: scale(0.985);
 }
 .hp-diff-icon {
   width: 36px;
@@ -738,6 +757,9 @@ main [id] {
   background: var(--text);
   color: var(--paper);
   border-color: var(--text);
+}
+.hp-admin-step-btn:active {
+  transform: scale(0.97) translateY(1px);
 }
 
 .hp-story {
@@ -1778,6 +1800,9 @@ main [id] {
   color: var(--text);
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.hp-package-file:active {
+  transform: scale(0.98);
 }
 .hp-package-file-name {
   flex: 1 1 auto;

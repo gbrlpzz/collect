@@ -24,6 +24,9 @@ function TopBar() {
           <a className="hp-nav-link" href="#collection">
             Collector
           </a>
+          <a className="hp-nav-link" href="#guarantees">
+            Guarantees
+          </a>
           <a className="hp-nav-link" href="#sync">
             Sync
           </a>
@@ -78,8 +81,9 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
         <h1 id="hero-title">Field observations you can trust.</h1>
 
         <p className="hp-hero-lede">
-          An offline web app for field research. Record observations, photos,
-          and GPS coordinates on your phone without cellular signal.
+          An offline-first web app for field surveys and research expeditions.
+          Record structured observations, original photos, and GPS coordinates
+          on your phone with zero cellular signal.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -110,6 +114,11 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
             Try the live collector ↓
           </a>
         </div>
+
+        <p className="hp-hero-deployment-note">
+          Zero app store downloads. Administrators set up surveys on desktop or
+          mobile; field teams open the URL and enter an 8-character code.
+        </p>
       </div>
     </section>
   );
@@ -175,7 +184,11 @@ function DifferentiationSummary() {
   ];
 
   return (
-    <section className="hp-diff-section" aria-label="Core guarantees">
+    <section
+      className="hp-diff-section"
+      id="guarantees"
+      aria-label="Core guarantees"
+    >
       <div className="hp-diff-inner">
         <div className="hp-diff-heading">
           <p className="eyebrow">Guarantees</p>
@@ -249,9 +262,8 @@ export function HomepageApp() {
       <TopBar />
       <main id="main">
         <Hero onEmailSubmit={captureEmail} />
-        <DifferentiationSummary />
 
-        {/* Field Collection inside iPhone Mockup */}
+        {/* 1. Field Collection inside iPhone Mockup (Directly under Hero) */}
         <section
           className="hp-section hp-section-paper"
           id="collection"
@@ -262,14 +274,17 @@ export function HomepageApp() {
           </div>
         </section>
 
-        {/* Sync Architecture */}
+        {/* 2. Four Bedrock Guarantees */}
+        <DifferentiationSummary />
+
+        {/* 3. Synchronization State Machine */}
         <section className="hp-section" id="sync" aria-labelledby="sync-title">
           <div className="hp-section-inner">
             <SyncDemo />
           </div>
         </section>
 
-        {/* Admin Operations & Schema (Dark Mobile Mockup) */}
+        {/* 4. Admin Operations & Schema (Dark Evening Mockup) */}
         <section
           className="hp-section hp-section-admin"
           id="admin"
@@ -360,7 +375,7 @@ export function HomepageApp() {
           </div>
         </section>
 
-        {/* Integrity & Privacy */}
+        {/* 5. Integrity & Privacy */}
         <section
           className="hp-section"
           id="integrity"
@@ -373,10 +388,11 @@ export function HomepageApp() {
                 Detect surveyor fatigue without polluting research data.
               </h2>
               <p>
-                Unannounced checks measure focus during long transects, but
-                questions and answers are stripped in memory before database
-                commit. Ambient hardware telemetry records context without
-                tracking personal identity.
+                During 8-hour field transects, fatigue causes rapid tapping
+                without reading. collect interleaves subtle instruction checks
+                to measure focus, stripping questions and answers in memory
+                before database commit. Ambient hardware telemetry records
+                context without tracking personal identity.
               </p>
               <DocLinks files={["attention-qa.md", "privacy.md"]} />
             </div>
@@ -451,7 +467,7 @@ export function HomepageApp() {
           </div>
         </section>
 
-        {/* FAIR Checkpoint Dataset Explorer */}
+        {/* 6. FAIR Checkpoint Dataset Explorer */}
         <section
           className="hp-section hp-section-paper"
           id="data"
@@ -524,7 +540,7 @@ export function HomepageApp() {
           </div>
         </section>
 
-        {/* Request Access / Pilot Form */}
+        {/* 7. Request Access / Pilot Form */}
         <section
           className="hp-section"
           id="preview"
@@ -537,9 +553,9 @@ export function HomepageApp() {
                 Equip your next field campaign or expedition.
               </h2>
               <p>
-                We are onboarding research teams and field campaigns. Request
-                access to run custom schemas, or clone the repository to
-                self-host.
+                We are onboarding research teams, ecological surveys, and field
+                expeditions. Request preview access to test custom schemas, or
+                clone the repository to self-host.
               </p>
             </div>
             <div className="hp-preview-card">
@@ -564,6 +580,7 @@ export function HomepageApp() {
             <div>
               <span className="hp-footer-heading">Sections</span>
               <a href="#collection">Field collection</a>
+              <a href="#guarantees">Guarantees</a>
               <a href="#sync">Sync pipeline</a>
               <a href="#admin">Setup & operations</a>
               <a href="#integrity">Data integrity</a>
