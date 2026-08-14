@@ -454,6 +454,8 @@ main [id] {
   background: var(--canvas);
   display: flex;
   flex-direction: column;
+  transform: translateZ(0);
+  contain: layout paint;
 }
 .hp-dynamic-island {
   position: absolute;
@@ -500,7 +502,7 @@ main [id] {
   pointer-events: none;
 }
 
-/* Collector Viewport inside Phone */
+/* Collector Viewport strictly contained inside Phone */
 .hp-app-viewport {
   position: relative;
   z-index: 10;
@@ -511,14 +513,32 @@ main [id] {
   flex-direction: column;
   background: var(--canvas);
   overflow: hidden;
+  transform: translateZ(0);
 }
 .hp-app-viewport .app-shell {
+  position: relative !important;
   min-height: 100% !important;
   height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
   background: transparent !important;
   overflow: hidden !important;
+}
+.hp-app-viewport .topbar {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  z-index: 10 !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 10px !important;
+  background: var(--canvas) !important;
+  border-bottom: 1px solid var(--separator-light) !important;
+}
+.hp-app-viewport .topbar-inner {
+  height: 44px !important;
+  padding: 0 4px !important;
 }
 .hp-app-viewport .main-shell {
   flex: 1 1 0 !important;
@@ -532,12 +552,19 @@ main [id] {
 }
 .hp-app-viewport .collector-page,
 .hp-app-viewport .collector-flow {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  z-index: 1 !important;
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
-  min-height: 100% !important;
+  min-height: 0 !important;
   max-height: 100% !important;
   width: 100% !important;
+  max-width: 100% !important;
   overflow: hidden !important;
   justify-content: space-between !important;
 }

@@ -327,6 +327,12 @@ h3 {
   background: var(--paper);
   box-shadow: none;
 }
+/* The roster's per-row action menu is absolutely positioned below the row;
+   let it escape the grouped box instead of being clipped away. The rounded
+   corners stay clean because the rows themselves carry no background. */
+.contributor-list {
+  overflow: visible;
+}
 .project-row-wrap + .project-row-wrap,
 .list-row + .list-row,
 .admin-project-card + .admin-project-card {
