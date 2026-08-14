@@ -3,8 +3,8 @@ import { projectFields } from "./schemaFixtures";
 
 export const demoProject: Project = {
   id: "project-valladolid-houses",
-  organization: "Liminal Research Group",
-  organizationMark: "L",
+  organization: "Field Research Group",
+  organizationMark: "F",
   name: "Valladolid Rural Houses",
   description: "Occupancy and condition survey",
   instructions:

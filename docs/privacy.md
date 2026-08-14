@@ -90,6 +90,11 @@ flowchart TB
 2. **Contextual location**: The app requests location access only if the active project schema includes a location field. Projects without location fields never request GPS access.
 3. **No AI transformations**: The collection path stores verbatim contributor entries without automated alteration.
 4. **Attention separation**: The synthetic attention check field (`_attention`) is stripped from research data before hashing and storage.
+5. **Access revocation**: Removing a contributor from a project revokes their
+   server membership, pending invites, and device-readiness rows. Their
+   research records (submissions, media, attention responses) remain in the
+   dataset, and observations already saved on their device stay local and
+   remain exportable from **Profile**.
 
 ---
 

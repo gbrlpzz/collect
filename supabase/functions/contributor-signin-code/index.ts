@@ -112,6 +112,7 @@ Deno.serve(async (request) => {
         access.project.organization_id
           ? String(access.project.organization_id)
           : null,
+        false,
       );
       return json({
         accepted: true,
@@ -125,6 +126,17 @@ Deno.serve(async (request) => {
       const service = serviceClient();
       const email = String(body.email ?? "").trim().toLowerCase();
       if (!email.includes("@")) {
+        return json({ accepted: true });
+      }
+      // Per-IP throttle so one source cannot hammer many addresses. Answer
+      // uniformly either way so the screen never reveals the limit.
+      const ip =
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+          "";
+      const { data: allowed } = await service
+        .rpc("bump_signin_code_request", { p_ip_hash: await sha256(ip) })
+        .maybeSingle();
+      if (allowed === false) {
         return json({ accepted: true });
       }
       // Self-service is invite-only: mint only for addresses that already
@@ -164,16 +176,22 @@ async function issueCode(
   actorId: string | null,
   projectId: string | null,
   organizationId: string | null,
+  throttle = true,
 ): Promise<{ code: string; emailed: boolean }> {
-  const recent = await service.rpc("count_recent_session_link_codes", {
-    p_user_id: userId,
-  });
-  const recentCount = Number(recent.data ?? 0);
-  if (recentCount >= MAX_RECENT_PER_USER) {
-    throw new Response(
-      "Too many codes were issued recently; wait a few minutes",
-      { status: 429 },
-    );
+  // The mint throttle protects the anonymous self-service path from abuse.
+  // Administrator minting is authenticated and audited, so onboarding a
+  // whole team is never blocked by it.
+  if (throttle) {
+    const recent = await service.rpc("count_recent_session_link_codes", {
+      p_user_id: userId,
+    });
+    const recentCount = Number(recent.data ?? 0);
+    if (recentCount >= MAX_RECENT_PER_USER) {
+      throw new Response(
+        "Too many codes were issued recently; wait a few minutes",
+        { status: 429 },
+      );
+    }
   }
 
   const code = randomCode();

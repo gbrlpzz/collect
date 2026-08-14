@@ -107,6 +107,8 @@ flowchart TD
 
 ```mermaid
 sequenceDiagram
+  accTitle: Resumable Media Transfer Protocol
+  accDescr: Sequence diagram illustrating immediate local blob commit, pre-flight HEAD existence check, TUS chunked upload, and finalization attachment.
   autonumber
   actor Contributor as Device Storage
   participant Client as TUS Upload Client

@@ -248,7 +248,7 @@ const manifest =
       },
       dataset: {
         license: "CC-BY-4.0",
-        contact_email: "dataset@demo-lab.org",
+        contact_email: "dataset@example.com",
         dataset_identifier: "10.5281/zenodo.XXXXXXX",
       },
       contributor_readiness: contributorIds.map((contributorId) => {
@@ -265,7 +265,6 @@ const manifest =
           fieldwork_complete: true,
         };
       }),
-      note: "A checkpoint contains only complete submissions received by the server at the cutoff timestamp. Offline devices may hold additional unseen data.",
     },
     null,
     2,
@@ -301,7 +300,7 @@ const datacite =
           name: "Dataset contact",
           contributorType: "ContactPerson",
           nameType: "Organizational",
-          contactEmail: "dataset@demo-lab.org",
+          contactEmail: "dataset@example.com",
         },
       ],
       dates: [{ date: "2026-08-04T12:00:00.000Z", dateType: "Created" }],
@@ -372,12 +371,11 @@ export interface PackageFile {
 
 /** Tree order for the browser (folders rendered from paths). */
 export const PACKAGE_FILES: PackageFile[] = [
-  { path: "manifest.json", content: manifest, note: "package identity" },
+  { path: "manifest.json", content: manifest },
   { path: "schema/schema-v1.json", content: schemaJson },
   {
     path: "data/submissions.jsonl",
     content: submissionsJsonl,
-    note: "canonical",
   },
   { path: "data/submissions.csv", content: submissionsCsv },
   { path: "data/submissions.geojson", content: geojson },
@@ -390,6 +388,5 @@ export const PACKAGE_FILES: PackageFile[] = [
   {
     path: "media/",
     content: mediaFolderListing,
-    note: "originals, never recompressed",
   },
 ];

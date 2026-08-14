@@ -23,9 +23,11 @@ flowchart TB
       SessionManager["JWT & Refresh Tokens"]
     end
 
-    subgraph EdgeModule["10 Edge Functions (Deno Runtime)"]
+    subgraph EdgeModule["12 Edge Functions (Deno Runtime)"]
       FnSync["sync-submission & health"]
       FnAuth["link-session & claim-invites"]
+      FnSignIn["contributor-signin-code"]
+      FnRoster["remove-project-contributor"]
       FnAdmin["send-admin-invite & bootstrap-workspace"]
       FnExport["export-checkpoint"]
       FnPing["device-status & send-project-ping"]
@@ -46,13 +48,13 @@ flowchart TB
   FrontendHosting <-->|"HTTPS / WSS"| SupabaseBackend
 ```
 
-| Component          | Provider                  | Purpose                                                                        |
-| :----------------- | :------------------------ | :----------------------------------------------------------------------------- |
-| **Frontend**       | Vercel or static CDN host | Hosts the PWA client bundle and service worker.                                |
-| **Database**       | Supabase PostgreSQL       | Stores organizations, schemas, submissions, consent, and audit logs.           |
-| **Object storage** | Supabase Storage          | Hosts private media (`collect-media`) and checkpoint ZIPs (`collect-exports`). |
-| **Privileged API** | Supabase Edge Functions   | Handles ingestion, invitations, device linking, and exports.                   |
-| **Email delivery** | Supabase Auth / Resend    | Sends authentication magic links, OTP codes, and reminders.                    |
+| Component          | Provider                  | Purpose                                                                                 |
+| :----------------- | :------------------------ | :-------------------------------------------------------------------------------------- |
+| **Frontend**       | Vercel or static CDN host | Hosts the PWA client bundle and service worker.                                         |
+| **Database**       | Supabase PostgreSQL       | Stores organizations, schemas, submissions, consent, and audit logs.                    |
+| **Object storage** | Supabase Storage          | Hosts private media (`collect-media`) and checkpoint ZIPs (`collect-exports`).          |
+| **Privileged API** | Supabase Edge Functions   | Handles ingestion, invitations, device linking, and exports.                            |
+| **Email delivery** | Supabase Auth / Resend    | Sends administrator magic links, contributor sign-in codes, invitations, and reminders. |
 
 > [!WARNING]
 > Never put service-role keys or database passwords into frontend environment variables (`VITE_*`).
@@ -94,7 +96,7 @@ npm run provision -- --issue-magic-link
 3. Links the local project directory to the Supabase project.
 4. Applies all ordered SQL migrations (`supabase db push`).
 5. Sets Edge Function secrets (`APP_URL`, `BOOTSTRAP_ADMIN_EMAIL`).
-6. Deploys all 10 Edge Functions listed in `scripts/provision.mjs`.
+6. Deploys all 12 Edge Functions listed in `scripts/provision.mjs`.
 7. Sends an initial bootstrap authentication link to `BOOTSTRAP_ADMIN_EMAIL`.
 
 ---
@@ -113,7 +115,19 @@ Always create a new timestamped migration file in `supabase/migrations/` when up
 ### 2. Deploy Edge Functions
 
 ```bash
-for fn in   health   claim-invites   device-status   link-session   contributor-signin-code   send-admin-invite   send-project-invite   send-project-ping   export-checkpoint   sync-submission   bootstrap-workspace
+for fn in \
+  health \
+  claim-invites \
+  device-status \
+  link-session \
+  contributor-signin-code \
+  remove-project-contributor \
+  send-admin-invite \
+  send-project-invite \
+  send-project-ping \
+  export-checkpoint \
+  sync-submission \
+  bootstrap-workspace
 do
   supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF"
 done
@@ -122,13 +136,20 @@ done
 ### 3. Set Edge Function secrets
 
 ```bash
-supabase secrets set   APP_URL=https://collect.example.org   BOOTSTRAP_ADMIN_EMAIL=admin@example.org   --project-ref "$SUPABASE_PROJECT_REF"
+supabase secrets set \
+  APP_URL=https://collect.example.org \
+  BOOTSTRAP_ADMIN_EMAIL=admin@example.org \
+  --project-ref "$SUPABASE_PROJECT_REF"
 ```
 
 Optional email delivery secrets:
 
 ```bash
-supabase secrets set   RESEND_API_KEY=re_...   MAIL_FROM='Collect <fieldwork@example.org>'   ALLOWED_EMAIL_PATTERNS='admin@example.org,@org.example.org'   --project-ref "$SUPABASE_PROJECT_REF"
+supabase secrets set \
+  RESEND_API_KEY=re_... \
+  MAIL_FROM='Collect <fieldwork@example.org>' \
+  ALLOWED_EMAIL_PATTERNS='admin@example.org,@org.example.org' \
+  --project-ref "$SUPABASE_PROJECT_REF"
 ```
 
 ---
@@ -142,7 +163,13 @@ project is linked. The production project currently has these applied:
 - **Site URL / redirect allow-list**: `https://collect-tawny.vercel.app`.
 - **Invite-only accounts**: `disable_signup = true` — the generic sign-in
   screen can never create accounts; only administrator invitations do.
-- **Email OTP**: 6-digit codes, 10-minute expiry (matches the app's entry UI).
+- **Bridge codes**: contributor sign-in and device-link codes share one
+  bridge table: 8 characters from an unambiguous alphabet (32⁸), single-use
+  with an atomic consume, stored only as SHA-256 hashes, and capped at 10
+  failed attempts. Sign-in codes expire after 20 minutes and are throttled
+  (3 per user per 20 minutes on self-service; the anonymous request path is
+  additionally capped per IP at 20 per hour). Device-link codes expire after
+  5 minutes.
 
 The branded email templates (invite, magic link, confirmation, recovery,
 email-change, reauthentication) live in `supabase/templates/`. Customizing
@@ -211,7 +238,7 @@ vercel --prod
 Verify these 10 items on every deployment:
 
 1. Production URL loads the offline PWA shell.
-2. Sign-in works via magic link or email code.
+2. Sign-in works via contributor sign-in code (admin-issued or self-service) and administrator magic link.
 3. Installed iOS app links successfully with a device code.
 4. Offline observation can be created, saved, closed, and reopened.
 5. Structured data and media upload cleanly when online.

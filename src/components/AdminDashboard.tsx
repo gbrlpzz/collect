@@ -894,7 +894,9 @@ export function ContributorsPanel({
           `${removalRow.email} has no account to remove — only pending invites were revoked.`,
         );
       } else {
-        onToast(`Removed ${removalRow.email} from the project`);
+        onToast(
+          `Removed ${removalRow.email} from the project — their observations stay in the dataset.`,
+        );
       }
       setRemovalRow(null);
       refresh();

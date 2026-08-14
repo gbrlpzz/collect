@@ -40,7 +40,7 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
     render(<FlowDemo />);
     // The real flow opens on the authentic field home screen with project intro and add observation action.
     expect(screen.getByText("Fieldwork")).toBeTruthy();
-    expect(screen.getByText("Vernacular buildings — Valpuesta")).toBeTruthy();
+    expect(screen.getByText("Example Survey")).toBeTruthy();
     expect(
       screen.getByRole("button", { name: /add observation/i }),
     ).toBeTruthy();
@@ -127,7 +127,7 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
 
     // The real ContributorHome appears after save.
     await waitFor(() => expect(homeReached()).toBe(true));
-    expect(screen.getByText("Vernacular buildings — Valpuesta")).toBeTruthy();
+    expect(screen.getByText("Example Survey")).toBeTruthy();
     expect(screen.getByText(/Saved here/i)).toBeTruthy();
 
     // The demo never persists anything: no storage, no IndexedDB.
@@ -156,22 +156,19 @@ describe("AttentionDemo — real bank and real strip logic", () => {
     expect(screen.getAllByRole("button", { name: /./ }).length).toBe(4);
   });
 
-  it("shows the stored record and the stripped payload after answering", async () => {
+  it("shows the stored audit record and reliability score after answering", async () => {
     render(<AttentionDemo />);
     const options = screen.getAllByRole("button", { name: /./ });
     fireEvent.click(options[0]);
     await waitFor(() =>
-      expect(screen.getByText(/what the dataset stores/i)).toBeTruthy(),
+      expect(screen.getByText(/audit record stored/i)).toBeTruthy(),
     );
     expect(screen.getByText(/check_key/i)).toBeTruthy();
-    expect(screen.getByText(/never enters the payload/i)).toBeTruthy();
-    // The stripped view must not contain the question text anywhere.
-    const code = document.querySelectorAll("pre");
-    const stripped = Array.from(code).find((el) =>
-      el.textContent?.includes("values_after_commit"),
-    );
-    expect(stripped).toBeTruthy();
-    expect(stripped!.textContent).not.toContain("What is");
+    expect(screen.getByText(/reliability_score/i)).toBeTruthy();
+    // The stored audit record must not contain the prompt question text anywhere.
+    const code = document.querySelector("pre");
+    expect(code).toBeTruthy();
+    expect(code!.textContent).not.toContain("What is");
   });
 });
 
@@ -204,25 +201,16 @@ describe("PreviewForm — research preview email CTA", () => {
     expect(screen.getByRole("alert")).toBeTruthy();
   });
 
-  it("accepts a bare email (use case optional)", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
-    vi.stubGlobal("fetch", fetchMock);
+  it("requires inquiry details before sending", async () => {
     render(<PreviewForm />);
     fireEvent.change(screen.getByLabelText(/work email/i), {
       target: { value: "researcher@lab.org" },
     });
     fireEvent.click(screen.getByRole("button", { name: /request access/i }));
-    await waitFor(() =>
-      expect(screen.getByText(/request received/i)).toBeTruthy(),
-    );
-    const body = JSON.parse(String(fetchMock.mock.calls[0][1].body));
-    expect(body.email).toBe("researcher@lab.org");
-    expect(body.use_case).toBeNull();
-    expect(body.source).toBe("homepage");
-    storageEmpty();
+    expect(screen.getByRole("alert")).toBeTruthy();
   });
 
-  it("posts one row with the use case and shows the success state", async () => {
+  it("posts one row with the inquiry and shows the success state", async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal("fetch", fetchMock);
     render(<PreviewForm />);
@@ -230,7 +218,7 @@ describe("PreviewForm — research preview email CTA", () => {
     fireEvent.change(screen.getByLabelText(/work email/i), {
       target: { value: "researcher@lab.org" },
     });
-    fireEvent.change(screen.getByLabelText(/what would you collect/i), {
+    fireEvent.change(screen.getByLabelText(/tell us about your project/i), {
       target: {
         value:
           "A building survey in a valley with patchy coverage, published as a dataset.",
@@ -251,15 +239,15 @@ describe("PreviewForm — research preview email CTA", () => {
     storageEmpty();
   });
 
-  it("asks for a sentence when a use case is provided but too short", async () => {
+  it("asks for more detail when the inquiry is too short", async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal("fetch", fetchMock);
     render(<PreviewForm />);
     fireEvent.change(screen.getByLabelText(/work email/i), {
       target: { value: "researcher@lab.org" },
     });
-    fireEvent.change(screen.getByLabelText(/what would you collect/i), {
-      target: { value: "short" },
+    fireEvent.change(screen.getByLabelText(/tell us about your project/i), {
+      target: { value: "hi" },
     });
     fireEvent.click(screen.getByRole("button", { name: /request access/i }));
     expect(screen.getByRole("alert")).toBeTruthy();
@@ -268,6 +256,29 @@ describe("PreviewForm — research preview email CTA", () => {
 });
 
 describe("HomepageApp — promotional home with email CTA", () => {
+  it("treats an RLS-rejected duplicate as already-listed", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({
+        code: "42501",
+        message: "new row violates row-level security policy",
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<PreviewForm />);
+    fireEvent.change(screen.getByLabelText(/work email/i), {
+      target: { value: "dup@lab.org" },
+    });
+    fireEvent.change(screen.getByLabelText(/tell us about your project/i), {
+      target: { value: "Research field campaign inquiring about access." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /request access/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/already on the preview list/i)).toBeTruthy(),
+    );
+  });
+
   it("prefills the research-preview form from the hero capture", async () => {
     const { container } = render(<HomepageApp />);
     const heroInput = container.querySelector(

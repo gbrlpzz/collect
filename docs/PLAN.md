@@ -2,7 +2,7 @@
 
 This document records current product coverage and known limitations. It is not the requirements source of truth; see the [product specification](spec.md).
 
-Last reviewed: 2026-08-13.
+Last reviewed: 2026-08-14.
 
 ## Status legend
 
@@ -14,15 +14,49 @@ Last reviewed: 2026-08-13.
 
 ## Product coverage
 
+```mermaid
+flowchart TD
+  accTitle: Collect Product Implementation Architecture
+  accDescr: Layered map of implemented capabilities across client fieldwork, local durability, synchronization, backend security, and research preservation.
+
+  subgraph L1["📱 1. Contributor Fieldwork Surface (✅ Verified)"]
+    direction LR
+    F1["Capture-First Interface"] --- F2["One Field per Step"] --- F3["Optional Skip"] --- F4["Software Keyboard Sync"]
+  end
+
+  subgraph L2["💾 2. Local Durability & Isolation (✅ Verified)"]
+    direction LR
+    D1["Per-Account IDB (collect-local-v1-userId)"] --- D2["Atomic Commit Boundary"] --- D3["Local Recovery Export"]
+  end
+
+  subgraph L3["🔄 3. Single-Flight Sync Engine (✅ Verified)"]
+    direction LR
+    S1["Active /health Probe"] --- S2["Multi-Tab Lease"] --- S3["TUS Resumable Media"] --- S4["Durable Receipt"]
+  end
+
+  subgraph L4["☁️ 4. Backend & Access Governance (✅ Verified / 🟡 Operational)"]
+    direction LR
+    B1["12 Deno Edge Functions"] --- B2["Row-Level Security"] --- B3["Single-Use Bridge Codes"] --- B4["Advisory QA Bank 🟡"]
+  end
+
+  subgraph L5["📦 5. FAIR Research Checkpoint (✅ Verified)"]
+    direction LR
+    P1["Canonical JSONL & CSV"] --- P2["Original Media"] --- P3["DataCite 4.4 Metadata"] --- P4["SHA-256 Manifest"]
+  end
+
+  L1 ==> L2 ==> L3 ==> L4 ==> L5
+```
+
 | Area                      | Status | Current implementation                                                                                                                               |
 | ------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Mobile contributor flow   | ✅     | Capture-first home, one field per step, optional-field Skip, keyboard-aware actions, local receipt                                                   |
 | Local durability          | ✅     | Per-account IndexedDB, draft persistence, atomic submission/media/outbox commit, stale-write protection                                              |
 | Synchronization           | ✅     | Health-gated metadata → TUS media → finalization, durable receipt, lease, retry, permanent-failure classification                                    |
 | Recovery                  | ✅     | Pre-auth recovery path and local unsynced-data package from durable stores                                                                           |
-| Project administration    | ✅     | Project creation, typed schema builder, preview, immutable publication, contributor management                                                       |
+| Project administration    | ✅     | Project creation, typed schema builder, preview, immutable publication, contributor management (roster sign-in-code issuance and access removal)     |
 | Multi-user authorization  | ✅     | Organizations, projects, invite-only accounts, row-level security, administrator allow-list                                                          |
-| iOS authentication        | ✅     | Browser email-link default, installed-app device-code default, password and email-code fallbacks                                                     |
+| Access revocation         | ✅     | Roster removal revokes membership, pending invites, and readiness rows; research records and device-local observations are preserved                 |
+| iOS authentication        | ✅     | Contributor sign-in codes (admin-issued or self-service), administrator magic links, installed-app device codes, password fallback                   |
 | Consent                   | ✅     | Versioned interface, contributor profile record, server ingestion enforcement, checkpoint fields                                                     |
 | Attention verification    | 🟡     | Server-validated advisory signal and exports; deployment-specific bank validation and localization remain operator duties                            |
 | Provenance                | ✅     | Location and environment capture when permitted, schema/app/device/time identity                                                                     |
@@ -50,15 +84,15 @@ These behaviors are complete and must not regress:
 
 ## Current limitations
 
-| Limitation                                          | Consequence                                                                                               | Mitigation                                                                        |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Browser-managed storage                             | Local data can be lost through device destruction, manual deletion, browser removal, or platform eviction | Persistent-storage request, automatic transfer, quota visibility, recovery export |
-| Offline devices are invisible to the server         | A checkpoint cannot prove that no unseen local work exists                                                | Readiness language states only server-visible device status                       |
-| Email capabilities vary by provider and plan        | Email codes or custom templates may not be available                                                      | Device-link and password paths; verify Auth and SMTP before fieldwork             |
-| Attention bank is not universally valid             | Default prompts may be unsuitable for a language or population                                            | Deployment review, translation, replacement, or deactivation                      |
-| In-app consent is not a full governance system      | Technical enforcement does not satisfy every legal or ethics process                                      | Deployment-specific consent, withdrawal, retention, and review procedures         |
-| No contributor-side finalized-record editing        | Corrections require a linked successor workflow or administrator process                                  | Preserve original evidence and use `corrects_submission_id` semantics             |
-| No guaranteed background execution on every browser | Transfer may wait until the app reopens                                                                   | Durable outbox and lifecycle retry make foreground recovery sufficient            |
+| Limitation                                          | Consequence                                                                                               | Mitigation                                                                                                             |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Browser-managed storage                             | Local data can be lost through device destruction, manual deletion, browser removal, or platform eviction | Persistent-storage request, automatic transfer, quota visibility, recovery export                                      |
+| Offline devices are invisible to the server         | A checkpoint cannot prove that no unseen local work exists                                                | Readiness language states only server-visible device status                                                            |
+| Email capabilities vary by provider and plan        | Sign-in-code emails or custom templates may not be available                                              | Device-link and password paths; administrators can share issued codes in person; verify Auth and SMTP before fieldwork |
+| Attention bank is not universally valid             | Default prompts may be unsuitable for a language or population                                            | Deployment review, translation, replacement, or deactivation                                                           |
+| In-app consent is not a full governance system      | Technical enforcement does not satisfy every legal or ethics process                                      | Deployment-specific consent, withdrawal, retention, and review procedures                                              |
+| No contributor-side finalized-record editing        | Corrections require a linked successor workflow or administrator process                                  | Preserve original evidence and use `corrects_submission_id` semantics                                                  |
+| No guaranteed background execution on every browser | Transfer may wait until the app reopens                                                                   | Durable outbox and lifecycle retry make foreground recovery sufficient                                                 |
 
 ## Deferred capabilities
 
@@ -76,7 +110,7 @@ These items must not weaken the core collection path.
 
 The current repository baseline includes:
 
-- 13 Vitest files and 81 tests;
+- 21 Vitest files and 126 tests;
 - automated Axe checks for representative consent, project setup, profile, and synchronization surfaces;
 - client TypeScript checking;
 - production Vite build;

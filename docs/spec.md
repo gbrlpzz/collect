@@ -22,7 +22,7 @@ The complexity belongs in the infrastructure, not in the contributor interface.
 
 ---
 
-> **Implementation deltas (reviewed 2026-08-13).** This document is the requirements
+> **Implementation deltas (reviewed 2026-08-14).** This document is the requirements
 > baseline. Where the shipped product intentionally deviates, the deviation is
 > listed here so the spec is never read as a description of current behavior:
 >
@@ -34,8 +34,11 @@ The complexity belongs in the infrastructure, not in the contributor interface.
 >   excluded from the question flow; capture happens when the observation
 >   opens and is refreshed at save. A required failure surfaces a retry at the
 >   save boundary.
-> - **Device-link code length.** The server alphabet is 8 characters
->   (A–Z, 2–9, no 0/O/1/I); email one-time codes remain 6 digits.
+> - **Bridge code length.** Sign-in and device-link codes share one server
+>   alphabet: 8 characters (A–Z, 2–9, no 0/O/1/I), single-use, stored only
+>   as SHA-256 hashes, with short time-to-live windows. Email OTP codes are
+>   not used; contributors authenticate with sign-in codes (admin-issued or
+>   self-service) and administrators with invitation magic links.
 > - **Contributor home.** The contributor surface is capture-first ("New
 >   observation"), with the project as secondary context; there is no
 >   project-selection or tab-bar navigation layer for a single assignment.

@@ -3,9 +3,8 @@ import { Collector } from "../components/Collector";
 import { ContributorHome } from "../components/ContributorHome";
 import { TopBar } from "../components/TopBar";
 import { Icon } from "../components/Icon";
+import { DocLinks } from "./DocLinks";
 import { projectFields } from "../data/schemaFixtures";
-import { ATTENTION_FIELD_KEY } from "../data/attentionChecks";
-import { extractAttentionResponse } from "../lib/attention";
 import type { Observation, Project } from "../types";
 
 /**
@@ -14,7 +13,7 @@ import type { Observation, Project } from "../types";
  * Renders in the light iPhone mock-up using the real contributor styling tokens.
  */
 
-type ContributorTab = "home" | "flow" | "inputs" | "sync";
+type ContributorTab = "home" | "flow" | "media";
 
 const demoFields = projectFields
   .filter((field) => field.type !== "location")
@@ -30,15 +29,15 @@ const demoFields = projectFields
 
 const demoProject: Project = {
   id: "demo-project",
-  organization: "Liminal Research Group",
-  organizationMark: "L",
-  name: "Vernacular buildings — Valpuesta",
-  description: "A synthetic survey used on this page.",
-  instructions: "Answer the demo questions — nothing is recorded.",
+  organization: "Field Research",
+  organizationMark: "F",
+  name: "Example Survey",
+  description: "",
+  instructions: "",
   status: "active",
   schemaVersion: 1,
   license: "CC-BY-4.0",
-  contactEmail: "valpuesta@liminal-lab.org",
+  contactEmail: "valpuesta@example.com",
   contributors: 3,
   completeSubmissions: 104,
   lastReceived: "2026-08-14T09:32:00.000Z",
@@ -86,30 +85,18 @@ const initialSampleObservations: Observation[] = [
 
 const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
   home: {
-    title: "Field Home & Offline State",
-    body: "Opens on the assigned project with offline sync status and '+ Add observation' anchored in the bottom dock.",
+    title: "Field Home",
+    body: "Shows active survey guidance, offline sync status, and a single dominant action to begin collecting.",
   },
   flow: {
-    title: "One Calm Question per Screen",
-    body: "One question per screen with large touch targets for gloves and sunlight, with auto-advancing choices.",
+    title: "Guided Step Flow",
+    body: "One clear question per screen with large touch targets for gloves and sunlight, native inputs, and keyboard-safe viewports.",
   },
-  inputs: {
-    title: "Genuine uncertainty is a real answer",
-    body: "The tri-state question lets a surveyor record 'Unknown' when evidence is inconclusive, instead of forcing a guess that would corrupt the variable. Photos and audio still save uncompressed with SHA-256 hashes.",
-  },
-  sync: {
-    title: "Durable Receipts & Resumable Sync",
-    body: "Committed to IndexedDB before any network handshake, then an automatic 3-stage background sync.",
+  media: {
+    title: "Raw Media Capture",
+    body: "Stores photos and audio as unmodified original files with SHA-256 integrity hashes, bypassing compression.",
   },
 };
-
-const SYNC_PHASES = [
-  { label: "Metadata", detail: "1 operation" },
-  { label: "Media", detail: "0 files" },
-  { label: "Finalization", detail: "server receipt" },
-];
-
-type SyncStage = 0 | 1 | 2 | 3;
 
 const reducedMotion =
   typeof window !== "undefined" && window.matchMedia
@@ -188,15 +175,10 @@ export function FlowDemo() {
   const [activeTab, setActiveTab] = useState<ContributorTab>("home");
   const [collectorStep, setCollectorStep] = useState<number>(0);
   const [draft, setDraft] = useState<Record<string, unknown>>({});
-  const [savedValues, setSavedValues] = useState<Record<
-    string,
-    unknown
-  > | null>(null);
   const [observation, setObservation] = useState<Observation | null>(null);
   const [seedObservations, setSeedObservations] = useState<Observation[]>(
     initialSampleObservations,
   );
-  const [syncStage, setSyncStage] = useState<SyncStage>(0);
   const timersRef = useRef<number[]>([]);
   const screenRef = useRef<HTMLDivElement>(null);
 
@@ -206,10 +188,8 @@ export function FlowDemo() {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
     setDraft({});
-    setSavedValues(null);
     setObservation(null);
     setSeedObservations(initialSampleObservations);
-    setSyncStage(0);
     setRound((value) => value + 1);
     setPhase("home");
     setActiveTab("home");
@@ -223,68 +203,29 @@ export function FlowDemo() {
     } else if (tab === "flow") {
       setPhase("collecting");
       setCollectorStep(0);
-    } else if (tab === "inputs") {
+    } else if (tab === "media") {
       setPhase("collecting");
-      // Jump to the tri-state question by key so the live step order
-      // (including the attention check) never shifts the target screen.
+      // Jump to the photo step by key so the live step order (including the
+      // attention check) never shifts the target screen.
       setCollectorStep(-1);
-    } else if (tab === "sync") {
-      setPhase("home");
-      // If we don't have a recent local observation, create a synced receipt for demo
-      if (!savedValues) {
-        const sampleValues = {
-          site_code: "VA-023",
-          building_type: "house",
-          building_occupancy: "yes",
-          [ATTENTION_FIELD_KEY]: "demo:valid",
-        };
-        setSavedValues(sampleValues);
-        const newObs: Observation = {
-          id: "obs-val-023",
-          projectId: demoProject.id,
-          createdAt: new Date().toISOString(),
-          status: "SAVED_LOCAL",
-          values: sampleValues,
-          media: [],
-        };
-        setObservation(newObs);
-        setSyncStage(0);
-        triggerSyncAnimation();
-      }
     }
   };
 
   const triggerSyncAnimation = () => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
-    if (reducedMotion) {
-      timersRef.current.push(
-        window.setTimeout(() => {
-          setSyncStage(3);
-          setObservation((current) =>
-            current ? { ...current, status: "SYNCED" } : current,
-          );
-        }, 1000),
+    const complete = () =>
+      setObservation((current) =>
+        current ? { ...current, status: "SYNCED" } : current,
       );
-      return;
-    }
-
     timersRef.current.push(
-      window.setTimeout(() => setSyncStage(1), 1200),
-      window.setTimeout(() => setSyncStage(2), 2400),
-      window.setTimeout(() => {
-        setSyncStage(3);
-        setObservation((current) =>
-          current ? { ...current, status: "SYNCED" } : current,
-        );
-      }, 3800),
+      window.setTimeout(complete, reducedMotion ? 1000 : 3800),
     );
   };
 
   const handleSubmit = (values: Record<string, unknown>) => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
-    setSavedValues(values);
     const newObs: Observation = {
       id: "demo-observation",
       projectId: demoProject.id,
@@ -295,29 +236,27 @@ export function FlowDemo() {
     };
     setObservation(newObs);
     setSeedObservations((current) => [newObs, ...current]);
-    setSyncStage(0);
     setPhase("home");
-    setActiveTab("sync");
+    setActiveTab("home");
     triggerSyncAnimation();
   };
 
   const narrative = TAB_NARRATION[activeTab];
-  const stripped = savedValues && extractAttentionResponse(savedValues);
-  const latestObs = observation;
 
   return (
     <div className="hp-flow-layout">
       <div className="hp-flow-copy">
         <div className="section-heading">
-          <p className="eyebrow">Step 1 · Field Collection</p>
+          <p className="eyebrow">Field Collection</p>
           <h2 id="collection-title">
-            One calm question at a time. Built for zero signal.
+            Designed for bright sun, cold hands, and zero signal.
           </h2>
           <p>
-            The collector presents one question per screen with large touch
-            targets for gloves and sunlight, native date pickers, and raw photo
-            capture. Tap the choices and test the flow yourself.
+            One calm question at a time. High-contrast typography that cuts
+            through glare, oversized touch targets for gloved fingers, and
+            immediate local commit on every step.
           </p>
+          <DocLinks files={["flows.md"]} />
         </div>
 
         <div className="hp-admin-tab-selector hp-contrib-tab-selector">
@@ -326,28 +265,21 @@ export function FlowDemo() {
             className={`hp-admin-step-btn ${activeTab === "home" ? "active" : ""}`}
             onClick={() => handleTabClick("home")}
           >
-            1. Field Home
+            Field Home
           </button>
           <button
             type="button"
             className={`hp-admin-step-btn ${activeTab === "flow" ? "active" : ""}`}
             onClick={() => handleTabClick("flow")}
           >
-            2. Guided Flow
+            Guided Flow
           </button>
           <button
             type="button"
-            className={`hp-admin-step-btn ${activeTab === "inputs" ? "active" : ""}`}
-            onClick={() => handleTabClick("inputs")}
+            className={`hp-admin-step-btn ${activeTab === "media" ? "active" : ""}`}
+            onClick={() => handleTabClick("media")}
           >
-            3. Uncertainty & Media
-          </button>
-          <button
-            type="button"
-            className={`hp-admin-step-btn ${activeTab === "sync" ? "active" : ""}`}
-            onClick={() => handleTabClick("sync")}
-          >
-            4. Local Receipts & Sync
+            Raw Media
           </button>
         </div>
 
@@ -355,51 +287,6 @@ export function FlowDemo() {
           <span className="hp-story-kicker">Contributor Surface</span>
           <h3>{narrative.title}</h3>
           <p>{narrative.body}</p>
-
-          {activeTab === "sync" && latestObs && (
-            <div className="hp-sync-ops">
-              {SYNC_PHASES.map((item, index) => {
-                const done = syncStage > index || latestObs.status === "SYNCED";
-                const active =
-                  syncStage === index + 1 && latestObs.status !== "SYNCED";
-                return (
-                  <div className="hp-sync-op" key={item.label}>
-                    <span
-                      className={`hp-sync-mark ${done ? "hp-sync-done" : active ? "hp-sync-active" : ""}`}
-                      aria-hidden="true"
-                    >
-                      {done ? "✓" : ""}
-                    </span>
-                    <span>
-                      <strong>{item.label}</strong>
-                      <span>{item.detail}</span>
-                    </span>
-                  </div>
-                );
-              })}
-              <p className="hp-sync-note">
-                {latestObs.status === "SYNCED"
-                  ? "The server's durable receipt moved this record to synced."
-                  : "Waiting on the server receipt — nothing is marked sent before it."}
-              </p>
-            </div>
-          )}
-
-          {activeTab === "sync" && stripped && (
-            <details className="hp-payload">
-              <summary>View what was recorded</summary>
-              <pre>{JSON.stringify(stripped.values, null, 2)}</pre>
-              <p>
-                The attention answer (
-                <code>
-                  {stripped.response
-                    ? `${stripped.response.checkKey}:${stripped.response.selectedValue}`
-                    : "—"}
-                </code>
-                ) was stripped before commit — it never enters the payload.
-              </p>
-            </details>
-          )}
         </div>
 
         <div className="hp-auto-bar">
@@ -409,7 +296,7 @@ export function FlowDemo() {
         </div>
 
         <p className="hp-demo-note">
-          Live app frontend · click it yourself · nothing is recorded
+          Interactive preview — no data is saved to a server.
         </p>
       </div>
 
@@ -465,7 +352,8 @@ export function FlowDemo() {
                         setActiveTab("flow");
                       }}
                       onOpenSync={() => {
-                        handleTabClick("sync");
+                        setPhase("home");
+                        setActiveTab("home");
                       }}
                     />
                   </div>
@@ -475,11 +363,9 @@ export function FlowDemo() {
                   <Collector
                     key={`${round}-${collectorStep}`}
                     project={demoProject}
-                    initialStepIndex={
-                      activeTab === "inputs" ? 0 : collectorStep
-                    }
+                    initialStepIndex={activeTab === "media" ? 0 : collectorStep}
                     initialFieldKey={
-                      activeTab === "inputs" ? "building_occupancy" : undefined
+                      activeTab === "media" ? "site_photos" : undefined
                     }
                     draft={draft}
                     lastSavedAt={null}

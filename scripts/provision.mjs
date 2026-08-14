@@ -8,6 +8,8 @@ const FUNCTIONS = [
   "claim-invites",
   "device-status",
   "link-session",
+  "contributor-signin-code",
+  "remove-project-contributor",
   "send-admin-invite",
   "send-project-invite",
   "send-project-ping",

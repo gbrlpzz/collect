@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AdminProject, type AdminTab } from "../components/AdminDashboard";
 import { TopBar } from "../components/TopBar";
 import { Icon } from "../components/Icon";
@@ -11,17 +11,15 @@ export type { AdminTab };
 
 const adminDemoProject: Project = {
   id: "valpuesta-fieldwork",
-  organization: "Liminal Research Group",
-  organizationMark: "L",
-  name: "Vernacular buildings — Valpuesta",
-  description:
-    "Occupancy, masonry condition, and structural assessment survey.",
-  instructions:
-    "Record building type, occupancy status, and field photographs.",
+  organization: "Field Research",
+  organizationMark: "F",
+  name: "Example Survey",
+  description: "Structural assessment survey.",
+  instructions: "",
   status: "active",
   schemaVersion: 1,
   license: "CC-BY-4.0",
-  contactEmail: "valpuesta@liminal-lab.org",
+  contactEmail: "valpuesta@example.com",
   contributors: 3,
   completeSubmissions: 104,
   lastReceived: "2026-08-14T09:32:00.000Z",
@@ -31,7 +29,7 @@ const adminDemoProject: Project = {
 const adminDemoReadinessRows: ContributorReadiness[] = [
   {
     id: "user-1",
-    email: "elena@liminal-lab.org",
+    email: "elena@example.com",
     status: "Active",
     ready: true,
     pending: 0,
@@ -44,7 +42,7 @@ const adminDemoReadinessRows: ContributorReadiness[] = [
   },
   {
     id: "user-2",
-    email: "marcus@liminal-lab.org",
+    email: "marcus@example.com",
     status: "Active",
     ready: true,
     pending: 0,
@@ -57,7 +55,7 @@ const adminDemoReadinessRows: ContributorReadiness[] = [
   },
   {
     id: "user-3",
-    email: "claire@liminal-lab.org",
+    email: "claire@example.com",
     status: "Syncing",
     ready: false,
     pending: 1,
@@ -132,6 +130,25 @@ export function AdminWalkthrough({
 }) {
   const [project, setProject] = useState<Project>(adminDemoProject);
   const [view, setView] = useState<"project" | "list">("project");
+  const mainShellRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const scrollToTabs = () => {
+      const container = mainShellRef.current;
+      if (!container) return;
+      const tabsEl = container.querySelector<HTMLElement>(".admin-tabs");
+      if (tabsEl) {
+        const offset =
+          tabsEl.getBoundingClientRect().top -
+          container.getBoundingClientRect().top +
+          container.scrollTop;
+        container.scrollTop = Math.max(0, offset - 8);
+      }
+    };
+    scrollToTabs();
+    const timer = window.setTimeout(scrollToTabs, 40);
+    return () => window.clearTimeout(timer);
+  }, [initialTab, view]);
 
   const handleTabChange = (nextTab: AdminTab) => {
     onTabChange?.(nextTab);
@@ -164,7 +181,7 @@ export function AdminWalkthrough({
                 isPreview={true}
               />
 
-              <div className="main-shell">
+              <div className="main-shell" ref={mainShellRef}>
                 {view === "list" ? (
                   <main className="page page-admin">
                     <div className="page-heading">
@@ -179,7 +196,7 @@ export function AdminWalkthrough({
                       >
                         <div className="project-row-copy">
                           <strong>{project.name}</strong>
-                          <span>{project.organization} · Active</span>
+                          <span>Active</span>
                         </div>
                         <div className="project-row-meta">
                           <span>104 sent</span>

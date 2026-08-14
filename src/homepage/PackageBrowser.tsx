@@ -78,9 +78,6 @@ export function PackageBrowser() {
                 >
                   <FileTypeIcon path={file.path} />
                   <span className="hp-package-file-name">{file.path}</span>
-                  {file.note && (
-                    <span className="hp-package-file-note">{file.note}</span>
-                  )}
                 </button>
               );
             })}
@@ -108,11 +105,6 @@ export function PackageBrowser() {
                     >
                       <FileTypeIcon path={file.path} />
                       <span className="hp-package-file-name">{name}</span>
-                      {file.note && (
-                        <span className="hp-package-file-note">
-                          {file.note}
-                        </span>
-                      )}
                     </button>
                   );
                 })}
@@ -134,9 +126,6 @@ export function PackageBrowser() {
                 >
                   <FileTypeIcon path={file.path} />
                   <span className="hp-package-file-name">{file.path}</span>
-                  {file.note && (
-                    <span className="hp-package-file-note">{file.note}</span>
-                  )}
                 </button>
               );
             })}
@@ -148,10 +137,6 @@ export function PackageBrowser() {
         <div className="hp-package-file-heading">
           <div className="hp-package-file-title">
             <span className="hp-package-file-path">{active.path}</span>
-            <span className="hp-package-meta">
-              {bytes(new TextEncoder().encode(active.content).length)} ·{" "}
-              {active.content.split("\n").length} lines
-            </span>
           </div>
           <button
             type="button"

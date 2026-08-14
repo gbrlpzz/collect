@@ -11,7 +11,7 @@ flowchart TD
   accTitle: Contributor Field Workflow
   accDescr: Step-by-step workflow of a contributor from onboarding, offline form filling with attention checks, atomic local commit, to background sync.
 
-  Start([Email Invitation]) --> Auth[Sign In: Magic Link or Link Code]
+  Start([Email Invitation]) --> Auth[Sign In: Sign-in Code or Magic Link]
   Auth --> Consent[Accept Versioned Consent]
   Consent --> SyncSchemas[Cache Assigned Projects & Schemas to IndexedDB]
 
@@ -54,11 +54,17 @@ flowchart TD
 ### 1. Onboarding and sign-in
 
 1. The administrator invites the contributor to a project by email; the invitation email creates the account on first open.
-2. The administrator issues a **sign-in code** from the roster (**Contributors → ⋯ → Issue sign-in code**); the single-use, 20-minute code is emailed to the contributor and shown to the administrator for in-person sharing.
+2. The administrator issues a **sign-in code** from the roster row menu (**⋯ → Issue sign-in code**); the single-use, 20-minute code is emailed to the contributor and shown to the administrator for in-person sharing.
 3. The contributor signs in by entering the 8-character code on the login screen (**Sign in with a code**). Returning contributors can request a fresh code by email from the same screen (invite-only, uniform response).
 4. The contributor reviews the privacy disclosure and accepts the versioned consent.
 5. On iOS, the contributor adds `collect` to the Home Screen. Because iOS runs installed web apps in an isolated storage container, the app requires its own authentication session (device-link codes from **Profile → Sign in another device** still bridge a signed-in browser to the installed app).
 6. The app downloads assigned project definitions and published schemas into IndexedDB for offline use.
+
+If an administrator later removes your account from the project, the Field
+Home shows **Project access removed** instead of the project context.
+Observations already saved on the device stay there and remain exportable
+from **Profile**; your research records also stay in the project dataset
+unchanged (removal revokes membership and readiness rows, never evidence).
 
 ### 2. Capturing an observation
 
@@ -141,6 +147,15 @@ flowchart TD
 3. The dashboard highlights items needing attention; healthy background sync details remain collapsed.
 4. Review advisory attention summaries (quality metadata that never alters or deletes research records).
 5. Send email reminders to contributors with pending unsynced records.
+6. Issue per-contributor **sign-in codes** from the roster row menu
+   (**⋯ → Issue sign-in code**); the single-use, 20-minute code is emailed
+   and shown to the administrator for in-person sharing.
+7. Remove a contributor's access with **⋯ → Remove contributor** when
+   needed (pending invitations show **Revoke invitation**). Removal revokes
+   the membership, pending invites, and device-readiness rows; submissions,
+   media, attention responses, and the contributor profile remain in the
+   dataset untouched, and the contributor's device keeps its local
+   observations (shown as **Project access removed**).
 
 ### 3. Exporting checkpoint archives
 
@@ -155,6 +170,8 @@ flowchart TD
 
 ```mermaid
 sequenceDiagram
+  accTitle: iOS Container Cross-Authentication Bridge
+  accDescr: Sequence diagram illustrating how a signed-in browser session generates a single-use 8-character device-link code to authenticate an isolated iOS PWA container.
   autonumber
   actor Admin as Administrator
   actor Contributor as Contributor
@@ -173,7 +190,7 @@ sequenceDiagram
   Contributor->>Safari: Taps 'Add to Home Screen'
   Contributor->>Safari: Opens Profile → "Sign in another device"
   Safari->>Edge: POST /link-session (action: 'create')
-  Edge->>Auth: Store SHA-256 hash of 8-char code (10m TTL)
+  Edge->>Auth: Store SHA-256 hash of 8-char code in private.session_link_codes (5m TTL)
   Edge-->>Safari: Return 8-character code (e.g. ABCD-1234)
   Safari-->>Contributor: Displays code on screen
 
@@ -185,11 +202,11 @@ sequenceDiagram
   PWA-->>Contributor: Ready for offline fieldwork
 ```
 
-| Client context               | Primary method                                            | Fallback method        |
-| :--------------------------- | :-------------------------------------------------------- | :--------------------- |
-| **Contributor (any device)** | 8-character sign-in code (admin-issued or self-service)   | Password (if set)      |
-| **Installed iOS PWA**        | Sign-in code or device-link code from a signed-in browser | Password (if set)      |
-| **Administrator**            | Invitation link + password setup                          | Magic link / email OTP |
+| Client context               | Primary method                                            | Fallback method                |
+| :--------------------------- | :-------------------------------------------------------- | :----------------------------- |
+| **Contributor (any device)** | 8-character sign-in code (admin-issued or self-service)   | Password (if set)              |
+| **Installed iOS PWA**        | Sign-in code or device-link code from a signed-in browser | Password (if set)              |
+| **Administrator**            | Invitation link + password setup                          | Magic link / password (if set) |
 
 Contributor sign-in codes and device-link codes share the same bridge: they
 are 8 characters from an unambiguous alphabet (32⁸ ≈ 1.1×10¹²), single-use
