@@ -53,11 +53,11 @@ flowchart TD
 
 ### 1. Onboarding and sign-in
 
-1. The administrator invites the contributor to a project by email.
-2. The contributor opens the link and authenticates via magic link or password.
-3. The contributor reviews the privacy disclosure and accepts the versioned consent.
-4. On iOS, the contributor adds `collect` to the Home Screen. Because iOS runs installed web apps in an isolated storage container, the app requires its own authentication session.
-5. The contributor opens the installed app and enters an 8-character device code generated from the signed-in browser (**Profile → Sign in another device**).
+1. The administrator invites the contributor to a project by email; the invitation email creates the account on first open.
+2. The administrator issues a **sign-in code** from the roster (**Contributors → ⋯ → Issue sign-in code**); the single-use, 20-minute code is emailed to the contributor and shown to the administrator for in-person sharing.
+3. The contributor signs in by entering the 8-character code on the login screen (**Sign in with a code**). Returning contributors can request a fresh code by email from the same screen (invite-only, uniform response).
+4. The contributor reviews the privacy disclosure and accepts the versioned consent.
+5. On iOS, the contributor adds `collect` to the Home Screen. Because iOS runs installed web apps in an isolated storage container, the app requires its own authentication session (device-link codes from **Profile → Sign in another device** still bridge a signed-in browser to the installed app).
 6. The app downloads assigned project definitions and published schemas into IndexedDB for offline use.
 
 ### 2. Capturing an observation
@@ -185,13 +185,18 @@ sequenceDiagram
   PWA-->>Contributor: Ready for offline fieldwork
 ```
 
-| Client context                 | Primary method                   | Fallback method               |
-| :----------------------------- | :------------------------------- | :---------------------------- |
-| **Desktop / mobile browser**   | Passwordless magic link          | Password or 6-digit email OTP |
-| **Installed iOS PWA**          | 8-character device-link code     | Password or magic link        |
-| **New contributor invitation** | Invitation link + password setup | Direct email OTP              |
+| Client context               | Primary method                                            | Fallback method        |
+| :--------------------------- | :-------------------------------------------------------- | :--------------------- |
+| **Contributor (any device)** | 8-character sign-in code (admin-issued or self-service)   | Password (if set)      |
+| **Installed iOS PWA**        | Sign-in code or device-link code from a signed-in browser | Password (if set)      |
+| **Administrator**            | Invitation link + password setup                          | Magic link / email OTP |
 
-Device-link codes are single-use, expire quickly, and exist on the server only as SHA-256 hashes.
+Contributor sign-in codes and device-link codes share the same bridge: they
+are 8 characters from an unambiguous alphabet (32⁸ ≈ 1.1×10¹²), single-use
+with an atomic consume, expire after 20 minutes (device links: 5), are
+stored only as SHA-256 hashes, and invalidate after 10 failed attempts.
+Minting is throttled to 3 codes per user per 20 minutes and every issuance
+is written to `audit_events`.
 
 ---
 

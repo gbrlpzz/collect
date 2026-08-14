@@ -27,3 +27,42 @@ verify_jwt = false
 
 [functions.link-session]
 verify_jwt = false
+
+[functions.contributor-signin-code]
+verify_jwt = false
+
+[auth]
+enabled = true
+site_url = "https://collect-tawny.vercel.app"
+additional_redirect_urls = ["https://collect-tawny.vercel.app"]
+disable_signup = true
+
+[auth.email]
+otp_length = 6
+otp_expiry = 600
+double_confirm_changes = true
+enable_confirmations = true
+
+[auth.email.template.invite]
+subject = "You're invited to collect"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.magic_link]
+subject = "Your collect sign-in link"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.confirmation]
+subject = "Confirm your email address"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your collect password"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.email_change]
+subject = "Confirm your new email address"
+content_path = "./supabase/templates/email_change.html"
+
+[auth.email.template.reauthentication]
+subject = "Your collect verification code"
+content_path = "./supabase/templates/reauthentication.html"
