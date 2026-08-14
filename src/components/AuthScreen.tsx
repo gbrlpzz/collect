@@ -4,6 +4,7 @@ import {
   linkDeviceSession,
   pendingAuthEmail,
   rememberAuthEmail,
+  requestContributorSigninCode,
   sendMagicLink,
   setPassword,
   signInWithPassword,
@@ -46,8 +47,10 @@ export function AuthScreen({
   const standalone = isStandaloneApp();
   const showInstallHint = isAppleMobileBrowser() && !standalone;
   const showLocalRedirectHint = configured && isLocalDevelopmentOrigin();
+  // Contributors sign in with a code; administrators keep the link flow
+  // (invitations and password setup) with device-link as the mobile bridge.
   const [entryMode, setEntryMode] = useState<EntryMode>(() =>
-    standalone ? "device" : "link",
+    role === "contributor" ? "device" : standalone ? "device" : "link",
   );
   const [email, setEmail] = useState(pendingAuthEmail);
   const [password, setPasswordValue] = useState("");
@@ -71,6 +74,12 @@ export function AuthScreen({
   // Device-link entry.
   const deviceCodeInputRef = useRef<HTMLInputElement>(null);
   const codeInputRef = useRef<HTMLInputElement>(null);
+  // Self-service: request a fresh sign-in code by email.
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [requestEmail, setRequestEmail] = useState("");
+  const [requestSent, setRequestSent] = useState(false);
+  const [requestBusy, setRequestBusy] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
 
   const submit = async () => {
     const address = email.trim();
@@ -181,6 +190,34 @@ export function AuthScreen({
     }
   };
 
+  const requestCode = async () => {
+    const address = requestEmail.trim();
+    if (!address) return;
+    setRequestBusy(true);
+    setRequestError(null);
+    try {
+      await requestContributorSigninCode(address);
+      setRequestSent(true);
+    } catch (caught) {
+      const message =
+        caught instanceof Error ? caught.message.toLowerCase() : "";
+      if (
+        message.includes("network") ||
+        message.includes("fetch") ||
+        message.includes("failed to") ||
+        message.includes("configured")
+      ) {
+        setRequestError(
+          "We couldn’t reach the sign-in service. Check your connection and try again.",
+        );
+      } else {
+        setRequestError("That could not be completed. Try again in a moment.");
+      }
+    } finally {
+      setRequestBusy(false);
+    }
+  };
+
   const submitDeviceLink = async (token?: string) => {
     const nextToken = (token ?? code).trim().toUpperCase();
     if (nextToken.length !== 8) return;
@@ -199,7 +236,7 @@ export function AuthScreen({
         message.includes("not found")
       ) {
         setCodeError(
-          "That code is invalid or expired. Open collect on the signed-in device and request a fresh code.",
+          "That code is invalid or expired. Ask your administrator for a fresh code.",
         );
       } else if (
         message.includes("network") ||
@@ -211,7 +248,7 @@ export function AuthScreen({
         );
       } else {
         setCodeError(
-          "That code could not be used. Request a fresh code on the other device and try again.",
+          "That code could not be used. Request a fresh code and try again.",
         );
       }
     } finally {
@@ -350,7 +387,7 @@ export function AuthScreen({
               {callbackIssue
                 ? "Request a new link."
                 : entryMode === "device"
-                  ? "Link this device."
+                  ? "Sign in with a code."
                   : isAdmin
                     ? "Admin sign in."
                     : "Sign in."}
@@ -360,7 +397,7 @@ export function AuthScreen({
                 ? callbackIssue
                   ? "Enter the invited email address and we’ll send a fresh one-time link."
                   : entryMode === "device"
-                    ? "Generate a code in Profile on a signed-in device."
+                    ? "Enter the code your administrator issued, or request a new one below."
                     : "Use your invited email address."
                 : "Authentication is not configured for this deployment."}
             </p>
@@ -491,22 +528,91 @@ export function AuthScreen({
                         busy={codeBusy}
                       >
                         {codeBusy
-                          ? "Linking…"
+                          ? "Signing in…"
                           : codeError
                             ? "Try again"
-                            : "Link this device"}
+                            : "Sign in"}
                       </Button>
                     )}
                     <button
                       type="button"
                       className="text-button"
                       onClick={() => {
-                        setEntryMode("link");
+                        setRequestOpen((current) => !current);
+                        setRequestSent(false);
+                        setRequestError(null);
+                      }}
+                    >
+                      {requestOpen ? "Hide" : "Request a new code by email"}{" "}
+                      <Icon name="arrow-right" size={15} />
+                    </button>
+                    {requestOpen && (
+                      <div className="auth-code-request">
+                        {requestSent ? (
+                          <p className="auth-sent-note" role="status">
+                            If an account exists, a code is on its way to that
+                            address.
+                          </p>
+                        ) : (
+                          <form
+                            onSubmit={(event) => {
+                              event.preventDefault();
+                              void requestCode();
+                            }}
+                          >
+                            <div className="auth-label">
+                              <label htmlFor="auth-request-email">
+                                Email address
+                              </label>
+                              <input
+                                id="auth-request-email"
+                                className="field-input"
+                                type="email"
+                                required
+                                value={requestEmail}
+                                onChange={(event) => {
+                                  setRequestEmail(event.target.value);
+                                  setRequestError(null);
+                                }}
+                                placeholder="you@example.com"
+                                autoComplete="email"
+                                inputMode="email"
+                                autoCapitalize="none"
+                                spellCheck={false}
+                              />
+                            </div>
+                            {requestError && (
+                              <p className="auth-error" role="alert">
+                                {requestError}
+                              </p>
+                            )}
+                            <Button
+                              type="submit"
+                              variant="secondary"
+                              fullWidth
+                              disabled={requestBusy || !requestEmail.trim()}
+                              busy={requestBusy}
+                            >
+                              {requestBusy
+                                ? "Sending…"
+                                : "Send me a sign-in code"}
+                            </Button>
+                          </form>
+                        )}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={() => {
+                        setEntryMode(isAdmin ? "link" : "password");
                         setCode("");
                         setCodeError(null);
                       }}
                     >
-                      Sign in with email instead{" "}
+                      {isAdmin
+                        ? "Sign in with email instead"
+                        : "Sign in with a password instead"}{" "}
                       <Icon name="arrow-right" size={15} />
                     </button>
                   </form>
