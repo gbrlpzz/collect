@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import type { Observation, Project } from "../types";
+import { getMyProfile } from "../lib/consent";
 import { formatExactTime, formatRelativeTime } from "../lib/formatTime";
 import { Icon } from "./Icon";
 import { Button, Eyebrow } from "./ui";
@@ -39,6 +41,29 @@ export function ContributorHome({
   const project =
     projects.find((candidate) => candidate.id === activeProject.id) ??
     projects[0];
+  // Distinguish "never assigned yet" from "access was revoked": a profile
+  // with granted consent means this account was onboarded before, so an
+  // empty assignment list now means the contributor was removed. The local
+  // observations stay on the device either way.
+  const [removedFromProject, setRemovedFromProject] = useState(false);
+  useEffect(() => {
+    if (projects.length > 0) {
+      setRemovedFromProject(false);
+      return;
+    }
+    let active = true;
+    void getMyProfile()
+      .then((profile) => {
+        if (!active) return;
+        setRemovedFromProject(
+          Boolean(profile?.consentGrantedAt && !profile.consentRevokedAt),
+        );
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [projects.length]);
   const projectObservations = project
     ? observations.filter(
         (item) => !item.projectId || item.projectId === project.id,
@@ -204,9 +229,15 @@ export function ContributorHome({
         </>
       ) : (
         <div className="empty-list-state">
-          <strong>No assigned project</strong>
+          <strong>
+            {removedFromProject
+              ? "Project access removed"
+              : "No assigned project"}
+          </strong>
           <span>
-            Your administrator will send an invitation when fieldwork is ready.
+            {removedFromProject
+              ? "This project no longer includes your account. Observations on this device stay here and can be exported from Profile at any time."
+              : "Your administrator will send an invitation when fieldwork is ready."}
           </span>
         </div>
       )}
