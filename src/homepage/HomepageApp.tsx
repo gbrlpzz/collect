@@ -134,17 +134,19 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
       <div className="hp-hero-container">
         <div className="hp-hero-inner">
           <h1 id="hero-title">
-            Trustworthy
+            <span className="hp-hero-wordmark">
+              collect<span className="wordmark-dot">.</span>
+            </span>
             <br className="hp-hero-br" />
-            field evidence.
+            trustworthy
             <br className="hp-hero-br" />
-            Offline on any phone.
+            field evidence
+            <br className="hp-hero-br" />
+            offline on any phone.
           </h1>
 
           <p className="hp-hero-lede">
-            An offline-first field collection app for research teams. Record
-            structured observations, raw photos, and GPS coordinates on any
-            phone beyond cellular reach.
+            Fieldwork that arrives complete, verified, and ready to publish.
           </p>
 
           <form className="hp-capture" onSubmit={submit} noValidate>

@@ -334,6 +334,10 @@ body {
   max-width: 24ch;
   text-wrap: balance;
 }
+/* The opening line is the wordmark itself, so it carries its tracking. */
+.hp-hero-wordmark {
+  letter-spacing: var(--tracking-wordmark, -0.06em);
+}
 .hp-hero-br {
   display: block;
 }
@@ -2390,7 +2394,7 @@ section[id] {
     padding: 48px 16px 36px;
   }
   .hp-hero h1 {
-    font-size: clamp(2.15rem, 8.5vw, 2.75rem);
+    font-size: clamp(1.95rem, 7.9vw, 2.75rem);
     max-width: 100%;
   }
   .hp-hero-lede {
