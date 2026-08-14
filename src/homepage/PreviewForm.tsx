@@ -3,10 +3,9 @@ import { Button } from "../components/ui";
 import { Icon } from "../components/Icon";
 
 /**
- * Research-preview access request — the page's call to action. Email is the
- * only required field; the use case is optional but welcomed. Inserts one
- * row into the private preview_requests queue (RLS: anonymous insert only —
- * nothing is ever readable from the browser).
+ * Access request & inquiry form — the page's primary call to action.
+ * Email and inquiry details are required so we can properly route and respond.
+ * Inserts one row into the private preview_requests queue (RLS: anonymous insert only).
  */
 const FORM_ENDPOINT =
   "https://lrqlrufwrytpwhgclmyo.supabase.co/rest/v1/preview_requests";
@@ -14,7 +13,7 @@ const FORM_KEY = "sb_publishable_BAsTV49V04O0WZVtVgohqg_BD5JReFE";
 
 export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
   const [email, setEmail] = useState(initialEmail);
-  const [useCase, setUseCase] = useState("");
+  const [inquiry, setInquiry] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -28,13 +27,15 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
     setError(null);
 
     const trimmedEmail = email.trim();
-    const trimmedUseCase = useCase.trim();
+    const trimmedInquiry = inquiry.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmedEmail)) {
       setError("Enter a valid work email address.");
       return;
     }
-    if (trimmedUseCase.length > 0 && trimmedUseCase.length < 10) {
-      setError("Please provide a short sentence describing your fieldwork.");
+    if (trimmedInquiry.length < 5) {
+      setError(
+        "Please tell us a little about your project, fieldwork, or question.",
+      );
       return;
     }
 
@@ -52,14 +53,11 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
           name: null,
           email: trimmedEmail,
           organization: null,
-          use_case: trimmedUseCase || null,
+          use_case: trimmedInquiry,
           source: "homepage",
         }),
       });
       if (!response.ok) {
-        // PostgREST surfaces RLS rejections (e.g. duplicates) as 401 with a
-        // 42501 code in the body — surface the code so the caller can tell a
-        // duplicate from a real outage.
         let code = "";
         try {
           const data = (await response.json()) as { code?: string };
@@ -118,16 +116,15 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
         />
       </label>
       <label className="field">
-        <span>
-          What would you collect with it? <em className="optional">optional</em>
-        </span>
+        <span>Tell us about your project, fieldwork, or question</span>
         <textarea
           className="field-input field-textarea"
-          value={useCase}
-          onChange={(event) => setUseCase(event.target.value)}
+          value={inquiry}
+          onChange={(event) => setInquiry(event.target.value)}
+          required
           rows={4}
           maxLength={4000}
-          placeholder="e.g. Building survey across 3 field teams with photos, GPS coordinates, and offline sync."
+          placeholder="e.g. Field survey across 3 research teams, custom schema requirements, self-hosting setup, or general question."
         />
       </label>
       {error && (

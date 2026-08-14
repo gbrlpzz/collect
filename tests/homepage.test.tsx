@@ -201,25 +201,16 @@ describe("PreviewForm — research preview email CTA", () => {
     expect(screen.getByRole("alert")).toBeTruthy();
   });
 
-  it("accepts a bare email (use case optional)", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
-    vi.stubGlobal("fetch", fetchMock);
+  it("requires inquiry details before sending", async () => {
     render(<PreviewForm />);
     fireEvent.change(screen.getByLabelText(/work email/i), {
       target: { value: "researcher@lab.org" },
     });
     fireEvent.click(screen.getByRole("button", { name: /request access/i }));
-    await waitFor(() =>
-      expect(screen.getByText(/request received/i)).toBeTruthy(),
-    );
-    const body = JSON.parse(String(fetchMock.mock.calls[0][1].body));
-    expect(body.email).toBe("researcher@lab.org");
-    expect(body.use_case).toBeNull();
-    expect(body.source).toBe("homepage");
-    storageEmpty();
+    expect(screen.getByRole("alert")).toBeTruthy();
   });
 
-  it("posts one row with the use case and shows the success state", async () => {
+  it("posts one row with the inquiry and shows the success state", async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal("fetch", fetchMock);
     render(<PreviewForm />);
@@ -227,7 +218,7 @@ describe("PreviewForm — research preview email CTA", () => {
     fireEvent.change(screen.getByLabelText(/work email/i), {
       target: { value: "researcher@lab.org" },
     });
-    fireEvent.change(screen.getByLabelText(/what would you collect/i), {
+    fireEvent.change(screen.getByLabelText(/tell us about your project/i), {
       target: {
         value:
           "A building survey in a valley with patchy coverage, published as a dataset.",
@@ -248,15 +239,15 @@ describe("PreviewForm — research preview email CTA", () => {
     storageEmpty();
   });
 
-  it("asks for a sentence when a use case is provided but too short", async () => {
+  it("asks for more detail when the inquiry is too short", async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal("fetch", fetchMock);
     render(<PreviewForm />);
     fireEvent.change(screen.getByLabelText(/work email/i), {
       target: { value: "researcher@lab.org" },
     });
-    fireEvent.change(screen.getByLabelText(/what would you collect/i), {
-      target: { value: "short" },
+    fireEvent.change(screen.getByLabelText(/tell us about your project/i), {
+      target: { value: "hi" },
     });
     fireEvent.click(screen.getByRole("button", { name: /request access/i }));
     expect(screen.getByRole("alert")).toBeTruthy();
@@ -278,6 +269,9 @@ describe("HomepageApp — promotional home with email CTA", () => {
     render(<PreviewForm />);
     fireEvent.change(screen.getByLabelText(/work email/i), {
       target: { value: "dup@lab.org" },
+    });
+    fireEvent.change(screen.getByLabelText(/tell us about your project/i), {
+      target: { value: "Research field campaign inquiring about access." },
     });
     fireEvent.click(screen.getByRole("button", { name: /request access/i }));
     await waitFor(() =>

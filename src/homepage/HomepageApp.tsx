@@ -627,55 +627,65 @@ export function HomepageApp() {
           </div>
           <nav className="hp-footer-links" aria-label="Footer">
             <div>
-              <span className="hp-footer-heading">Sections</span>
-              <a href="#collection">Field collection</a>
+              <span className="hp-footer-heading">Product</span>
+              <a href="#collection">Collector</a>
               <a href="#guarantees">Guarantees</a>
-              <a href="#sync">Sync pipeline</a>
-              <a href="#admin">Setup & operations</a>
+              <a href="#sync">Sync engine</a>
+              <a href="#admin">Setup & fleet</a>
               <a href="#integrity">Data integrity</a>
-              <a href="#data">Archival & export</a>
-              <a href="#preview">Request access</a>
-              <a href="/" target="_blank" rel="noopener noreferrer">
-                Sign in — contributor
-              </a>
-              <a href="/?role=admin" target="_blank" rel="noopener noreferrer">
-                Sign in — admin
-              </a>
+              <a href="#data">Dataset export</a>
             </div>
             <div>
               <span className="hp-footer-heading">Documentation</span>
-              <a href={GITHUB_URL} target="_blank" rel="noopener">
-                GitHub repository
+              <a href={DOCS("architecture.md")} target="_blank" rel="noopener">
+                Architecture
               </a>
               <a
                 href={DOCS("background-automation.md")}
                 target="_blank"
                 rel="noopener"
               >
-                Background automation
+                Automation
               </a>
               <a href={DOCS("export-format.md")} target="_blank" rel="noopener">
-                Export format spec
-              </a>
-              <a href={DOCS("architecture.md")} target="_blank" rel="noopener">
-                Architecture guide
-              </a>
-              <a href={DOCS("privacy.md")} target="_blank" rel="noopener">
-                Privacy & data handling
+                Export format
               </a>
               <a
                 href={DOCS("dataset-standards.md")}
                 target="_blank"
                 rel="noopener"
               >
-                FAIR dataset standards
+                FAIR standards
               </a>
-              <a href={DOCS("design.md")} target="_blank" rel="noopener">
-                Design baseline
+              <a href={DOCS("privacy.md")} target="_blank" rel="noopener">
+                Privacy & QA
+              </a>
+            </div>
+            <div>
+              <span className="hp-footer-heading">Access</span>
+              <a href={GITHUB_URL} target="_blank" rel="noopener">
+                GitHub
+              </a>
+              <a href="#preview">Request access</a>
+              <a href="/" target="_blank" rel="noopener noreferrer">
+                Sign in (Contributor)
+              </a>
+              <a href="/?role=admin" target="_blank" rel="noopener noreferrer">
+                Sign in (Admin)
               </a>
             </div>
           </nav>
-          <p className="hp-footer-legal">© 2026 Gabriele Pizzi — Apache-2.0</p>
+          <p className="hp-footer-legal">
+            © 2026{" "}
+            <a
+              href="https://gabrielepizzi.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Gabriele Pizzi
+            </a>{" "}
+            — Apache-2.0
+          </p>
         </div>
       </footer>
     </div>

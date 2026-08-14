@@ -2106,7 +2106,7 @@ section[id] {
    Footer
    ========================================================================= */
 .hp-footer {
-  padding: 56px 24px 40px;
+  padding: 44px 24px 28px;
   background: var(--canvas);
   border-top: 1px solid var(--separator-light);
 }
@@ -2114,28 +2114,28 @@ section[id] {
   width: min(100%, 1080px);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 48px;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: clamp(32px, 5vw, 64px);
 }
 .hp-footer-brand p {
   margin-top: 8px;
   color: var(--secondary);
   font-size: 0.8125rem;
-  max-width: 26rem;
-  line-height: 1.5;
+  max-width: 20rem;
+  line-height: 1.45;
 }
 .hp-footer-links {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(16px, 3vw, 32px);
 }
 .hp-footer-links > div {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 .hp-footer-heading {
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   color: var(--tertiary);
   font-size: 0.6875rem;
   font-weight: 650;
@@ -2143,7 +2143,7 @@ section[id] {
   text-transform: uppercase;
 }
 .hp-footer-links a {
-  min-height: 26px;
+  min-height: 24px;
   display: inline-flex;
   align-items: center;
   color: var(--secondary);
@@ -2156,11 +2156,20 @@ section[id] {
 }
 .hp-footer-legal {
   grid-column: 1 / -1;
-  margin-top: 6px;
-  padding-top: 24px;
+  margin-top: 0;
+  padding-top: 18px;
   border-top: 1px solid var(--separator-light);
   color: var(--tertiary);
   font-size: 0.6875rem;
+}
+.hp-footer-legal a {
+  color: var(--secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+.hp-footer-legal a:hover {
+  color: var(--text);
 }
 
 /* =========================================================================
