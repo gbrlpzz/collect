@@ -302,14 +302,14 @@ export function HomepageApp() {
 
         {/* Step 2: Admin Operations & Schema (Dark Mobile Mockup) */}
         <section
-          className="hp-section hp-section-dark"
+          className="hp-section hp-section-admin"
           id="admin"
           aria-labelledby="admin-title"
         >
           <div className="hp-section-inner">
             <div className="hp-flow-layout">
               <div className="hp-flow-copy">
-                <div className="section-heading hp-admin-heading">
+                <div className="section-heading">
                   <p className="eyebrow">Step 2 · Fleet Setup & Schema</p>
                   <h2 id="admin-title">
                     Define immutable schemas and pair field devices.
