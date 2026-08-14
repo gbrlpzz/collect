@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import * as React from "react";
 import {
   render,
@@ -21,10 +21,19 @@ const storageEmpty = () => {
     expect(sessionStorage.length).toBe(0);
 };
 
+beforeEach(() => {
+  // The preview form only renders when the Supabase project is configured.
+  // It must never fall back to a hardcoded production project, so the tests
+  // provide an explicit local configuration.
+  vi.stubEnv("VITE_SUPABASE_URL", "https://test-project.supabase.co");
+  vi.stubEnv("VITE_SUPABASE_PUBLISHABLE_KEY", "sb_publishable_test_key");
+});
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
   if (typeof localStorage !== "undefined") localStorage.clear();
   if (typeof sessionStorage !== "undefined") sessionStorage.clear();
 });

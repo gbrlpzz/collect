@@ -1,5 +1,7 @@
 import { corsHeaders, json, options } from "../_shared/cors.ts";
 import { errorMessage, requireUser, serviceClient } from "../_shared/auth.ts";
+import { appEntryUrl } from "../_shared/config.ts";
+import { bumpIpRateLimit } from "../_shared/rateLimit.ts";
 import { sha256 } from "../_shared/hash.ts";
 
 function randomCode(): string {
@@ -63,22 +65,27 @@ Deno.serve(async (request) => {
         );
       }
       const service = serviceClient();
+      // A short-lived code is unguessable in practice (32^8), but a per-IP
+      // budget still keeps one host from hammering the exchange endpoint.
+      if (!(await bumpIpRateLimit(request, service))) {
+        return json(
+          {
+            error:
+              "Too many sign-in attempts. Wait a few minutes and try again.",
+          },
+          { status: 429 },
+        );
+      }
       const codeHash = await sha256(code);
+      // Resolve the redirect target before consuming the single-use code so a
+      // misconfigured deployment cannot burn a valid code and then fail.
+      const redirectTo = appEntryUrl();
       // Consume in the same statement that validates the one-time code. Two
       // containers racing the same code can never both receive a session.
       const { data: userId } = await service.rpc("consume_session_link_code", {
         p_code_hash: codeHash,
       });
       if (typeof userId !== "string") {
-        // Count the failed try so a guessed code invalidates after a small
-        // number of attempts instead of being brute-forced inside its TTL.
-        try {
-          await service.rpc("bump_session_link_attempt", {
-            p_code_hash: codeHash,
-          });
-        } catch {
-          // Best effort; the exchange is rejected either way.
-        }
         return json(
           { error: "That sign-in code is invalid or expired" },
           { status: 404 },
@@ -99,8 +106,7 @@ Deno.serve(async (request) => {
           type: "magiclink",
           email,
           options: {
-            redirectTo: Deno.env.get("APP_URL") ??
-              "https://collect-tawny.vercel.app",
+            redirectTo,
           },
         });
       if (linkError || !link?.properties?.hashed_token) {

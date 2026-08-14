@@ -1,5 +1,6 @@
 import { corsHeaders, json, options } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
+import { appEntryUrl } from "../_shared/config.ts";
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return options();
@@ -47,7 +48,7 @@ Deno.serve(async (request) => {
         .update({ status: "revoked" })
         .eq("project_id", projectId)
         .eq("status", "pending")
-        .ilike("email", email);
+        .eq("email", email);
     }
 
     const { data: existingInvite } = await service
@@ -55,13 +56,13 @@ Deno.serve(async (request) => {
       .select("id")
       .eq("project_id", projectId)
       .eq("status", "pending")
-      .ilike("email", email)
+      .eq("email", email)
       .maybeSingle();
     if (existingInvite) return json({ accepted: true, already_pending: true });
 
     let invitedUserId: string | null = null;
     const inviteResult = await service.auth.admin.inviteUserByEmail(email, {
-      redirectTo: Deno.env.get("APP_URL") ?? "https://collect-tawny.vercel.app",
+      redirectTo: appEntryUrl(),
     });
     if (!inviteResult.error) invitedUserId = inviteResult.data.user?.id ?? null;
     else if (!/already|registered|exists/i.test(inviteResult.error.message)) {
@@ -116,8 +117,7 @@ Deno.serve(async (request) => {
           type: "magiclink",
           email,
           options: {
-            redirect_to: Deno.env.get("APP_URL") ??
-              "https://collect-tawny.vercel.app",
+            redirect_to: appEntryUrl(),
           },
         }),
       });

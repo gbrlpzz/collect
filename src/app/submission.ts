@@ -41,9 +41,18 @@ export async function commitLocalObservation({
   const { values: cleanedValues, response: attentionResponse } =
     extractAttentionResponse(values);
 
+  // Only declared schema keys may enter the research payload. The draft also
+  // carries a UI-only "observed_date" seed for the demo schema; on real
+  // deployments that key is not a declared field and must not be persisted as
+  // research data. Filtering here also guarantees the reserved attention key
+  // (already stripped above) can never re-enter the payload.
+  const declaredKeys = new Set(project.fields.map((field) => field.key));
+  let submittedValues = Object.fromEntries(
+    Object.entries(cleanedValues).filter(([key]) => declaredKeys.has(key)),
+  );
+
   // A fresh location fix is captured at submit time when the browser permits it.
   // Failure to obtain a fix never blocks the durable local receipt.
-  let submittedValues = cleanedValues;
   // The fresh fix is written to every declared location field key so a schema
   // with a non-"location" key (e.g. "gps") still records coordinates. The
   // merge stays on cleanedValues so stripped auxiliary keys (e.g. the

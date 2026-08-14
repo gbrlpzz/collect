@@ -7,20 +7,30 @@ import { Icon } from "../components/Icon";
  * Email and inquiry details are required so we can properly route and respond.
  * Inserts one row into the private preview_requests queue (RLS: anonymous insert only).
  */
-const DEFAULT_SUPABASE_URL = "https://lrqlrufwrytpwhgclmyo.supabase.co";
-const DEFAULT_PUBLISHABLE_KEY =
-  "sb_publishable_BAsTV49V04O0WZVtVgohqg_BD5JReFE";
-
-const baseUrl = (
-  import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL
-).replace(/\/+$/, "");
-const FORM_ENDPOINT = `${baseUrl}/rest/v1/preview_requests`;
-const FORM_KEY =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  DEFAULT_PUBLISHABLE_KEY;
+// The preview form posts into the same Supabase project that powers the app.
+// It must never fall back to a hardcoded production project: a self-hosted
+// build without VITE_SUPABASE_* would otherwise write interest requests into
+// someone else's database. When unconfigured, the form renders a clear note.
+/**
+ * Read the target project lazily (not at module scope) so test and runtime
+ * environments can configure VITE_SUPABASE_* after import, and so a build
+ * without the variables still renders a clear "not configured" note instead
+ * of silently posting into a hardcoded production project.
+ */
+function previewFormConfig(): { endpoint: string; key: string } | null {
+  const baseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+  const key =
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() ||
+    import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+  if (!baseUrl || !key) return null;
+  return {
+    endpoint: `${baseUrl.replace(/\/+$/, "")}/rest/v1/preview_requests`,
+    key,
+  };
+}
 
 export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
+  const config = previewFormConfig();
   const [email, setEmail] = useState(initialEmail);
   const [inquiry, setInquiry] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +43,7 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!config) return;
     setError(null);
 
     const trimmedEmail = email.trim();
@@ -50,11 +61,11 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
 
     setSending(true);
     try {
-      const response = await fetch(FORM_ENDPOINT, {
+      const response = await fetch(config.endpoint, {
         method: "POST",
         headers: {
-          apikey: FORM_KEY,
-          Authorization: `Bearer ${FORM_KEY}`,
+          apikey: config.key,
+          Authorization: `Bearer ${config.key}`,
           "Content-Type": "application/json",
           Prefer: "return=minimal",
         },
@@ -89,6 +100,16 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
       setSending(false);
     }
   };
+
+  if (!config) {
+    return (
+      <div className="hp-form" role="status">
+        <p className="hp-form-note">
+          The preview request form is not configured for this deployment.
+        </p>
+      </div>
+    );
+  }
 
   if (sent) {
     return (

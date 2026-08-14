@@ -159,10 +159,10 @@ async function updateAuthConfig({
   }
 }
 
-async function issueMagicLink({ projectRef, publishableKey, appUrl, email }) {
+async function issueMagicLink({ projectRef, publishableKey, appPath, email }) {
   const supabaseUrl = `https://${projectRef}.supabase.co`;
   const response = await fetch(
-    `${supabaseUrl}/auth/v1/otp?redirect_to=${encodeURIComponent(appUrl)}`,
+    `${supabaseUrl}/auth/v1/otp?redirect_to=${encodeURIComponent(appPath)}`,
     {
       method: "POST",
       headers: {
@@ -259,7 +259,7 @@ async function main() {
     await issueMagicLink({
       projectRef,
       publishableKey,
-      appUrl,
+      appPath,
       email: adminEmail,
     });
     console.log(

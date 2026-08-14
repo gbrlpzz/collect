@@ -20,7 +20,7 @@ Deno.serve(async (request) => {
       .from("project_invites")
       .select("id,project_id")
       .eq("status", "pending")
-      .ilike("email", email);
+      .eq("email", email);
     if (inviteError) {
       return json(
         { error: "Invitations could not be checked" },

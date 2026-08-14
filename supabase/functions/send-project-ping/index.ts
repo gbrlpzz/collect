@@ -1,5 +1,6 @@
 import { corsHeaders, json, options } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
+import { appEntryUrl } from "../_shared/config.ts";
 import { sendEmail } from "../_shared/mail.ts";
 
 Deno.serve(async (request) => {
@@ -73,9 +74,9 @@ Deno.serve(async (request) => {
       } still has field data waiting to synchronize`,
       text: `${
         project?.name ?? "Your field project"
-      } still has field data waiting to synchronize.\n\nOpen the collector when you have connectivity and allow synchronization to complete.\n\n${
-        Deno.env.get("APP_URL") ?? "https://collect-tawny.vercel.app"
-      }/?project=${encodeURIComponent(projectId)}`,
+      } still has field data waiting to synchronize.\n\nOpen the collector when you have connectivity and allow synchronization to complete.\n\n${appEntryUrl()}?project=${
+        encodeURIComponent(projectId)
+      }`,
     });
     await service.from("audit_events").insert({
       organization_id: access.project.organization_id,
