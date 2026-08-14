@@ -130,6 +130,7 @@ function DifferentiationSummary() {
     proof: string;
     href: string;
     cta: string;
+    doc: string;
   }> = [
     {
       icon: "shield",
@@ -139,6 +140,7 @@ function DifferentiationSummary() {
       proof: "commit before network · receipt-gated SYNCED",
       href: "#sync",
       cta: "See the sync pipeline",
+      doc: "background-automation.md",
     },
     {
       icon: "camera",
@@ -148,6 +150,7 @@ function DifferentiationSummary() {
       proof: "uncompressed originals · SHA-256",
       href: "#collection",
       cta: "See the media step",
+      doc: "dataset-standards.md",
     },
     {
       icon: "check",
@@ -157,6 +160,7 @@ function DifferentiationSummary() {
       proof: "stripped before commit · immutable versions",
       href: "#integrity",
       cta: "Inspect the payload",
+      doc: "attention-qa.md",
     },
     {
       icon: "archive",
@@ -166,6 +170,7 @@ function DifferentiationSummary() {
       proof: "DataCite 4.4 · GeoJSON · JSONL",
       href: "#data",
       cta: "Open the dataset",
+      doc: "export-format.md",
     },
   ];
 
@@ -201,6 +206,16 @@ function DifferentiationSummary() {
               <span className="hp-diff-cta">
                 {item.cta}
                 <Icon name="arrow-right" size={14} />
+              </span>
+              <span className="hp-diff-doc">
+                <a
+                  href={DOCS(item.doc)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  docs/{item.doc}
+                </a>
               </span>
             </a>
           ))}
@@ -275,13 +290,17 @@ export function HomepageApp() {
                 <div className="section-heading">
                   <p className="eyebrow">Synchronization Architecture</p>
                   <h2 id="sync-title">
-                    A three-stage pipeline that ends in a server receipt.
+                    Sync is a state machine, not a best effort.
                   </h2>
                   <p>
-                    A data path, not an afterthought: nothing uploads before it
-                    exists on device, and nothing is marked sent before the
-                    server says so.
+                    A submission moves through explicit states — each one a
+                    verifiable fact. Nothing uploads before it exists on device,
+                    and nothing is marked sent before the server says so.
                   </p>
+                  <DocLink
+                    file="background-automation.md"
+                    label="Background automation doc"
+                  />
                   <DocLink
                     file="architecture.md"
                     label="Sync architecture doc"
@@ -291,15 +310,18 @@ export function HomepageApp() {
                 <ul className="hp-sync-principles">
                   <li>
                     <strong>Commit first.</strong> Payload, media, and outbox
-                    write to IndexedDB before any network attempt.
+                    operations write to IndexedDB before any network attempt —{" "}
+                    <code>SAVED_LOCAL</code>, shown as “Saved on this device”.
                   </li>
                   <li>
-                    <strong>Resumable media.</strong> Original files upload over
-                    tus and resume where a flaky link stopped.
+                    <strong>Resumable media.</strong> Original files upload as
+                    tus chunked transfers with SHA-256 hashes; a flaky link
+                    resumes where it stopped.
                   </li>
                   <li>
-                    <strong>Receipt-gated status.</strong> <code>SYNCED</code>{" "}
-                    only after server finalization.
+                    <strong>Receipt-gated SYNCED.</strong> The server finalizes
+                    and returns a receipt naming the exact submission id. Only
+                    that flips the local record to <code>SYNCED</code>.
                   </li>
                 </ul>
               </div>
@@ -309,26 +331,53 @@ export function HomepageApp() {
                   <div className="hp-sync-stage">
                     <span className="hp-sync-stage-index">1</span>
                     <div>
-                      <strong>Metadata</strong>
-                      <p>Payload and receipt ops commit to the local outbox.</p>
+                      <strong>Saved on this device</strong>
+                      <p className="hp-sync-state-code">SAVED_LOCAL</p>
+                      <p>
+                        Payload and <code>submit:&lt;id&gt;</code> commit to the
+                        local outbox.
+                      </p>
                     </div>
                   </div>
                   <div className="hp-sync-stage">
                     <span className="hp-sync-stage-index">2</span>
                     <div>
-                      <strong>Media</strong>
-                      <p>Original files upload as resumable tus transfers.</p>
+                      <strong>Syncing</strong>
+                      <p className="hp-sync-state-code">
+                        SYNCING_METADATA → SYNCING_MEDIA
+                      </p>
+                      <p>
+                        Metadata first, then original media over resumable tus
+                        uploads.
+                      </p>
                     </div>
                   </div>
                   <div className="hp-sync-stage">
                     <span className="hp-sync-stage-index">3</span>
                     <div>
-                      <strong>Finalization</strong>
+                      <strong>Synced</strong>
+                      <p className="hp-sync-state-code">FINALIZING → SYNCED</p>
                       <p>
-                        A durable server receipt flips the record to{" "}
+                        The server writes a durable receipt; only then{" "}
                         <code>SYNCED</code>.
                       </p>
                     </div>
+                  </div>
+                  <div className="hp-sync-receipt">
+                    <span className="hp-sync-receipt-label">
+                      durable server receipt
+                    </span>
+                    <pre>{`{
+  "submission_id": "obs-4f2a9c…",
+  "received_at": "2026-08-14T09:32:01.204Z",
+  "finalized_at": "2026-08-14T09:32:02.118Z",
+  "status": "COMPLETE"
+}`}</pre>
+                    <p>
+                      Marked <code>SYNCED</code> only when the receipt names
+                      your submission id — request start or upload completion is
+                      never enough.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -355,6 +404,7 @@ export function HomepageApp() {
                     pairing codes, and trigger publication checkpoints.
                   </p>
                   <DocLink file="flows.md" label="Administrator workflow doc" />
+                  <DocLink file="spec.md" label="Product & schema spec" />
                 </div>
 
                 <div className="hp-admin-tab-selector">
@@ -443,6 +493,7 @@ export function HomepageApp() {
                 telemetry.
               </p>
               <DocLink file="attention-qa.md" label="Attention QA doc" />
+              <DocLink file="privacy.md" label="Privacy & provenance doc" />
             </div>
             <div className="hp-integrity-grid">
               <div className="hp-integrity-card">
@@ -484,6 +535,10 @@ export function HomepageApp() {
                 SHA-256 hashes.
               </p>
               <DocLink file="export-format.md" label="Export format doc" />
+              <DocLink
+                file="dataset-standards.md"
+                label="FAIR dataset standards"
+              />
             </div>
             <PackageBrowser />
             <p className="hp-section-note">

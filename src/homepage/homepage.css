@@ -559,6 +559,73 @@ body {
   padding: 0 4px;
 }
 
+.hp-sync-state-code {
+  margin: 0 0 2px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--tertiary);
+}
+.hp-sync-stage code,
+.hp-sync-receipt code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+  color: var(--text);
+  background: var(--grouped);
+  border-radius: 5px;
+  padding: 0 4px;
+}
+.hp-sync-receipt {
+  margin-top: 4px;
+  padding: 14px 14px 12px;
+  border-radius: 14px;
+  background: var(--grouped);
+}
+.hp-sync-receipt-label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--tertiary);
+  margin-bottom: 8px;
+}
+.hp-sync-receipt pre {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--paper);
+  border: 1px solid var(--separator-light);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--text);
+  overflow: auto;
+}
+.hp-sync-receipt p {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--secondary);
+}
+/* Per-card documentation link in the differentiator grid */
+.hp-diff-doc {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--separator-light);
+}
+.hp-diff-doc a {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6875rem;
+  color: var(--tertiary);
+  text-decoration: none;
+}
+.hp-diff-doc a:hover {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* ---------- Common Section Layout ---------- */
 .hp-section {
   padding: clamp(60px, 8vh, 92px) 24px;
