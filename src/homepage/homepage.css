@@ -1578,24 +1578,38 @@ main [id] {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(320px, 1fr);
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
 }
 .hp-integrity-left-rail {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  height: 100%;
 }
 .hp-integrity-right-rail {
   display: flex;
   flex-direction: column;
+  height: 100%;
+}
+.hp-integrity-right-rail .hp-integrity-card {
+  height: 100%;
+  flex: 1;
 }
 .hp-privacy-stack {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  flex: 1;
+  align-items: stretch;
 }
 .hp-privacy-stack .hp-fact-card {
   padding: 14px 14px 12px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.hp-privacy-stack .hp-fact-card p {
+  flex: 1;
 }
 .hp-integrity-card {
   border: 1px solid var(--separator-light);
@@ -1711,6 +1725,16 @@ main [id] {
 .hp-provenance-clean {
   display: flex;
   flex-direction: column;
+  flex: 1;
+}
+.hp-provenance-clean .hp-record {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  margin-bottom: 0;
+}
+.hp-provenance-clean .record-json {
+  flex: 1;
 }
 .hp-provenance-intro {
   font-size: 0.75rem;
