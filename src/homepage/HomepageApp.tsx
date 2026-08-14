@@ -284,9 +284,6 @@ function ComparisonSection() {
 
 export function HomepageApp() {
   const [draftEmail, setDraftEmail] = useState("");
-  const [adminTab, setAdminTab] = useState<"setup" | "contributors" | "export">(
-    "setup",
-  );
 
   const captureEmail = (email: string) => {
     setDraftEmail(email);
@@ -307,94 +304,26 @@ export function HomepageApp() {
         <Hero onEmailSubmit={captureEmail} />
         <DifferentiationSummary />
 
-        {/* Step 1: Admin Operations & Schema */}
+        {/* Step 1: Admin Operations & Schema (Expansive Dark Console) */}
         <section
           className="hp-section hp-section-dark"
           id="admin"
           aria-labelledby="admin-title"
         >
           <div className="hp-section-inner">
-            <div className="hp-flow-layout">
-              <div className="hp-flow-copy">
-                <div className="section-heading hp-admin-heading">
-                  <p className="eyebrow">Step 1 · Setup & Fleet Pairing</p>
-                  <h2 id="admin-title">
-                    Define immutable schemas and pair field devices.
-                  </h2>
-                  <p>
-                    Author versioned questions with typed rules. Generate
-                    single-use 8-character pairing codes to onboard field phones
-                    without passwords, monitor fleet readiness, and trigger
-                    research checkpoints.
-                  </p>
-                </div>
-
-                <div className="hp-admin-tab-selector">
-                  <button
-                    type="button"
-                    className={`hp-admin-step-btn ${adminTab === "setup" ? "active" : ""}`}
-                    onClick={() => setAdminTab("setup")}
-                  >
-                    1. Form Schema
-                  </button>
-                  <button
-                    type="button"
-                    className={`hp-admin-step-btn ${adminTab === "contributors" ? "active" : ""}`}
-                    onClick={() => setAdminTab("contributors")}
-                  >
-                    2. Device Pairing
-                  </button>
-                  <button
-                    type="button"
-                    className={`hp-admin-step-btn ${adminTab === "export" ? "active" : ""}`}
-                    onClick={() => setAdminTab("export")}
-                  >
-                    3. Checkpoint Export
-                  </button>
-                </div>
-
-                <div className="hp-story" aria-live="polite">
-                  <span className="hp-story-kicker">Administrator Console</span>
-                  {adminTab === "setup" && (
-                    <>
-                      <h3>Immutable question schema</h3>
-                      <p>
-                        Field definitions are locked on publish. Modifying a
-                        published survey creates Version 2 without corrupting
-                        past observations.
-                      </p>
-                    </>
-                  )}
-                  {adminTab === "contributors" && (
-                    <>
-                      <h3>Passwordless device link</h3>
-                      <p>
-                        Field researchers enter an 8-character code once to pair
-                        their phone’s IndexedDB storage. No passwords or app
-                        store accounts.
-                      </p>
-                    </>
-                  )}
-                  {adminTab === "export" && (
-                    <>
-                      <h3>Verified sync readiness</h3>
-                      <p>
-                        Review received observations, monitor contributor
-                        attention rings, and generate a self-contained research
-                        archive.
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="hp-flow-visual">
-                <AdminWalkthrough
-                  initialTab={adminTab}
-                  onTabChange={setAdminTab}
-                />
-              </div>
+            <div className="section-heading hp-admin-heading">
+              <p className="eyebrow">Step 1 · Setup & Fleet Pairing</p>
+              <h2 id="admin-title">
+                Define immutable schemas and pair field devices.
+              </h2>
+              <p>
+                Author versioned questions with typed rules. Generate single-use
+                8-character pairing codes to onboard field phones without
+                passwords, monitor fleet readiness, and trigger research
+                checkpoints.
+              </p>
             </div>
+            <AdminWalkthrough />
           </div>
         </section>
 
@@ -405,25 +334,7 @@ export function HomepageApp() {
           aria-labelledby="collection-title"
         >
           <div className="hp-section-inner">
-            <div className="hp-flow-layout">
-              <div className="hp-flow-copy">
-                <div className="section-heading">
-                  <p className="eyebrow">Step 2 · Field Collection</p>
-                  <h2 id="collection-title">
-                    One calm question at a time. Built for zero signal.
-                  </h2>
-                  <p>
-                    The collector presents one question per screen with 52pt
-                    touch targets for gloves and sunlight, native date pickers,
-                    and raw photo capture. Atomic IndexedDB transactions
-                    guarantee that no saved observation is lost.
-                  </p>
-                </div>
-              </div>
-              <div className="hp-flow-visual">
-                <FlowDemo />
-              </div>
-            </div>
+            <FlowDemo />
           </div>
         </section>
 
