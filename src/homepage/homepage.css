@@ -349,11 +349,11 @@ main [id] {
    2-Column Scrollytelling Flow Layout (Admin & Contributor)
    ========================================================================= */
 /* =========================================================================
-   Interactive Surfaces: Step 1 (Collector Phone) & Step 2 (Admin Console)
+   Interactive Surfaces: Step 1 (Contributor Phone) & Step 2 (Admin Phone)
    ========================================================================= */
 .hp-flow-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
+  grid-template-columns: minmax(0, 1fr) 375px;
   gap: clamp(32px, 5vw, 64px);
   align-items: center;
   justify-content: space-between;
@@ -421,7 +421,7 @@ main [id] {
   line-height: 1.5;
 }
 
-/* ---------- Authentic iPhone Mockup (Step 1) ---------- */
+/* ---------- Shared iPhone Mockup Shell ---------- */
 .hp-iphone-wrap {
   display: flex;
   flex-direction: column;
@@ -431,39 +431,51 @@ main [id] {
 }
 .hp-iphone {
   position: relative;
-  width: 380px;
+  width: 375px;
   max-width: 100%;
-  height: 780px;
-  border-radius: 50px;
+  height: 740px;
+  border-radius: 48px;
   background: #1c1c1e;
   box-shadow:
     0 28px 70px -14px rgba(0, 0, 0, 0.28),
     0 8px 24px rgba(0, 0, 0, 0.1),
     inset 0 0 0 1.5px rgba(255, 255, 255, 0.16),
     inset 0 0 2px 2px rgba(0, 0, 0, 0.8);
-  padding: 10px;
+  padding: 9px;
   box-sizing: border-box;
   margin: 0 auto;
+}
+.hp-iphone-dark {
+  background: #000000;
+  box-shadow:
+    0 28px 70px -14px rgba(0, 0, 0, 0.6),
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.2),
+    inset 0 0 2px 2px rgba(0, 0, 0, 0.95);
 }
 .hp-iphone-screen {
   position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  border-radius: 40px;
+  border-radius: 39px;
   background: var(--canvas);
   display: flex;
   flex-direction: column;
   transform: translateZ(0);
   contain: layout paint;
 }
+.hp-iphone-screen-dark {
+  background: #000000;
+  color: #f5f5f7;
+}
 .hp-dynamic-island {
   position: absolute;
-  top: 10px;
+  top: 9px;
   left: 50%;
   z-index: 40;
-  width: 96px;
-  height: 26px;
+  width: 92px;
+  height: 24px;
   transform: translateX(-50%);
   border-radius: 999px;
   background: #000000;
@@ -472,17 +484,20 @@ main [id] {
 .hp-status-bar {
   position: relative;
   z-index: 35;
-  height: 44px;
-  flex: 0 0 44px;
+  height: 42px;
+  flex: 0 0 42px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 22px;
+  padding: 0 20px;
   color: #000000;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   background: transparent;
+}
+.hp-status-bar-dark {
+  color: #ffffff;
 }
 .hp-status-icons {
   display: inline-flex;
@@ -491,18 +506,21 @@ main [id] {
 }
 .hp-home-indicator {
   position: absolute;
-  bottom: 8px;
+  bottom: 7px;
   left: 50%;
   z-index: 40;
-  width: 130px;
-  height: 4.5px;
+  width: 124px;
+  height: 4px;
   transform: translateX(-50%);
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.7);
   pointer-events: none;
 }
+.hp-iphone-screen-dark .hp-home-indicator {
+  background: rgba(255, 255, 255, 0.6);
+}
 
-/* Collector Viewport inside Phone */
+/* ---------- Collector Viewport inside Phone ---------- */
 .hp-app-viewport {
   position: relative;
   z-index: 10;
@@ -571,22 +589,22 @@ main [id] {
 .hp-app-viewport .collector-topbar {
   position: relative !important;
   z-index: 15 !important;
-  flex: 0 0 50px !important;
-  height: 50px !important;
-  min-height: 50px !important;
+  flex: 0 0 48px !important;
+  height: 48px !important;
+  min-height: 48px !important;
   display: grid !important;
-  grid-template-columns: 36px minmax(0, 1fr) 52px !important;
+  grid-template-columns: 34px minmax(0, 1fr) 52px !important;
   align-items: center !important;
-  padding: 0 14px !important;
+  padding: 0 12px !important;
   border-bottom: 1px solid var(--separator-light) !important;
   background: var(--canvas) !important;
   gap: 8px !important;
 }
 .hp-app-viewport .collector-topbar .back-button {
-  width: 34px !important;
-  height: 34px !important;
-  min-height: 34px !important;
-  min-width: 34px !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  min-width: 32px !important;
   padding: 0 !important;
   border-radius: 50% !important;
   background: var(--grouped) !important;
@@ -660,13 +678,13 @@ main [id] {
 }
 .hp-app-viewport .flow-step {
   flex: 1 1 auto !important;
-  padding: 24px 20px 20px !important;
+  padding: 22px 18px 18px !important;
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
 }
 .hp-app-viewport .flow-step .step-title {
-  font-size: 1.5rem !important;
+  font-size: 1.375rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.03em !important;
   line-height: 1.15 !important;
@@ -674,15 +692,15 @@ main [id] {
   color: var(--text) !important;
 }
 .hp-app-viewport .flow-step .step-description {
-  font-size: 0.875rem !important;
+  font-size: 0.8125rem !important;
   color: var(--secondary) !important;
   line-height: 1.4 !important;
-  margin: 0 0 14px 0 !important;
+  margin: 0 0 12px 0 !important;
 }
 .hp-app-viewport .choice-button {
-  min-height: 48px !important;
-  padding: 0 18px !important;
-  font-size: 0.9375rem !important;
+  min-height: 46px !important;
+  padding: 0 16px !important;
+  font-size: 0.875rem !important;
   border-radius: 999px !important;
 }
 .hp-app-viewport .flow-actions {
@@ -691,7 +709,7 @@ main [id] {
   left: 0 !important;
   right: 0 !important;
   z-index: 25 !important;
-  padding: 12px 20px 28px !important;
+  padding: 12px 18px 24px !important;
   background: rgba(245, 245, 247, 0.94) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
@@ -704,284 +722,312 @@ main [id] {
 }
 .hp-app-viewport .flow-actions .flow-continue {
   flex: 1 1 auto !important;
-  min-height: 48px !important;
+  min-height: 46px !important;
   border-radius: 999px !important;
-  font-size: 1rem !important;
+  font-size: 0.9375rem !important;
   font-weight: 600 !important;
 }
 .hp-app-viewport .flow-actions .flow-back {
   flex: 0 0 auto !important;
-  min-height: 48px !important;
-  min-width: 84px !important;
+  min-height: 46px !important;
+  min-width: 80px !important;
   border-radius: 999px !important;
-  font-size: 0.9375rem !important;
+  font-size: 0.875rem !important;
 }
 .hp-app-viewport .page-contributor {
-  padding: 18px 20px 32px !important;
+  padding: 16px 16px 32px !important;
   overflow-y: auto !important;
 }
 
-/* ---------- Spacious Admin Dashboard Console (Step 2) ---------- */
-.hp-admin-console {
-  width: 100%;
-  border-radius: 20px;
-  background: #1c1c1e;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow:
-    0 24px 60px -12px rgba(0, 0, 0, 0.5),
-    0 4px 16px rgba(0, 0, 0, 0.25);
-  padding: 24px;
-  color: #f5f5f7;
-  box-sizing: border-box;
+/* ---------- Admin Viewport inside Dark Phone ---------- */
+.hp-admin-viewport {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  background: #000000 !important;
+  color: #f5f5f7 !important;
+  box-sizing: border-box !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding: 0 12px 36px !important;
+}
+.hp-admin-mobile-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-.hp-console-header {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.hp-admin-console .admin-project-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
   gap: 10px;
 }
-.hp-admin-console .admin-project-header h1 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #ffffff;
-  line-height: 1.2;
-  margin: 3px 0 0;
+.hp-admin-viewport .back-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 8px !important;
 }
-.hp-console-badge {
-  font-size: 0.6875rem;
-  font-weight: 650;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #aeaeb2;
+.hp-admin-viewport .hp-bubble-btn {
+  width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  min-width: 30px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  border: none !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  list-style: none !important;
 }
-.hp-admin-console .admin-metrics {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  padding: 10px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+.hp-admin-viewport .hp-bubble-btn:hover {
+  background: rgba(255, 255, 255, 0.22) !important;
 }
-.hp-admin-console .admin-metrics span {
-  font-size: 0.6875rem;
-  color: #aeaeb2;
+.hp-admin-viewport .hp-bubble-btn::-webkit-details-marker {
+  display: none !important;
 }
-.hp-admin-console .admin-metrics strong {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #ffffff;
-  font-variant-numeric: tabular-nums;
-}
-.hp-admin-console .admin-tabs {
-  display: flex;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  padding: 3px;
-}
-.hp-admin-console .admin-tabs button {
-  flex: 1;
-  min-height: 32px;
-  padding: 0 10px;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: #aeaeb2;
+.hp-admin-viewport .hp-crumb-text {
   font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  color: #aeaeb2;
+  font-weight: 550;
 }
-.hp-admin-console .admin-tabs button.tab-active {
-  background: #2c2c2e;
-  color: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+.hp-admin-viewport .admin-project-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+}
+.hp-admin-viewport .admin-project-header h1 {
+  font-size: 1.0625rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  line-height: 1.2 !important;
+  margin: 2px 0 0 !important;
+}
+.hp-admin-viewport .admin-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  padding: 8px 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+.hp-admin-viewport .admin-metrics span {
+  font-size: 0.625rem !important;
+  color: #aeaeb2 !important;
+}
+.hp-admin-viewport .admin-metrics strong {
+  font-size: 0.9375rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  font-variant-numeric: tabular-nums !important;
+}
+.hp-admin-viewport .admin-tabs {
+  display: flex !important;
+  gap: 3px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 999px !important;
+  padding: 2px !important;
+}
+.hp-admin-viewport .admin-tabs button {
+  flex: 1 !important;
+  min-height: 28px !important;
+  padding: 0 6px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: #aeaeb2 !important;
+  font-size: 0.6875rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+.hp-admin-viewport .admin-tabs button.tab-active {
+  background: #2c2c2e !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
 }
 
-.hp-console-body {
+.hp-admin-tab-body {
   display: flex;
   flex-direction: column;
 }
 .hp-console-panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-.hp-admin-console .schema-list {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-}
-.hp-admin-console .schema-field-row {
-  min-height: 42px;
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto auto;
-  gap: 8px;
-  align-items: center;
-  padding: 8px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-.hp-admin-console .schema-field-row:last-child {
-  border-bottom: none;
-}
-.hp-admin-console .schema-field-row:hover,
-.hp-admin-console .schema-field-row.schema-field-row-active {
-  background: rgba(255, 255, 255, 0.08);
-}
-.hp-admin-console .schema-index {
-  font-family: ui-monospace, monospace;
-  font-size: 0.6875rem;
-  color: #8e8e93;
-}
-.hp-admin-console .schema-field-row strong {
-  font-size: 0.8125rem;
-  color: #ffffff;
-}
-.hp-admin-console .schema-field-row span {
-  font-size: 0.6875rem;
-  color: #8e8e93;
-}
-.hp-admin-console .schema-type {
-  font-size: 0.75rem;
-  color: #aeaeb2;
-}
-.hp-admin-console .schema-required {
-  font-size: 0.6875rem;
-  color: #8e8e93;
-}
-.hp-admin-console .hp-schema-detail-card {
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-.hp-admin-console .hp-schema-detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-.hp-admin-console .hp-schema-detail-header strong {
-  font-size: 0.8125rem;
-  color: #ffffff;
-}
-.hp-admin-console .hp-schema-detail-header code {
-  font-size: 0.6875rem;
-  color: #aeaeb2;
-}
-.hp-admin-console .hp-schema-options-pills {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
-  margin-top: 6px;
-}
-.hp-admin-console .hp-schema-options-pills .chip {
-  font-size: 0.6875rem;
-  padding: 2px 8px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  border-radius: 999px;
-}
-
-.hp-admin-console .hp-admin-pairing-box {
-  padding: 14px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-.hp-admin-console .builder-config-title {
-  display: block;
-  font-size: 0.6875rem;
-  font-weight: 650;
-  color: #aeaeb2;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-bottom: 6px;
-}
-.hp-admin-console .hp-pairing-code-display {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.hp-admin-console .hp-pairing-code {
-  font-size: 1.375rem;
-  font-weight: 750;
-  color: #ffffff;
-  letter-spacing: 0.08em;
-  font-family: ui-monospace, monospace;
-}
-.hp-admin-console .hp-pairing-controls {
-  display: flex;
-  gap: 5px;
-}
-
-.hp-admin-console .contributor-list {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-}
-.hp-admin-console .contributor-row {
-  min-height: 46px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-.hp-admin-console .contributor-copy strong {
-  display: block;
-  font-size: 0.8125rem;
-  color: #ffffff;
-}
-.hp-admin-console .contributor-copy span {
-  font-size: 0.75rem;
-  color: #aeaeb2;
-}
-
-.hp-admin-console .export-readiness {
-  padding: 14px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  display: flex;
-  flex-direction: column;
   gap: 8px;
 }
-.hp-admin-console .readiness-bar {
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
+.hp-admin-viewport .schema-list {
+  display: flex !important;
+  flex-direction: column !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  background: #1c1c1e !important;
+  overflow: hidden !important;
 }
-.hp-admin-console .readiness-bar span {
-  display: block;
-  height: 100%;
-  background: #ffffff;
+.hp-admin-viewport .schema-field-row {
+  min-height: 40px !important;
+  display: grid !important;
+  grid-template-columns: 18px minmax(0, 1fr) auto auto !important;
+  gap: 6px !important;
+  align-items: center !important;
+  padding: 6px 10px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  cursor: pointer !important;
 }
-.hp-admin-console .export-readiness span {
-  font-size: 0.75rem;
-  color: #aeaeb2;
+.hp-admin-viewport .schema-field-row:last-child {
+  border-bottom: none !important;
 }
-.hp-admin-console .export-readiness strong {
-  font-size: 0.875rem;
-  color: #ffffff;
+.hp-admin-viewport .schema-field-row.schema-field-row-active {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+.hp-admin-viewport .schema-index {
+  font-family: ui-monospace, monospace !important;
+  font-size: 0.625rem !important;
+  color: #8e8e93 !important;
+}
+.hp-admin-viewport .schema-field-row strong {
+  font-size: 0.75rem !important;
+  color: #ffffff !important;
+}
+.hp-admin-viewport .schema-field-row span {
+  font-size: 0.625rem !important;
+  color: #8e8e93 !important;
+}
+.hp-admin-viewport .schema-type {
+  font-size: 0.6875rem !important;
+  color: #aeaeb2 !important;
+}
+.hp-admin-viewport .schema-required {
+  font-size: 0.625rem !important;
+  color: #8e8e93 !important;
+}
+.hp-admin-viewport .hp-schema-detail-card {
+  padding: 8px 10px !important;
+  border-radius: 10px !important;
+  background: #1c1c1e !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+.hp-admin-viewport .hp-schema-detail-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+}
+.hp-admin-viewport .hp-schema-detail-header strong {
+  font-size: 0.75rem !important;
+  color: #ffffff !important;
+}
+.hp-admin-viewport .hp-schema-detail-header code {
+  font-size: 0.625rem !important;
+  color: #aeaeb2 !important;
+}
+.hp-admin-viewport .hp-schema-options-pills {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 4px !important;
+  margin-top: 6px !important;
+}
+.hp-admin-viewport .hp-schema-options-pills .chip {
+  font-size: 0.625rem !important;
+  padding: 2px 7px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  border-radius: 999px !important;
+}
+.hp-admin-viewport .hp-admin-pairing-box {
+  padding: 12px !important;
+  border-radius: 12px !important;
+  background: #1c1c1e !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+.hp-admin-viewport .builder-config-title {
+  display: block !important;
+  font-size: 0.6875rem !important;
+  font-weight: 650 !important;
+  color: #aeaeb2 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.03em !important;
+  margin-bottom: 6px !important;
+}
+.hp-admin-viewport .hp-pairing-code-display {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+.hp-admin-viewport .hp-pairing-code {
+  font-size: 1.25rem !important;
+  font-weight: 750 !important;
+  color: #ffffff !important;
+  letter-spacing: 0.08em !important;
+  font-family: ui-monospace, monospace !important;
+}
+.hp-admin-viewport .hp-pairing-controls {
+  display: flex !important;
+  gap: 4px !important;
+}
+.hp-admin-viewport .hp-pairing-controls .button {
+  min-height: 28px !important;
+  padding: 0 10px !important;
+  font-size: 0.6875rem !important;
+  border-radius: 999px !important;
+}
+.hp-admin-viewport .contributor-list {
+  display: flex !important;
+  flex-direction: column !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  background: #1c1c1e !important;
+  overflow: hidden !important;
+}
+.hp-admin-viewport .contributor-row {
+  min-height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 8px 10px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+.hp-admin-viewport .contributor-copy strong {
+  display: block !important;
+  font-size: 0.75rem !important;
+  color: #ffffff !important;
+}
+.hp-admin-viewport .contributor-copy span {
+  font-size: 0.6875rem !important;
+  color: #aeaeb2 !important;
+}
+.hp-admin-viewport .export-readiness {
+  padding: 12px !important;
+  border-radius: 12px !important;
+  background: #1c1c1e !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+.hp-admin-viewport .readiness-bar {
+  height: 4px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+}
+.hp-admin-viewport .readiness-bar span {
+  display: block !important;
+  height: 100% !important;
+  background: #ffffff !important;
+}
+.hp-admin-viewport .export-readiness span {
+  font-size: 0.6875rem !important;
+  color: #aeaeb2 !important;
+}
+.hp-admin-viewport .export-readiness strong {
+  font-size: 0.8125rem !important;
+  color: #ffffff !important;
+}
+.hp-admin-viewport .admin-context-actions .button {
+  min-height: 44px !important;
+  border-radius: 999px !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
 }
 
 /* =========================================================================
