@@ -8,6 +8,38 @@ This mechanism helps research teams detect inattentive responses. It is **not** 
 
 ## Workflow
 
+```mermaid
+flowchart TD
+  accTitle: Attention Verification Protocol
+  accDescr: Flow showing local attention check selection, synthetic field injection, isolation from research payloads, server-side validation, and chance-corrected score calculation.
+
+  subgraph ClientSide["📱 Client Collector (Offline)"]
+    Bank[("Local Question Bank<br/>(30 Direct-Instruction Checks)")] --> PickRandom["Select Random Check & Shuffle Options"]
+    PickRandom --> Inject["Inject synthetic _attention step<br/>after random research field"]
+    Inject --> CollectorUI["Contributor Answers Field"]
+    CollectorUI --> Extract["extractAttentionResponse()"]
+    Extract -->|"Strip _attention"| CleanPayload["Research Payload<br/>(Clean Scientific Data)"]
+    Extract -->|"Extract checkKey + answer"| AttData["Attention Provenance<br/>(checkKey, selectedValue)"]
+    CleanPayload & AttData --> AtomicCommit["Commit to IndexedDB Ledger"]
+  end
+
+  subgraph ServerSide["☁️ Supabase Cloud (sync-submission)"]
+    AtomicCommit --> SendSync["POST /sync-submission"]
+    SendSync --> ServerBank[("Authoritative Server Bank<br/>(public.attention_checks)")]
+    ServerBank --> Evaluate["Evaluate Answer against correct_value"]
+    Evaluate --> SetFlag["Set submissions.attention_failed<br/>(true / false)"]
+    Evaluate --> LogResponse["Insert into public.attention_responses"]
+    LogResponse --> CalcScore["recompute_attention_score()<br/>Chance-adjusted formula"]
+    CalcScore --> ProfileSummary[("Updated Contributor Score<br/>(Advisory quality signal)")]
+  end
+
+  subgraph ExportPackage["📦 Checkpoint Package"]
+    CleanPayload --> SubmissionsJSONL["data/submissions.jsonl"]
+    LogResponse --> AttentionCSV["data/attention.csv"]
+    ProfileSummary --> ContributorsCSV["data/contributors.csv"]
+  end
+```
+
 ```text
 Select random check from local bank
   → Shuffle option order

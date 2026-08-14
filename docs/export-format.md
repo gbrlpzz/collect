@@ -6,6 +6,37 @@ A **checkpoint** is an immutable server snapshot of complete submissions finaliz
 
 ## Package structure
 
+```mermaid
+flowchart TD
+  accTitle: Checkpoint Package Archive Structure
+  accDescr: Hierarchy of files and directories within a self-contained collect checkpoint archive.
+
+  Root["📦 project-name_checkpoint-YYYY-MM-DD.zip"]
+
+  Root --> Manifest["📄 manifest.json<br/>(Metadata, Counts & SHA-256 Hashes)"]
+
+  Root --> SchemaDir["📁 schema/"]
+  SchemaDir --> S1["schema-v1.json"]
+  SchemaDir --> S2["schema-v2.json (Immutable schema contracts)"]
+
+  Root --> DataDir["📁 data/"]
+  DataDir --> D1["submissions.jsonl (Canonical stream)"]
+  DataDir --> D2["submissions.csv (Tabular flat view)"]
+  DataDir --> D3["media.csv (Media catalog & paths)"]
+  DataDir --> D4["contributors.csv (Roster & consent status)"]
+  DataDir --> D5["attention.csv (Quality check audit trail)"]
+  DataDir --> D6["submissions.geojson (Spatial feature collection)"]
+
+  Root --> DatasetDir["📁 dataset/"]
+  DatasetDir --> Meta1["datacite.json (DataCite 4.4 kernel for DOIs)"]
+  DatasetDir --> Meta2["data-dictionary.json (Fields, units & ontologies)"]
+  DatasetDir --> Meta3["README.md (Human-readable citation & license)"]
+
+  Root --> MediaDir["📁 media/"]
+  MediaDir --> MediaSub["{submission_id}/"]
+  MediaSub --> MediaFiles["{media_id}.jpg / .m4a (Original uncompressed blobs)"]
+```
+
 ```text
 project-name_checkpoint-YYYY-MM-DD.zip
 ├── manifest.json
@@ -161,6 +192,38 @@ The check prompt is never stored in observation rows; only the stable `check_key
 ---
 
 ## Data integrity guarantees
+
+```mermaid
+flowchart TD
+  accTitle: Checkpoint Generation and Integrity Verification Pipeline
+  accDescr: Pipeline for generating and verifying immutable research checkpoints with DataCite metadata and SHA-256 manifest hashing.
+
+  Trigger([Admin Requests Checkpoint at Cutoff T]) --> EdgeFn["Edge Function: export-checkpoint"]
+
+  subgraph DataAssembly["1. Server-Side Data Assembly"]
+    EdgeFn --> QueryDB["Query PostgreSQL Database<br/>• Submissions finalized ≤ T<br/>• Immutable Schemas v1..vN<br/>• Attention Check records<br/>• Contributor consent & readiness"]
+    QueryDB --> ValidateMedia["Verify & Fetch Media Blobs<br/>from collect-media Bucket"]
+    ValidateMedia --> MediaCheck{All media files present?}
+    MediaCheck -->|Missing file| AbortExport[Abort: Media completeness invariant violated]
+  end
+
+  subgraph Serialization["2. Serialization & FAIR Formatting"]
+    MediaCheck -->|All files present| BuildJSONL["Generate Canonical data/submissions.jsonl"]
+    BuildJSONL --> BuildCSV["Generate Flat CSVs (submissions, media, contributors, attention)"]
+    BuildCSV --> BuildGeoJSON["Extract Spatial Points into submissions.geojson"]
+    BuildGeoJSON --> BuildDict["Assemble dataset/data-dictionary.json with ontologies"]
+    BuildDict --> BuildDataCite["Assemble dataset/datacite.json (4.4 kernel)"]
+  end
+
+  subgraph Integrity["3. Cryptographic Sealing & Packaging"]
+    BuildDataCite --> HashData["Compute SHA-256 checksums for all data files"]
+    HashData --> WriteManifest["Generate manifest.json with hashes & cutoff"]
+    WriteManifest --> StreamZIP["Stream ZIP Archive into collect-exports Bucket"]
+    StreamZIP --> DurableRecord["Insert immutable checkpoint record in PostgreSQL"]
+  end
+
+  DurableRecord --> Deliver[Download URL provided to Administrator]
+```
 
 1. **Deterministic hashing**: `manifest.json` contains SHA-256 hashes of `data/submissions.jsonl` and `data/media.csv`.
 2. **Media completeness**: A checkpoint succeeds only if every referenced media file downloads successfully from storage.

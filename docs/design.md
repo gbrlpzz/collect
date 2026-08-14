@@ -24,6 +24,37 @@ The software keyboard is part of the mobile viewport, not an obstruction:
 - Users can tap **Skip** or **Continue** without dismissing the keyboard.
 - Empty optional fields never autofocus or trigger unwanted keyboard popups.
 
+```mermaid
+flowchart TD
+  accTitle: Mobile Viewport and Keyboard Geometry Model
+  accDescr: Visual diagram showing how the PWA dynamic viewport geometry adapts when the software keyboard opens, keeping the primary action bar docked above the keyboard.
+
+  subgraph MobileScreen["📱 Mobile Device Display Window (100dvh)"]
+    subgraph AppHeader["Top Bar (Status & Close / Home)"]
+      TopBarNav["Capsule Bar: Project Title & Close"]
+    end
+
+    subgraph DynamicViewport["Dynamic Visual Viewport (visualViewport.height)"]
+      FieldContent["Question Title & Input Control<br/>(Text / Choice / Number / Media)"]
+      ValidationNotice["Inline Validation / Required Notice"]
+
+      subgraph StickyActionBar["Floating Action Bar (52pt Hit Area)"]
+        SkipBtn["Secondary Action: [Skip]"]
+        ContinueBtn["Primary Action: [Continue / Save]"]
+      end
+    end
+
+    subgraph SoftwareKeyboard["Software Keyboard (Dynamic Height)"]
+      Keys["Virtual Keyboard Keys & Autocorrect Bar"]
+    end
+  end
+
+  TopBarNav --> FieldContent
+  FieldContent --> ValidationNotice
+  ValidationNotice --> StickyActionBar
+  StickyActionBar --- SoftwareKeyboard
+```
+
 ---
 
 ## Guided capture flow

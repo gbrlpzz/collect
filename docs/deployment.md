@@ -6,6 +6,46 @@ This guide explains how to deploy `collect` to Supabase (backend) and Vercel (fr
 
 ## Deployment model
 
+```mermaid
+flowchart TB
+  accTitle: Collect Deployment Model and Infrastructure
+  accDescr: Topology of frontend static hosting and backend Supabase managed cloud infrastructure including Auth, Edge Functions, PostgreSQL, and Storage.
+
+  subgraph FrontendHosting["🌐 Static Frontend Hosting (Vercel / CDN)"]
+    PWABundle["PWA Client Bundle<br/>(Vite + React + TypeScript)"]
+    ServiceWorker["Service Worker Cache<br/>(Offline shell & assets)"]
+    PublicConfig["Public Environment Config<br/>(VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY)"]
+  end
+
+  subgraph SupabaseBackend["☁️ Supabase Cloud Backend (Managed Project)"]
+    subgraph AuthModule["Supabase Auth"]
+      MagicLinks["Passwordless Magic Link Delivery"]
+      SessionManager["JWT & Refresh Tokens"]
+    end
+
+    subgraph EdgeModule["10 Edge Functions (Deno Runtime)"]
+      FnSync["sync-submission & health"]
+      FnAuth["link-session & claim-invites"]
+      FnAdmin["send-admin-invite & bootstrap-workspace"]
+      FnExport["export-checkpoint"]
+      FnPing["device-status & send-project-ping"]
+    end
+
+    subgraph DBModule["PostgreSQL Engine"]
+      Migrations[("Ordered SQL Migrations<br/>(RLS & Immutable Triggers)")]
+      OrgData[("Organizations & Projects")]
+      SubData[("Submissions & Attention Checks")]
+    end
+
+    subgraph StorageModule["Storage Buckets (S3-Compatible)"]
+      MediaBuck[("collect-media (Private)")]
+      ExportBuck[("collect-exports (Private)")]
+    end
+  end
+
+  FrontendHosting <-->|"HTTPS / WSS"| SupabaseBackend
+```
+
 | Component          | Provider                  | Purpose                                                                        |
 | :----------------- | :------------------------ | :----------------------------------------------------------------------------- |
 | **Frontend**       | Vercel or static CDN host | Hosts the PWA client bundle and service worker.                                |
@@ -73,17 +113,7 @@ Always create a new timestamped migration file in `supabase/migrations/` when up
 ### 2. Deploy Edge Functions
 
 ```bash
-for fn in \
-  health \
-  claim-invites \
-  device-status \
-  link-session \
-  send-admin-invite \
-  send-project-invite \
-  send-project-ping \
-  export-checkpoint \
-  sync-submission \
-  bootstrap-workspace
+for fn in   health   claim-invites   device-status   link-session   send-admin-invite   send-project-invite   send-project-ping   export-checkpoint   sync-submission   bootstrap-workspace
 do
   supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF"
 done
@@ -92,20 +122,13 @@ done
 ### 3. Set Edge Function secrets
 
 ```bash
-supabase secrets set \
-  APP_URL=https://collect.example.org \
-  BOOTSTRAP_ADMIN_EMAIL=admin@example.org \
-  --project-ref "$SUPABASE_PROJECT_REF"
+supabase secrets set   APP_URL=https://collect.example.org   BOOTSTRAP_ADMIN_EMAIL=admin@example.org   --project-ref "$SUPABASE_PROJECT_REF"
 ```
 
 Optional email delivery secrets:
 
 ```bash
-supabase secrets set \
-  RESEND_API_KEY=re_... \
-  MAIL_FROM='Collect <fieldwork@example.org>' \
-  ALLOWED_EMAIL_PATTERNS='admin@example.org,@org.example.org' \
-  --project-ref "$SUPABASE_PROJECT_REF"
+supabase secrets set   RESEND_API_KEY=re_...   MAIL_FROM='Collect <fieldwork@example.org>'   ALLOWED_EMAIL_PATTERNS='admin@example.org,@org.example.org'   --project-ref "$SUPABASE_PROJECT_REF"
 ```
 
 ---

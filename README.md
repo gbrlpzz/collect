@@ -78,11 +78,25 @@ Safari and installed iOS web apps use separate storage containers. `collect` bri
 
 ```mermaid
 flowchart TD
-  A[Capture observation] --> B[Atomic local commit]
-  B --> C[Local receipt: Saved on this device]
-  C --> D[Resumable background transfer]
-  D --> E[Server finalization]
-  E --> F[Server receipt: Synced]
+  accTitle: Collect Two-Phase Evidence Lifecycle
+  accDescr: Two-phase evidence lifecycle separating local storage receipt from server synchronization receipt.
+
+  subgraph LocalBoundary["Phase 1: Local Receipt Boundary (Zero Network Dependency)"]
+    A["Field Capture Step-by-Step"] --> B["Save Observation"]
+    B --> C["Atomic Commit to IndexedDB<br/>(Payload + Media Blobs + Outbox Queue)"]
+    C --> D["Local Receipt: <b>Saved on this device</b>"]
+  end
+
+  subgraph SyncBoundary["Phase 2: Resumable Background Synchronization"]
+    D --> E["Single-Flight Sync Coordinator<br/>(Health Probes & Tab Mutex)"]
+    E --> F["Resumable Media Transfer<br/>(TUS Protocol + SHA-256 Checksums)"]
+    F --> G["Server Ingestion & Validation<br/>(Consent, Project Membership & Hash Check)"]
+    G --> H["Server Receipt: <b>Synced</b>"]
+  end
+
+  subgraph PreserveBoundary["Phase 3: Research Preservation"]
+    H --> I["Immutable FAIR Checkpoint Export<br/>(Canonical JSONL, CSV, GeoJSON, DataCite 4.4)"]
+  end
 ```
 
 The synchronization sequence strictly follows: **metadata $\to$ media $\to$ finalization**. Each step is idempotent and resumable. `navigator.onLine` is never used as proof of reachability. Background execution is an optimization, not a dependency for correctness.
@@ -107,6 +121,61 @@ The synchronization sequence strictly follows: **metadata $\to$ media $\to$ fina
 ---
 
 ## Architecture at a glance
+
+```mermaid
+flowchart TB
+  accTitle: Collect Architecture Overview
+  accDescr: High-level topology diagram showing client PWA, scoped local ledger, sync coordinator, edge functions, Postgres database with RLS, and storage buckets.
+
+  subgraph Client["📱 Contributor & Admin Client (PWA)"]
+    UI["React + TypeScript UI<br/>(Guided Field Capture & Admin Dashboard)"]
+    SW["Service Worker<br/>(Offline App Shell Cache)"]
+    subgraph Ledger["Local Storage (Per-Account Scoped)"]
+      IDB[("IndexedDB<br/>collect-local-v1-userId")]
+      Drafts["Drafts & Media Blobs"]
+      Outbox["Outbox Queue & Receipts"]
+    end
+    SyncMgr["Sync Lifecycle Coordinator<br/>(Health Probes & Multi-Tab Lease)"]
+    TUS["Resumable TUS Uploader"]
+  end
+
+  subgraph Backend["☁️ Supabase Cloud Backend"]
+    subgraph Edge["Edge Functions (Deno)"]
+      Ingest["sync-submission<br/>(Consent & Ingestion)"]
+      AuthFn["link-session & claim-invites"]
+      ExportFn["export-checkpoint"]
+      HealthFn["health probe"]
+    end
+    subgraph Storage["Supabase Storage"]
+      MediaBucket[("Private Media Bucket<br/>collect-media")]
+      ExportBucket[("Export Archive Bucket<br/>collect-exports")]
+    end
+    subgraph DB["PostgreSQL Database"]
+      RLS["Row-Level Security (RLS)"]
+      Schemas[("Immutable Schemas")]
+      Submissions[("Finalized Submissions")]
+      Provenance[("Provenance & Consent")]
+    end
+  end
+
+  subgraph FAIR["📦 External Research Package"]
+    ZIP["FAIR Checkpoint Archive<br/>(JSONL, CSV, GeoJSON, Media, DataCite 4.4)"]
+  end
+
+  UI --> Drafts
+  UI -->|"Save observation<br/>(Atomic transaction)"| Outbox
+  SyncMgr -->|"1. Health probe"| HealthFn
+  SyncMgr -->|"2. Verify & resume"| TUS
+  TUS -->|"Chunked upload"| MediaBucket
+  SyncMgr -->|"3. Finalize"| Ingest
+  Ingest -->|"Validate & write"| DB
+  Ingest -->|"Return durable receipt"| SyncMgr
+  SyncMgr -->|"Mark SYNCED"| IDB
+  ExportFn -->|"Filter cutoff"| DB
+  ExportFn -->|"Fetch originals"| MediaBucket
+  ExportFn -->|"Store ZIP"| ExportBucket
+  ExportBucket --> ZIP
+```
 
 | Layer              | Technology                     | Primary responsibility                                                                |
 | :----------------- | :----------------------------- | :------------------------------------------------------------------------------------ |
