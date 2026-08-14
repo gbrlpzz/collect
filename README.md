@@ -213,3 +213,4 @@ exports must include failure-oriented tests and pass `npm run check`.
 
 `collect` is open-source software licensed under the
 [Apache License 2.0](LICENSE). Copyright © 2026 Gabriele Pizzi.
+
