@@ -403,12 +403,15 @@ export async function sendProjectInvite(
 export async function removeProjectContributor(
   projectId: string,
   email: string,
-): Promise<void> {
+): Promise<boolean> {
   const client = requireClient();
-  await invokeFunction(client, "remove-project-contributor", {
-    project_id: projectId,
-    email,
-  });
+  const data = await invokeFunction(
+    client,
+    "remove-project-contributor",
+    { project_id: projectId, email },
+    z.object({ removed: z.boolean().optional() }),
+  );
+  return Boolean(data?.removed);
 }
 
 export async function mintContributorSigninCode(
