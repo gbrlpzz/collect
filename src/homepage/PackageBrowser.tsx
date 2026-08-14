@@ -148,10 +148,6 @@ export function PackageBrowser() {
         <div className="hp-package-file-heading">
           <div className="hp-package-file-title">
             <span className="hp-package-file-path">{active.path}</span>
-            <span className="hp-package-meta">
-              {bytes(new TextEncoder().encode(active.content).length)} ·{" "}
-              {active.content.split("\n").length} lines
-            </span>
           </div>
           <button
             type="button"

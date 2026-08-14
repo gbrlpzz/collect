@@ -255,6 +255,16 @@ export function FlowDemo() {
             targets for gloves and sunlight, native date pickers, and raw photo
             capture. Tap the choices and test the flow yourself.
           </p>
+          <p className="hp-doc-link">
+            <a
+              href="https://github.com/gbrlpzz/collect/blob/main/docs/flows.md"
+              target="_blank"
+              rel="noopener"
+            >
+              Contributor workflow doc
+              <Icon name="arrow-right" size={13} />
+            </a>
+          </p>
         </div>
 
         <div className="hp-admin-tab-selector hp-contrib-tab-selector">
