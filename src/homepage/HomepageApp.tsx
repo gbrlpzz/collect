@@ -18,7 +18,6 @@ function TopBar() {
       <div className="hp-topbar-inner">
         <a className="hp-brand" href="#top" aria-label="collect home">
           <CollectBrand compact />
-          <span className="hp-brand-tag">Research Preview</span>
         </a>
 
         <nav className="hp-nav" aria-label="Sections">
@@ -76,10 +75,6 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
   return (
     <section className="hp-hero" id="top" aria-labelledby="hero-title">
       <div className="hp-hero-inner">
-        <div className="hp-hero-badge">
-          <span>Open Source Research Preview · Apache-2.0</span>
-        </div>
-
         <h1 id="hero-title">
           Field data collection that never loses a record.
         </h1>
@@ -378,7 +373,7 @@ export function HomepageApp() {
           </div>
         </section>
 
-        {/* Integrity & Provenance */}
+        {/* Integrity & Privacy */}
         <section
           className="hp-section"
           id="integrity"
@@ -386,19 +381,19 @@ export function HomepageApp() {
         >
           <div className="hp-section-inner">
             <div className="section-heading">
-              <p className="eyebrow">Data Integrity</p>
+              <p className="eyebrow">Data Integrity & Privacy</p>
               <h2 id="integrity-title">
-                Verify contributor attention without biasing research data.
+                Verifiable attention scoring and strict privacy boundaries.
               </h2>
               <p>
-                Interleaved checks evaluate contributor focus. Prompts and
-                responses are stripped in memory, preserving only a
-                guess-adjusted reliability metric alongside ambient device
-                telemetry.
+                Interleaved instruction checks evaluate surveyor focus in
+                memory, stripping questions and answers before storage.
+                Submissions remain account-isolated with zero AI alterations.
               </p>
               <DocLink file="attention-qa.md" label="Attention QA doc" />
-              <DocLink file="privacy.md" label="Privacy & provenance doc" />
+              <DocLink file="privacy.md" label="Privacy & data handling doc" />
             </div>
+
             <div className="hp-integrity-grid">
               <div className="hp-integrity-card">
                 <div className="hp-integrity-card-header">
@@ -413,6 +408,57 @@ export function HomepageApp() {
                   <p>Non-identifying context · Never blocks local commit</p>
                 </div>
                 <ProvenanceCard />
+              </div>
+            </div>
+
+            {/* Privacy & Storage Boundaries from docs/privacy.md */}
+            <div
+              className="hp-fact-grid"
+              style={{ "--fact-cols": 4 } as React.CSSProperties}
+            >
+              <div className="hp-fact-card">
+                <div className="hp-fact-header">
+                  <Icon name="lock" size={16} />
+                  <strong>Account-Scoped Ledger</strong>
+                </div>
+                <p>
+                  IndexedDB storage is strictly scoped per authenticated user (
+                  <code>collect-local-v1-userId</code>), preventing data leakage
+                  across accounts.
+                </p>
+              </div>
+
+              <div className="hp-fact-card">
+                <div className="hp-fact-header">
+                  <Icon name="shield" size={16} />
+                  <strong>Server-Enforced Consent</strong>
+                </div>
+                <p>
+                  The sync backend strictly rejects submissions from accounts
+                  without active, unrevoked participant consent.
+                </p>
+              </div>
+
+              <div className="hp-fact-card">
+                <div className="hp-fact-header">
+                  <Icon name="file" size={16} />
+                  <strong>Verbatim Provenance</strong>
+                </div>
+                <p>
+                  Field inputs and media blobs are recorded verbatim as entered,
+                  with zero AI transformation or lossy preprocessing.
+                </p>
+              </div>
+
+              <div className="hp-fact-card">
+                <div className="hp-fact-header">
+                  <Icon name="download" size={16} />
+                  <strong>Local Recovery Archive</strong>
+                </div>
+                <p>
+                  Unsynced observations can be exported directly from device
+                  storage to a self-contained ZIP archive at any time.
+                </p>
               </div>
             </div>
           </div>
@@ -438,7 +484,7 @@ export function HomepageApp() {
               <DocLink file="export-format.md" label="Export format doc" />
               <DocLink
                 file="dataset-standards.md"
-                label="FAIR dataset standards"
+                label="FAIR dataset standards doc"
               />
             </div>
             <PackageBrowser />
@@ -450,6 +496,48 @@ export function HomepageApp() {
               </a>
               .
             </p>
+
+            {/* FAIR Compliance Principles from docs/dataset-standards.md */}
+            <div
+              className="hp-fact-grid"
+              style={{ "--fact-cols": 3 } as React.CSSProperties}
+            >
+              <div className="hp-fact-card">
+                <div className="hp-fact-header">
+                  <Icon name="archive" size={16} />
+                  <strong>Findable (DataCite 4.4)</strong>
+                </div>
+                <p>
+                  Native <code>datacite.json</code> metadata kernel with DOI
+                  identifiers, organizational creators, and license declarations
+                  for repository deposit (Zenodo / Figshare).
+                </p>
+              </div>
+
+              <div className="hp-fact-card">
+                <div className="hp-fact-header">
+                  <Icon name="sliders" size={16} />
+                  <strong>Interoperable (RFC 7946 & JSONL)</strong>
+                </div>
+                <p>
+                  Canonical JSONL stream, flat CSV tables, RFC 7946 GeoJSON
+                  spatial features, and machine-readable{" "}
+                  <code>data-dictionary.json</code> with semantic URIs.
+                </p>
+              </div>
+
+              <div className="hp-fact-card">
+                <div className="hp-fact-header">
+                  <Icon name="camera" size={16} />
+                  <strong>Reusable (Byte-for-Byte)</strong>
+                </div>
+                <p>
+                  Self-contained ZIP archives containing uncompressed original
+                  media files, schema version histories, and SHA-256 integrity
+                  manifests.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -522,6 +610,16 @@ export function HomepageApp() {
               </a>
               <a href={DOCS("architecture.md")} target="_blank" rel="noopener">
                 Architecture guide
+              </a>
+              <a href={DOCS("privacy.md")} target="_blank" rel="noopener">
+                Privacy & data handling
+              </a>
+              <a
+                href={DOCS("dataset-standards.md")}
+                target="_blank"
+                rel="noopener"
+              >
+                FAIR dataset standards
               </a>
               <a href={DOCS("design.md")} target="_blank" rel="noopener">
                 Design baseline
