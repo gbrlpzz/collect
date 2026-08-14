@@ -109,7 +109,9 @@ Deno.serve(async (request) => {
         email,
         user.id,
         projectId,
-        access.project.organization_id,
+        access.project.organization_id
+          ? String(access.project.organization_id)
+          : null,
       );
       return json({
         accepted: true,
