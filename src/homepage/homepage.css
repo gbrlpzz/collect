@@ -353,31 +353,31 @@ main [id] {
    ========================================================================= */
 .hp-flow-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(340px, 1fr);
-  gap: clamp(32px, 5vw, 64px);
-  align-items: center;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 440px);
+  gap: clamp(24px, 4vw, 48px);
+  align-items: start;
   justify-content: space-between;
 }
 .hp-flow-copy {
-  max-width: 520px;
+  max-width: 500px;
 }
 .hp-flow-visual {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
 }
 
 .hp-admin-tab-selector {
   display: flex;
   gap: 6px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
 }
 .hp-admin-step-btn {
   font-size: 0.75rem;
   font-weight: 600;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 999px;
   border: 1px solid var(--separator-light);
   background: var(--paper);
@@ -396,13 +396,13 @@ main [id] {
 }
 
 .hp-story {
-  padding: 16px 0 14px;
-  border-top: 1px solid var(--separator);
+  padding: 14px 0 12px;
+  border-top: 1px solid var(--separator-light);
   border-bottom: 1px solid var(--separator-light);
 }
 .hp-story-kicker {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   color: var(--tertiary);
   font-size: 0.6875rem;
   font-weight: 650;
@@ -410,15 +410,15 @@ main [id] {
   text-transform: uppercase;
 }
 .hp-story h3 {
-  font-size: 1.0625rem;
+  font-size: 1rem;
   font-weight: 650;
-  margin: 0 0 6px;
+  margin: 0 0 4px;
 }
 .hp-story > p {
   margin: 0;
   color: var(--secondary);
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: 0.8125rem;
+  line-height: 1.45;
 }
 
 /* ---------- Collector Phone Mockup (Step 1) ---------- */
@@ -431,17 +431,17 @@ main [id] {
 }
 .hp-iphone {
   position: relative;
-  width: 360px;
+  width: 340px;
   max-width: 100%;
-  height: 580px;
-  border-radius: 40px;
+  height: 480px;
+  border-radius: 36px;
   background: #1c1c1e;
   box-shadow:
-    0 24px 60px -12px rgba(0, 0, 0, 0.25),
-    0 4px 16px rgba(0, 0, 0, 0.1),
+    0 20px 48px -10px rgba(0, 0, 0, 0.22),
+    0 4px 12px rgba(0, 0, 0, 0.08),
     inset 0 0 0 1.5px rgba(255, 255, 255, 0.16),
     inset 0 0 2px 2px rgba(0, 0, 0, 0.8);
-  padding: 8px;
+  padding: 7px;
   box-sizing: border-box;
   margin: 0 auto;
 }
@@ -450,18 +450,18 @@ main [id] {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  border-radius: 32px;
+  border-radius: 29px;
   background: var(--canvas);
   display: flex;
   flex-direction: column;
 }
 .hp-dynamic-island {
   position: absolute;
-  top: 8px;
+  top: 7px;
   left: 50%;
   z-index: 30;
-  width: 84px;
-  height: 22px;
+  width: 78px;
+  height: 20px;
   transform: translateX(-50%);
   border-radius: 999px;
   background: #000000;
@@ -470,14 +470,14 @@ main [id] {
 .hp-status-bar {
   position: relative;
   z-index: 25;
-  height: 38px;
-  flex: 0 0 38px;
+  height: 36px;
+  flex: 0 0 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 18px;
+  padding: 0 16px;
   color: #000000;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   background: transparent;
@@ -489,11 +489,11 @@ main [id] {
 }
 .hp-home-indicator {
   position: absolute;
-  bottom: 6px;
+  bottom: 5px;
   left: 50%;
   z-index: 35;
-  width: 110px;
-  height: 4px;
+  width: 100px;
+  height: 3.5px;
   transform: translateX(-50%);
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.7);
@@ -542,22 +542,22 @@ main [id] {
   justify-content: space-between !important;
 }
 .hp-app-viewport .collector-topbar {
-  flex: 0 0 46px !important;
-  height: 46px !important;
-  min-height: 46px !important;
+  flex: 0 0 42px !important;
+  height: 42px !important;
+  min-height: 42px !important;
   display: grid !important;
-  grid-template-columns: 32px minmax(0, 1fr) 48px !important;
+  grid-template-columns: 28px minmax(0, 1fr) 44px !important;
   align-items: center !important;
-  padding: 0 12px !important;
+  padding: 0 10px !important;
   border-bottom: 1px solid var(--separator-light) !important;
   background: var(--canvas) !important;
   gap: 6px !important;
 }
 .hp-app-viewport .collector-topbar .back-button {
-  width: 30px !important;
-  height: 30px !important;
-  min-height: 30px !important;
-  min-width: 30px !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  min-width: 28px !important;
   padding: 0 !important;
   border-radius: 50% !important;
   background: var(--grouped) !important;
@@ -602,7 +602,7 @@ main [id] {
   text-overflow: ellipsis !important;
 }
 .hp-app-viewport .collector-topbar .collector-save-state {
-  font-size: 0.625rem !important;
+  font-size: 0.5625rem !important;
   color: var(--secondary) !important;
   text-align: right !important;
 }
@@ -627,13 +627,13 @@ main [id] {
 }
 .hp-app-viewport .flow-step {
   flex: 1 1 auto !important;
-  padding: 16px 14px 12px !important;
+  padding: 14px 12px 10px !important;
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
 }
 .hp-app-viewport .flow-step .step-title {
-  font-size: 1.25rem !important;
+  font-size: 1.1875rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.03em !important;
   line-height: 1.15 !important;
@@ -644,12 +644,12 @@ main [id] {
   font-size: 0.75rem !important;
   color: var(--secondary) !important;
   line-height: 1.35 !important;
-  margin: 0 0 10px 0 !important;
+  margin: 0 0 8px 0 !important;
 }
 .hp-app-viewport .choice-button {
-  min-height: 42px !important;
-  padding: 0 14px !important;
-  font-size: 0.8125rem !important;
+  min-height: 38px !important;
+  padding: 0 12px !important;
+  font-size: 0.75rem !important;
   border-radius: 999px !important;
 }
 .hp-app-viewport .flow-actions {
@@ -657,7 +657,7 @@ main [id] {
   position: sticky !important;
   bottom: 0 !important;
   z-index: 20 !important;
-  padding: 10px 14px 22px !important;
+  padding: 8px 12px 18px !important;
   background: rgba(245, 245, 247, 0.94) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
@@ -665,142 +665,104 @@ main [id] {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  gap: 8px !important;
+  gap: 6px !important;
   box-sizing: border-box !important;
 }
 .hp-app-viewport .flow-actions .flow-continue {
   flex: 1 1 auto !important;
-  min-height: 42px !important;
+  min-height: 38px !important;
   border-radius: 999px !important;
-  font-size: 0.875rem !important;
+  font-size: 0.8125rem !important;
   font-weight: 600 !important;
 }
 .hp-app-viewport .flow-actions .flow-back {
   flex: 0 0 auto !important;
-  min-height: 42px !important;
-  min-width: 70px !important;
+  min-height: 38px !important;
+  min-width: 64px !important;
   border-radius: 999px !important;
-  font-size: 0.8125rem !important;
+  font-size: 0.75rem !important;
 }
 .hp-app-viewport .page-contributor {
-  padding: 14px 14px 28px !important;
+  padding: 12px 12px 24px !important;
   overflow-y: auto !important;
 }
 
-/* ---------- Spacious Admin Dashboard Console (Step 2) ---------- */
+/* ---------- Compact Admin Dashboard Console (Step 2) ---------- */
 .hp-admin-console {
   width: 100%;
-  border-radius: 20px;
+  border-radius: 18px;
   background: #1c1c1e;
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow:
-    0 24px 60px -12px rgba(0, 0, 0, 0.5),
-    0 4px 16px rgba(0, 0, 0, 0.25);
-  padding: 24px;
+    0 20px 48px -10px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: 18px 16px;
   color: #f5f5f7;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 .hp-console-header {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-.hp-admin-console .back-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.hp-admin-console .back-button {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f5f5f7;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 5px 12px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.hp-admin-console .back-button:hover {
-  background: rgba(255, 255, 255, 0.16);
+  gap: 10px;
 }
 .hp-admin-console .admin-project-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 }
 .hp-admin-console .admin-project-header h1 {
-  font-size: 1.375rem;
+  font-size: 1.125rem;
   font-weight: 700;
   color: #ffffff;
   line-height: 1.2;
-  margin: 4px 0 2px;
+  margin: 2px 0 0;
 }
-.hp-admin-console .admin-project-header .lede {
-  font-size: 0.8125rem;
+.hp-console-badge {
+  font-size: 0.625rem;
+  font-weight: 650;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
   color: #aeaeb2;
-  line-height: 1.4;
-  margin: 0;
-}
-.hp-admin-console .admin-project-actions summary {
-  width: 32px;
-  height: 32px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-  cursor: pointer;
-  list-style: none;
-  transition: all 0.15s ease;
-}
-.hp-admin-console .admin-project-actions summary:hover {
-  background: rgba(255, 255, 255, 0.16);
-}
-.hp-admin-console .admin-project-actions summary::-webkit-details-marker {
-  display: none;
 }
 .hp-admin-console .admin-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  padding: 12px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 .hp-admin-console .admin-metrics span {
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   color: #aeaeb2;
 }
 .hp-admin-console .admin-metrics strong {
-  font-size: 1.0625rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: #ffffff;
   font-variant-numeric: tabular-nums;
 }
 .hp-admin-console .admin-tabs {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 999px;
-  padding: 3px;
+  padding: 2px;
 }
 .hp-admin-console .admin-tabs button {
   flex: 1;
-  min-height: 32px;
-  padding: 0 10px;
+  min-height: 28px;
+  padding: 0 8px;
   border: none;
   border-radius: 999px;
   background: transparent;
   color: #aeaeb2;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -808,49 +770,35 @@ main [id] {
 .hp-admin-console .admin-tabs button.tab-active {
   background: #2c2c2e;
   color: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .hp-console-body {
   display: flex;
   flex-direction: column;
 }
-.hp-admin-console .panel-heading {
+.hp-console-panel {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-.hp-admin-console .panel-heading h2 {
-  font-size: 1rem;
-  font-weight: 650;
-  color: #ffffff;
-  margin: 0;
-}
-.hp-admin-console .panel-heading p {
-  font-size: 0.75rem;
-  color: #aeaeb2;
-  margin: 2px 0 0;
+  flex-direction: column;
+  gap: 8px;
 }
 .hp-admin-console .schema-list {
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
   background: rgba(0, 0, 0, 0.3);
   overflow: hidden;
-  margin-top: 8px;
 }
 .hp-admin-console .schema-field-row {
-  min-height: 44px;
+  min-height: 38px;
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto auto;
-  gap: 10px;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
+  gap: 8px;
   align-items: center;
-  padding: 8px 14px;
+  padding: 6px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   cursor: pointer;
-  transition: background 0.15s ease;
 }
 .hp-admin-console .schema-field-row:last-child {
   border-bottom: none;
@@ -861,95 +809,82 @@ main [id] {
 }
 .hp-admin-console .schema-index {
   font-family: ui-monospace, monospace;
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   color: #8e8e93;
 }
 .hp-admin-console .schema-field-row strong {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: #ffffff;
 }
 .hp-admin-console .schema-field-row span {
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   color: #8e8e93;
 }
 .hp-admin-console .schema-type {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: #aeaeb2;
 }
 .hp-admin-console .schema-required {
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   color: #8e8e93;
 }
 .hp-admin-console .hp-schema-detail-card {
-  margin-top: 10px;
-  padding: 12px 14px;
-  border-radius: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
   background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .hp-admin-console .hp-schema-detail-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
 }
 .hp-admin-console .hp-schema-detail-header strong {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: #ffffff;
 }
 .hp-admin-console .hp-schema-detail-header code {
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   color: #aeaeb2;
-}
-.hp-admin-console .hp-schema-detail-card p {
-  font-size: 0.75rem;
-  color: #aeaeb2;
-  margin: 4px 0 0;
-  line-height: 1.4;
 }
 .hp-admin-console .hp-schema-options-pills {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-}
-.hp-admin-console .hp-schema-pill-label {
-  font-size: 0.6875rem;
-  color: #8e8e93;
+  gap: 4px;
+  margin-top: 6px;
 }
 .hp-admin-console .hp-schema-options-pills .chip {
-  font-size: 0.6875rem;
-  padding: 2px 8px;
+  font-size: 0.625rem;
+  padding: 2px 7px;
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
   border-radius: 999px;
 }
 
 .hp-admin-console .hp-admin-pairing-box {
-  margin-bottom: 14px;
-  padding: 16px;
-  border-radius: 12px;
+  padding: 12px;
+  border-radius: 10px;
   background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .hp-admin-console .builder-config-title {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 650;
   color: #aeaeb2;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .hp-admin-console .hp-pairing-code-display {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 8px 0;
 }
 .hp-admin-console .hp-pairing-code {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 750;
   color: #ffffff;
   letter-spacing: 0.08em;
@@ -957,51 +892,48 @@ main [id] {
 }
 .hp-admin-console .hp-pairing-controls {
   display: flex;
-  gap: 6px;
+  gap: 4px;
 }
-.hp-admin-console .field-help {
-  font-size: 0.75rem;
-  color: #aeaeb2;
-  margin: 6px 0 0;
-  line-height: 1.4;
+.hp-admin-console .hp-pairing-controls .button {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 0.6875rem;
 }
 
 .hp-admin-console .contributor-list {
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
   background: rgba(0, 0, 0, 0.3);
   overflow: hidden;
-  margin-top: 10px;
 }
 .hp-admin-console .contributor-row {
-  min-height: 50px;
+  min-height: 42px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 8px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 .hp-admin-console .contributor-copy strong {
   display: block;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: #ffffff;
 }
 .hp-admin-console .contributor-copy span {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: #aeaeb2;
 }
 
 .hp-admin-console .export-readiness {
-  padding: 14px 16px;
-  border-radius: 12px;
+  padding: 12px;
+  border-radius: 10px;
   background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 6px;
 }
 .hp-admin-console .readiness-bar {
   height: 4px;
@@ -1014,11 +946,11 @@ main [id] {
   background: #ffffff;
 }
 .hp-admin-console .export-readiness span {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: #aeaeb2;
 }
 .hp-admin-console .export-readiness strong {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: #ffffff;
 }
 

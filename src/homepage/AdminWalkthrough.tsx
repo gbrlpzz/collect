@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../components/Icon";
-import {
-  AttentionScoreRing,
-  Button,
-  Eyebrow,
-  InfoDisclosure,
-} from "../components/ui";
+import { AttentionScoreRing, Button, Eyebrow } from "../components/ui";
 
 type AdminTab = "setup" | "contributors" | "export";
 
@@ -54,7 +49,6 @@ interface SchemaFieldItem {
   label: string;
   type: string;
   required: boolean;
-  description: string;
   options?: string[];
 }
 
@@ -64,59 +58,25 @@ const SCHEMA_FIELDS: SchemaFieldItem[] = [
     label: "Site code",
     type: "Text",
     required: true,
-    description: "Unique alphanumeric site identifier (e.g. VA-023).",
   },
   {
     key: "building_type",
     label: "Building type",
     type: "Single choice",
     required: true,
-    description: "Primary architectural typology.",
-    options: ["House", "Barn", "Chapel", "Outbuilding", "Other"],
+    options: ["House", "Barn", "Chapel", "Workshop"],
   },
   {
     key: "building_occupancy",
     label: "Is the building occupied?",
     type: "Tri-state",
     required: true,
-    description: "Occupancy status (Yes / No / Unknown).",
-  },
-  {
-    key: "building_condition",
-    label: "Observed condition",
-    type: "Single choice",
-    required: false,
-    description: "Structural state of conservation.",
-    options: ["Intact", "Weathered", "Deteriorated", "Ruinous"],
-  },
-  {
-    key: "visible_features",
-    label: "Visible features",
-    type: "Multiple choice",
-    required: false,
-    description: "Observable construction details.",
-    options: ["Ashlar stone", "Rubble masonry", "Timber lintels", "Tile roof"],
   },
   {
     key: "site_photos",
     label: "Field photographs",
     type: "Photo",
     required: false,
-    description: "Uncompressed photos with SHA-256 integrity hash.",
-  },
-  {
-    key: "people_count",
-    label: "People observed",
-    type: "Number",
-    required: false,
-    description: "Count of occupants observed on site.",
-  },
-  {
-    key: "notes",
-    label: "Survey notes",
-    type: "Long text",
-    required: false,
-    description: "Contextual fieldwork commentary.",
   },
 ];
 
@@ -137,13 +97,10 @@ export function AdminWalkthrough({
   onTabChange?: (tab: AdminTab) => void;
 }) {
   const [tab, setTab] = useState<AdminTab>(initialTab);
-  const [selectedKey, setSelectedKey] = useState<string | null>("site_code");
+  const [selectedKey, setSelectedKey] = useState<string>("building_type");
   const [deviceCode, setDeviceCode] = useState("K9XP-4M7B");
   const [copiedCode, setCopiedCode] = useState(false);
   const [exported, setExported] = useState(false);
-  const [activeStatus, setActiveStatus] = useState<"active" | "closed">(
-    "active",
-  );
 
   useEffect(() => {
     setTab(initialTab);
@@ -171,7 +128,7 @@ export function AdminWalkthrough({
 
   const triggerExport = () => {
     setExported(true);
-    setTimeout(() => setExported(false), 3500);
+    setTimeout(() => setExported(false), 3000);
   };
 
   const selectedField = SCHEMA_FIELDS.find((f) => f.key === selectedKey);
@@ -179,47 +136,14 @@ export function AdminWalkthrough({
   return (
     <div className="hp-admin-console" data-mode="admin" data-surface="admin">
       <div className="hp-console-header">
-        <div className="back-row">
-          <button className="back-button" aria-label="Projects">
-            <Icon name="chevron-left" size={16} /> Projects
-          </button>
-        </div>
-
         <div className="admin-project-header">
           <div>
             <div className="admin-project-title-meta">
-              <Eyebrow>
-                Liminal Research Group ·{" "}
-                {activeStatus === "closed" ? "Closed" : "Active"}
-              </Eyebrow>
+              <Eyebrow>Liminal Research Group · Active</Eyebrow>
             </div>
             <h1>Vernacular buildings — Valpuesta</h1>
-            <p className="lede">
-              Occupancy, masonry condition, and structural assessment survey
-            </p>
           </div>
-
-          <details className="admin-project-actions">
-            <summary aria-label="Project actions">
-              <Icon name="more" size={18} />
-            </summary>
-            <div className="admin-project-actions-menu">
-              <button
-                type="button"
-                onClick={() =>
-                  setActiveStatus((s) => (s === "active" ? "closed" : "active"))
-                }
-              >
-                <Icon
-                  name={activeStatus === "active" ? "lock" : "refresh"}
-                  size={15}
-                />
-                {activeStatus === "active"
-                  ? "Close collection"
-                  : "Reopen collection"}
-              </button>
-            </div>
-          </details>
+          <span className="hp-console-badge">Admin</span>
         </div>
 
         <div className="admin-metrics">
@@ -232,8 +156,8 @@ export function AdminWalkthrough({
             <strong>3</strong>
           </div>
           <div>
-            <span>Last received</span>
-            <strong title="Today at 09:32">Today 09:32</strong>
+            <span>Last sync</span>
+            <strong title="Today at 09:32">09:32</strong>
           </div>
         </div>
 
@@ -252,10 +176,10 @@ export function AdminWalkthrough({
               onClick={() => handleTabClick(item)}
             >
               {item === "setup"
-                ? "Form schema (v1)"
+                ? "1. Form Schema"
                 : item === "contributors"
-                  ? "Contributors"
-                  : "Export & publish"}
+                  ? "2. Device Pairing"
+                  : "3. Checkpoint Export"}
             </button>
           ))}
         </div>
@@ -263,22 +187,7 @@ export function AdminWalkthrough({
 
       <div className="hp-console-body">
         {tab === "setup" && (
-          <section className="admin-panel" role="tabpanel">
-            <div className="panel-heading">
-              <div>
-                <h2>Form Questions</h2>
-                <p>Version 1 · {SCHEMA_FIELDS.length} questions</p>
-              </div>
-              <div className="panel-actions admin-context-actions">
-                <a
-                  className="button button-secondary button-small"
-                  href="#collection"
-                >
-                  <Icon name="play" size={13} /> Preview in Collector
-                </a>
-              </div>
-            </div>
-
+          <div className="hp-console-panel">
             <div className="schema-list">
               {SCHEMA_FIELDS.map((field, idx) => (
                 <div
@@ -307,44 +216,26 @@ export function AdminWalkthrough({
               ))}
             </div>
 
-            {selectedField && (
+            {selectedField && selectedField.options && (
               <div className="hp-schema-detail-card">
                 <div className="hp-schema-detail-header">
                   <strong>{selectedField.label}</strong>
                   <code>{selectedField.key}</code>
                 </div>
-                <p>{selectedField.description}</p>
-                {selectedField.options && (
-                  <div className="hp-schema-options-pills">
-                    <span className="hp-schema-pill-label">Options:</span>
-                    {selectedField.options.map((opt) => (
-                      <span className="chip" key={opt}>
-                        {opt}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                <div className="hp-schema-options-pills">
+                  {selectedField.options.map((opt) => (
+                    <span className="chip" key={opt}>
+                      {opt}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
-
-            <InfoDisclosure title="About immutable schemas">
-              <p>
-                Once published, historical observations retain their exact
-                schema version. Adding fields creates a new version without
-                corrupting past submissions.
-              </p>
-            </InfoDisclosure>
-          </section>
+          </div>
         )}
 
         {tab === "contributors" && (
-          <section className="admin-panel" role="tabpanel">
-            <div className="panel-heading">
-              <div>
-                <h2>{CONTRIBUTORS.length} Assigned Contributors</h2>
-              </div>
-            </div>
-
+          <div className="hp-console-panel">
             <div className="hp-admin-pairing-box">
               <span className="builder-config-title">
                 Single-use device link code
@@ -357,26 +248,19 @@ export function AdminWalkthrough({
                     {copiedCode ? "Copied" : "Copy"}
                   </Button>
                   <Button variant="secondary" onClick={generateNewCode}>
-                    <Icon name="refresh" size={13} /> New code
+                    <Icon name="refresh" size={13} /> New
                   </Button>
                 </div>
               </div>
-              <p className="field-help">
-                Field researchers enter this 8-character code once on their
-                device to pair local IndexedDB storage.
-              </p>
             </div>
 
             <div className="contributor-list">
               {CONTRIBUTORS.map((c) => (
                 <div className="contributor-row" key={c.id}>
                   <div className="contributor-copy">
-                    <strong>
-                      {c.name} · {c.email}
-                    </strong>
+                    <strong>{c.name}</strong>
                     <span>
                       {c.submissions} submissions · {c.lastActive}
-                      {!c.synced && " · 1 pending"}
                     </span>
                   </div>
                   <AttentionScoreRing
@@ -386,33 +270,18 @@ export function AdminWalkthrough({
                 </div>
               ))}
             </div>
-
-            <InfoDisclosure title="About attention scores">
-              <p>
-                The ring is a 0–100 summary of quick verification questions,
-                adjusted for random guessing. The score is recorded in
-                observation provenance while the answer is stripped from payload
-                data.
-              </p>
-            </InfoDisclosure>
-          </section>
+          </div>
         )}
 
         {tab === "export" && (
-          <section className="admin-panel export-panel" role="tabpanel">
-            <div className="panel-heading">
-              <div>
-                <h2>Export Checkpoint Archive</h2>
-              </div>
-            </div>
-
+          <div className="hp-console-panel">
             <div className="export-readiness">
               <div className="readiness-bar">
                 <span style={{ width: "100%" }} />
               </div>
               <div>
                 <span>3 of 3 contributors fully synced</span>
-                <strong>104 complete submissions · raw media included</strong>
+                <strong>104 submissions · uncompressed media ready</strong>
               </div>
             </div>
 
@@ -425,19 +294,10 @@ export function AdminWalkthrough({
               >
                 {exported
                   ? "Generated archive (1.4 MB)"
-                  : "Export checkpoint archive"}
+                  : "Export checkpoint archive (ZIP)"}
               </Button>
             </div>
-
-            <InfoDisclosure title="Checkpoint archive coverage">
-              <p>
-                A checkpoint includes all verified data received by the server:
-                canonical JSONL, CSV, RFC 7946 GeoJSON, DataCite 4.4 metadata,
-                and byte-for-byte original media files with SHA-256 integrity
-                hashes.
-              </p>
-            </InfoDisclosure>
-          </section>
+          </div>
         )}
       </div>
     </div>
