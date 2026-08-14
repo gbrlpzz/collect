@@ -289,12 +289,7 @@ export function HomepageApp() {
                     8-character codes — no account creation, no password resets
                     in the field.
                   </p>
-                  <DocLinks
-                    docs={[
-                      { file: "flows.md", label: "Administrator workflow" },
-                      { file: "spec.md", label: "Product & schema spec" },
-                    ]}
-                  />
+                  <DocLinks files={["flows.md", "spec.md"]} />
                 </div>
 
                 <div className="hp-admin-tab-selector">
@@ -383,12 +378,7 @@ export function HomepageApp() {
                 commit. Ambient hardware telemetry records context without
                 tracking personal identity.
               </p>
-              <DocLinks
-                docs={[
-                  { file: "attention-qa.md", label: "Attention verification" },
-                  { file: "privacy.md", label: "Privacy & data handling" },
-                ]}
-              />
+              <DocLinks files={["attention-qa.md", "privacy.md"]} />
             </div>
 
             <div className="hp-integrity-grid">
@@ -478,15 +468,7 @@ export function HomepageApp() {
                 DataCite 4.4 metadata, and unmodified media with SHA-256
                 checksums into a single verifiable archive.
               </p>
-              <DocLinks
-                docs={[
-                  { file: "export-format.md", label: "Export format spec" },
-                  {
-                    file: "dataset-standards.md",
-                    label: "FAIR dataset standards",
-                  },
-                ]}
-              />
+              <DocLinks files={["export-format.md", "dataset-standards.md"]} />
             </div>
             <PackageBrowser />
             <p className="hp-section-note">

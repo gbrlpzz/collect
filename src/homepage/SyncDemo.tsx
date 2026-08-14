@@ -11,37 +11,11 @@ export function SyncDemo() {
           </h2>
           <p>
             Flaky cellular links shouldn't jeopardize weeks of fieldwork.
-            Observations commit to device storage first, media transfers resume
+            Submissions commit to device storage first, media transfers resume
             in chunks, and records mark synced only upon signed server receipt.
           </p>
-          <DocLinks
-            docs={[
-              {
-                file: "background-automation.md",
-                label: "Background automation",
-              },
-              { file: "architecture.md", label: "Sync architecture" },
-            ]}
-          />
+          <DocLinks files={["background-automation.md", "architecture.md"]} />
         </div>
-
-        <ul className="hp-sync-principles">
-          <li>
-            <strong>Commit first.</strong> Payload, media blobs, and outbox
-            operations write to IndexedDB before any network attempt —{" "}
-            <code>SAVED_LOCAL</code>.
-          </li>
-          <li>
-            <strong>Resumable media.</strong> Original files upload in verified
-            binary chunks via TUS protocol with SHA-256 checksums, resuming
-            where they stopped.
-          </li>
-          <li>
-            <strong>Receipt-gated finalization.</strong> The server validates
-            and returns a signed receipt naming the exact submission ID before
-            the local record marks <code>SYNCED</code>.
-          </li>
-        </ul>
       </div>
 
       <div className="hp-flow-visual">

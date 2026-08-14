@@ -256,9 +256,7 @@ export function FlowDemo() {
             through glare, oversized touch targets for gloved fingers, and
             immediate local commit on every step.
           </p>
-          <DocLinks
-            docs={[{ file: "flows.md", label: "Contributor workflow" }]}
-          />
+          <DocLinks files={["flows.md"]} />
         </div>
 
         <div className="hp-admin-tab-selector hp-contrib-tab-selector">
