@@ -22,7 +22,6 @@ const adminDemoProject: Project = {
   schemaVersion: 1,
   license: "CC-BY-4.0",
   contactEmail: "valpuesta@liminal-lab.org",
-  datasetIdentifier: "10.5281/zenodo.0000000",
   contributors: 3,
   completeSubmissions: 104,
   lastReceived: "2026-08-14T09:32:00.000Z",

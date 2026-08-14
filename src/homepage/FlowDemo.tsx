@@ -39,7 +39,6 @@ const demoProject: Project = {
   schemaVersion: 1,
   license: "CC-BY-4.0",
   contactEmail: "valpuesta@liminal-lab.org",
-  datasetIdentifier: "10.5281/zenodo.0000000",
   contributors: 3,
   completeSubmissions: 104,
   lastReceived: "2026-08-14T09:32:00.000Z",
@@ -92,7 +91,7 @@ const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
   },
   flow: {
     title: "One Calm Question per Screen",
-    body: "One question per screen with 52pt touch targets for gloves and sunlight, with auto-advancing choices.",
+    body: "One question per screen with large touch targets for gloves and sunlight, with auto-advancing choices.",
   },
   inputs: {
     title: "Uncertainty & Original Media",
@@ -100,7 +99,7 @@ const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
   },
   sync: {
     title: "Durable Receipts & Resumable Sync",
-    body: "IndexedDB commit in <5ms before network handshake, followed by automatic 3-stage background sync.",
+    body: "Committed to IndexedDB before any network handshake, then an automatic 3-stage background sync.",
   },
 };
 
@@ -314,7 +313,7 @@ export function FlowDemo() {
             One calm question at a time. Built for zero signal.
           </h2>
           <p>
-            The collector presents one question per screen with 52pt touch
+            The collector presents one question per screen with large touch
             targets for gloves and sunlight, native date pickers, and raw photo
             capture. Tap the choices and test the flow yourself.
           </p>

@@ -24,8 +24,8 @@ export function ProvenanceCard() {
     <div className="hp-provenance-clean">
       <p className="hp-provenance-intro">
         Every observation captures non-fingerprinting ambient device context. If
-        any browser API is restricted or unavailable, the submission writes to
-        IndexedDB in under 5ms without error.
+        any browser API is restricted or unavailable, the submission still
+        commits to IndexedDB without error.
       </p>
 
       <div className="hp-record">
