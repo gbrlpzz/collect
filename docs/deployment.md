@@ -115,7 +115,19 @@ Always create a new timestamped migration file in `supabase/migrations/` when up
 ### 2. Deploy Edge Functions
 
 ```bash
-for fn in   health   claim-invites   device-status   link-session   contributor-signin-code   remove-project-contributor   send-admin-invite   send-project-invite   send-project-ping   export-checkpoint   sync-submission   bootstrap-workspace
+for fn in \
+  health \
+  claim-invites \
+  device-status \
+  link-session \
+  contributor-signin-code \
+  remove-project-contributor \
+  send-admin-invite \
+  send-project-invite \
+  send-project-ping \
+  export-checkpoint \
+  sync-submission \
+  bootstrap-workspace
 do
   supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF"
 done
@@ -124,13 +136,20 @@ done
 ### 3. Set Edge Function secrets
 
 ```bash
-supabase secrets set   APP_URL=https://collect.example.org   BOOTSTRAP_ADMIN_EMAIL=admin@example.org   --project-ref "$SUPABASE_PROJECT_REF"
+supabase secrets set \
+  APP_URL=https://collect.example.org \
+  BOOTSTRAP_ADMIN_EMAIL=admin@example.org \
+  --project-ref "$SUPABASE_PROJECT_REF"
 ```
 
 Optional email delivery secrets:
 
 ```bash
-supabase secrets set   RESEND_API_KEY=re_...   MAIL_FROM='Collect <fieldwork@example.org>'   ALLOWED_EMAIL_PATTERNS='admin@example.org,@org.example.org'   --project-ref "$SUPABASE_PROJECT_REF"
+supabase secrets set \
+  RESEND_API_KEY=re_... \
+  MAIL_FROM='Collect <fieldwork@example.org>' \
+  ALLOWED_EMAIL_PATTERNS='admin@example.org,@org.example.org' \
+  --project-ref "$SUPABASE_PROJECT_REF"
 ```
 
 ---

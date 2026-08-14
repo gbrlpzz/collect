@@ -60,11 +60,11 @@ flowchart TB
 
     subgraph DatabaseLayer["PostgreSQL Database with Row-Level Security"]
       RLSPolicies["Row-Level Security Policies"]
-      SchemaTable[("schemas<br/>(Published versions immutable)")]
+      SchemaTable[("project_schemas<br/>(Published versions immutable)")]
       SubmissionsTable[("submissions<br/>(Finalized records immutable)")]
       MediaTable[("submission_media<br/>(Metadata & checksums)")]
-      ConsentTable[("contributor_consents<br/>(Versioned legal records)")]
-      AuditTable[("project_audit_log")]
+      ConsentTable[("contributor_profiles & consent_versions<br/>(Versioned legal records)")]
+      AuditTable[("audit_events<br/>(Append-only log)")]
     end
   end
 
@@ -118,6 +118,8 @@ The core architecture strictly separates local storage guarantees from server fi
 
 ```mermaid
 sequenceDiagram
+  accTitle: Local and Server Receipt Boundaries Protocol
+  accDescr: Sequence diagram illustrating the strict separation between Phase 1 local IndexedDB durability receipt and Phase 2 server finalization receipt.
   autonumber
   actor Contributor as Contributor
   participant UI as PWA Shell
@@ -223,7 +225,7 @@ flowchart TB
 
   subgraph Backend["☁️ Supabase Cloud Backend"]
     AuthService["Supabase Auth Service"]
-    CodeTable[("private.device_link_codes<br/>(SHA-256 code hash, 10-min expiry)")]
+    CodeTable[("private.session_link_codes<br/>(SHA-256 code hash, 5-min expiry)")]
     LinkFn["Edge Function: link-session"]
   end
 

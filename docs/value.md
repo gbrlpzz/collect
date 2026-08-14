@@ -21,6 +21,30 @@ Field operations frequently encounter unreliable mobile connectivity. Convention
 
 ## The evidence contract
 
+```mermaid
+flowchart TD
+  accTitle: Evidence Contract Comparison
+  accDescr: Visual comparison contrasting conventional online web forms with the collect offline-first evidence contract.
+
+  subgraph FragilePath["❌ Conventional Web Forms (Fragile Data Path)"]
+    direction TB
+    C1["User Enters Data in Browser"] --> C2{"Network Reachable?"}
+    C2 -->|No| C3["Data Trapped in Volatile Memory<br/>(Lost on close, crash, or tab eviction)"]
+    C2 -->|Yes| C4["POST Request Initiated<br/>(Optimistic 'Saving...' UI)"]
+    C4 --> C5["Partial Upload Failure<br/>(Rows saved, media files orphaned)"]
+    C5 --> C6["Schema Edited Later<br/>(Historical observations distorted)"]
+  end
+
+  subgraph CollectPath["✅ Collect Architecture (Evidence Contract)"]
+    direction TB
+    K1["User Enters Field Data (Offline / Online)"] --> K2["Atomic Commit to Scoped IndexedDB<br/>• Observation payload<br/>• Raw media blobs<br/>• Outbox queue entry"]
+    K2 --> K3["Local Receipt: <b>Saved on this device</b><br/>(Durable across restarts and crashes)"]
+    K3 --> K4["Single-Flight Sync Engine<br/>• GET /health reachability probe<br/>• TUS resumable media chunks<br/>• Atomic finalization POST"]
+    K4 --> K5["Server Receipt: <b>Synced</b><br/>(Immutable database record + receipt token)"]
+    K5 --> K6["FAIR Checkpoint Archive<br/>(Self-contained package with DataCite metadata)"]
+  end
+```
+
 ### 1. Saved means locally durable
 
 The client commits the observation payload, media references, blobs, and outbox tasks to IndexedDB in a single transaction before displaying **Saved on this device**.

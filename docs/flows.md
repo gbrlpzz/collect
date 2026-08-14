@@ -170,6 +170,8 @@ flowchart TD
 
 ```mermaid
 sequenceDiagram
+  accTitle: iOS Container Cross-Authentication Bridge
+  accDescr: Sequence diagram illustrating how a signed-in browser session generates a single-use 8-character device-link code to authenticate an isolated iOS PWA container.
   autonumber
   actor Admin as Administrator
   actor Contributor as Contributor
@@ -188,7 +190,7 @@ sequenceDiagram
   Contributor->>Safari: Taps 'Add to Home Screen'
   Contributor->>Safari: Opens Profile → "Sign in another device"
   Safari->>Edge: POST /link-session (action: 'create')
-  Edge->>Auth: Store SHA-256 hash of 8-char code (10m TTL)
+  Edge->>Auth: Store SHA-256 hash of 8-char code in private.session_link_codes (5m TTL)
   Edge-->>Safari: Return 8-character code (e.g. ABCD-1234)
   Safari-->>Contributor: Displays code on screen
 
