@@ -138,9 +138,11 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
     ).toEqual([]);
 
     // Background sync simulation completes on the real home screen.
-    await waitFor(() => expect(screen.getByText("Sent")).toBeTruthy(), {
-      timeout: 8000,
-    });
+    await waitFor(
+      () =>
+        expect(screen.getAllByText("Sent").length).toBeGreaterThanOrEqual(1),
+      { timeout: 8000 },
+    );
     storageEmpty();
   }, 15000);
 });

@@ -48,6 +48,18 @@ const demoProject: Project = {
 
 const initialSampleObservations: Observation[] = [
   {
+    id: "obs-val-003",
+    projectId: "demo-project",
+    createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+    status: "SAVED_LOCAL",
+    values: {
+      site_code: "VA-003",
+      building_type: "workshop",
+      building_occupancy: "unknown",
+    },
+    media: [],
+  },
+  {
     id: "obs-val-001",
     projectId: "demo-project",
     createdAt: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
@@ -182,6 +194,9 @@ export function FlowDemo() {
     unknown
   > | null>(null);
   const [observation, setObservation] = useState<Observation | null>(null);
+  const [seedObservations, setSeedObservations] = useState<Observation[]>(
+    initialSampleObservations,
+  );
   const [syncStage, setSyncStage] = useState<SyncStage>(0);
   const timersRef = useRef<number[]>([]);
   const screenRef = useRef<HTMLDivElement>(null);
@@ -194,6 +209,7 @@ export function FlowDemo() {
     setDraft({});
     setSavedValues(null);
     setObservation(null);
+    setSeedObservations(initialSampleObservations);
     setSyncStage(0);
     setRound((value) => value + 1);
     setPhase("home");
@@ -278,6 +294,7 @@ export function FlowDemo() {
       media: [],
     };
     setObservation(newObs);
+    setSeedObservations((current) => [newObs, ...current]);
     setSyncStage(0);
     setPhase("home");
     setActiveTab("sync");
@@ -416,14 +433,22 @@ export function FlowDemo() {
                         setActiveTab("home");
                       }
                     }}
-                    observations={observation ? [observation] : []}
+                    observations={
+                      observation
+                        ? [observation, ...seedObservations]
+                        : seedObservations
+                    }
                     isPreview={true}
                   />
                   <div className="main-shell">
                     <ContributorHome
                       projects={[demoProject]}
                       activeProject={demoProject}
-                      observations={observation ? [observation] : []}
+                      observations={
+                        observation
+                          ? [observation, ...seedObservations]
+                          : seedObservations
+                      }
                       hasDraft={false}
                       onStartObservation={() => {
                         setPhase("collecting");
