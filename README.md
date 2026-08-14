@@ -2,79 +2,68 @@
 
 ![Collect administrator form editor and contributor observation interface](public/collect-preview.png)
 
-**Offline-first field data collection for research and operational fieldwork.**
+**Trustworthy field evidence. Offline on any phone.**
 
-`collect` is a mobile-first progressive web application (PWA) for structured observations, media, and location data. It works reliably when network connectivity is intermittent or unavailable. It pairs a simple contributor interface with a durable local ledger, resumable synchronization, immutable schema versions, and portable research exports.
-
-The core contract is explicit:
-
-- **Saved on this device** means the client committed the observation, media, and outbox operations to IndexedDB.
-- **Synced** means the server finalized the complete observation and issued a durable receipt.
-- The client never removes a pending observation before the server receipt exists.
+`collect` is an offline-first field data collection progressive web application (PWA) for research teams. Record structured observations, raw photos, and GPS coordinates on any phone beyond cellular reach — backed by durable local storage, resumable synchronization, immutable schema versions, and deposit-ready research archives.
 
 ---
 
-## Why collect is different
+## Four core guarantees
 
-| Requirement                   | `collect` approach                                                                                                                 |
-| :---------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
-| **Work without connectivity** | Collection, drafts, media, and the outbox remain available offline. Connectivity affects transfer timing, not data capture.        |
-| **Trustworthy status**        | Local and server receipts represent distinct verifiable facts. The interface uses distinct language for each state.                |
-| **Survive interruptions**     | Stable identifiers, durable outbox queues, resumable media uploads, and idempotent endpoints support reliable retry after crashes. |
-| **Preserve interpretation**   | Every observation links to an immutable schema version. Finalized evidence cannot be rewritten.                                    |
-| **Produce reusable data**     | Checkpoints contain canonical JSONL, CSV, GeoJSON, schema history, original media, data dictionaries, and DataCite metadata.       |
-| **Auditable quality signals** | Server-validated attention checks and contributor quality summaries are included in exports without altering research data.        |
-| **Zero vendor lock-in**       | The Apache-2.0 core is self-hostable. Checkpoint packages remain interpretable without the application.                            |
+Fieldwork happens in harsh conditions. `collect` is engineered around four technical guarantees that protect your data from capture to archive:
 
----
+| Guarantee                      | Technical contract                                                                                                                                 | Verification                                                   |
+| :----------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------- |
+| **Local-first durability**     | Observations and media commit to IndexedDB before any network attempt, updating to `SYNCED` only upon explicit server confirmation.                | [docs/background-automation.md](docs/background-automation.md) |
+| **Unmodified media originals** | Photos and audio retain capture quality with client-calculated SHA-256 checksums, with zero collection-path recompression.                         | [docs/dataset-standards.md](docs/dataset-standards.md)         |
+| **Isolated attention checks**  | Periodic checks evaluate contributor focus in memory during long transects, stripping questions and answers before database commit.                | [docs/attention-qa.md](docs/attention-qa.md)                   |
+| **FAIR export archives**       | Checkpoint exports package canonical JSONL, CSV, RFC 7946 GeoJSON, DataCite 4.4 metadata, schemas, and raw media into a single verifiable archive. | [docs/export-format.md](docs/export-format.md)                 |
 
-## Intended use cases
+### Key system metrics
 
-`collect` is built for fieldwork where a lost or ambiguous record is far more costly than a delayed upload.
-
-| Use case                                    | Key capabilities                                                                                                     |
-| :------------------------------------------ | :------------------------------------------------------------------------------------------------------------------- |
-| **Ecological and environmental monitoring** | Offline transects, automatic location provenance, photo/audio capture, immutable protocols, repository-ready exports |
-| **Building and infrastructure surveys**     | Multi-contributor workflows, typed schemas, shared-device account isolation, reproducible checkpoints                |
-| **Humanitarian and rapid assessments**      | Hostile network resilience, durable local receipts, recovery exports, explicit sync states                           |
-| **Citizen-science research**                | Invite-only access, guided one-field capture, automatic background sync, standardized dataset exports                |
-| **Institutional field operations**          | Self-hosted backend, row-level security, private storage buckets, audit logs, administrator readiness views          |
-
-The application does not replace a general-purpose database, spreadsheet editor, or complex survey suite. Its priority is dependable evidence capture with a focused operational surface.
+- **3-stage verified sync** — metadata $\to$ resumable TUS media upload $\to$ server finalization receipt.
+- **SHA-256 integrity** — byte-for-byte media preservation with cryptographic verification.
+- **8-character codes** — passwordless single-use codes bridging iOS Safari and installed PWA containers.
+- **Apache-2.0 licensed** — fully open source and self-hostable with zero vendor lock-in.
 
 ---
 
-## Product flows
+## The evidence contract
 
-### Contributor workflow
+The core collection contract is explicit:
 
-1. Open the installed app and sign in with an eight-character sign-in code (issued by your administrator from the roster, or requested by email from the login screen).
-2. Select an assigned project and tap **Add observation**.
-3. Complete one field at a time. Skip optional fields directly without dismissing the keyboard.
-4. Tap **Save observation**. The client creates a durable local receipt before displaying success.
-5. Continue fieldwork. Synchronization, retries, media transfer, and readiness reports run automatically in the background.
-6. Open **Sync** only when a record requires manual attention or a local recovery export is needed.
-
-### Administrator workflow
-
-1. Create a project. Optionally add research context, licenses, and dataset metadata.
-2. Define a typed collection schema and preview the live contributor flow.
-3. Publish the immutable schema version and invite contributors by email.
-4. Monitor multi-device readiness, pending queues, and advisory attention metrics.
-5. Export immutable checkpoint archives at any cutoff timestamp, or close the project when all devices report complete.
-
-### iOS container sign-in
-
-Safari and installed iOS web apps use separate storage containers. `collect` bridges this platform boundary:
-
-- Contributors sign in with an eight-character single-use sign-in code, issued by the administrator from the roster or requested by email from the login screen.
-- Administrators sign in through invitation magic links (the generic sign-in screen never creates accounts).
-- The installed app can also authenticate via an eight-character single-use device code generated from a signed-in browser (**Profile → Sign in another device**).
-- Passwords remain available as a fallback once set.
+1. **Saved on this device** means the observation, media blobs, and outbox operations committed to local IndexedDB. Capturing data never depends on network connectivity.
+2. **Synced** is a server fact, not an optimistic guess. Only a verified server finalization receipt moves a local record to `SYNCED`.
+3. The client **never discards** pending observations, media originals, drafts, or outbox queues before an explicit server receipt is received.
 
 ---
 
-## Data lifecycle
+## Product surfaces
+
+### 1. Contributor: capture-first fieldwork
+
+- **Guided capture**: One field per step with large touch targets, high-contrast states, and software keyboard integration (skip or continue without dismissing the keyboard).
+- **Strongly typed fields**: Text, numbers with units, single/multiple choice, tri-state (yes/no/unknown), dates, GPS coordinates, camera/photo capture, audio notes, and repeatable sub-forms.
+- **Per-account storage isolation**: Each authenticated account writes to its own isolated IndexedDB database (`collect-local-v1-<userId>`), preventing data leakage across shared field devices.
+- **Automatic background sync**: Single-flight sync coordinator with multi-tab mutex leases, health-probe gating, exponential backoff, and automatic retry on launch, foreground, or reconnection.
+- **On-device recovery**: Unsynced fieldwork can be exported directly from the device as a recovery package even when completely disconnected.
+
+### 2. Administrator: setup & fleet operations
+
+- **Immutable schema versioning**: Published field definitions are permanently locked. Schema changes create new versions without mutating historical observations.
+- **Real-time fleet readiness**: Track incoming observations, pending on-device queues, and contributor attention scores across all field teams in real time.
+- **Passwordless onboarding**: Issue 8-character single-use contributor sign-in codes directly from the roster, or send invite magic links.
+- **Server-enforced consent**: Ingestion rejects submissions from accounts without granted (and unrevoked) participant consent.
+- **Deposit-ready checkpoints**: Generate immutable ZIP archives at any cutoff timestamp once field teams report completion.
+
+### 3. Data integrity & provenance
+
+- **Fatigue detection without data pollution**: During 8-hour field transects, surveyor fatigue causes mechanical tapping. Subtle instruction checks measure attention in memory; the question and response are stripped before storage, recording only an advisory reliability score.
+- **Automatic spatial & device provenance**: Automatic capture of GPS coordinates, horizontal accuracy, altitude, timestamp, device model, operating system, browser engine, battery level, and network state.
+
+---
+
+## Evidence lifecycle
 
 ```mermaid
 flowchart TD
@@ -99,28 +88,38 @@ flowchart TD
   end
 ```
 
-The synchronization sequence strictly follows: **metadata $\to$ media $\to$ finalization**. Each step is idempotent and resumable. `navigator.onLine` is never used as proof of reachability. Background execution is an optimization, not a dependency for correctness.
+The synchronization sequence strictly follows: **metadata $\to$ media $\to$ finalization**. Each phase is idempotent and resumable.
 
 ---
 
-## Core capabilities
+## FAIR research checkpoints
 
-- **Guided capture**: One-field-at-a-time mobile interface with large touch targets, reduced motion support, and software keyboard integration.
-- **Typed data fields**: Text, numbers, single/multiple choice, tri-state, dates, coordinates, photos, audio, and repeatable groups.
-- **Local persistence**: Automatic draft persistence and atomic IndexedDB local submission receipts.
-- **Account isolation**: Dedicated IndexedDB database per account (`collect-local-v1-<userId>`) to protect shared devices.
-- **Resumable media uploads**: TUS chunked uploads with client-calculated SHA-256 integrity metadata.
-- **Data immutability**: Database triggers protect published schemas and finalized submissions from modification.
-- **Access control**: Invite-only registration, administrator allow-lists, admin-issued or self-service sign-in codes, passwordless links, and single-use device-link codes.
-- **Consent enforcement**: Versioned, server-enforced in-app consent required before data ingestion.
-- **Provenance tracking**: Automatic recording of device model, OS, browser, battery, connection, timezone, and location accuracy.
-- **Attention checks**: Curated attention verification with server-evaluated chance-corrected scoring.
-- **Readiness monitoring**: Real-time aggregation of pending submissions and media across all contributor devices.
-- **FAIR checkpoints**: Self-contained ZIP packages containing data files, original media, schemas, and DataCite 4.4 metadata.
+Checkpoint exports produce a self-contained ZIP package structured for long-term preservation and open-science repositories (Zenodo, Dryad, institutional archives):
+
+```text
+dataset-checkpoint-YYYYMMDDTHHMMSSZ/
+├── manifest.json              # SHA-256 checksums, export cutoff, software version
+├── datacite.json              # DataCite 4.4 kernel (DOIs, creators, licenses)
+├── data-dictionary.json       # Field types, constraints, units, and semantic URIs
+├── dataset-README.md          # Provenance, methods, and reproduction instructions
+├── submissions.jsonl          # Canonical observation records (one JSON object per line)
+├── submissions.csv            # Tabular export for spreadsheets, R, and pandas
+├── submissions.geojson        # RFC 7946 spatial features for QGIS and ArcGIS
+├── schema-v1.json             # Immutable snapshot of the collection schema
+├── contributors.json          # Contributor profile metadata and consent records
+├── attention-checks.json      # Check keys, response evaluations, and reliability scores
+└── media/                     # Uncompressed original photos and audio recordings
+    ├── photo-01-uuid.webp
+    └── photo-02-uuid.jpg
+```
+
+- **Findable**: Native `datacite.json` metadata kernel with DOI identifiers, organizational creators, and license declarations.
+- **Interoperable**: Canonical JSONL stream, flat CSV tables, RFC 7946 GeoJSON spatial features, and machine-readable data dictionary.
+- **Reusable**: Byte-for-byte uncompressed original media, schema version histories, and cryptographic SHA-256 manifest.
 
 ---
 
-## Architecture at a glance
+## Architecture
 
 ```mermaid
 flowchart TB
@@ -177,14 +176,14 @@ flowchart TB
   ExportBucket --> ZIP
 ```
 
-| Layer              | Technology                     | Primary responsibility                                                                |
-| :----------------- | :----------------------------- | :------------------------------------------------------------------------------------ |
-| **Client UI**      | React + TypeScript PWA         | Contributor and administrator interfaces, schema rendering, offline shell             |
-| **Local Ledger**   | IndexedDB (`collect-local-v1`) | Drafts, submissions, media blobs, outbox operations, receipts, device state           |
-| **Sync Engine**    | TypeScript + TUS client        | Health probes, multi-tab leases, retry loops, upload workers, receipt validation      |
-| **Database**       | Supabase PostgreSQL            | Organizations, projects, immutable schemas, submissions, consent, audit logs          |
-| **Storage**        | Supabase Storage               | Private media objects (`collect-media`) and checkpoint archives (`collect-exports`)   |
-| **Privileged API** | Supabase Edge Functions        | Ingestion, authorization, device linking, invitations, reminders, checkpoint creation |
+| Layer              | Technology                              | Primary responsibility                                                                |
+| :----------------- | :-------------------------------------- | :------------------------------------------------------------------------------------ |
+| **Client UI**      | React 19 + TypeScript + Vite PWA        | Contributor and administrator interfaces, schema rendering, offline shell             |
+| **Local Ledger**   | IndexedDB (`collect-local-v1-<userId>`) | Drafts, submissions, media blobs, outbox operations, receipts, device state           |
+| **Sync Engine**    | TypeScript + TUS client                 | Health probes, multi-tab leases, retry loops, upload workers, receipt validation      |
+| **Database**       | Supabase PostgreSQL + RLS               | Organizations, projects, immutable schemas, submissions, consent, audit logs          |
+| **Storage**        | Supabase Storage (Private)              | Private media objects (`collect-media`) and checkpoint archives (`collect-exports`)   |
+| **Privileged API** | Supabase Edge Functions (Deno)          | Ingestion, authorization, device linking, invitations, reminders, checkpoint creation |
 
 Read [Architecture](docs/architecture.md) for technical invariants and trust boundaries, and [Product specification](docs/spec.md) for normative requirements.
 
@@ -195,14 +194,16 @@ Read [Architecture](docs/architecture.md) for technical invariants and trust bou
 ### Prerequisites
 
 - Node.js 22+ and npm
-- Deno 2 (for Edge Function verification and formatting)
+- Deno 2 (for Edge Function typechecking and formatting)
 
 ```bash
 npm ci
 npm run dev
 ```
 
-Without backend environment variables, `collect` launches an interactive local preview. The marketing homepage (`homepage.html`) is a second Vite entry in the same bundle; it mounts the app's real components, so interface changes mirror into its live demo.
+Without backend credentials, `collect` launches an interactive local preview. The marketing homepage (`homepage.html`) is a companion Vite entry in the same bundle; it mounts the app's real components, so interface changes mirror into its live demo.
+
+### Verification suite
 
 Run the verification suite before committing changes:
 
@@ -211,55 +212,57 @@ npm run check
 git diff --check
 ```
 
-`npm run check` verifies Prettier formatting, validates Markdown doc links, runs the Vitest suite (including axe-core accessibility tests), typechecks TypeScript (`tsc -b`), and builds the production bundle.
+`npm run check` verifies Prettier code formatting, validates Markdown documentation links, executes the Vitest suite (including automated axe-core accessibility tests), checks TypeScript types (`tsc -b`), and builds the production bundle.
 
 ---
 
-## Deployment
+## Self-hosting & deployment
 
-Deploy `collect` to a dedicated Supabase project and a static host (such as Vercel). Configuration is managed through environment variables:
+`collect` can be deployed against any Supabase project and any static host (such as Vercel). Configuration lives in environment variables:
 
 ```bash
-export SUPABASE_ACCESS_TOKEN=...
-export SUPABASE_PROJECT_REF=...
+export SUPABASE_ACCESS_TOKEN=...          # Supabase Management API / CLI token
+export SUPABASE_PROJECT_REF=...           # e.g. lrqlrufwrytpwhgclmyo
 export APP_URL=https://your-collect.example.org
 export BOOTSTRAP_ADMIN_EMAIL=admin@example.org
-export VITE_SUPABASE_PUBLISHABLE_KEY=...
+export VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 
 npm run provision -- --issue-magic-link
 ```
 
-Never expose service-role keys or database passwords in client environment variables (`VITE_*`). Read [Deployment](docs/deployment.md) for detailed instructions.
+The provisioning script applies database migrations, configures Auth redirect allow-lists, sets server secrets, and deploys every Edge Function with `--no-verify-jwt` (each function authenticates its own bearer token; the `health` probe remains reachable anonymously). Service-role keys never enter the client bundle.
+
+Read [Deployment guide](docs/deployment.md) for step-by-step instructions and CI/CD setup.
 
 ---
 
 ## Documentation index
 
-Start with the [documentation index](docs/README.md). Core guides include:
+Start with the [documentation index](docs/README.md). Detailed guides include:
 
-| Document                                               | Purpose                                                               |
-| :----------------------------------------------------- | :-------------------------------------------------------------------- |
-| [Product value](docs/value.md)                         | Fit, differentiators, and operational return on investment            |
-| [User and system flows](docs/flows.md)                 | Step-by-step contributor, admin, and authentication workflows         |
-| [Privacy and data handling](docs/privacy.md)           | Data categories, retention rules, and operator responsibilities       |
-| [Architecture](docs/architecture.md)                   | System boundaries, storage isolation, and synchronization invariants  |
-| [Interface baseline](docs/design.md)                   | Design principles, typography, touch targets, and accessibility rules |
-| [Deployment](docs/deployment.md)                       | Setup instructions, environment variables, and CLI automation         |
-| [Checkpoint format](docs/export-format.md)             | Archive layout, JSONL/CSV formats, and integrity hashes               |
-| [FAIR dataset standards](docs/dataset-standards.md)    | DataCite metadata, data dictionaries, and ontology mapping            |
-| [Attention verification](docs/attention-qa.md)         | Quality check bank, scoring formulas, and ethical boundaries          |
-| [Background automation](docs/background-automation.md) | Lifecycle hooks, sync triggers, and lease coordination                |
-| [Product specification](docs/spec.md)                  | Normative functional and technical requirements                       |
-| [Implementation status](docs/PLAN.md)                  | Current test coverage and roadmap status                              |
+| Document                                               | Purpose                                                                     |
+| :----------------------------------------------------- | :-------------------------------------------------------------------------- |
+| [Product value & fit](docs/value.md)                   | Core problem, value propositions, and comparison matrix                     |
+| [User & system flows](docs/flows.md)                   | Step-by-step contributor, administrator, and authentication workflows       |
+| [Privacy & data governance](docs/privacy.md)           | Data categories, retention policies, and operator obligations               |
+| [System architecture](docs/architecture.md)            | Security boundaries, storage isolation, and synchronization invariants      |
+| [Interface baseline](docs/design.md)                   | Apple HIG-inspired interaction rules, typography, touch targets, and themes |
+| [Deployment & provisioning](docs/deployment.md)        | Setup instructions, environment variables, and CLI automation               |
+| [Checkpoint export format](docs/export-format.md)      | Package archive structure, JSONL/CSV formats, and integrity hashes          |
+| [FAIR dataset standards](docs/dataset-standards.md)    | DataCite metadata, schema history, and semantic data dictionaries           |
+| [Attention verification](docs/attention-qa.md)         | Quality check bank, scoring formulas, and ethical boundaries                |
+| [Background automation](docs/background-automation.md) | Lifecycle hooks, sync triggers, and multi-tab lease coordination            |
+| [Product specification](docs/spec.md)                  | Normative functional and technical requirements                             |
+| [Implementation status](docs/PLAN.md)                  | Current test coverage and roadmap status                                    |
 
 ---
 
 ## Project principles
 
-1. **Preserve fieldwork first**: Never discard local data before an explicit server finalization receipt exists.
-2. **State only verifiable facts**: Distinguish local receipts from server receipts across all UI copy.
-3. **Keep the collection path clean**: Capture exact contributor observations without AI modification.
-4. **Enforce explicit decisions**: Require conscious human action for consent, schema publication, and exports.
+1. **Preserve fieldwork first**: A saved local submission and its media must not be discarded before an explicit server finalization receipt exists.
+2. **State only verifiable facts**: Distinguish local receipts from server receipts across all UI copy and documentation.
+3. **Keep the collection path clean**: Capture exact contributor observations without AI transformation or lossy recompression.
+4. **Enforce explicit decisions**: Require conscious human action for consent, schema publication, and data exports.
 5. **Protect historical evidence**: Keep published schemas and finalized submissions immutable.
 6. **Ensure portability**: Checkpoint exports must remain fully readable and useful without the application.
 
