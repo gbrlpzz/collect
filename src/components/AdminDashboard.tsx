@@ -874,10 +874,9 @@ function ContributorsPanel({
                     // The menu may open past the roster box, but it must
                     // never run off the bottom of the window: flip it upward
                     // when there is more room above the row than below it.
-                    const menu =
-                      details.querySelector<HTMLElement>(
-                        ".admin-project-actions-menu",
-                      );
+                    const menu = details.querySelector<HTMLElement>(
+                      ".admin-project-actions-menu",
+                    );
                     if (!menu) return;
                     const bubbleRect = details.getBoundingClientRect();
                     const menuHeight = menu.offsetHeight;

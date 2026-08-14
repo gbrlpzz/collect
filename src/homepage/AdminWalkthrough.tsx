@@ -101,6 +101,9 @@ export function AdminWalkthrough({
   const [deviceCode, setDeviceCode] = useState("K9XP-4M7B");
   const [copiedCode, setCopiedCode] = useState(false);
   const [exported, setExported] = useState(false);
+  const [activeStatus, setActiveStatus] = useState<"active" | "closed">(
+    "active",
+  );
 
   useEffect(() => {
     setTab(initialTab);
@@ -136,14 +139,45 @@ export function AdminWalkthrough({
   return (
     <div className="hp-admin-console" data-mode="admin" data-surface="admin">
       <div className="hp-console-header">
+        <div className="back-row">
+          <button className="back-button hp-bubble-btn" aria-label="Projects">
+            <Icon name="chevron-left" size={16} />
+          </button>
+          <span className="hp-crumb-text">Projects</span>
+        </div>
+
         <div className="admin-project-header">
           <div>
             <div className="admin-project-title-meta">
-              <Eyebrow>Liminal Research Group · Active</Eyebrow>
+              <Eyebrow>
+                Liminal Research Group ·{" "}
+                {activeStatus === "closed" ? "Closed" : "Active"}
+              </Eyebrow>
             </div>
             <h1>Vernacular buildings — Valpuesta</h1>
           </div>
-          <span className="hp-console-badge">Admin</span>
+
+          <details className="admin-project-actions">
+            <summary className="hp-bubble-btn" aria-label="Project actions">
+              <Icon name="more" size={18} />
+            </summary>
+            <div className="admin-project-actions-menu">
+              <button
+                type="button"
+                onClick={() =>
+                  setActiveStatus((s) => (s === "active" ? "closed" : "active"))
+                }
+              >
+                <Icon
+                  name={activeStatus === "active" ? "lock" : "refresh"}
+                  size={15}
+                />
+                {activeStatus === "active"
+                  ? "Close collection"
+                  : "Reopen collection"}
+              </button>
+            </div>
+          </details>
         </div>
 
         <div className="admin-metrics">
@@ -162,7 +196,7 @@ export function AdminWalkthrough({
         </div>
 
         <div
-          className="admin-tabs"
+          className="admin-tabs hp-pill-tabs"
           role="tablist"
           aria-label="Project administration"
         >
@@ -224,7 +258,7 @@ export function AdminWalkthrough({
                 </div>
                 <div className="hp-schema-options-pills">
                   {selectedField.options.map((opt) => (
-                    <span className="chip" key={opt}>
+                    <span className="chip hp-pill-chip" key={opt}>
                       {opt}
                     </span>
                   ))}

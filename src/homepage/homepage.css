@@ -353,31 +353,31 @@ main [id] {
    ========================================================================= */
 .hp-flow-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 440px);
-  gap: clamp(24px, 4vw, 48px);
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: clamp(32px, 5vw, 64px);
+  align-items: center;
   justify-content: space-between;
 }
 .hp-flow-copy {
-  max-width: 500px;
+  max-width: 520px;
 }
 .hp-flow-visual {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
 }
 
 .hp-admin-tab-selector {
   display: flex;
   gap: 6px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 }
 .hp-admin-step-btn {
   font-size: 0.75rem;
   font-weight: 600;
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 999px;
   border: 1px solid var(--separator-light);
   background: var(--paper);
@@ -396,13 +396,13 @@ main [id] {
 }
 
 .hp-story {
-  padding: 14px 0 12px;
+  padding: 16px 0 14px;
   border-top: 1px solid var(--separator-light);
   border-bottom: 1px solid var(--separator-light);
 }
 .hp-story-kicker {
   display: block;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
   color: var(--tertiary);
   font-size: 0.6875rem;
   font-weight: 650;
@@ -410,18 +410,18 @@ main [id] {
   text-transform: uppercase;
 }
 .hp-story h3 {
-  font-size: 1rem;
+  font-size: 1.0625rem;
   font-weight: 650;
-  margin: 0 0 4px;
+  margin: 0 0 6px;
 }
 .hp-story > p {
   margin: 0;
   color: var(--secondary);
-  font-size: 0.8125rem;
-  line-height: 1.45;
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
-/* ---------- Collector Phone Mockup (Step 1) ---------- */
+/* ---------- Authentic iPhone Mockup (Step 1) ---------- */
 .hp-iphone-wrap {
   display: flex;
   flex-direction: column;
@@ -431,17 +431,17 @@ main [id] {
 }
 .hp-iphone {
   position: relative;
-  width: 340px;
+  width: 380px;
   max-width: 100%;
-  height: 480px;
-  border-radius: 36px;
+  height: 780px;
+  border-radius: 50px;
   background: #1c1c1e;
   box-shadow:
-    0 20px 48px -10px rgba(0, 0, 0, 0.22),
-    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 28px 70px -14px rgba(0, 0, 0, 0.28),
+    0 8px 24px rgba(0, 0, 0, 0.1),
     inset 0 0 0 1.5px rgba(255, 255, 255, 0.16),
     inset 0 0 2px 2px rgba(0, 0, 0, 0.8);
-  padding: 7px;
+  padding: 10px;
   box-sizing: border-box;
   margin: 0 auto;
 }
@@ -450,7 +450,7 @@ main [id] {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  border-radius: 29px;
+  border-radius: 40px;
   background: var(--canvas);
   display: flex;
   flex-direction: column;
@@ -459,11 +459,11 @@ main [id] {
 }
 .hp-dynamic-island {
   position: absolute;
-  top: 7px;
+  top: 10px;
   left: 50%;
-  z-index: 30;
-  width: 78px;
-  height: 20px;
+  z-index: 40;
+  width: 96px;
+  height: 26px;
   transform: translateX(-50%);
   border-radius: 999px;
   background: #000000;
@@ -471,15 +471,15 @@ main [id] {
 }
 .hp-status-bar {
   position: relative;
-  z-index: 25;
-  height: 36px;
-  flex: 0 0 36px;
+  z-index: 35;
+  height: 44px;
+  flex: 0 0 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 22px;
   color: #000000;
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   background: transparent;
@@ -487,22 +487,22 @@ main [id] {
 .hp-status-icons {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 .hp-home-indicator {
   position: absolute;
-  bottom: 5px;
+  bottom: 8px;
   left: 50%;
-  z-index: 35;
-  width: 100px;
-  height: 3.5px;
+  z-index: 40;
+  width: 130px;
+  height: 4.5px;
   transform: translateX(-50%);
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.7);
   pointer-events: none;
 }
 
-/* Collector Viewport strictly contained inside Phone */
+/* Collector Viewport inside Phone */
 .hp-app-viewport {
   position: relative;
   z-index: 10;
@@ -530,15 +530,15 @@ main [id] {
   left: auto !important;
   right: auto !important;
   z-index: 10 !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  padding: 0 10px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  padding: 0 12px !important;
   background: var(--canvas) !important;
   border-bottom: 1px solid var(--separator-light) !important;
 }
 .hp-app-viewport .topbar-inner {
-  height: 44px !important;
-  padding: 0 4px !important;
+  height: 48px !important;
+  padding: 0 6px !important;
 }
 .hp-app-viewport .main-shell {
   flex: 1 1 0 !important;
@@ -552,11 +552,11 @@ main [id] {
 }
 .hp-app-viewport .collector-page,
 .hp-app-viewport .collector-flow {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  bottom: auto !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
   z-index: 1 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -566,25 +566,27 @@ main [id] {
   width: 100% !important;
   max-width: 100% !important;
   overflow: hidden !important;
-  justify-content: space-between !important;
+  background: var(--canvas) !important;
 }
 .hp-app-viewport .collector-topbar {
-  flex: 0 0 42px !important;
-  height: 42px !important;
-  min-height: 42px !important;
+  position: relative !important;
+  z-index: 15 !important;
+  flex: 0 0 50px !important;
+  height: 50px !important;
+  min-height: 50px !important;
   display: grid !important;
-  grid-template-columns: 28px minmax(0, 1fr) 44px !important;
+  grid-template-columns: 36px minmax(0, 1fr) 52px !important;
   align-items: center !important;
-  padding: 0 10px !important;
+  padding: 0 14px !important;
   border-bottom: 1px solid var(--separator-light) !important;
   background: var(--canvas) !important;
-  gap: 6px !important;
+  gap: 8px !important;
 }
 .hp-app-viewport .collector-topbar .back-button {
-  width: 28px !important;
-  height: 28px !important;
-  min-height: 28px !important;
-  min-width: 28px !important;
+  width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  min-width: 34px !important;
   padding: 0 !important;
   border-radius: 50% !important;
   background: var(--grouped) !important;
@@ -614,14 +616,14 @@ main [id] {
   overflow: hidden !important;
 }
 .hp-app-viewport .collector-topbar .collector-title span {
-  font-size: 0.5625rem !important;
+  font-size: 0.625rem !important;
   color: var(--secondary) !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
 .hp-app-viewport .collector-topbar .collector-title strong {
-  font-size: 0.75rem !important;
+  font-size: 0.8125rem !important;
   font-weight: 650 !important;
   color: var(--text) !important;
   white-space: nowrap !important;
@@ -629,13 +631,15 @@ main [id] {
   text-overflow: ellipsis !important;
 }
 .hp-app-viewport .collector-topbar .collector-save-state {
-  font-size: 0.5625rem !important;
+  font-size: 0.6875rem !important;
   color: var(--secondary) !important;
   text-align: right !important;
 }
 .hp-app-viewport .flow-progress {
-  flex: 0 0 2px !important;
-  height: 2px !important;
+  position: relative !important;
+  z-index: 15 !important;
+  flex: 0 0 2.5px !important;
+  height: 2.5px !important;
   width: 100% !important;
   background: var(--separator-light) !important;
 }
@@ -651,40 +655,43 @@ main [id] {
   overflow-x: hidden !important;
   display: flex !important;
   flex-direction: column !important;
+  padding: 0 !important;
+  padding-bottom: 96px !important;
 }
 .hp-app-viewport .flow-step {
   flex: 1 1 auto !important;
-  padding: 14px 12px 10px !important;
+  padding: 24px 20px 20px !important;
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
 }
 .hp-app-viewport .flow-step .step-title {
-  font-size: 1.1875rem !important;
+  font-size: 1.5rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.03em !important;
   line-height: 1.15 !important;
-  margin: 0 0 4px 0 !important;
+  margin: 0 0 6px 0 !important;
   color: var(--text) !important;
 }
 .hp-app-viewport .flow-step .step-description {
-  font-size: 0.75rem !important;
+  font-size: 0.875rem !important;
   color: var(--secondary) !important;
-  line-height: 1.35 !important;
-  margin: 0 0 8px 0 !important;
+  line-height: 1.4 !important;
+  margin: 0 0 14px 0 !important;
 }
 .hp-app-viewport .choice-button {
-  min-height: 38px !important;
-  padding: 0 12px !important;
-  font-size: 0.75rem !important;
+  min-height: 48px !important;
+  padding: 0 18px !important;
+  font-size: 0.9375rem !important;
   border-radius: 999px !important;
 }
 .hp-app-viewport .flow-actions {
-  flex: 0 0 auto !important;
-  position: sticky !important;
+  position: absolute !important;
   bottom: 0 !important;
-  z-index: 20 !important;
-  padding: 8px 12px 18px !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 25 !important;
+  padding: 12px 20px 28px !important;
   background: rgba(245, 245, 247, 0.94) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
@@ -692,104 +699,104 @@ main [id] {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  gap: 6px !important;
+  gap: 10px !important;
   box-sizing: border-box !important;
 }
 .hp-app-viewport .flow-actions .flow-continue {
   flex: 1 1 auto !important;
-  min-height: 38px !important;
+  min-height: 48px !important;
   border-radius: 999px !important;
-  font-size: 0.8125rem !important;
+  font-size: 1rem !important;
   font-weight: 600 !important;
 }
 .hp-app-viewport .flow-actions .flow-back {
   flex: 0 0 auto !important;
-  min-height: 38px !important;
-  min-width: 64px !important;
+  min-height: 48px !important;
+  min-width: 84px !important;
   border-radius: 999px !important;
-  font-size: 0.75rem !important;
+  font-size: 0.9375rem !important;
 }
 .hp-app-viewport .page-contributor {
-  padding: 12px 12px 24px !important;
+  padding: 18px 20px 32px !important;
   overflow-y: auto !important;
 }
 
-/* ---------- Compact Admin Dashboard Console (Step 2) ---------- */
+/* ---------- Spacious Admin Dashboard Console (Step 2) ---------- */
 .hp-admin-console {
   width: 100%;
-  border-radius: 18px;
+  border-radius: 20px;
   background: #1c1c1e;
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow:
-    0 20px 48px -10px rgba(0, 0, 0, 0.45),
-    0 4px 12px rgba(0, 0, 0, 0.2);
-  padding: 18px 16px;
+    0 24px 60px -12px rgba(0, 0, 0, 0.5),
+    0 4px 16px rgba(0, 0, 0, 0.25);
+  padding: 24px;
   color: #f5f5f7;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 .hp-console-header {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 .hp-admin-console .admin-project-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
 }
 .hp-admin-console .admin-project-header h1 {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #ffffff;
   line-height: 1.2;
-  margin: 2px 0 0;
+  margin: 3px 0 0;
 }
 .hp-console-badge {
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   font-weight: 650;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   color: #aeaeb2;
 }
 .hp-admin-console .admin-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  padding: 8px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 .hp-admin-console .admin-metrics span {
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   color: #aeaeb2;
 }
 .hp-admin-console .admin-metrics strong {
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #ffffff;
   font-variant-numeric: tabular-nums;
 }
 .hp-admin-console .admin-tabs {
   display: flex;
-  gap: 3px;
+  gap: 4px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 999px;
-  padding: 2px;
+  padding: 3px;
 }
 .hp-admin-console .admin-tabs button {
   flex: 1;
-  min-height: 28px;
-  padding: 0 8px;
+  min-height: 32px;
+  padding: 0 10px;
   border: none;
   border-radius: 999px;
   background: transparent;
   color: #aeaeb2;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -797,7 +804,7 @@ main [id] {
 .hp-admin-console .admin-tabs button.tab-active {
   background: #2c2c2e;
   color: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .hp-console-body {
@@ -807,25 +814,26 @@ main [id] {
 .hp-console-panel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 .hp-admin-console .schema-list {
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
   background: rgba(0, 0, 0, 0.3);
   overflow: hidden;
 }
 .hp-admin-console .schema-field-row {
-  min-height: 38px;
+  min-height: 42px;
   display: grid;
   grid-template-columns: 20px minmax(0, 1fr) auto auto;
   gap: 8px;
   align-items: center;
-  padding: 6px 10px;
+  padding: 8px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   cursor: pointer;
+  transition: background 0.15s ease;
 }
 .hp-admin-console .schema-field-row:last-child {
   border-bottom: none;
@@ -836,30 +844,30 @@ main [id] {
 }
 .hp-admin-console .schema-index {
   font-family: ui-monospace, monospace;
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   color: #8e8e93;
 }
 .hp-admin-console .schema-field-row strong {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: #ffffff;
 }
 .hp-admin-console .schema-field-row span {
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   color: #8e8e93;
 }
 .hp-admin-console .schema-type {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: #aeaeb2;
 }
 .hp-admin-console .schema-required {
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   color: #8e8e93;
 }
 .hp-admin-console .hp-schema-detail-card {
-  padding: 8px 10px;
-  border-radius: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
   background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 .hp-admin-console .hp-schema-detail-header {
   display: flex;
@@ -868,33 +876,33 @@ main [id] {
   gap: 6px;
 }
 .hp-admin-console .hp-schema-detail-header strong {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: #ffffff;
 }
 .hp-admin-console .hp-schema-detail-header code {
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   color: #aeaeb2;
 }
 .hp-admin-console .hp-schema-options-pills {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   margin-top: 6px;
 }
 .hp-admin-console .hp-schema-options-pills .chip {
-  font-size: 0.625rem;
-  padding: 2px 7px;
+  font-size: 0.6875rem;
+  padding: 2px 8px;
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
   border-radius: 999px;
 }
 
 .hp-admin-console .hp-admin-pairing-box {
-  padding: 12px;
-  border-radius: 10px;
+  padding: 14px;
+  border-radius: 12px;
   background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 .hp-admin-console .builder-config-title {
   display: block;
@@ -911,7 +919,7 @@ main [id] {
   justify-content: space-between;
 }
 .hp-admin-console .hp-pairing-code {
-  font-size: 1.25rem;
+  font-size: 1.375rem;
   font-weight: 750;
   color: #ffffff;
   letter-spacing: 0.08em;
@@ -919,48 +927,43 @@ main [id] {
 }
 .hp-admin-console .hp-pairing-controls {
   display: flex;
-  gap: 4px;
-}
-.hp-admin-console .hp-pairing-controls .button {
-  min-height: 28px;
-  padding: 0 10px;
-  font-size: 0.6875rem;
+  gap: 5px;
 }
 
 .hp-admin-console .contributor-list {
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
   background: rgba(0, 0, 0, 0.3);
   overflow: hidden;
 }
 .hp-admin-console .contributor-row {
-  min-height: 42px;
+  min-height: 46px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 .hp-admin-console .contributor-copy strong {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: #ffffff;
 }
 .hp-admin-console .contributor-copy span {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: #aeaeb2;
 }
 
 .hp-admin-console .export-readiness {
-  padding: 12px;
-  border-radius: 10px;
+  padding: 14px;
+  border-radius: 12px;
   background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 .hp-admin-console .readiness-bar {
   height: 4px;
@@ -973,11 +976,11 @@ main [id] {
   background: #ffffff;
 }
 .hp-admin-console .export-readiness span {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: #aeaeb2;
 }
 .hp-admin-console .export-readiness strong {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   color: #ffffff;
 }
 
