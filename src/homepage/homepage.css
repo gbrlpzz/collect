@@ -309,7 +309,7 @@ main [id] {
 }
 
 /* =========================================================================
-   2-Column Scrollytelling Flow Layout (Admin & Contributor)
+   2-Column Scrollytelling Flow Layout
    ========================================================================= */
 .hp-flow-layout {
   display: grid;
@@ -328,7 +328,6 @@ main [id] {
   width: 100%;
 }
 
-/* Tab Selector Buttons in Step 1 Narrative */
 .hp-admin-tab-selector {
   display: flex;
   gap: 6px;
@@ -338,7 +337,7 @@ main [id] {
 .hp-admin-step-btn {
   font-size: 0.75rem;
   font-weight: 600;
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.06);
@@ -535,17 +534,30 @@ main [id] {
 .hp-admin-viewport .back-row {
   display: flex;
   align-items: center;
+  gap: 8px;
   margin-bottom: 8px;
 }
-.hp-admin-viewport .back-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
+.hp-admin-back-bubble {
+  width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  min-width: 32px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  display: grid !important;
+  place-items: center !important;
+  border: none !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+}
+.hp-admin-back-bubble:hover {
+  background: rgba(255, 255, 255, 0.22) !important;
+}
+.hp-admin-topbar-crumb {
   font-size: 0.75rem;
   color: var(--secondary);
-  background: transparent;
-  border: none;
-  padding: 0;
+  font-weight: 550;
 }
 .hp-admin-viewport .admin-project-header {
   display: flex;
@@ -567,8 +579,8 @@ main [id] {
   line-height: 1.35;
 }
 .hp-admin-viewport .admin-project-actions summary {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -812,7 +824,7 @@ main [id] {
 }
 
 /* =========================================================================
-   Step 2: Collector Inside iPhone
+   Step 2: Collector Inside iPhone (HIG Floating Low Bar & Circular Bubble X)
    ========================================================================= */
 .hp-app-viewport {
   position: relative;
@@ -849,30 +861,45 @@ main [id] {
   position: relative !important;
   top: auto !important;
   z-index: 5 !important;
-  flex: 0 0 44px !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  max-height: 44px !important;
+  flex: 0 0 52px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
   display: grid !important;
-  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  grid-template-columns: 36px minmax(0, 1fr) 52px !important;
   align-items: center !important;
-  padding: 0 10px !important;
+  padding: 0 12px !important;
   margin: 0 !important;
   gap: 8px !important;
   border-bottom: 1px solid var(--separator-light) !important;
   background: var(--canvas) !important;
 }
+/* Bubble Circular X Button */
 .hp-app-viewport .collector-topbar .back-button {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-self: start !important;
-  gap: 4px !important;
-  font-size: 0.75rem !important;
-  padding: 2px 4px !important;
-  min-height: 28px !important;
+  width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  min-width: 34px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: var(--grouped) !important;
   color: var(--text) !important;
-  background: transparent !important;
-  flex-shrink: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border: none !important;
+  cursor: pointer !important;
+  justify-self: start !important;
+  transition: all 0.15s ease !important;
+}
+.hp-app-viewport .collector-topbar .back-button:hover {
+  background: var(--grouped-strong) !important;
+}
+.hp-app-viewport .collector-topbar .back-button-label {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
   white-space: nowrap !important;
 }
 .hp-app-viewport .collector-topbar .collector-title {
@@ -956,7 +983,7 @@ main [id] {
   box-sizing: border-box !important;
 }
 .hp-app-viewport .flow-step .step-title {
-  font-size: 1.5rem !important;
+  font-size: 1.375rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.03em !important;
   line-height: 1.15 !important;
@@ -969,6 +996,7 @@ main [id] {
   line-height: 1.35 !important;
   margin: 0 0 10px 0 !important;
 }
+/* Floating Low Action Bar */
 .hp-app-viewport .flow-actions {
   position: static !important;
   flex: 0 0 auto !important;
@@ -977,7 +1005,7 @@ main [id] {
   align-items: center !important;
   justify-content: space-between !important;
   gap: 8px !important;
-  background: rgba(245, 245, 247, 0.9) !important;
+  background: rgba(245, 245, 247, 0.92) !important;
   -webkit-backdrop-filter: blur(20px) !important;
   backdrop-filter: blur(20px) !important;
   border-top: 1px solid var(--separator-light) !important;

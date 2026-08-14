@@ -217,9 +217,13 @@ export function AdminWalkthrough({
           <div className="hp-app-viewport hp-admin-viewport">
             <div className="hp-admin-screen-inner">
               <div className="back-row">
-                <span className="back-button" aria-hidden="true">
-                  <Icon name="chevron-left" size={15} /> Projects
-                </span>
+                <button
+                  className="back-button hp-admin-back-bubble"
+                  aria-label="Projects"
+                >
+                  <Icon name="chevron-left" size={16} />
+                </button>
+                <span className="hp-admin-topbar-crumb">Projects</span>
               </div>
 
               <div className="admin-project-header">
