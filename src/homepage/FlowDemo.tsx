@@ -173,8 +173,8 @@ function IPhone({ children }: { children: React.ReactNode }) {
 
 export function FlowDemo() {
   const [round, setRound] = useState(0);
-  const [phase, setPhase] = useState<"home" | "collecting">("collecting");
-  const [activeTab, setActiveTab] = useState<ContributorTab>("flow");
+  const [phase, setPhase] = useState<"home" | "collecting">("home");
+  const [activeTab, setActiveTab] = useState<ContributorTab>("home");
   const [collectorStep, setCollectorStep] = useState<number>(0);
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [savedValues, setSavedValues] = useState<Record<
