@@ -80,7 +80,7 @@ body {
   backdrop-filter: blur(20px) saturate(180%);
 }
 .hp-topbar-inner {
-  width: min(100%, 1120px);
+  width: min(100%, 1040px);
   height: 100%;
   margin: 0 auto;
   padding: 0 20px;
@@ -142,11 +142,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(48px, 8vh, 80px) 20px clamp(40px, 6vh, 64px);
+  padding: clamp(56px, 9vh, 96px) 20px clamp(44px, 7vh, 72px);
   border-bottom: 1px solid var(--separator-light);
 }
 .hp-hero-inner {
-  width: min(100%, 720px);
+  width: min(100%, 680px);
   margin: 0 auto;
   text-align: center;
 }
@@ -161,7 +161,7 @@ body {
   color: var(--secondary);
   font-size: 0.75rem;
   font-weight: 550;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 .hp-hero-badge .status-dot {
@@ -172,7 +172,7 @@ body {
 }
 .hp-hero h1 {
   margin-top: 0;
-  font-size: clamp(2.125rem, 3.8vw, 3.25rem);
+  font-size: clamp(2.25rem, 4vw, 3.25rem);
   line-height: 1.08;
   letter-spacing: -0.04em;
   font-weight: 750;
@@ -185,7 +185,7 @@ body {
 }
 .hp-hero-lede {
   max-width: 36rem;
-  margin: 16px auto 0;
+  margin: 18px auto 0;
   color: var(--secondary);
   font-size: clamp(0.9375rem, 1.4vw, 1.0625rem);
   line-height: 1.55;
@@ -196,7 +196,7 @@ body {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 26px auto 0;
+  margin: 28px auto 0;
   max-width: 440px;
 }
 .hp-capture-input {
@@ -228,13 +228,13 @@ body {
   color: var(--text);
 }
 
-/* ---------- Differentiation Summary (Calm 4-Column Hairline Grid) ---------- */
+/* ---------- Differentiation Summary ---------- */
 .hp-diff-section {
-  padding: clamp(36px, 5vh, 52px) 20px;
+  padding: clamp(40px, 6vh, 60px) 20px;
   border-bottom: 1px solid var(--separator-light);
 }
 .hp-diff-inner {
-  width: min(100%, 1120px);
+  width: min(100%, 1040px);
   margin: 0 auto;
 }
 .hp-diff-grid {
@@ -243,17 +243,19 @@ body {
   gap: 16px;
 }
 .hp-diff-card {
-  padding: 18px 16px;
-  border-radius: 12px;
+  padding: 20px 18px;
+  border-radius: 14px;
   border: 1px solid var(--separator-light);
   background: var(--paper);
+  display: flex;
+  flex-direction: column;
 }
 .hp-diff-card h3 {
   font-size: 0.875rem;
   font-weight: 650;
   letter-spacing: -0.015em;
   color: var(--text);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .hp-diff-card p {
   font-size: 0.75rem;
@@ -264,7 +266,7 @@ body {
 
 /* ---------- Sections Baseline ---------- */
 .hp-section {
-  padding: clamp(48px, 6vh, 76px) 20px;
+  padding: clamp(56px, 8vh, 88px) 20px;
 }
 .hp-section-paper {
   background: var(--paper);
@@ -272,11 +274,11 @@ body {
   border-bottom: 1px solid var(--separator-light);
 }
 .hp-section-inner {
-  width: min(100%, 1120px);
+  width: min(100%, 1040px);
   margin: 0 auto;
 }
 .section-heading {
-  max-width: 42rem;
+  max-width: 38rem;
   margin-bottom: 24px;
 }
 .section-heading h2 {
@@ -284,15 +286,16 @@ body {
   font-size: clamp(1.375rem, 2.2vw, 1.875rem);
   letter-spacing: -0.03em;
   font-weight: 700;
+  line-height: 1.18;
 }
 .section-heading > p:not(.eyebrow) {
-  margin-top: 6px;
+  margin-top: 8px;
   color: var(--secondary);
   font-size: 0.9375rem;
   line-height: 1.5;
 }
 .hp-section-note {
-  margin-top: 14px;
+  margin-top: 16px;
   color: var(--secondary);
   font-size: 0.75rem;
 }
@@ -306,463 +309,53 @@ main [id] {
 }
 
 /* =========================================================================
-   Step 1: Admin Console (Authentic High-Contrast Dark Workstation)
+   2-Column Scrollytelling Flow Layout (Admin & Contributor)
    ========================================================================= */
-.hp-section-dark {
-  background: #000000;
-  color: #f5f5f7;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  --canvas: #000000;
-  --paper: #1c1c1e;
-  --text: #f5f5f7;
-  --secondary: #aeaeb2;
-  --tertiary: #8e8e93;
-  --separator: rgba(255, 255, 255, 0.15);
-  --separator-light: rgba(255, 255, 255, 0.08);
-  --grouped: rgba(255, 255, 255, 0.12);
-  --grouped-strong: #2c2c2e;
-  --accent: #ffffff;
-  --accent-hover: #e5e5ea;
-  --accent-text: #000000;
-}
-.hp-section-dark .eyebrow {
-  color: var(--secondary);
-}
-.hp-admin-heading {
-  margin-bottom: 24px;
-}
-.hp-admin-heading h2 {
-  color: var(--text);
-}
-.hp-admin-heading p {
-  color: var(--secondary);
-}
-
-.hp-admin-screen {
-  width: 100%;
-  max-width: 860px;
-  margin: 0 auto;
-  border-radius: 18px;
-  background: #1c1c1e;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.4);
-  padding: 24px 22px;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-.hp-admin-screen .back-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.hp-admin-screen .back-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8125rem;
-  color: var(--secondary);
-  background: transparent;
-  border: none;
-  padding: 0;
-}
-
-.hp-admin-screen .admin-project-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
-  width: 100%;
-  box-sizing: border-box;
-}
-.hp-admin-screen .admin-project-header h1 {
-  font-size: 1.375rem;
-  font-weight: 700;
-  color: #fff;
-  margin-top: 3px;
-  letter-spacing: -0.025em;
-}
-.hp-admin-screen .admin-project-header .lede {
-  color: var(--secondary);
-  font-size: 0.875rem;
-  margin-top: 4px;
-  line-height: 1.4;
-}
-.hp-admin-screen .admin-project-actions {
-  position: relative;
-  flex: 0 0 auto;
-}
-.hp-admin-screen .admin-project-actions summary {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text);
-  cursor: pointer;
-  list-style: none;
-}
-.hp-admin-screen .admin-project-actions summary::-webkit-details-marker {
-  display: none;
-}
-.hp-admin-screen .admin-project-actions-menu {
-  position: absolute;
-  top: 38px;
-  right: 0;
-  z-index: 20;
-  min-width: 180px;
-  padding: 6px;
-  border-radius: 10px;
-  background: #2c2c2e;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-}
-.hp-admin-screen .admin-project-actions-menu button {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: #fff;
-  font-size: 0.8125rem;
-  cursor: pointer;
-}
-.hp-admin-screen .admin-project-actions-menu button:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.hp-admin-screen .admin-metrics {
+.hp-flow-layout {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  padding: 14px 0;
-  margin-bottom: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  width: 100%;
-  box-sizing: border-box;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 360px);
+  gap: clamp(32px, 5vw, 64px);
+  align-items: center;
+  justify-content: space-between;
 }
-.hp-admin-screen .admin-metrics > div {
+.hp-flow-copy {
+  max-width: 480px;
+}
+.hp-flow-visual {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.hp-admin-screen .admin-metrics span {
-  font-size: 0.75rem;
-  color: var(--secondary);
-}
-.hp-admin-screen .admin-metrics strong {
-  font-size: 1.1875rem;
-  font-weight: 700;
-  color: #fff;
-  font-variant-numeric: tabular-nums;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
-.hp-admin-screen .admin-tabs {
+/* Tab Selector Buttons in Step 1 Narrative */
+.hp-admin-tab-selector {
   display: flex;
-  gap: 4px;
-  margin-bottom: 20px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  padding: 3px;
-  width: fit-content;
-  max-width: 100%;
-  box-sizing: border-box;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
-.hp-admin-screen .admin-tabs button {
-  min-height: 32px;
-  padding: 0 16px;
-  border: none;
+.hp-admin-step-btn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 12px;
   border-radius: 999px;
-  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
   color: var(--secondary);
-  font-size: 0.8125rem;
-  font-weight: 550;
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.hp-admin-screen .admin-tabs button.tab-active {
-  background: #2c2c2e;
-  color: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.hp-admin-screen .panel-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-.hp-admin-screen .panel-heading h2 {
-  font-size: 1.0625rem;
-  font-weight: 650;
+.hp-admin-step-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
   color: #fff;
 }
-.hp-admin-screen .panel-heading p {
-  font-size: 0.8125rem;
-  color: var(--secondary);
-  margin-top: 2px;
-}
-
-.hp-admin-screen .schema-list {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  background: #161618;
-  overflow: hidden;
-  margin-top: 14px;
-  width: 100%;
-  box-sizing: border-box;
-}
-.hp-admin-screen .schema-field-row {
-  min-height: 52px;
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto auto;
-  gap: 12px;
-  align-items: center;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  width: 100%;
-  box-sizing: border-box;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  background: transparent;
-}
-.hp-admin-screen .schema-field-row:last-child {
-  border-bottom: none;
-}
-.hp-admin-screen .schema-field-row:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-.hp-admin-screen .schema-field-row.schema-field-row-active {
-  background: rgba(255, 255, 255, 0.08);
-}
-.hp-admin-screen .schema-index {
-  font-family: ui-monospace, monospace;
-  font-size: 0.6875rem;
-  color: var(--tertiary);
-}
-.hp-admin-screen .schema-field-row > div {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.hp-admin-screen .schema-field-row strong {
-  font-size: 0.8125rem;
-  color: #fff;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.hp-admin-screen .schema-field-row > div span {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.6875rem;
-  color: var(--tertiary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.hp-admin-screen .schema-type {
-  font-size: 0.75rem;
-  color: var(--secondary);
-  white-space: nowrap;
-}
-.hp-admin-screen .schema-required {
-  font-size: 0.6875rem;
-  color: var(--tertiary);
-  white-space: nowrap;
-}
-
-.hp-schema-detail-card {
-  margin-top: 14px;
-  padding: 14px 16px;
-  border-radius: 10px;
-  background: #161618;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-sizing: border-box;
-}
-.hp-schema-detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-.hp-schema-detail-header strong {
-  font-size: 0.875rem;
-  color: #fff;
-}
-.hp-schema-detail-header code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.75rem;
-  color: var(--secondary);
-  background: rgba(255, 255, 255, 0.08);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-.hp-schema-detail-card p {
-  color: var(--secondary);
-  font-size: 0.8125rem;
-  line-height: 1.45;
-  margin: 0;
-}
-.hp-schema-options-pills {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
-}
-.hp-schema-pill-label {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.hp-schema-options-pills .chip {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
-
-.hp-admin-pairing-box {
-  margin-bottom: 16px;
-  padding: 14px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  background: #161618;
-  box-sizing: border-box;
-}
-.hp-pairing-code-display {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 6px 0;
-}
-.hp-pairing-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 1.5rem;
-  font-weight: 750;
-  letter-spacing: 0.12em;
-  color: #fff;
-}
-.hp-pairing-controls {
-  display: flex;
-  gap: 8px;
-}
-
-.hp-admin-screen .contributor-list {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  background: #161618;
-  overflow: hidden;
-  margin-top: 14px;
-  width: 100%;
-  box-sizing: border-box;
-}
-.hp-admin-screen .contributor-row {
-  min-height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  width: 100%;
-  box-sizing: border-box;
-}
-.hp-admin-screen .contributor-row:last-child {
-  border-bottom: none;
-}
-.hp-admin-screen .contributor-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.hp-admin-screen .contributor-copy strong {
-  font-size: 0.8125rem;
-  color: #fff;
-}
-.hp-admin-screen .contributor-copy span {
-  font-size: 0.75rem;
-  color: var(--secondary);
-}
-
-.hp-admin-screen .export-readiness {
-  padding: 14px 16px;
-  border-radius: 10px;
-  background: #161618;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-.hp-admin-screen .readiness-bar {
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  overflow: hidden;
-}
-.hp-admin-screen .readiness-bar span {
-  display: block;
-  height: 100%;
-  background: #34c759;
-}
-.hp-admin-screen .export-readiness > div:last-child {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.hp-admin-screen .export-readiness span {
-  font-size: 0.75rem;
-  color: var(--secondary);
-}
-.hp-admin-screen .export-readiness strong {
-  font-size: 0.8125rem;
-  color: #34c759;
-}
-.hp-section-dark .button-primary {
+.hp-admin-step-btn.active {
   background: #ffffff;
   color: #000000;
   border-color: #ffffff;
 }
-.hp-section-dark .button-primary:hover {
-  background: #e5e5ea;
-}
-.hp-section-dark .button-secondary {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-}
-.hp-section-dark .button-secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
 
-/* ---------- Step 2: Flow Demo Section ---------- */
-.hp-flow-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 340px);
-  gap: clamp(32px, 4vw, 64px);
-  align-items: center;
-}
-.hp-flow-copy {
-  max-width: 440px;
-}
 .hp-story {
   padding: 16px 0 14px;
   border-top: 1px solid var(--separator);
@@ -787,115 +380,44 @@ main [id] {
   font-size: 0.875rem;
   line-height: 1.5;
 }
-.hp-sync-ops {
-  margin-top: 14px;
-  border-top: 1px solid var(--separator-light);
+
+/* =========================================================================
+   Step 1: Admin Section Dark Styling
+   ========================================================================= */
+.hp-section-dark {
+  background: #000000;
+  color: #f5f5f7;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  --canvas: #000000;
+  --paper: #1c1c1e;
+  --text: #f5f5f7;
+  --secondary: #aeaeb2;
+  --tertiary: #8e8e93;
+  --separator: rgba(255, 255, 255, 0.15);
+  --separator-light: rgba(255, 255, 255, 0.08);
+  --grouped: rgba(255, 255, 255, 0.12);
+  --grouped-strong: #2c2c2e;
+  --accent: #ffffff;
+  --accent-hover: #e5e5ea;
+  --accent-text: #000000;
 }
-.hp-sync-op {
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid var(--separator-light);
+.hp-section-dark .eyebrow {
   color: var(--secondary);
-  font-size: 0.75rem;
 }
-.hp-sync-op > span:last-child {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+.hp-admin-heading {
+  margin-bottom: 20px;
 }
-.hp-sync-op strong {
+.hp-admin-heading h2 {
   color: var(--text);
-  font-size: 0.8125rem;
-  font-weight: 600;
 }
-.hp-sync-mark {
-  width: 20px;
-  height: 20px;
-  display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--grouped);
+.hp-admin-heading p {
   color: var(--secondary);
-  font-size: 0.625rem;
-}
-.hp-sync-mark.hp-sync-done {
-  background: var(--accent);
-  color: var(--accent-text);
-}
-.hp-sync-mark.hp-sync-active {
-  box-shadow: 0 0 0 2px var(--focus-ring);
-}
-.hp-sync-note {
-  padding-top: 8px;
-  color: var(--secondary);
-  font-size: 0.75rem;
-}
-.hp-payload {
-  margin-top: 14px;
-  border-top: 1px solid var(--separator-light);
-}
-.hp-payload summary {
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--secondary);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  list-style: none;
-}
-.hp-payload summary::-webkit-details-marker {
-  display: none;
-}
-.hp-payload summary::after {
-  margin-left: auto;
-  content: "+";
-  color: var(--tertiary);
-  font-size: 1rem;
-  font-weight: 400;
-}
-.hp-payload[open] summary::after {
-  content: "−";
-}
-.hp-payload pre {
-  margin: 0;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: var(--grouped);
-  font-size: 0.75rem;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-.hp-payload p {
-  margin-top: 8px;
-  color: var(--secondary);
-  font-size: 0.75rem;
-}
-.hp-auto-bar {
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  margin-top: 10px;
-}
-.hp-auto-note {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--secondary);
-  font-size: 0.75rem;
-}
-.hp-demo-note {
-  margin-top: 10px;
-  color: var(--tertiary);
-  font-size: 0.6875rem;
 }
 
-/* ---------- iPhone Precision Mock-up with HIG Floating Low Bar ---------- */
+/* =========================================================================
+   iPhone Device Frame (Light & Dark Variants)
+   ========================================================================= */
 .hp-iphone-wrap {
   display: flex;
   flex-direction: column;
@@ -911,13 +433,21 @@ main [id] {
   border-radius: 46px;
   background: #1c1c1e;
   box-shadow:
-    0 24px 60px -12px rgba(0, 0, 0, 0.2),
-    0 4px 16px rgba(0, 0, 0, 0.08),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.15),
+    0 24px 60px -12px rgba(0, 0, 0, 0.25),
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
     inset 0 0 2px 2px rgba(0, 0, 0, 0.7);
   padding: 8px;
   box-sizing: border-box;
   margin: 0 auto;
+}
+.hp-iphone-dark {
+  background: #000000;
+  box-shadow:
+    0 24px 60px -12px rgba(0, 0, 0, 0.6),
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+    inset 0 0 2px 2px rgba(0, 0, 0, 0.9);
 }
 .hp-iphone-screen {
   position: relative;
@@ -928,6 +458,9 @@ main [id] {
   background: var(--canvas);
   display: flex;
   flex-direction: column;
+}
+.hp-iphone-screen-dark {
+  background: #000000;
 }
 .hp-dynamic-island {
   position: absolute;
@@ -956,6 +489,9 @@ main [id] {
   font-variant-numeric: tabular-nums;
   background: transparent;
 }
+.hp-status-bar-dark {
+  color: #ffffff;
+}
 .hp-status-icons {
   display: inline-flex;
   align-items: center;
@@ -973,8 +509,311 @@ main [id] {
   background: rgba(0, 0, 0, 0.7);
   pointer-events: none;
 }
+.hp-iphone-screen-dark .hp-home-indicator {
+  background: rgba(255, 255, 255, 0.5);
+}
 
-/* Scoped app viewport */
+/* =========================================================================
+   Admin Inside iPhone (Step 1 Visual)
+   ========================================================================= */
+.hp-admin-viewport {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #000000;
+  color: #f5f5f7;
+  padding: 0 12px 24px;
+  box-sizing: border-box;
+}
+.hp-admin-screen-inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.hp-admin-viewport .back-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.hp-admin-viewport .back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.75rem;
+  color: var(--secondary);
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.hp-admin-viewport .admin-project-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.hp-admin-viewport .admin-project-header h1 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+.hp-admin-viewport .admin-project-header .lede {
+  font-size: 0.75rem;
+  color: var(--secondary);
+  margin-top: 2px;
+  line-height: 1.35;
+}
+.hp-admin-viewport .admin-project-actions summary {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  list-style: none;
+}
+.hp-admin-viewport .admin-project-actions summary::-webkit-details-marker {
+  display: none;
+}
+.hp-admin-viewport .admin-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px 0;
+  margin-bottom: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.hp-admin-viewport .admin-metrics > div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.hp-admin-viewport .admin-metrics span {
+  font-size: 0.625rem;
+  color: var(--secondary);
+}
+.hp-admin-viewport .admin-metrics strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.hp-admin-viewport .admin-tabs {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 2px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.hp-admin-viewport .admin-tabs button {
+  flex: 1;
+  min-height: 28px;
+  padding: 0 4px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.hp-admin-viewport .admin-tabs button.tab-active {
+  background: #2c2c2e;
+  color: #fff;
+}
+.hp-admin-viewport .panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.hp-admin-viewport .panel-heading h2 {
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: #fff;
+}
+.hp-admin-viewport .panel-heading p {
+  font-size: 0.6875rem;
+  color: var(--secondary);
+}
+.hp-admin-viewport .schema-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: #1c1c1e;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.hp-admin-viewport .schema-field-row {
+  min-height: 40px;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+.hp-admin-viewport .schema-field-row:last-child {
+  border-bottom: none;
+}
+.hp-admin-viewport .schema-field-row.schema-field-row-active {
+  background: rgba(255, 255, 255, 0.08);
+}
+.hp-admin-viewport .schema-index {
+  font-family: ui-monospace, monospace;
+  font-size: 0.625rem;
+  color: var(--tertiary);
+}
+.hp-admin-viewport .schema-field-row strong {
+  font-size: 0.75rem;
+  color: #fff;
+}
+.hp-admin-viewport .schema-field-row span {
+  font-size: 0.625rem;
+  color: var(--tertiary);
+}
+.hp-admin-viewport .schema-type {
+  font-size: 0.6875rem;
+  color: var(--secondary);
+}
+.hp-admin-viewport .schema-required {
+  font-size: 0.625rem;
+  color: var(--tertiary);
+}
+.hp-admin-viewport .hp-schema-detail-card {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #1c1c1e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.hp-admin-viewport .hp-schema-detail-header strong {
+  font-size: 0.75rem;
+  color: #fff;
+}
+.hp-admin-viewport .hp-schema-detail-header code {
+  font-size: 0.625rem;
+  color: var(--secondary);
+}
+.hp-admin-viewport .hp-schema-detail-card p {
+  font-size: 0.6875rem;
+  color: var(--secondary);
+  margin-top: 2px;
+}
+.hp-admin-viewport .hp-schema-options-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.hp-admin-viewport .hp-schema-options-pills .chip {
+  font-size: 0.625rem;
+  padding: 1px 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.hp-admin-viewport .hp-admin-pairing-box {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #1c1c1e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.hp-admin-viewport .hp-pairing-code-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0;
+}
+.hp-admin-viewport .hp-pairing-code {
+  font-size: 1.125rem;
+  font-weight: 750;
+  color: #fff;
+  letter-spacing: 0.08em;
+}
+.hp-admin-viewport .hp-pairing-controls {
+  display: flex;
+  gap: 4px;
+}
+.hp-admin-viewport .hp-pairing-controls .button {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 0.6875rem;
+}
+.hp-admin-viewport .field-help {
+  font-size: 0.6875rem;
+  color: var(--secondary);
+  margin-top: 2px;
+}
+.hp-admin-viewport .contributor-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: #1c1c1e;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.hp-admin-viewport .contributor-row {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hp-admin-viewport .contributor-copy strong {
+  font-size: 0.75rem;
+  color: #fff;
+}
+.hp-admin-viewport .contributor-copy span {
+  font-size: 0.6875rem;
+  color: var(--secondary);
+}
+.hp-admin-viewport .export-readiness {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #1c1c1e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.hp-admin-viewport .readiness-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.hp-admin-viewport .readiness-bar span {
+  display: block;
+  height: 100%;
+  background: #34c759;
+}
+.hp-admin-viewport .export-readiness span {
+  font-size: 0.6875rem;
+  color: var(--secondary);
+}
+.hp-admin-viewport .export-readiness strong {
+  font-size: 0.75rem;
+  color: #34c759;
+}
+
+/* =========================================================================
+   Step 2: Collector Inside iPhone
+   ========================================================================= */
 .hp-app-viewport {
   position: relative;
   z-index: 10;
@@ -1160,18 +999,10 @@ main [id] {
   padding: 16px 14px 24px !important;
   width: 100% !important;
 }
-.hp-app-viewport .primary-action-dock {
-  margin-top: 20px;
-  width: 100%;
-}
-.hp-app-viewport .primary-action-dock .button {
-  min-height: 50px !important;
-  font-size: 0.9375rem !important;
-  border-radius: 999px !important;
-  width: 100% !important;
-}
 
-/* ---------- Step 3: Integrity & Provenance Grid ---------- */
+/* =========================================================================
+   Step 3: Integrity & Provenance Grid
+   ========================================================================= */
 .hp-integrity-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1387,7 +1218,9 @@ main [id] {
   margin-top: 6px;
 }
 
-/* ---------- Step 4: Package Browser ---------- */
+/* =========================================================================
+   Step 4: Package Browser
+   ========================================================================= */
 .hp-package {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
@@ -1558,7 +1391,9 @@ main [id] {
   word-break: break-word;
 }
 
-/* ---------- Comparison Section ---------- */
+/* =========================================================================
+   Step 5: Comparison Section
+   ========================================================================= */
 .hp-comparison-table-wrapper {
   overflow-x: auto;
   border-radius: 14px;
@@ -1633,7 +1468,9 @@ main [id] {
   color: var(--secondary);
 }
 
-/* ---------- Research preview layout ---------- */
+/* =========================================================================
+   Step 6: Research preview layout
+   ========================================================================= */
 .hp-preview-layout {
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
@@ -1732,14 +1569,16 @@ main [id] {
   line-height: 1.5;
 }
 
-/* ---------- Footer ---------- */
+/* =========================================================================
+   Footer
+   ========================================================================= */
 .hp-footer {
   padding: 48px 20px 36px;
   background: var(--canvas);
   border-top: 1px solid var(--separator-light);
 }
 .hp-footer-inner {
-  width: min(100%, 1120px);
+  width: min(100%, 1040px);
   margin: 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
@@ -1791,7 +1630,9 @@ main [id] {
   font-size: 0.6875rem;
 }
 
-/* ---------- Responsive Breakpoints ---------- */
+/* =========================================================================
+   Responsive Breakpoints
+   ========================================================================= */
 @media (max-width: 960px) {
   .hp-nav {
     display: none;
@@ -1801,7 +1642,7 @@ main [id] {
   }
   .hp-flow-layout {
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: 36px;
   }
   .hp-flow-copy {
     max-width: 100%;
@@ -1845,18 +1686,6 @@ main [id] {
   }
   .hp-hero-lede {
     font-size: 0.9375rem;
-  }
-  .hp-admin-screen {
-    padding: 16px;
-  }
-  .hp-admin-screen .admin-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .hp-admin-screen .schema-field-row {
-    grid-template-columns: 24px minmax(0, 1fr) auto;
-  }
-  .hp-admin-screen .schema-required {
-    display: none;
   }
   .hp-footer-inner {
     grid-template-columns: 1fr;

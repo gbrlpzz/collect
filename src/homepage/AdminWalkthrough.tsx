@@ -129,10 +129,43 @@ function randomCode(): string {
   return `${result.slice(0, 4)}-${result.slice(4)}`;
 }
 
+function DarkStatusBar() {
+  return (
+    <div className="hp-status-bar hp-status-bar-dark" aria-hidden="true">
+      <span>9:41</span>
+      <div className="hp-status-icons">
+        <svg
+          viewBox="0 0 24 24"
+          width="13"
+          height="13"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" />
+        </svg>
+        <svg
+          viewBox="0 0 24 24"
+          width="13"
+          height="13"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <rect x="2" y="7" width="16" height="10" rx="2" />
+          <path d="M22 11v2" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 export function AdminWalkthrough({
   initialTab = "setup",
+  onTabChange,
 }: {
   initialTab?: AdminTab;
+  onTabChange?: (tab: AdminTab) => void;
 }) {
   const [tab, setTab] = useState<AdminTab>(initialTab);
   const [selectedKey, setSelectedKey] = useState<string | null>("site_code");
@@ -146,6 +179,11 @@ export function AdminWalkthrough({
   useEffect(() => {
     setTab(initialTab);
   }, [initialTab]);
+
+  const handleTabClick = (nextTab: AdminTab) => {
+    setTab(nextTab);
+    onTabChange?.(nextTab);
+  };
 
   const generateNewCode = () => {
     setDeviceCode(randomCode());
@@ -170,261 +208,284 @@ export function AdminWalkthrough({
   const selectedField = SCHEMA_FIELDS.find((f) => f.key === selectedKey);
 
   return (
-    <div className="hp-admin-screen">
-      <div className="back-row">
-        <span className="back-button" aria-hidden="true">
-          <Icon name="chevron-left" size={17} /> Projects
-        </span>
-      </div>
+    <div className="hp-iphone-wrap">
+      <div className="hp-iphone hp-iphone-dark">
+        <div className="hp-iphone-screen hp-iphone-screen-dark">
+          <div className="hp-dynamic-island" aria-hidden="true" />
+          <DarkStatusBar />
 
-      <div className="admin-project-header">
-        <div>
-          <div className="admin-project-title-meta">
-            <Eyebrow>
-              Liminal Research Group
-              {activeStatus === "closed" ? " · Closed" : " · Active"}
-            </Eyebrow>
-          </div>
-          <h1>Vernacular buildings — Valpuesta</h1>
-          <p className="lede">
-            Occupancy, masonry condition, and structural assessment survey
-          </p>
-        </div>
-
-        <details className="admin-project-actions">
-          <summary aria-label="Project actions">
-            <Icon name="more" size={20} />
-            <span className="visually-hidden">Project actions</span>
-          </summary>
-          <div className="admin-project-actions-menu">
-            <button
-              type="button"
-              onClick={() =>
-                setActiveStatus((s) => (s === "active" ? "closed" : "active"))
-              }
-            >
-              <Icon
-                name={activeStatus === "active" ? "lock" : "refresh"}
-                size={17}
-              />
-              {activeStatus === "active"
-                ? "Close collection"
-                : "Reopen collection"}
-            </button>
-          </div>
-        </details>
-      </div>
-
-      <div className="admin-metrics">
-        <div>
-          <span>Received</span>
-          <strong>104</strong>
-        </div>
-        <div>
-          <span>Contributors</span>
-          <strong>3</strong>
-        </div>
-        <div>
-          <span>Last received</span>
-          <strong title="Today at 09:32">Today at 09:32</strong>
-        </div>
-      </div>
-
-      <div
-        className="admin-tabs"
-        role="tablist"
-        aria-label="Project administration"
-      >
-        {(["setup", "contributors", "export"] as AdminTab[]).map((item) => (
-          <button
-            key={item}
-            type="button"
-            role="tab"
-            aria-selected={tab === item}
-            className={tab === item ? "tab-active" : ""}
-            onClick={() => setTab(item)}
-          >
-            {item === "setup"
-              ? "Form"
-              : item === "contributors"
-                ? "Contributors"
-                : "Export"}
-          </button>
-        ))}
-      </div>
-
-      {tab === "setup" && (
-        <section className="admin-panel" role="tabpanel">
-          <div className="panel-heading">
-            <div>
-              <h2>Form</h2>
-              <p>Version 1 (Published) · {SCHEMA_FIELDS.length} questions</p>
-            </div>
-            <div className="panel-actions admin-context-actions">
-              <a className="button button-secondary" href="#collection">
-                <Icon name="play" size={15} />
-                Preview
-              </a>
-            </div>
-          </div>
-
-          <div className="schema-list">
-            {SCHEMA_FIELDS.map((field, idx) => (
-              <div
-                className={`schema-field-row ${selectedKey === field.key ? "schema-field-row-active" : ""}`}
-                key={field.key}
-                onClick={() => setSelectedKey(field.key)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ")
-                    setSelectedKey(field.key);
-                }}
-              >
-                <span className="schema-index">{idx + 1}</span>
-                <div>
-                  <strong>{field.label}</strong>
-                  <span>{field.key}</span>
-                </div>
-                <span className="schema-type">{field.type}</span>
-                <span className="schema-required">
-                  {field.required ? "Required" : "Optional"}
+          <div className="hp-app-viewport hp-admin-viewport">
+            <div className="hp-admin-screen-inner">
+              <div className="back-row">
+                <span className="back-button" aria-hidden="true">
+                  <Icon name="chevron-left" size={15} /> Projects
                 </span>
               </div>
-            ))}
-          </div>
 
-          {selectedField && (
-            <div className="hp-schema-detail-card">
-              <div className="hp-schema-detail-header">
-                <strong>{selectedField.label}</strong>
-                <code>{selectedField.key}</code>
-              </div>
-              <p>{selectedField.description}</p>
-              {selectedField.options && (
-                <div className="hp-schema-options-pills">
-                  <span className="hp-schema-pill-label">Allowed choices:</span>
-                  {selectedField.options.map((opt) => (
-                    <span className="chip" key={opt}>
-                      {opt}
-                    </span>
-                  ))}
+              <div className="admin-project-header">
+                <div>
+                  <div className="admin-project-title-meta">
+                    <Eyebrow>
+                      Liminal Research Group
+                      {activeStatus === "closed" ? " · Closed" : " · Active"}
+                    </Eyebrow>
+                  </div>
+                  <h1>Vernacular buildings — Valpuesta</h1>
+                  <p className="lede">
+                    Occupancy, masonry condition, and structural assessment
+                    survey
+                  </p>
                 </div>
+
+                <details className="admin-project-actions">
+                  <summary aria-label="Project actions">
+                    <Icon name="more" size={18} />
+                    <span className="visually-hidden">Project actions</span>
+                  </summary>
+                  <div className="admin-project-actions-menu">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveStatus((s) =>
+                          s === "active" ? "closed" : "active",
+                        )
+                      }
+                    >
+                      <Icon
+                        name={activeStatus === "active" ? "lock" : "refresh"}
+                        size={15}
+                      />
+                      {activeStatus === "active"
+                        ? "Close collection"
+                        : "Reopen collection"}
+                    </button>
+                  </div>
+                </details>
+              </div>
+
+              <div className="admin-metrics">
+                <div>
+                  <span>Received</span>
+                  <strong>104</strong>
+                </div>
+                <div>
+                  <span>Contributors</span>
+                  <strong>3</strong>
+                </div>
+                <div>
+                  <span>Last received</span>
+                  <strong title="Today at 09:32">Today 09:32</strong>
+                </div>
+              </div>
+
+              <div
+                className="admin-tabs"
+                role="tablist"
+                aria-label="Project administration"
+              >
+                {(["setup", "contributors", "export"] as AdminTab[]).map(
+                  (item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      role="tab"
+                      aria-selected={tab === item}
+                      className={tab === item ? "tab-active" : ""}
+                      onClick={() => handleTabClick(item)}
+                    >
+                      {item === "setup"
+                        ? "Form"
+                        : item === "contributors"
+                          ? "Contributors"
+                          : "Export"}
+                    </button>
+                  ),
+                )}
+              </div>
+
+              {tab === "setup" && (
+                <section className="admin-panel" role="tabpanel">
+                  <div className="panel-heading">
+                    <div>
+                      <h2>Form</h2>
+                      <p>Version 1 · {SCHEMA_FIELDS.length} questions</p>
+                    </div>
+                    <div className="panel-actions admin-context-actions">
+                      <a
+                        className="button button-secondary button-small"
+                        href="#collection"
+                      >
+                        <Icon name="play" size={13} />
+                        Preview
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="schema-list">
+                    {SCHEMA_FIELDS.map((field, idx) => (
+                      <div
+                        className={`schema-field-row ${selectedKey === field.key ? "schema-field-row-active" : ""}`}
+                        key={field.key}
+                        onClick={() => setSelectedKey(field.key)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ")
+                            setSelectedKey(field.key);
+                        }}
+                      >
+                        <span className="schema-index">{idx + 1}</span>
+                        <div>
+                          <strong>{field.label}</strong>
+                          <span>{field.key}</span>
+                        </div>
+                        <span className="schema-type">{field.type}</span>
+                        <span className="schema-required">
+                          {field.required ? "Req." : "Opt."}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {selectedField && (
+                    <div className="hp-schema-detail-card">
+                      <div className="hp-schema-detail-header">
+                        <strong>{selectedField.label}</strong>
+                        <code>{selectedField.key}</code>
+                      </div>
+                      <p>{selectedField.description}</p>
+                      {selectedField.options && (
+                        <div className="hp-schema-options-pills">
+                          <span className="hp-schema-pill-label">Choices:</span>
+                          {selectedField.options.map((opt) => (
+                            <span className="chip" key={opt}>
+                              {opt}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <InfoDisclosure title="About immutable schemas">
+                    <p>
+                      Once published, historical observations retain their exact
+                      schema version. Adding fields creates a new version
+                      without corrupting past submissions.
+                    </p>
+                  </InfoDisclosure>
+                </section>
+              )}
+
+              {tab === "contributors" && (
+                <section className="admin-panel" role="tabpanel">
+                  <div className="panel-heading">
+                    <div>
+                      <h2>{CONTRIBUTORS.length} contributors</h2>
+                    </div>
+                  </div>
+
+                  <div className="hp-admin-pairing-box">
+                    <span className="builder-config-title">
+                      Single-use device link code
+                    </span>
+                    <div className="hp-pairing-code-display">
+                      <span className="hp-pairing-code">{deviceCode}</span>
+                      <div className="hp-pairing-controls">
+                        <Button variant="secondary" onClick={copyCode}>
+                          <Icon
+                            name={copiedCode ? "check" : "file"}
+                            size={13}
+                          />
+                          {copiedCode ? "Copied" : "Copy"}
+                        </Button>
+                        <Button variant="secondary" onClick={generateNewCode}>
+                          <Icon name="refresh" size={13} />
+                          New
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="field-help">
+                      Field contributors enter this 8-character code once on
+                      their device to pair local IndexedDB storage.
+                    </p>
+                  </div>
+
+                  <div className="contributor-list">
+                    {CONTRIBUTORS.map((c) => (
+                      <div className="contributor-row" key={c.id}>
+                        <div className="contributor-copy">
+                          <strong>
+                            {c.name} · {c.email}
+                          </strong>
+                          <span>
+                            {c.submissions} submissions · {c.lastActive}
+                            {!c.synced && " · 1 pending"}
+                          </span>
+                        </div>
+                        <AttentionScoreRing
+                          score={c.attentionScore}
+                          total={c.submissions}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <InfoDisclosure title="About attention scores">
+                    <p>
+                      The ring is a 0–100 summary of quick verification
+                      questions, adjusted for random guessing. The score is
+                      recorded in observation provenance while the answer is
+                      stripped from payload data.
+                    </p>
+                  </InfoDisclosure>
+                </section>
+              )}
+
+              {tab === "export" && (
+                <section className="admin-panel export-panel" role="tabpanel">
+                  <div className="panel-heading">
+                    <div>
+                      <h2>Export checkpoint</h2>
+                    </div>
+                  </div>
+
+                  <div className="export-readiness">
+                    <div className="readiness-bar">
+                      <span style={{ width: "100%" }} />
+                    </div>
+                    <div>
+                      <span>3 of 3 contributors synced</span>
+                      <strong>104 complete submissions · media included</strong>
+                    </div>
+                  </div>
+
+                  <div className="admin-context-actions admin-context-actions-single">
+                    <Button
+                      variant="primary"
+                      icon="download"
+                      onClick={triggerExport}
+                      fullWidth
+                    >
+                      {exported ? "Generated (1.4 MB)" : "Export checkpoint"}
+                    </Button>
+                  </div>
+
+                  <InfoDisclosure title="Checkpoint coverage">
+                    <p>
+                      A checkpoint includes data received by the server: JSONL,
+                      CSV, GeoJSON, DataCite 4.4 metadata, and byte-for-byte
+                      original media files with SHA-256 hashes.
+                    </p>
+                  </InfoDisclosure>
+                </section>
               )}
             </div>
-          )}
-
-          <InfoDisclosure title="About immutable schemas">
-            <p>
-              Once a schema is published, historical observations retain their
-              exact schema version. Adding or modifying fields creates a new
-              version without corrupting past submissions.
-            </p>
-          </InfoDisclosure>
-        </section>
-      )}
-
-      {tab === "contributors" && (
-        <section className="admin-panel" role="tabpanel">
-          <div className="panel-heading">
-            <div>
-              <h2>{CONTRIBUTORS.length} contributors</h2>
-            </div>
           </div>
 
-          <div className="hp-admin-pairing-box">
-            <span className="builder-config-title">
-              Single-use device link code
-            </span>
-            <div className="hp-pairing-code-display">
-              <span className="hp-pairing-code">{deviceCode}</span>
-              <div className="hp-pairing-controls">
-                <Button variant="secondary" onClick={copyCode}>
-                  <Icon name={copiedCode ? "check" : "file"} size={15} />
-                  {copiedCode ? "Copied" : "Copy code"}
-                </Button>
-                <Button variant="secondary" onClick={generateNewCode}>
-                  <Icon name="refresh" size={15} />
-                  New code
-                </Button>
-              </div>
-            </div>
-            <p className="field-help">
-              Field contributors enter this 8-character code once on their
-              device to pair local IndexedDB storage.
-            </p>
-          </div>
-
-          <div className="contributor-list">
-            {CONTRIBUTORS.map((c) => (
-              <div className="contributor-row" key={c.id}>
-                <div className="contributor-copy">
-                  <strong>
-                    {c.name} · {c.email}
-                  </strong>
-                  <span>
-                    {c.submissions} submissions · Last active {c.lastActive}
-                    {!c.synced && " · 1 pending sync"}
-                  </span>
-                </div>
-                <AttentionScoreRing
-                  score={c.attentionScore}
-                  total={c.submissions}
-                />
-              </div>
-            ))}
-          </div>
-
-          <InfoDisclosure title="About attention scores">
-            <p>
-              The ring is a 0–100 summary of quick verification questions,
-              adjusted for random guessing. The score is recorded in observation
-              provenance while the answer is stripped from payload data.
-            </p>
-          </InfoDisclosure>
-        </section>
-      )}
-
-      {tab === "export" && (
-        <section className="admin-panel export-panel" role="tabpanel">
-          <div className="panel-heading">
-            <div>
-              <h2>Export checkpoint</h2>
-            </div>
-          </div>
-
-          <div className="export-readiness">
-            <div className="readiness-bar">
-              <span style={{ width: "100%" }} />
-            </div>
-            <div>
-              <span>3 of 3 contributors fully synced</span>
-              <strong>104 complete submissions · media included</strong>
-            </div>
-          </div>
-
-          <div className="admin-context-actions admin-context-actions-single">
-            <Button
-              variant="primary"
-              icon="download"
-              onClick={triggerExport}
-              fullWidth
-            >
-              {exported
-                ? "Checkpoint generated · valpuesta_checkpoint.zip (1.4 MB)"
-                : "Export checkpoint"}
-            </Button>
-          </div>
-
-          <InfoDisclosure title="Checkpoint coverage">
-            <p>
-              A checkpoint includes data received by the server. Every archive
-              contains canonical JSONL, CSV, GeoJSON, DataCite 4.4 metadata, and
-              byte-for-byte original media files with SHA-256 integrity hashes.
-            </p>
-          </InfoDisclosure>
-        </section>
-      )}
+          <div className="hp-home-indicator" aria-hidden="true" />
+        </div>
+      </div>
     </div>
   );
 }
