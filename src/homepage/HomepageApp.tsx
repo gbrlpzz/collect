@@ -193,8 +193,7 @@ function DifferentiationSummary() {
     title: string;
     claim: string;
     proof: string;
-    href: string;
-    cta: string;
+    doc: string;
   }> = [
     {
       icon: "shield",
@@ -202,8 +201,7 @@ function DifferentiationSummary() {
       claim:
         "Observations and media commit to IndexedDB before any network attempt, updating to synced only upon server confirmation.",
       proof: "commit before network with verified receipt",
-      href: "#sync",
-      cta: "Inspect sync pipeline",
+      doc: "background-automation.md",
     },
     {
       icon: "camera",
@@ -211,8 +209,7 @@ function DifferentiationSummary() {
       claim:
         "Photos and audio retain capture quality with SHA-256 checksums, with no collection-path recompression.",
       proof: "raw originals with SHA-256 checksums",
-      href: "#collection",
-      cta: "View media capture",
+      doc: "dataset-standards.md",
     },
     {
       icon: "check",
@@ -220,8 +217,7 @@ function DifferentiationSummary() {
       claim:
         "Periodic checks evaluate contributor focus in memory, stripping questions and answers before database commit.",
       proof: "in-memory checks and isolated payloads",
-      href: "#integrity",
-      cta: "Test attention check",
+      doc: "attention-qa.md",
     },
     {
       icon: "archive",
@@ -229,8 +225,7 @@ function DifferentiationSummary() {
       claim:
         "Checkpoint exports package canonical JSONL, CSV, RFC 7946 GeoJSON, DataCite 4.4 metadata, and raw media into a single archive.",
       proof: "DataCite 4.4, GeoJSON and JSONL",
-      href: "#data",
-      cta: "Browse export package",
+      doc: "export-format.md",
     },
   ];
 
@@ -256,14 +251,6 @@ function DifferentiationSummary() {
             four technical guarantees that protect your data from capture to
             archive:
           </p>
-          <DocLinks
-            files={[
-              "background-automation.md",
-              "dataset-standards.md",
-              "attention-qa.md",
-              "export-format.md",
-            ]}
-          />
         </div>
 
         <div className="hp-diff-grid">
@@ -275,10 +262,15 @@ function DifferentiationSummary() {
               <h3>{item.title}</h3>
               <p>{item.claim}</p>
               <span className="hp-diff-proof">{item.proof}</span>
-              <a className="hp-diff-cta" href={item.href}>
-                {item.cta}
-                <Icon name="arrow-right" size={14} />
-              </a>
+              <div className="hp-diff-doc-link">
+                <a
+                  href={DOCS(item.doc)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  docs/{item.doc}
+                </a>
+              </div>
             </div>
           ))}
         </div>
@@ -475,7 +467,7 @@ export function HomepageApp() {
 
                 <div className="hp-integrity-card hp-privacy-card">
                   <div className="hp-integrity-card-header">
-                    <h3>Ledger & Consent Boundaries</h3>
+                    <h3>Storage & Access Safeguards</h3>
                     <p>
                       Client storage isolation and server-side authorization
                     </p>
