@@ -712,9 +712,14 @@ body {
   padding: 92px 24px 40px;
   box-sizing: border-box;
 }
-.hp-scrolly-panel > .hp-section-inner {
+.hp-scrolly-panel > .hp-section-inner,
+.hp-scrolly-panel > .hp-diff-inner {
   width: min(100%, 1080px);
   margin: 0 auto;
+}
+/* Sections without sub-steps only hold briefly — no click-through. */
+.hp-scrolly-hold {
+  height: calc(100vh + 45vh);
 }
 
 /* ---------- Common Section Layout ---------- */
@@ -809,52 +814,36 @@ section[id] {
   width: 100%;
 }
 
-/* Sub-level under the Guided Flow tab: the supported input types. */
+/* Sub-level under the Guided Flow tab: the supported input types, kept as a
+   quiet inline list rather than a second row of controls. */
 .hp-field-types {
-  margin: 2px 0 14px 16px;
-  padding-left: 14px;
-  border-left: 1px solid var(--separator-light);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.hp-field-types-label {
+  margin: -4px 0 14px;
+  font-size: 0.75rem;
+  line-height: 1.9;
   color: var(--tertiary);
-  font-size: 0.625rem;
-  font-weight: 650;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
-.hp-field-types-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.hp-field-type-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 26px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid var(--separator-light);
-  background: var(--paper);
-  color: var(--tertiary);
-  font-size: 0.6875rem;
-  font-weight: 600;
+.hp-field-type {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: var(--secondary);
   cursor: pointer;
-  transition:
-    color 0.15s ease,
-    border-color 0.15s ease,
-    background 0.15s ease;
 }
-.hp-field-type-chip:hover {
-  border-color: var(--text);
+.hp-field-type:hover {
   color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
-.hp-field-type-chip:focus-visible {
+.hp-field-type:focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 2px;
+  border-radius: 4px;
+}
+.hp-field-type-sep {
+  padding: 0 6px;
+  color: var(--separator-light);
 }
 
 .hp-admin-tab-selector {
@@ -2263,7 +2252,8 @@ section[id] {
   .hp-diff-stat:nth-child(4) {
     border-top: 1px solid var(--separator-light);
   }
-  .hp-scrolly {
+  .hp-scrolly,
+  .hp-scrolly-hold {
     height: auto;
   }
   .hp-scrolly-panel {
@@ -2396,10 +2386,6 @@ section[id] {
   }
   .hp-admin-tab-selector {
     gap: 6px;
-  }
-  .hp-field-type-chip {
-    min-height: 34px;
-    padding: 0 12px;
   }
   .hp-admin-step-btn {
     font-size: 0.8125rem;

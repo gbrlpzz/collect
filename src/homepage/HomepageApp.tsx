@@ -224,50 +224,54 @@ function DifferentiationSummary() {
 
   return (
     <section
-      className="hp-diff-section"
+      className="hp-diff-section hp-section-scrolly"
       id="guarantees"
       aria-label="Core guarantees"
     >
-      <div className="hp-diff-inner">
-        <div className="hp-diff-heading">
-          <p className="eyebrow">Guarantees</p>
-          <h2>Four guarantees for data collected in the wild.</h2>
-          <p>
-            Fieldwork happens in harsh conditions. collect is engineered around
-            four technical guarantees that protect your data from capture to
-            archive:
-          </p>
-        </div>
-
-        <div className="hp-diff-grid">
-          {items.map((item) => (
-            <div className="hp-diff-card" key={item.title}>
-              <span className="hp-diff-icon" aria-hidden="true">
-                <Icon name={item.icon} size={18} />
-              </span>
-              <h3>{item.title}</h3>
-              <p>{item.claim}</p>
-              <span className="hp-diff-proof">{item.proof}</span>
-              <div className="hp-diff-doc-link">
-                <a
-                  href={DOCS(item.doc)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  docs/{item.doc}
-                </a>
-              </div>
+      <div className="hp-scrolly hp-scrolly-hold">
+        <div className="hp-scrolly-panel">
+          <div className="hp-diff-inner">
+            <div className="hp-diff-heading">
+              <p className="eyebrow">Guarantees</p>
+              <h2>Four guarantees for data collected in the wild.</h2>
+              <p>
+                Fieldwork happens in harsh conditions. collect is engineered
+                around four technical guarantees that protect your data from
+                capture to archive:
+              </p>
             </div>
-          ))}
-        </div>
 
-        <div className="hp-diff-stats">
-          {stats.map((stat) => (
-            <div className="hp-diff-stat" key={stat.value}>
-              <strong>{stat.value}</strong>
-              <span>{stat.label}</span>
+            <div className="hp-diff-grid">
+              {items.map((item) => (
+                <div className="hp-diff-card" key={item.title}>
+                  <span className="hp-diff-icon" aria-hidden="true">
+                    <Icon name={item.icon} size={18} />
+                  </span>
+                  <h3>{item.title}</h3>
+                  <p>{item.claim}</p>
+                  <span className="hp-diff-proof">{item.proof}</span>
+                  <div className="hp-diff-doc-link">
+                    <a
+                      href={DOCS(item.doc)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      docs/{item.doc}
+                    </a>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+
+            <div className="hp-diff-stats">
+              {stats.map((stat) => (
+                <div className="hp-diff-stat" key={stat.value}>
+                  <strong>{stat.value}</strong>
+                  <span>{stat.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -588,21 +592,25 @@ export function HomepageApp() {
 
         {/* 7. Request Access / Pilot Form */}
         <section
-          className="hp-section hp-section-canvas"
+          className="hp-section-scrolly hp-section-canvas"
           id="preview"
           aria-labelledby="preview-title"
         >
-          <div className="hp-section-inner hp-preview-layout">
-            <div className="hp-preview-copy">
-              <p className="eyebrow">Research Preview</p>
-              <h2 id="preview-title">Equip your next expedition.</h2>
-              <p>
-                Request preview access to test custom schemas, or clone the
-                repository to self-host.
-              </p>
-            </div>
-            <div className="hp-preview-card">
-              <PreviewForm initialEmail={draftEmail} />
+          <div className="hp-scrolly hp-scrolly-hold">
+            <div className="hp-scrolly-panel">
+              <div className="hp-section-inner hp-preview-layout">
+                <div className="hp-preview-copy">
+                  <p className="eyebrow">Research Preview</p>
+                  <h2 id="preview-title">Equip your next expedition.</h2>
+                  <p>
+                    Request preview access to test custom schemas, or clone the
+                    repository to self-host.
+                  </p>
+                </div>
+                <div className="hp-preview-card">
+                  <PreviewForm initialEmail={draftEmail} />
+                </div>
+              </div>
             </div>
           </div>
         </section>

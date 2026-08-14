@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Collector } from "../components/Collector";
 import { ContributorHome } from "../components/ContributorHome";
 import { TopBar } from "../components/TopBar";
-import { Icon, type IconName } from "../components/Icon";
 import { DocLinks } from "./DocLinks";
 import { projectFields } from "../data/schemaFixtures";
 import type { Observation, Project } from "../types";
@@ -85,15 +84,15 @@ const initialSampleObservations: Observation[] = [
 
 /** The input types the schema supports; each chip jumps the preview phone
  *  to the matching question so visitors see the flow is not media-only. */
-const FIELD_TYPES: { icon: IconName; label: string; fieldKey: string }[] = [
-  { icon: "file", label: "Short text", fieldKey: "site_code" },
-  { icon: "check", label: "Single choice", fieldKey: "building_type" },
-  { icon: "info", label: "Tri-state", fieldKey: "building_occupancy" },
-  { icon: "more", label: "Multi-select", fieldKey: "visible_features" },
-  { icon: "clock", label: "Date", fieldKey: "observed_date" },
-  { icon: "sliders", label: "Number", fieldKey: "people_count" },
-  { icon: "camera", label: "Photo & audio", fieldKey: "site_photos" },
-  { icon: "mic", label: "Field notes", fieldKey: "notes" },
+const FIELD_TYPES: { label: string; fieldKey: string }[] = [
+  { label: "Short text", fieldKey: "site_code" },
+  { label: "Single choice", fieldKey: "building_type" },
+  { label: "Tri-state", fieldKey: "building_occupancy" },
+  { label: "Multi-select", fieldKey: "visible_features" },
+  { label: "Date", fieldKey: "observed_date" },
+  { label: "Number", fieldKey: "people_count" },
+  { label: "Photo & audio", fieldKey: "site_photos" },
+  { label: "Field notes", fieldKey: "notes" },
 ];
 
 const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
@@ -304,22 +303,24 @@ export function FlowDemo({
         </div>
 
         {tab === "flow" && (
-          <div className="hp-field-types">
-            <span className="hp-field-types-label">Input types</span>
-            <div className="hp-field-types-row">
-              {FIELD_TYPES.map((type) => (
+          <p className="hp-field-types">
+            {FIELD_TYPES.map((type, index) => (
+              <span key={type.fieldKey}>
+                {index > 0 && (
+                  <span className="hp-field-type-sep" aria-hidden="true">
+                    ·
+                  </span>
+                )}
                 <button
-                  key={type.fieldKey}
                   type="button"
-                  className="hp-field-type-chip"
+                  className="hp-field-type"
                   onClick={() => jumpToField(type.fieldKey)}
                 >
-                  <Icon name={type.icon} size={13} />
                   {type.label}
                 </button>
-              ))}
-            </div>
-          </div>
+              </span>
+            ))}
+          </p>
         )}
 
         <div className="hp-story" aria-live="polite">
