@@ -141,13 +141,18 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
 
       <div className="hp-hero-container">
         <div className="hp-hero-inner">
-          <h1 id="hero-title">Field evidence you can trust.</h1>
+          <h1 id="hero-title">
+            Trustworthy field evidence.
+            <br className="hp-hero-br" />
+            Offline on any phone.
+          </h1>
 
           <p className="hp-hero-lede">
-            An offline-first field data collection app for research teams.
-            Record structured observations, raw photos, and GPS provenance on
-            any phone beyond cellular reach, then sync verified data when back
-            in range.
+            An offline-first data collection app built for scientific
+            expeditions and field research. Record structured observations,
+            unmodified photos, and spatial telemetry with zero cellular
+            connectivity — backed by an atomic local ledger and deposit-ready
+            FAIR exports.
           </p>
 
           <form className="hp-capture" onSubmit={submit} noValidate>

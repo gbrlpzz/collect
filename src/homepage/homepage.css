@@ -324,12 +324,20 @@ body {
 }
 .hp-hero h1 {
   margin: 0;
-  font-size: clamp(2.4rem, 4.8vw, 3.75rem);
-  line-height: 1.04;
+  font-size: clamp(2.35rem, 4.6vw, 3.65rem);
+  line-height: 1.06;
   letter-spacing: -0.04em;
   font-weight: 750;
   color: var(--text);
-  max-width: 18ch;
+  max-width: 22ch;
+}
+.hp-hero-br {
+  display: block;
+}
+@media (max-width: 680px) {
+  .hp-hero-br {
+    display: inline;
+  }
 }
 .hp-hero-lede {
   max-width: 38rem;
