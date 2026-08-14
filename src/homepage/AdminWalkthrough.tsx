@@ -4,6 +4,7 @@ import { TopBar } from "../components/TopBar";
 import { Icon } from "../components/Icon";
 import { Eyebrow } from "../components/ui";
 import { projectFields } from "../data/schemaFixtures";
+import type { ContributorReadiness } from "../lib/adminBackend";
 import type { Project } from "../types";
 
 export type { AdminTab };
@@ -27,6 +28,48 @@ const adminDemoProject: Project = {
   lastReceived: "2026-08-14T09:32:00.000Z",
   fields: projectFields,
 };
+
+const adminDemoReadinessRows: ContributorReadiness[] = [
+  {
+    id: "user-1",
+    email: "elena@liminal-lab.org",
+    status: "Active",
+    ready: true,
+    pending: 0,
+    lastSeen: new Date(Date.now() - 1000 * 60).toISOString(),
+    received: 42,
+    attentionScore: 95,
+    attentionChecksTotal: 42,
+    attentionCorrectTotal: 40,
+    consentGranted: true,
+  },
+  {
+    id: "user-2",
+    email: "marcus@liminal-lab.org",
+    status: "Active",
+    ready: true,
+    pending: 0,
+    lastSeen: new Date(Date.now() - 1000 * 60 * 4).toISOString(),
+    received: 38,
+    attentionScore: 100,
+    attentionChecksTotal: 38,
+    attentionCorrectTotal: 38,
+    consentGranted: true,
+  },
+  {
+    id: "user-3",
+    email: "claire@liminal-lab.org",
+    status: "Syncing",
+    ready: false,
+    pending: 1,
+    lastSeen: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+    received: 24,
+    attentionScore: 88,
+    attentionChecksTotal: 24,
+    attentionCorrectTotal: 21,
+    consentGranted: true,
+  },
+];
 
 function DarkStatusBar() {
   return (
@@ -91,6 +134,10 @@ export function AdminWalkthrough({
   const [project, setProject] = useState<Project>(adminDemoProject);
   const [view, setView] = useState<"project" | "list">("project");
 
+  const handleTabChange = (nextTab: AdminTab) => {
+    onTabChange?.(nextTab);
+  };
+
   return (
     <div className="hp-iphone-wrap">
       <div className="hp-iphone hp-iphone-dark">
@@ -145,8 +192,9 @@ export function AdminWalkthrough({
                 ) : (
                   <AdminProject
                     project={project}
+                    previewRows={adminDemoReadinessRows}
                     initialTab={initialTab}
-                    onTabChange={onTabChange}
+                    onTabChange={handleTabChange}
                     onBack={() => setView("list")}
                     onToast={() => undefined}
                     onExport={() => undefined}

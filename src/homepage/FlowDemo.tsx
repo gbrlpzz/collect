@@ -410,7 +410,12 @@ export function FlowDemo() {
                   <TopBar
                     mode="contributor"
                     view="home"
-                    onNavigate={() => undefined}
+                    onNavigate={(v) => {
+                      if (v === "home") {
+                        setPhase("home");
+                        setActiveTab("home");
+                      }
+                    }}
                     observations={observation ? [observation] : []}
                     isPreview={true}
                   />
