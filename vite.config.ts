@@ -2,9 +2,10 @@ import { loadEnv, type HtmlTagDescriptor } from "vite";
 import { defineConfig, type Plugin } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
-const SOCIAL_TITLE = "collect — fieldwork, ready offline";
+const SOCIAL_TITLE =
+  "collect — trustworthy field evidence, offline on any phone";
 const SOCIAL_DESCRIPTION =
-  "Offline-first field data collection with durable local receipts, resumable synchronization, and portable research exports.";
+  "An offline-first field collection app for research teams. Record structured observations, raw photos, and GPS coordinates on any phone beyond cellular reach.";
 
 /**
  * Emits crawler-readable social metadata at build time. VITE_APP_URL produces
