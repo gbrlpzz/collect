@@ -13,14 +13,12 @@ const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 const DOCS = (file: string) => `${GITHUB_URL}/blob/main/docs/${file}`;
 
 const NAV = [
-  { label: "1. Schema", href: "#admin" },
-  { label: "2. Collection", href: "#collection" },
-  { label: "3. QA & Telemetry", href: "#integrity" },
-  { label: "4. FAIR Package", href: "#data" },
+  { label: "1. Setup & Schema", href: "#admin" },
+  { label: "2. Field Collection", href: "#collection" },
+  { label: "3. Integrity & QA", href: "#integrity" },
+  { label: "4. Data Package", href: "#data" },
   { label: "Comparison", href: "#comparison" },
-  { label: "Use Cases", href: "#use-cases" },
-  { label: "Architecture", href: "#architecture" },
-  { label: "FAQ", href: "#faq" },
+  { label: "Deploy", href: "#preview" },
 ];
 
 function TopBar() {
@@ -91,19 +89,21 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
       <div className="hp-hero-inner">
         <div className="hp-hero-badge">
           <span className="status-dot" aria-hidden="true" />
-          <span>Offline-First Fieldwork Infrastructure · Apache-2.0</span>
+          <span>Field data collection · Offline-first PWA</span>
         </div>
 
         <h1 id="hero-title">
-          Trustworthy field observations.
+          Fieldwork without connectivity.
           <br />
-          <span className="hp-hero-accent">Built for zero signal.</span>
+          <span className="hp-hero-accent">Evidence without ambiguity.</span>
         </h1>
 
         <p className="hp-hero-lede">
-          Design immutable observation schemas, capture uncompressed original
-          media in remote environments, verify contributor attention without
-          payload bias, and export self-contained FAIR research packages.
+          collect is an offline-first field application for scientific research
+          and building assessments. It commits observations and uncompressed
+          media to local storage before touching the network, verifies surveyor
+          attention without biasing research variables, and exports
+          publication-ready FAIR archives.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -129,46 +129,10 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
           </p>
         )}
 
-        <div className="hp-hero-quicklinks">
-          <a className="hp-quicklink" href="#collection">
-            <Icon name="play" size={14} />
-            Try Field Simulator ↓
+        <div className="hp-hero-actions">
+          <a className="text-button" href="#admin">
+            Walk through the field workflow ↓
           </a>
-          <a className="hp-quicklink" href="#data">
-            <Icon name="archive" size={14} />
-            Browse FAIR Package →
-          </a>
-          <a
-            className="hp-quicklink"
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noopener"
-          >
-            <Icon name="globe" size={14} />
-            GitHub Repo ↗
-          </a>
-        </div>
-
-        <div
-          className="hp-hero-metric-strip"
-          aria-label="Core operational guarantees"
-        >
-          <div className="hp-metric-pill">
-            <strong>0 Lost Records</strong>
-            <span>Atomic IndexedDB receipts before network</span>
-          </div>
-          <div className="hp-metric-pill">
-            <strong>100% Offline</strong>
-            <span>Full shell & uncompressed media stored locally</span>
-          </div>
-          <div className="hp-metric-pill">
-            <strong>8-Char Link</strong>
-            <span>Zero passwords, instant Safari/PWA pairing</span>
-          </div>
-          <div className="hp-metric-pill">
-            <strong>DataCite 4.4</strong>
-            <span>GeoJSON, CSV, JSONL & SHA-256 media manifests</span>
-          </div>
         </div>
       </div>
     </section>
@@ -178,40 +142,29 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
 function DifferentiationSummary() {
   const items = [
     {
-      icon: "shield" as const,
-      title: "Durable Local Receipts",
-      desc: "Atomic IndexedDB multi-store transactions commit metadata, payload, and raw binary media to device storage before confirming save. Never loses a record when signal vanishes.",
+      title: "Durable local receipts",
+      desc: "Atomic IndexedDB transactions write structured values and raw binary photos to device storage before showing “Saved on this device”. No observation is discarded before an explicit server receipt.",
     },
     {
-      icon: "check" as const,
-      title: "Unbiased Cognitive QA",
-      desc: "Automated, guess-adjusted attention verification questions confirm surveyor focus. Question text never enters the schema and responses are stripped before commit.",
+      title: "Immutable schema versions",
+      desc: "Published question sets are permanent. Historical observations retain their original schema version; changes create a new version without corrupting past fieldwork records.",
     },
     {
-      icon: "users" as const,
-      title: "Zero-Password Device Link",
-      desc: "Instant contributor pairing with single-use 8-character codes. Works seamlessly in mobile Safari or installed PWA with zero App Store friction or passwords.",
+      title: "Attention checks as provenance",
+      desc: "Curated verification questions test surveyor alertness in the field. Question text never enters the schema and answers are stripped before commit, leaving only an untampered vigilance score.",
     },
     {
-      icon: "archive" as const,
-      title: "FAIR Checkpoint Packages",
-      desc: "One-click self-contained ZIP archives including DataCite 4.4 kernel metadata, GeoJSON, CSV, JSONL, data dictionaries, and SHA-256 verified media originals.",
+      title: "Single-use device linking",
+      desc: "Field contributors pair iOS Safari or installed PWAs in seconds using 8-character single-use codes. No passwords, no App Store accounts, no credentials stored on field devices.",
     },
   ];
 
   return (
-    <section
-      className="hp-diff-section"
-      id="pillars"
-      aria-label="Core differentiation"
-    >
+    <section className="hp-diff-section" aria-label="Core differentiation">
       <div className="hp-diff-inner">
         <div className="hp-diff-grid">
           {items.map((item) => (
             <div className="hp-diff-card" key={item.title}>
-              <div className="hp-diff-icon-wrap">
-                <Icon name={item.icon} size={18} />
-              </div>
               <h3>{item.title}</h3>
               <p>{item.desc}</p>
             </div>
@@ -225,58 +178,50 @@ function DifferentiationSummary() {
 function ComparisonSection() {
   const comparisonRows = [
     {
-      feature: "Offline Persistence",
+      feature: "Storage on device",
       collect:
-        "Atomic multi-store IndexedDB receipts written before network handshake",
+        "Atomic multi-store IndexedDB durable receipts committed before network handshake",
       others:
         "In-memory form drafts or fragile browser caches prone to tab eviction",
-      advantage: true,
     },
     {
-      feature: "Media Preservation",
+      feature: "Media preservation",
       collect:
         "100% original uncompressed media blobs with SHA-256 integrity hashes",
-      others: "Aggressive lossy JPEG downsampling during mobile capture",
-      advantage: true,
+      others: "Aggressively downsampled lossy JPEGs compressed during capture",
     },
     {
-      feature: "Surveyor Attention QA",
+      feature: "Surveyor attention QA",
       collect:
-        "Cognitive checks with guess-adjusted scoring; prompt & answer stripped before commit",
+        "Built-in guess-adjusted checks; question & answer stripped before commit",
       others:
         "None, or manual survey questions that pollute and bias the research dataset",
-      advantage: true,
     },
     {
-      feature: "Field Device Onboarding",
+      feature: "Device onboarding",
       collect:
         "Single-use 8-character link codes; 0 passwords, 0 App Store accounts",
       others:
         "App Store downloads, permanent passwords, or unprotected public survey links",
-      advantage: true,
     },
     {
-      feature: "Archival Export Standard",
+      feature: "Archival export format",
       collect:
-        "FAIR checkpoint ZIP (DataCite 4.4, GeoJSON, CSV, JSONL, hash manifest)",
-      others:
-        "Flat single-table CSV or Excel spreadsheet export without provenance",
-      advantage: true,
+        "Complete FAIR checkpoint ZIP (DataCite 4.4, GeoJSON, CSV, JSONL, media manifest)",
+      others: "Single flat CSV or Excel spreadsheet export without provenance",
     },
     {
-      feature: "Local Multi-Account Isolation",
+      feature: "Local account isolation",
       collect:
         "Strict account-scoped IndexedDB instances (collect-local-v1-<userId>)",
       others: "Shared browser storage risking cross-contributor survey leaks",
-      advantage: true,
     },
     {
-      feature: "License & Self-Hosting",
+      feature: "License & hosting",
       collect:
         "100% Open Source (Apache-2.0), self-hostable on Supabase & Vercel",
       others:
         "Proprietary vendor lock-in or complex Java/XML server infrastructure",
-      advantage: true,
     },
   ];
 
@@ -288,14 +233,14 @@ function ComparisonSection() {
     >
       <div className="hp-section-inner">
         <div className="section-heading">
-          <p className="eyebrow">Why Field Teams Choose collect</p>
+          <p className="eyebrow">Architecture Comparison</p>
           <h2 id="comp-title">
-            Engineered specifically for high-stakes field evidence.
+            How collect differs from generic form builders.
           </h2>
           <p>
-            Generic form builders are built for office surveys on fast WiFi.
-            collect is purpose-built to preserve scientific observations in
-            harsh, disconnected field environments.
+            Office survey tools assume constant WiFi and throw away raw media.
+            collect is purpose-built for hostile field conditions where data
+            loss is unacceptable.
           </p>
         </div>
 
@@ -337,174 +282,6 @@ function ComparisonSection() {
   );
 }
 
-function UseCasesSection() {
-  const useCases = [
-    {
-      badge: "Biodiversity & Ecology",
-      title: "Remote Habitat & Species Surveys",
-      desc: "Record species observations, canopy coverage, and micro-climate data deep inside remote nature reserves with zero cellular connectivity. Store uncompressed macro photography and precise hardware GPS without losing a single transect.",
-    },
-    {
-      badge: "Built Heritage & Architecture",
-      title: "Historic Structure & Masonry Audits",
-      desc: "Map vernacular construction, structural deformation, and material weathering across rural settlements. Versioned schemas ensure historic observations retain their exact survey schema over decades of monitoring.",
-    },
-    {
-      badge: "Emergency & Humanitarian",
-      title: "Post-Disaster Rapid Assessment",
-      desc: "Deploy multi-enumerator field teams immediately following extreme weather or seismic events. Instant 8-character device pairing gets local teams operational in seconds with offline local receipts.",
-    },
-    {
-      badge: "Public Policy & Economics",
-      title: "Regional Socio-Economic Fieldwork",
-      desc: "Conduct multi-week rural household surveys with verifiable contributor attention scoring. Mathematical guess adjustment eliminates enumerator fatigue and fabricated responses without biasing research variables.",
-    },
-  ];
-
-  return (
-    <section
-      className="hp-section"
-      id="use-cases"
-      aria-labelledby="usecases-title"
-    >
-      <div className="hp-section-inner">
-        <div className="section-heading">
-          <p className="eyebrow">Proven Field Scenarios</p>
-          <h2 id="usecases-title">
-            Built for scientific, environmental, and infrastructure fieldwork.
-          </h2>
-          <p>
-            When data collection cannot be repeated, researchers rely on
-            deterministic local durability and tamper-evident provenance.
-          </p>
-        </div>
-
-        <div className="hp-usecases-grid">
-          {useCases.map((uc) => (
-            <div className="hp-usecase-card" key={uc.title}>
-              <span className="chip hp-usecase-badge">{uc.badge}</span>
-              <h3>{uc.title}</h3>
-              <p>{uc.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ArchitectureSection() {
-  const pillars = [
-    {
-      title: "Multi-Store Client Isolation",
-      desc: "Every authenticated account writes to an isolated IndexedDB database (collect-local-v1-<userId>). Shared field tablets never leak cached observations or drafts across different researchers.",
-    },
-    {
-      title: "Resumable 4-Stage Sync Protocol",
-      desc: "Synchronization advances sequentially: Schema Metadata → Raw Media Blobs → Observation Finalization → Durable Server Receipt. Submissions stay in local outbox until server confirms receipt.",
-    },
-    {
-      title: "Zero-AI Pure Provenance",
-      desc: "Observations are captured verbatim with authentic timestamps and device environment context. No AI transformations or heuristic rewrites alter field truth before publication.",
-    },
-    {
-      title: "PostgreSQL Row-Level Security",
-      desc: "All access boundaries are enforced at the PostgreSQL database layer via RLS policies. Service-role credentials remain strictly confined inside Supabase Edge Functions.",
-    },
-  ];
-
-  return (
-    <section
-      className="hp-section hp-section-paper"
-      id="architecture"
-      aria-labelledby="arch-title"
-    >
-      <div className="hp-section-inner">
-        <div className="section-heading">
-          <p className="eyebrow">Architecture & Trust</p>
-          <h2 id="arch-title">Zero-compromise technical guarantees.</h2>
-          <p>
-            An open architecture designed for durability, privacy, and long-term
-            scientific reproducibility.
-          </p>
-        </div>
-
-        <div className="hp-arch-grid">
-          {pillars.map((p) => (
-            <div className="hp-arch-card" key={p.title}>
-              <div className="hp-arch-card-header">
-                <span className="hp-arch-bullet" />
-                <h3>{p.title}</h3>
-              </div>
-              <p>{p.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FAQSection() {
-  const faqs = [
-    {
-      q: "How does offline collection work without an App Store download?",
-      a: "collect is a Progressive Web App (PWA) that leverages modern browser Cache and Service Worker APIs. When loaded once, the entire application shell is stored on the device. All question schemas, media blobs, and observations are written directly into IndexedDB, providing multi-gigabyte local storage capacity with zero network requirement.",
-    },
-    {
-      q: "What happens if a field device battery dies or the browser closes mid-survey?",
-      a: "Every single answer and photo is saved atomically to IndexedDB the moment it is entered. If the browser closes, Safari crashes, or the phone runs out of battery, reopening collect immediately restores the exact survey state and draft without data loss.",
-    },
-    {
-      q: "How does the cognitive attention check work without biasing research data?",
-      a: "A quick verification question from a curated bank is randomly presented during the survey. Provenance records a guess-adjusted 0–100 score and binary pass/fail flag. The question text never enters the published schema, and the response is stripped completely before the payload is committed to the database.",
-    },
-    {
-      q: "How are original media files protected against corruption or tampering?",
-      a: "Photos and audio recordings are stored in IndexedDB as original binary blobs without lossy downsampling. Upon submission, a cryptographic SHA-256 hash is computed. The checkpoint manifest pairs every media file with its exact byte count, MIME type, and SHA-256 checksum.",
-    },
-    {
-      q: "Can our university or research institution self-host collect?",
-      a: "Yes. collect is 100% open source under the Apache-2.0 license. The backend uses Supabase (PostgreSQL, Auth, Storage, Edge Functions) and the frontend deploys to any static host or Vercel. You can deploy it within your own cloud or on-premise infrastructure.",
-    },
-    {
-      q: "How do single-use device link codes protect field projects?",
-      a: "Administrators generate an 8-character single-use code from the dashboard. Field contributors enter this code once on their mobile device to pair their IndexedDB storage and receive their project schema. There are no passwords to manage or forget in the field.",
-    },
-  ];
-
-  return (
-    <section className="hp-section" id="faq" aria-labelledby="faq-title">
-      <div className="hp-section-inner">
-        <div className="section-heading">
-          <p className="eyebrow">Frequently Asked Questions</p>
-          <h2 id="faq-title">
-            Everything you need to know about deploying collect.
-          </h2>
-          <p>
-            Clear answers to common technical and operational questions from
-            field coordinators and principal investigators.
-          </p>
-        </div>
-
-        <div className="hp-faq-list">
-          {faqs.map((faq) => (
-            <details className="hp-faq-item" key={faq.q}>
-              <summary className="hp-faq-summary">
-                <span>{faq.q}</span>
-                <span className="hp-faq-icon" aria-hidden="true" />
-              </summary>
-              <div className="hp-faq-answer">
-                <p>{faq.a}</p>
-              </div>
-            </details>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export function HomepageApp() {
   const [draftEmail, setDraftEmail] = useState("");
 
@@ -535,17 +312,18 @@ export function HomepageApp() {
         >
           <div className="hp-section-inner">
             <div className="section-heading hp-admin-heading">
-              <p className="eyebrow">Step 1 · Setup & Operations</p>
+              <p className="eyebrow">Step 1 · Setup & Fleet Pairing</p>
               <h2 id="admin-title">
                 Define immutable schemas and pair field devices.
               </h2>
               <p>
-                Author versioned questions, generate single-use 8-character
-                device codes without passwords, monitor fleet readiness, and
-                trigger research snapshots.
+                Author versioned questions with typed constraints. Generate
+                single-use 8-character pairing codes to onboard field phones
+                without passwords, monitor fleet readiness, and trigger research
+                checkpoints.
               </p>
             </div>
-            <AdminWalkthrough />
+            <AdminWalkthrough initialTab="setup" />
           </div>
         </section>
 
@@ -559,12 +337,13 @@ export function HomepageApp() {
             <div className="section-heading">
               <p className="eyebrow">Step 2 · Field Collection</p>
               <h2 id="collection-title">
-                Single-question focus. Built for zero signal.
+                One calm question at a time. Built for zero signal.
               </h2>
               <p>
-                One question per screen, comfortable touch targets for gloves,
-                uncompressed photos, and atomic IndexedDB transactions that
-                guarantee no saved observation is lost.
+                The collector presents one question per screen with 52pt touch
+                targets for gloves and sunlight, native date pickers, and raw
+                photo capture. Atomic IndexedDB transactions guarantee that no
+                saved observation is lost.
               </p>
             </div>
             <FlowDemo />
@@ -581,13 +360,13 @@ export function HomepageApp() {
             <div className="section-heading">
               <p className="eyebrow">Step 3 · Provenance & Quality</p>
               <h2 id="integrity-title">
-                Trustworthy provenance without research payload bias.
+                Verify contributor attention without altering research payloads.
               </h2>
               <p>
-                Cognitive attention checks verify contributor focus while the
-                question text never enters the schema and the answer is stripped
-                before commit. Device hardware telemetry is recorded
-                automatically.
+                Cognitive attention checks test surveyor focus during long
+                transects. The answer is stripped before database commit, and
+                the guess-adjusted score is stored in observation provenance
+                alongside automatic device environment telemetry.
               </p>
             </div>
             <div className="hp-integrity-grid">
@@ -622,14 +401,15 @@ export function HomepageApp() {
         >
           <div className="hp-section-inner">
             <div className="section-heading">
-              <p className="eyebrow">Step 4 · Archival & Export</p>
+              <p className="eyebrow">Step 4 · Archival & Publication</p>
               <h2 id="data-title">
-                A complete, self-contained research package.
+                Self-contained research archives ready for repository deposit.
               </h2>
               <p>
-                Every checkpoint archive includes canonical JSONL, CSV, GeoJSON,
-                DataCite 4.4 kernel metadata, machine-readable data dictionary,
-                and byte-for-byte original media with SHA-256 integrity hashes.
+                Every checkpoint archive includes canonical JSONL, CSV, RFC 7946
+                GeoJSON, DataCite 4.4 kernel metadata, machine-readable data
+                dictionary, and byte-for-byte original media with SHA-256
+                integrity hashes.
               </p>
             </div>
             <PackageBrowser />
@@ -647,18 +427,9 @@ export function HomepageApp() {
         {/* Value Differentiation & Comparison Matrix */}
         <ComparisonSection />
 
-        {/* Field Use Cases */}
-        <UseCasesSection />
-
-        {/* Architecture & Security Deep Dive */}
-        <ArchitectureSection />
-
-        {/* Frequently Asked Questions */}
-        <FAQSection />
-
         {/* Request Access / Deploy */}
         <section
-          className="hp-section hp-section-paper"
+          className="hp-section"
           id="preview"
           aria-labelledby="preview-title"
         >
@@ -666,39 +437,13 @@ export function HomepageApp() {
             <div className="hp-preview-copy">
               <p className="eyebrow">Deploy collect</p>
               <h2 id="preview-title">
-                Ready for your institution or research team.
+                Provision an instance for your institution or expedition.
               </h2>
               <p>
-                A hosted instance provisioned with your survey fields, team
-                invitations, and export requirements. Or clone the open source
-                repository and self-host on your own infrastructure.
+                We provide managed research previews with custom schemas and
+                team invitations, or you can self-host the open-source
+                repository on your own cloud infrastructure.
               </p>
-              <div className="hp-deploy-options">
-                <div className="hp-deploy-option">
-                  <span className="hp-deploy-icon">
-                    <Icon name="cloud" size={16} />
-                  </span>
-                  <div>
-                    <strong>Managed Research Preview</strong>
-                    <p>
-                      Hosted Supabase + Vercel deployment with dedicated project
-                      scoping.
-                    </p>
-                  </div>
-                </div>
-                <div className="hp-deploy-option">
-                  <span className="hp-deploy-icon">
-                    <Icon name="shield" size={16} />
-                  </span>
-                  <div>
-                    <strong>Self-Hosted Institutional Stack</strong>
-                    <p>
-                      100% Apache-2.0 open source code with complete data
-                      sovereignty.
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
             <div className="hp-preview-card">
               <PreviewForm initialEmail={draftEmail} />
@@ -723,8 +468,8 @@ export function HomepageApp() {
               </span>
             </a>
             <p>
-              Infrastructure for trustworthy field evidence. Offline-first,
-              zero-AI, and open source under Apache-2.0.
+              Infrastructure for trustworthy field evidence. Open source under
+              Apache-2.0.
             </p>
           </div>
           <nav className="hp-footer-links" aria-label="Footer">
@@ -735,13 +480,6 @@ export function HomepageApp() {
               <a href="#integrity">3. Integrity & QA</a>
               <a href="#data">4. Data Package</a>
               <a href="#preview">Deploy instance</a>
-            </div>
-            <div>
-              <span className="hp-footer-heading">Product & Trust</span>
-              <a href="#comparison">Why collect</a>
-              <a href="#use-cases">Field Use Cases</a>
-              <a href="#architecture">Architecture</a>
-              <a href="#faq">Frequently Asked Questions</a>
             </div>
             <div>
               <span className="hp-footer-heading">Documentation</span>
@@ -759,10 +497,7 @@ export function HomepageApp() {
               </a>
             </div>
           </nav>
-          <p className="hp-footer-legal">
-            © 2026 Gabriele Pizzi · Apache-2.0 · Open Source Field
-            Infrastructure
-          </p>
+          <p className="hp-footer-legal">© 2026 Gabriele Pizzi · Apache-2.0</p>
         </div>
       </footer>
     </div>
