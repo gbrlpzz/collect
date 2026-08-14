@@ -28,6 +28,8 @@ interface CollectorProps {
   preview?: boolean;
   /** Test seam: disable the automatic attention check step. */
   attentionCheck?: boolean;
+  /** Optional starting step index for interactive walkthroughs */
+  initialStepIndex?: number;
 }
 
 type Step =
@@ -87,9 +89,16 @@ export function Collector({
   isSaving,
   preview = false,
   attentionCheck = true,
+  initialStepIndex,
 }: CollectorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [stepIndex, setStepIndex] = useState(0);
+  const [stepIndex, setStepIndex] = useState(initialStepIndex ?? 0);
+
+  useEffect(() => {
+    if (typeof initialStepIndex === "number") {
+      setStepIndex(initialStepIndex);
+    }
+  }, [initialStepIndex]);
   const [capturingLocation, setCapturingLocation] = useState(false);
   const locationPermissionCheckStartedRef = useRef(false);
   const [mediaByField, setMediaByField] = useState<

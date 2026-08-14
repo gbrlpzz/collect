@@ -9,7 +9,7 @@ import { extractAttentionResponse } from "../lib/attention";
 import type { Observation, Project } from "../types";
 
 /**
- * Step 2: Field Collection Preview.
+ * Step 1: Field Collection Preview.
  * Live-linked directly to the production Collector and ContributorHome components.
  * Renders in the light iPhone mock-up using the real contributor styling tokens.
  */
@@ -46,10 +46,37 @@ const demoProject: Project = {
   fields: demoFields,
 };
 
+const initialSampleObservations: Observation[] = [
+  {
+    id: "obs-val-001",
+    projectId: "demo-project",
+    createdAt: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
+    status: "SYNCED",
+    values: {
+      site_code: "VA-001",
+      building_type: "house",
+      building_occupancy: "yes",
+    },
+    media: [],
+  },
+  {
+    id: "obs-val-002",
+    projectId: "demo-project",
+    createdAt: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
+    status: "SYNCED",
+    values: {
+      site_code: "VA-002",
+      building_type: "farm",
+      building_occupancy: "no",
+    },
+    media: [],
+  },
+];
+
 const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
   home: {
     title: "Field Home & Offline State",
-    body: "Opens on the assigned project with offline sync status and '+ Add observation' anchored at the bottom.",
+    body: "Opens on the assigned project with offline sync status and '+ Add observation' anchored in the bottom dock.",
   },
   flow: {
     title: "One Calm Question per Screen",
@@ -148,6 +175,7 @@ export function FlowDemo() {
   const [round, setRound] = useState(0);
   const [phase, setPhase] = useState<"home" | "collecting">("collecting");
   const [activeTab, setActiveTab] = useState<ContributorTab>("flow");
+  const [collectorStep, setCollectorStep] = useState<number>(0);
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [savedValues, setSavedValues] = useState<Record<
     string,
@@ -170,15 +198,71 @@ export function FlowDemo() {
     setRound((value) => value + 1);
     setPhase("home");
     setActiveTab("home");
+    setCollectorStep(0);
   };
 
   const handleTabClick = (tab: ContributorTab) => {
     setActiveTab(tab);
     if (tab === "home") {
       setPhase("home");
-    } else {
+    } else if (tab === "flow") {
       setPhase("collecting");
+      setCollectorStep(0);
+    } else if (tab === "inputs") {
+      setPhase("collecting");
+      // Step 3 is building_occupancy (Tri-state "Is the building occupied?")
+      setCollectorStep(3);
+    } else if (tab === "sync") {
+      setPhase("home");
+      // If we don't have a recent local observation, create a synced receipt for demo
+      if (!savedValues) {
+        const sampleValues = {
+          site_code: "VA-023",
+          building_type: "house",
+          building_occupancy: "yes",
+          [ATTENTION_FIELD_KEY]: "demo:valid",
+        };
+        setSavedValues(sampleValues);
+        const newObs: Observation = {
+          id: "obs-val-023",
+          projectId: demoProject.id,
+          createdAt: new Date().toISOString(),
+          status: "SAVED_LOCAL",
+          values: sampleValues,
+          media: [],
+        };
+        setObservation(newObs);
+        setSyncStage(0);
+        triggerSyncAnimation();
+      }
     }
+  };
+
+  const triggerSyncAnimation = () => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+    if (reducedMotion) {
+      timersRef.current.push(
+        window.setTimeout(() => {
+          setSyncStage(3);
+          setObservation((current) =>
+            current ? { ...current, status: "SYNCED" } : current,
+          );
+        }, 1000),
+      );
+      return;
+    }
+
+    timersRef.current.push(
+      window.setTimeout(() => setSyncStage(1), 1200),
+      window.setTimeout(() => setSyncStage(2), 2400),
+      window.setTimeout(() => {
+        setSyncStage(3);
+        setObservation((current) =>
+          current ? { ...current, status: "SYNCED" } : current,
+        );
+      }, 3800),
+    );
   };
 
   const handleSubmit = (values: Record<string, unknown>) => {
@@ -197,39 +281,18 @@ export function FlowDemo() {
     setSyncStage(0);
     setPhase("home");
     setActiveTab("sync");
-
-    if (reducedMotion) {
-      timersRef.current.push(
-        window.setTimeout(() => {
-          setSyncStage(3);
-          setObservation((current) =>
-            current ? { ...current, status: "SYNCED" } : current,
-          );
-        }, 1200),
-      );
-      return;
-    }
-
-    timersRef.current.push(
-      window.setTimeout(() => setSyncStage(1), 1800),
-      window.setTimeout(() => setSyncStage(2), 3400),
-      window.setTimeout(() => {
-        setSyncStage(3);
-        setObservation((current) =>
-          current ? { ...current, status: "SYNCED" } : current,
-        );
-      }, 5400),
-    );
+    triggerSyncAnimation();
   };
 
   const narrative = TAB_NARRATION[activeTab];
   const stripped = savedValues && extractAttentionResponse(savedValues);
+  const latestObs = observation;
 
   return (
     <div className="hp-flow-layout">
       <div className="hp-flow-copy">
         <div className="section-heading">
-          <p className="eyebrow">Step 2 · Field Collection</p>
+          <p className="eyebrow">Step 1 · Field Collection</p>
           <h2 id="collection-title">
             One calm question at a time. Built for zero signal.
           </h2>
@@ -276,11 +339,12 @@ export function FlowDemo() {
           <h3>{narrative.title}</h3>
           <p>{narrative.body}</p>
 
-          {activeTab === "sync" && observation && (
+          {activeTab === "sync" && latestObs && (
             <div className="hp-sync-ops">
               {SYNC_PHASES.map((item, index) => {
-                const done = syncStage > index;
-                const active = syncStage === index + 1;
+                const done = syncStage > index || latestObs.status === "SYNCED";
+                const active =
+                  syncStage === index + 1 && latestObs.status !== "SYNCED";
                 return (
                   <div className="hp-sync-op" key={item.label}>
                     <span
@@ -297,7 +361,7 @@ export function FlowDemo() {
                 );
               })}
               <p className="hp-sync-note">
-                {observation.status === "SYNCED"
+                {latestObs.status === "SYNCED"
                   ? "The server's durable receipt moved this record to synced."
                   : "Waiting on the server receipt — nothing is marked sent before it."}
               </p>
@@ -359,6 +423,7 @@ export function FlowDemo() {
                       onStartObservation={() => {
                         setPhase("collecting");
                         setActiveTab("flow");
+                        setCollectorStep(0);
                       }}
                       onChooseProject={() => undefined}
                       onResumeObservation={() => {
@@ -369,15 +434,18 @@ export function FlowDemo() {
                         setPhase("collecting");
                         setActiveTab("flow");
                       }}
-                      onOpenSync={() => undefined}
+                      onOpenSync={() => {
+                        handleTabClick("sync");
+                      }}
                     />
                   </div>
                 </>
               ) : (
                 <div className="main-shell">
                   <Collector
-                    key={round}
+                    key={`${round}-${collectorStep}`}
                     project={demoProject}
+                    initialStepIndex={collectorStep}
                     draft={draft}
                     lastSavedAt={null}
                     onDraftChange={(key, value) =>
