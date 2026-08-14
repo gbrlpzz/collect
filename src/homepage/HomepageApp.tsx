@@ -138,9 +138,7 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
             <br className="hp-hero-br" />
             field evidence.
             <br className="hp-hero-br" />
-            Offline
-            <br className="hp-hero-br" />
-            on any phone.
+            Offline on any phone.
           </h1>
 
           <p className="hp-hero-lede">
