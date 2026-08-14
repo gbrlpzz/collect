@@ -72,6 +72,74 @@ body {
 }
 
 /* ---------- Top Bar Navigation ---------- */
+
+/* ---------- Discrete Sign-in Menu ---------- */
+.hp-signin {
+  position: relative;
+}
+.hp-signin summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--separator-light);
+  background: var(--paper);
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.hp-signin summary::-webkit-details-marker {
+  display: none;
+}
+.hp-signin summary:hover {
+  border-color: var(--text);
+}
+.hp-signin[open] summary svg {
+  transform: rotate(180deg);
+}
+.hp-signin summary svg {
+  transition: transform 0.15s ease;
+}
+.hp-signin-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 60;
+  min-width: 200px;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid var(--separator-light);
+  background: var(--paper);
+  box-shadow: var(--floating-shadow);
+  display: flex;
+  flex-direction: column;
+}
+.hp-signin-menu a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 550;
+  text-decoration: none;
+}
+.hp-signin-menu a:hover {
+  background: var(--grouped);
+}
+.hp-signin-path {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6875rem;
+  color: var(--tertiary);
+}
+
 .hp-topbar {
   position: sticky;
   top: 0;
@@ -700,10 +768,27 @@ main [id] {
   background: rgba(255, 255, 255, 0.6);
 }
 
+/* ---------- Demo narrative bar ---------- */
+.hp-auto-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.hp-demo-note {
+  margin: 10px 0 0;
+  color: var(--tertiary);
+  font-size: 0.75rem;
+}
+
 /* =========================================================================
-   
-/* =========================================================================
-   REAL APP EMBEDDED VIEWPORT (AUTHENTIC APPLE HIG MOBILE SURFACES)
+   REAL APP EMBEDDED VIEWPORT (CONTAINMENT ONLY)
+   The mockups mount the live app components unchanged. The app's own
+   stylesheet (foundation.css / geometry.css) styles every element — including
+   the dark admin surface via the .hp-iphone-dark token scope. The rules below
+   only contain the live app inside the phone frame: the app uses
+   position:fixed / 100dvh on mobile, which would otherwise break out of the
+   mockup.
    ========================================================================= */
 .hp-app-viewport {
   position: relative;
@@ -716,9 +801,8 @@ main [id] {
   background: var(--canvas);
   overflow: hidden;
   transform: translateZ(0);
+  contain: layout paint;
 }
-
-/* Contained App Shell */
 .hp-app-viewport .app-shell {
   position: relative !important;
   min-height: 100% !important;
@@ -728,372 +812,27 @@ main [id] {
   background: transparent !important;
   overflow: hidden !important;
 }
-
-/* Hide topbar when viewing admin project (matches real mobile app where navigation bar replaces topbar) */
-.hp-app-viewport .topbar-admin-project {
-  display: none !important;
-}
-
-/* Floating Glass TopBar for Contributor / Admin List */
-.hp-app-viewport .topbar {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  z-index: 20 !important;
-  height: 52px !important;
-  min-height: 52px !important;
-  padding: 4px 14px 0 !important;
-  background: transparent !important;
-  border-bottom: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-.hp-app-viewport .topbar-inner {
-  height: 44px !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-}
-.hp-app-viewport .topbar .wordmark,
-.hp-app-viewport .topbar .account-button,
-.hp-app-viewport .topbar .sync-indicator {
-  border: 1px solid var(--separator-light) !important;
-  background: var(--glass) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-}
-.hp-app-viewport .topbar .wordmark {
-  height: 38px !important;
-  padding: 0 14px !important;
-  border-radius: 999px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-}
-.hp-app-viewport .topbar .sync-indicator {
-  height: 38px !important;
-  padding: 0 12px !important;
-  border-radius: 999px !important;
-  font-size: 0.75rem !important;
-  font-weight: 550 !important;
-}
-.hp-app-viewport .topbar .account-button {
-  width: 38px !important;
-  height: 38px !important;
-  min-width: 38px !important;
-  min-height: 38px !important;
-  border-radius: 50% !important;
-  display: grid !important;
-  place-items: center !important;
-  padding: 0 !important;
-}
-
-/* Main Shell Scroll Container */
 .hp-app-viewport .main-shell {
   flex: 1 1 0 !important;
   min-height: 0 !important;
+  height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch !important;
-  padding: 0 !important;
 }
-
-/* Page Layout inside Viewport */
-.hp-app-viewport .page {
-  padding: 12px 16px 100px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 12px !important;
-  box-sizing: border-box !important;
-}
-
-/* Back Row Navigation Bar */
-.hp-app-viewport .back-row {
-  display: flex !important;
-  align-items: center !important;
-  min-height: 38px !important;
-  margin-bottom: 8px !important;
-}
-.hp-app-viewport .back-button {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  min-height: 36px !important;
-  padding: 0 14px !important;
-  border-radius: 999px !important;
-  border: 1px solid var(--separator-light) !important;
-  background: var(--grouped) !important;
-  color: var(--text) !important;
-  font-size: 0.8125rem !important;
-  font-weight: 600 !important;
-  cursor: pointer !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
-}
-
-/* Admin Project Header */
-.hp-app-viewport .admin-project-header {
-  display: flex !important;
-  align-items: flex-start !important;
-  justify-content: space-between !important;
-  gap: 12px !important;
-  margin-bottom: 12px !important;
-}
-.hp-app-viewport .admin-project-header h1 {
-  font-size: 1.25rem !important;
-  font-weight: 750 !important;
-  letter-spacing: -0.02em !important;
-  line-height: 1.2 !important;
-  margin: 2px 0 4px 0 !important;
-}
-.hp-app-viewport .admin-project-header .lede {
-  font-size: 0.8125rem !important;
-  color: var(--secondary) !important;
-  line-height: 1.4 !important;
-  margin: 0 !important;
-}
-.hp-app-viewport .admin-project-actions {
-  position: relative !important;
-  flex: 0 0 auto !important;
-}
-.hp-app-viewport .admin-project-actions > summary {
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
-  display: grid !important;
-  place-items: center !important;
-  border-radius: 50% !important;
-  background: var(--grouped) !important;
-  border: 1px solid var(--separator-light) !important;
-  color: var(--text) !important;
-  cursor: pointer !important;
-  list-style: none !important;
-}
-.hp-app-viewport .admin-project-actions > summary::-webkit-details-marker {
-  display: none !important;
-}
-
-/* Admin Metrics Grid */
-.hp-app-viewport .admin-metrics {
-  display: grid !important;
-  grid-template-columns: repeat(3, 1fr) !important;
-  gap: 8px !important;
-  padding: 10px 0 !important;
-  margin-bottom: 12px !important;
-  border-top: 1px solid var(--separator-light) !important;
-  border-bottom: 1px solid var(--separator-light) !important;
-}
-.hp-app-viewport .admin-metrics > div {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 2px !important;
-}
-.hp-app-viewport .admin-metrics span {
-  font-size: 0.625rem !important;
-  color: var(--secondary) !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.04em !important;
-  font-weight: 600 !important;
-}
-.hp-app-viewport .admin-metrics strong {
-  font-size: 1.0625rem !important;
-  font-weight: 750 !important;
-  color: var(--text) !important;
-  font-variant-numeric: tabular-nums !important;
-}
-
-/* Admin Segmented Pill Tabs */
-.hp-app-viewport .admin-tabs {
-  display: flex !important;
-  width: 100% !important;
-  gap: 4px !important;
-  padding: 3px !important;
-  margin-bottom: 14px !important;
-  border-radius: 999px !important;
-  background: var(--grouped) !important;
-  border: 1px solid var(--separator-light) !important;
-  box-sizing: border-box !important;
-}
-.hp-app-viewport .admin-tabs button {
-  flex: 1 !important;
-  min-height: 32px !important;
-  padding: 0 8px !important;
-  border-radius: 999px !important;
-  border: none !important;
-  background: transparent !important;
-  color: var(--secondary) !important;
-  font-size: 0.75rem !important;
-  font-weight: 600 !important;
-  cursor: pointer !important;
-  transition: all 0.15s ease !important;
-}
-.hp-app-viewport .admin-tabs button.tab-active {
-  background: var(--paper) !important;
-  color: var(--text) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Schema Viewer & Inset Lists */
-.hp-app-viewport .schema-list,
-.hp-app-viewport .contributor-list,
-.hp-app-viewport .recent-observation-list,
-.hp-app-viewport .project-list {
-  border-radius: 16px !important;
-  border: 1px solid var(--separator-light) !important;
-  background: var(--paper) !important;
-  overflow: hidden !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
-}
-.hp-app-viewport .schema-field-row {
-  display: grid !important;
-  grid-template-columns: 24px minmax(0, 1fr) auto auto !important;
-  align-items: center !important;
-  gap: 10px !important;
-  padding: 10px 14px !important;
-  min-height: 48px !important;
-  border-bottom: 1px solid var(--separator-light) !important;
-  box-sizing: border-box !important;
-}
-.hp-app-viewport .schema-field-row:last-child {
-  border-bottom: none !important;
-}
-.hp-app-viewport .schema-field-row .schema-index {
-  font-family: ui-monospace, monospace !important;
-  font-size: 0.75rem !important;
-  color: var(--tertiary) !important;
-}
-.hp-app-viewport .schema-field-row strong {
-  font-size: 0.8125rem !important;
-  font-weight: 600 !important;
-  color: var(--text) !important;
-}
-.hp-app-viewport .schema-field-row span {
-  font-size: 0.6875rem !important;
-  color: var(--secondary) !important;
-}
-.hp-app-viewport .schema-type {
-  font-size: 0.6875rem !important;
-  padding: 2px 8px !important;
-  border-radius: 999px !important;
-  background: var(--grouped) !important;
-  color: var(--secondary) !important;
-}
-.hp-app-viewport .schema-required {
-  font-size: 0.6875rem !important;
-  font-weight: 550 !important;
-  color: var(--tertiary) !important;
-}
-
-/* Floating Glass Bottom Action Dock (Field Home & Admin Context) */
+/* The floating action dock and collector action bar are position:fixed in
+   the mobile app; inside the phone they are anchored to the viewport. */
 .hp-app-viewport .primary-action-dock,
-.hp-app-viewport .admin-context-actions {
+.hp-app-viewport .admin-context-actions,
+.hp-app-viewport .flow-actions {
   position: absolute !important;
-  z-index: 30 !important;
-  bottom: 14px !important;
-  left: 14px !important;
-  right: 14px !important;
-  width: auto !important;
-  padding: 6px !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  border-radius: 999px !important;
-  background: rgba(255, 255, 255, 0.88) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  box-shadow:
-    0 10px 30px -4px rgba(0, 0, 0, 0.18),
-    0 2px 8px rgba(0, 0, 0, 0.06) !important;
-  display: block !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 25 !important;
 }
-.hp-app-viewport .primary-action-dock .button,
-.hp-app-viewport .admin-context-actions .button {
-  min-height: 48px !important;
-  border-radius: 999px !important;
-  font-size: 0.9375rem !important;
-  font-weight: 600 !important;
-  width: 100% !important;
-}
-
-/* Dark Mode Viewport (Admin Console) */
-.hp-app-viewport[data-mode="admin"],
-.hp-app-viewport .app-shell[data-mode="admin"] {
-  background: #000000 !important;
-  color: #f5f5f7 !important;
-}
-.hp-app-viewport[data-mode="admin"] .back-button {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(255, 255, 255, 0.16) !important;
-  color: #ffffff !important;
-}
-.hp-app-viewport[data-mode="admin"] .admin-project-actions > summary {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(255, 255, 255, 0.16) !important;
-  color: #ffffff !important;
-}
-.hp-app-viewport[data-mode="admin"] .admin-metrics {
-  border-color: rgba(255, 255, 255, 0.12) !important;
-}
-.hp-app-viewport[data-mode="admin"] .admin-metrics span {
-  color: #aeaeb2 !important;
-}
-.hp-app-viewport[data-mode="admin"] .admin-metrics strong {
-  color: #ffffff !important;
-}
-.hp-app-viewport[data-mode="admin"] .admin-tabs {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-}
-.hp-app-viewport[data-mode="admin"] .admin-tabs button {
-  color: #aeaeb2 !important;
-}
-.hp-app-viewport[data-mode="admin"] .admin-tabs button.tab-active {
-  background: #2c2c2e !important;
-  color: #ffffff !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
-}
-.hp-app-viewport[data-mode="admin"] .schema-list,
-.hp-app-viewport[data-mode="admin"] .contributor-list,
-.hp-app-viewport[data-mode="admin"] .project-list {
-  background: #1c1c1e !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-}
-.hp-app-viewport[data-mode="admin"] .schema-field-row,
-.hp-app-viewport[data-mode="admin"] .contributor-row,
-.hp-app-viewport[data-mode="admin"] .project-row {
-  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
-}
-.hp-app-viewport[data-mode="admin"] .schema-field-row strong,
-.hp-app-viewport[data-mode="admin"] .contributor-row strong,
-.hp-app-viewport[data-mode="admin"] .project-row strong {
-  color: #ffffff !important;
-}
-.hp-app-viewport[data-mode="admin"] .schema-field-row span,
-.hp-app-viewport[data-mode="admin"] .contributor-row span,
-.hp-app-viewport[data-mode="admin"] .project-row span {
-  color: #aeaeb2 !important;
-}
-.hp-app-viewport[data-mode="admin"] .schema-type {
-  background: rgba(255, 255, 255, 0.12) !important;
-  color: #aeaeb2 !important;
-}
-.hp-app-viewport[data-mode="admin"] .schema-required {
-  color: #8e8e93 !important;
-}
-.hp-app-viewport[data-mode="admin"] .admin-context-actions {
-  background: rgba(30, 30, 32, 0.88) !important;
-  border-color: rgba(255, 255, 255, 0.14) !important;
-  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.6) !important;
-}
-.hp-app-viewport[data-mode="admin"] .admin-context-actions .button {
-  background: #ffffff !important;
-  color: #000000 !important;
-}
-
-/* Collector Guided Flow Containment */
 .hp-app-viewport .collector-page,
 .hp-app-viewport .collector-flow {
   position: absolute !important;
@@ -1110,308 +849,576 @@ main [id] {
   width: 100% !important;
   max-width: 100% !important;
   overflow: hidden !important;
-  background: var(--canvas) !important;
-}
-.hp-app-viewport .collector-topbar {
-  position: relative !important;
-  z-index: 15 !important;
-  flex: 0 0 52px !important;
-  height: 52px !important;
-  min-height: 52px !important;
-  display: grid !important;
-  grid-template-columns: 38px minmax(0, 1fr) 56px !important;
-  align-items: center !important;
-  padding: 0 12px !important;
-  border-bottom: 1px solid var(--separator-light) !important;
-  background: var(--canvas) !important;
-  gap: 8px !important;
-}
-.hp-app-viewport .collector-topbar .back-button {
-  width: 36px !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  min-width: 36px !important;
-  padding: 0 !important;
-  border-radius: 50% !important;
-  background: var(--grouped) !important;
-  border: 1px solid var(--separator-light) !important;
-  color: var(--text) !important;
-  display: grid !important;
-  place-items: center !important;
-  cursor: pointer !important;
-}
-.hp-app-viewport .collector-topbar .collector-title {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  text-align: center !important;
-}
-.hp-app-viewport .collector-topbar .collector-title span {
-  font-size: 0.625rem !important;
-  color: var(--secondary) !important;
-}
-.hp-app-viewport .collector-topbar .collector-title strong {
-  font-size: 0.8125rem !important;
-  font-weight: 650 !important;
-  color: var(--text) !important;
-}
-.hp-app-viewport .flow-body {
-  flex: 1 1 0 !important;
-  min-height: 0 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
-  padding: 0 !important;
-  padding-bottom: 96px !important;
-}
-.hp-app-viewport .flow-step {
-  flex: 1 1 auto !important;
-  padding: 24px 18px 18px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  box-sizing: border-box !important;
-}
-.hp-app-viewport .choice-button {
-  min-height: 48px !important;
-  padding: 0 18px !important;
-  font-size: 0.875rem !important;
-  font-weight: 550 !important;
-  border-radius: 999px !important;
-  border: 1.5px solid var(--separator-light) !important;
-  background: var(--paper) !important;
-}
-.hp-app-viewport .choice-button.choice-selected {
-  background: #000000 !important;
-  color: #ffffff !important;
-  border-color: #000000 !important;
-}
-.hp-app-viewport .flow-actions {
-  position: absolute !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  z-index: 25 !important;
-  padding: 12px 18px 24px !important;
-  background: rgba(245, 245, 247, 0.92) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border-top: 1px solid var(--separator-light) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 10px !important;
-  box-sizing: border-box !important;
-}
-.hp-app-viewport .flow-actions .flow-continue {
-  flex: 1 1 auto !important;
-  min-height: 48px !important;
-  border-radius: 999px !important;
-  font-size: 0.9375rem !important;
-  font-weight: 600 !important;
-  background: #000000 !important;
-  color: #ffffff !important;
-}
-.hp-app-viewport .flow-actions .flow-back {
-  flex: 0 0 auto !important;
-  min-height: 48px !important;
-  min-width: 80px !important;
-  border-radius: 999px !important;
-  font-size: 0.875rem !important;
 }
 
-/* Field Home View & Cards */
-.hp-app-viewport .page-contributor {
-  padding: 8px 14px 100px !important;
-  overflow-y: auto !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 12px !important;
+/* =========================================================================
+   MOBILE VIEWPORT SIMULATION (PHONE-ON-DESKTOP)
+   The mockups sit in a desktop viewport, so the app's @media (max-width:
+   680px) rules never fire. These rules are mechanically derived from the
+   app's own mobile blocks (geometry.css, foundation.css, native.css, in the
+   same cascade order) and scoped under .hp-app-viewport, so the phone
+   renders the exact mobile design — bubbles, pill tabs, floating docks —
+   with the app's own values. Keep in sync with those files.
+   ========================================================================= */
+.hp-app-viewport .desktop-only {
+  display: none;
 }
-.hp-app-viewport .page-heading-home {
-  margin-bottom: 2px !important;
+.hp-app-viewport .topbar-inner {
+  padding: 0 16px;
 }
-.hp-app-viewport .page-heading-home h1 {
-  font-size: 1.5rem !important;
-  font-weight: 750 !important;
-  letter-spacing: -0.03em !important;
-  margin: 0 !important;
+.hp-app-viewport .page {
+  padding: 30px 16px 56px;
 }
-.hp-app-viewport .project-intro {
-  padding: 14px 16px !important;
-  border-radius: 16px !important;
-  background: var(--paper) !important;
-  border: 1px solid var(--separator-light) !important;
-  margin: 0 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+.hp-app-viewport .page-heading {
+  margin-bottom: 24px;
 }
-.hp-app-viewport .project-intro h2 {
-  font-size: 1.0625rem !important;
-  font-weight: 700 !important;
-  margin: 2px 0 4px !important;
+.hp-app-viewport .admin-heading {
+  align-items: center;
 }
-.hp-app-viewport .project-intro p {
-  font-size: 0.8125rem !important;
-  color: var(--secondary) !important;
-  margin: 0 !important;
-  line-height: 1.4 !important;
+.hp-app-viewport .admin-heading .button {
+  min-width: 70px;
 }
-.hp-app-viewport .project-list-detail {
-  margin: 0 !important;
+.hp-app-viewport .project-row {
+  gap: 11px;
 }
-.hp-app-viewport .project-list-detail .list-row {
-  width: 100% !important;
-  padding: 12px 14px !important;
-  border-radius: 14px !important;
-  background: var(--paper) !important;
-  border: 1px solid var(--separator-light) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  text-align: left !important;
-  cursor: pointer !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+.hp-app-viewport .project-row-copy span {
+  max-width: 190px;
 }
-.hp-app-viewport .project-list-detail .list-row strong {
-  display: block !important;
-  font-size: 0.8125rem !important;
-  color: var(--text) !important;
+.hp-app-viewport .project-row-meta {
+  font-size: 0.6875rem;
 }
-.hp-app-viewport .project-list-detail .list-row span {
-  font-size: 0.6875rem !important;
-  color: var(--secondary) !important;
-}
-.hp-app-viewport .collection-status {
-  margin: 0 !important;
-}
-.hp-app-viewport .collection-status h2 {
-  font-size: 0.75rem !important;
-  font-weight: 650 !important;
-  color: var(--tertiary) !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.04em !important;
-  margin: 0 0 6px 4px !important;
-}
-.hp-app-viewport .recent-observation-list {
-  border-radius: 14px !important;
-  background: var(--paper) !important;
-  border: 1px solid var(--separator-light) !important;
-  overflow: hidden !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
-}
-.hp-app-viewport .recent-observation-row {
-  padding: 10px 14px !important;
-  border-bottom: 1px solid var(--separator-light) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-}
-.hp-app-viewport .recent-observation-row:last-child {
-  border-bottom: none !important;
-}
-.hp-app-viewport .recent-observation-row strong {
-  font-size: 0.8125rem !important;
-  color: var(--text) !important;
-}
-.hp-app-viewport .recent-observation-row span {
-  font-size: 0.6875rem !important;
-  color: var(--secondary) !important;
-}
-
-/* Floating Glass Bottom Dock (+ Add observation) */
-.hp-app-viewport .primary-action-dock {
-  position: absolute !important;
-  z-index: 30 !important;
-  bottom: 14px !important;
-  left: 14px !important;
-  right: 14px !important;
-  padding: 6px !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  border-radius: 999px !important;
-  background: rgba(255, 255, 255, 0.85) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  box-shadow:
-    0 10px 30px -4px rgba(0, 0, 0, 0.18),
-    0 2px 8px rgba(0, 0, 0, 0.06) !important;
-  display: block !important;
-}
-.hp-app-viewport .primary-action-dock .button {
-  min-height: 48px !important;
-  border-radius: 999px !important;
-  font-size: 0.9375rem !important;
-  font-weight: 600 !important;
-  width: 100% !important;
-  background: #000000 !important;
-  color: #ffffff !important;
-  box-shadow: none !important;
-}
-
-/* ---------- Contributor Field Home: Instructions & Footer polish ---------- */
-.hp-app-viewport .project-guidance {
-  padding: 14px 16px !important;
-  border-radius: 16px !important;
-  background: var(--paper) !important;
-  border: 1px solid var(--separator-light) !important;
-  margin: 0 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
-}
-.hp-app-viewport .project-guidance h2 {
-  font-size: 0.75rem !important;
-  font-weight: 650 !important;
-  color: var(--tertiary) !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.04em !important;
-  margin: 0 0 4px !important;
+.hp-app-viewport .project-row-meta span {
+  max-width: 75px;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .hp-app-viewport .project-instructions {
-  font-size: 0.8125rem !important;
-  color: var(--secondary) !important;
-  line-height: 1.45 !important;
-  margin: 0 !important;
+  font-size: 1rem;
 }
-/* The app's "by gbrlpzz" credit is part of the real app shell, but it has no
-   place inside a marketing phone mockup — keep the field surface clean. */
-.hp-app-viewport .app-credit {
-  display: none !important;
+.hp-app-viewport .collector-page {
+  padding-right: 16px;
+  padding-left: 16px;
+}
+.hp-app-viewport .collector-topbar {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+.hp-app-viewport .collector-topbar .back-button {
+  font-size: 0.875rem;
+}
+.hp-app-viewport .collector-save-state {
+  max-width: 74px;
+  overflow: hidden;
+  font-size: 0.6875rem;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hp-app-viewport .collector-action-bar {
+  padding-right: 16px;
+  padding-left: 16px;
+}
+.hp-app-viewport .admin-project-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+.hp-app-viewport .admin-project-stats {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+  gap: 14px;
+  padding-left: 48px;
+  font-size: 0.6875rem;
+}
+.hp-app-viewport .admin-project-card > svg {
+  grid-column: 2;
+  grid-row: 1;
+}
+.hp-app-viewport .admin-project-header {
+  display: block;
+}
+.hp-app-viewport .admin-project-header .button {
+  margin-top: 18px;
+}
+.hp-app-viewport .admin-metrics {
+  gap: 15px;
+  overflow-x: auto;
+}
+.hp-app-viewport .admin-metrics > div {
+  min-width: 112px;
+}
+.hp-app-viewport .schema-field-row {
+  grid-template-columns: 25px minmax(0, 1fr) 18px;
+  gap: 8px;
+}
+.hp-app-viewport .schema-type,
+.hp-app-viewport .schema-required {
+  display: none;
+}
+.hp-app-viewport .builder-row {
+  grid-template-columns: 22px minmax(0, 1fr) 34px;
+}
+.hp-app-viewport .builder-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.hp-app-viewport .builder-controls > div {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.hp-app-viewport .builder-required {
+  grid-column: 2;
+  grid-row: 2;
+}
+.hp-app-viewport .builder-row > .icon-button {
+  grid-column: 3;
+  grid-row: 1;
+}
+.hp-app-viewport .wizard-actions {
+  justify-content: stretch;
+}
+.hp-app-viewport .wizard-actions .button {
+  flex: 1;
+}
+.hp-app-viewport .auth-card {
+  padding: 26px 22px;
 }
 
-/* ---------- Demo narrative bar & payload disclosure ---------- */
-.hp-auto-bar {
+.hp-app-viewport .page {
+  padding-right: 16px;
+  padding-left: 16px;
+}
+.hp-app-viewport .mobile-tabbar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  min-height: calc(50px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: flex-start;
+  padding: 3px max(8px, env(safe-area-inset-right)) env(safe-area-inset-bottom)
+    max(8px, env(safe-area-inset-left));
+  border-top: 1px solid var(--separator-light);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+}
+.hp-app-viewport .mobile-tabbar button {
+  min-width: 0;
+  min-height: 49px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 2px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--secondary);
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+.hp-app-viewport .mobile-tabbar button svg {
+  width: 20px;
+  height: 20px;
+}
+.hp-app-viewport .mobile-tabbar button.mobile-tab-active {
+  color: var(--text);
+  font-weight: 650;
+}
+.hp-app-viewport .mobile-tabbar button:active {
+  opacity: 0.68;
+}
+.hp-app-viewport .project-row,
+.hp-app-viewport .list-row {
+  padding-right: 12px;
+  padding-left: 12px;
+}
+.hp-app-viewport .project-row-meta span {
+  max-width: 92px;
+}
+.hp-app-viewport .collector-topbar {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.hp-app-viewport .collector-save-state {
+  max-width: 95px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hp-app-viewport .collector-title {
+  text-align: center;
+  justify-self: center;
+}
+.hp-app-viewport .collector-title span {
+  max-width: 150px;
+  text-align: center;
+}
+.hp-app-viewport .collector-action-bar {
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-left: max(16px, env(safe-area-inset-left));
+}
+.hp-app-viewport .admin-project-card {
+  padding-right: 12px;
+  padding-left: 12px;
+}
+
+.hp-app-viewport .dialog-backdrop {
+  align-items: flex-end;
+  padding: 0;
+}
+.hp-app-viewport .confirmation-dialog {
+  width: 100%;
+  padding: 22px 16px calc(16px + env(safe-area-inset-bottom));
+  border-radius: 22px 22px 0 0;
+  border-bottom: 0;
+}
+.hp-app-viewport .dialog-actions {
+  flex-direction: column;
+}
+.hp-app-viewport .dialog-actions .button {
+  width: 100%;
+}
+
+.hp-app-viewport .flow-back {
+  min-width: 84px;
+}
+.hp-app-viewport .flow-step {
+  padding-right: 16px;
+  padding-left: 16px;
+}
+
+.hp-app-viewport .panel-actions {
+  flex-wrap: wrap;
+}
+
+.hp-app-viewport .topbar {
+  height: calc(68px + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+  border-bottom: 0;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.hp-app-viewport .topbar-inner {
+  width: calc(100% - (2 * var(--page-gutter))) !important;
+  height: 52px;
+  margin: 8px var(--page-gutter) 0;
+  padding: 0;
+}
+.hp-app-viewport .topbar-home .wordmark,
+.hp-app-viewport .topbar-project .wordmark,
+.hp-app-viewport .topbar-admin .wordmark,
+.hp-app-viewport .topbar-admin-project .wordmark,
+.hp-app-viewport .topbar-home .account-button,
+.hp-app-viewport .topbar-project .account-button,
+.hp-app-viewport .topbar-admin .account-button,
+.hp-app-viewport .topbar-admin-project .account-button {
+  border: 1px solid var(--separator-light);
+  background: var(--glass);
+  box-shadow: var(--floating-shadow);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+}
+.hp-app-viewport .topbar-home .wordmark,
+.hp-app-viewport .topbar-project .wordmark,
+.hp-app-viewport .topbar-admin .wordmark,
+.hp-app-viewport .topbar-admin-project .wordmark {
+  padding: 0 var(--space-4);
+  border-radius: var(--control-radius);
+}
+.hp-app-viewport .topbar-new-project {
+  display: none;
+}
+.hp-app-viewport .app-shell[data-view="new-project"] .main-shell {
+  min-height: 100dvh;
+}
+.hp-app-viewport .collector-topbar .back-button,
+.hp-app-viewport .wizard-back-button {
+  width: var(--control-height);
+  min-width: var(--control-height);
+  padding: 0;
+  justify-content: center;
+}
+.hp-app-viewport .collector-topbar .back-button-label,
+.hp-app-viewport .wizard-back-button .back-button-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.hp-app-viewport .main-shell {
+  min-height: calc(100dvh - 68px - env(safe-area-inset-top));
+}
+.hp-app-viewport .page {
+  padding-top: 28px;
+  padding-right: var(--page-gutter);
+  padding-bottom: calc(116px + env(safe-area-inset-bottom));
+  padding-left: var(--page-gutter);
+}
+.hp-app-viewport .page-wizard {
+  width: 100%;
+}
+.hp-app-viewport .admin-heading {
+  display: block;
+  gap: var(--space-4);
+}
+.hp-app-viewport .primary-action-dock,
+.hp-app-viewport .admin-context-actions {
+  position: fixed;
+  z-index: 18;
+  right: max(var(--space-3), env(safe-area-inset-right));
+  bottom: max(var(--space-2), env(safe-area-inset-bottom));
+  left: max(var(--space-3), env(safe-area-inset-left));
+  width: auto;
+  padding: 6px;
+  border: 1px solid var(--separator-light);
+  border-radius: 999px;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  box-shadow: var(--floating-shadow);
+}
+.hp-app-viewport .primary-action-dock .button,
+.hp-app-viewport .admin-context-actions .button {
+  min-height: 52px;
+  border-radius: 999px;
+}
+.hp-app-viewport .primary-action-dock-draft {
+  border-radius: 28px;
+}
+.hp-app-viewport .primary-action-dock-draft .draft-restart-action {
+  min-height: var(--control-height);
+}
+.hp-app-viewport .project-row,
+.hp-app-viewport .list-row {
+  padding-right: var(--space-3);
+  padding-left: var(--space-3);
+}
+.hp-app-viewport .project-row-meta span {
+  max-width: 92px;
+}
+.hp-app-viewport .admin-project-card {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--space-2);
+  padding-right: var(--space-3);
+  padding-left: var(--space-3);
+}
+.hp-app-viewport .admin-project-stats {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  padding-left: 52px;
+  font-size: var(--type-caption-2);
+}
+.hp-app-viewport .admin-project-stats span {
+  text-align: left;
+}
+.hp-app-viewport .admin-project-card > svg {
+  grid-column: auto;
+  grid-row: auto;
+}
+.hp-app-viewport .admin-project-header {
+  display: flex;
+}
+.hp-app-viewport .admin-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+  overflow: visible;
+}
+.hp-app-viewport .admin-metrics > div {
+  min-width: 0;
+}
+.hp-app-viewport .admin-metrics > div:last-child {
+  grid-column: 1 / -1;
+}
+.hp-app-viewport .panel-heading {
+  display: block;
+}
+.hp-app-viewport .panel-actions {
+  margin-top: 0;
+}
+.hp-app-viewport .panel-actions .button {
+  flex: 1 1 auto;
+}
+.hp-app-viewport .admin-tabs {
+  width: 100%;
+  gap: var(--space-1);
+  margin-right: 0;
+  margin-left: 0;
+  padding: var(--space-1);
+}
+.hp-app-viewport .admin-tabs button {
+  min-width: max-content;
+  flex: 1 0 auto;
+  padding-right: var(--space-3);
+  padding-left: var(--space-3);
+}
+.hp-app-viewport .schema-field-row {
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: var(--space-2);
+}
+.hp-app-viewport .schema-type,
+.hp-app-viewport .schema-required {
+  display: none;
+}
+.hp-app-viewport .builder-row {
+  grid-template-columns: 24px minmax(0, 1fr) var(--control-height);
+  gap: var(--space-2);
+  align-items: start;
+}
+.hp-app-viewport .builder-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+.hp-app-viewport .builder-controls > div {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.hp-app-viewport .builder-required {
+  grid-column: 2;
+  grid-row: 2;
+}
+.hp-app-viewport .wizard-actions {
+  justify-content: stretch;
+}
+.hp-app-viewport .wizard-actions .button {
+  flex: 1 1 0;
+}
+.hp-app-viewport .auth-page {
+  padding-top: max(48px, calc(48px + env(safe-area-inset-top)));
+}
+.hp-app-viewport .auth-card > p,
+.hp-app-viewport .auth-sent > p {
+  max-width: none;
+}
+.hp-app-viewport .collector-title {
+  max-width: 38vw;
+}
+.hp-app-viewport .collector-save-state {
+  max-width: 96px;
+}
+.hp-app-viewport .flow-step {
+  padding-right: var(--space-4);
+  padding-left: var(--space-4);
+}
+.hp-app-viewport .flow-actions {
+  width: calc(100% - 24px);
+  margin: 0 12px max(8px, env(safe-area-inset-bottom));
+  padding: 6px;
+  border: 1px solid var(--separator-light);
+  border-radius: 999px;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  box-shadow: var(--floating-shadow);
+}
+.hp-app-viewport .flow-back {
+  min-width: 88px;
+  background: var(--grouped);
+}
+.hp-app-viewport .flow-continue {
+  border-radius: 999px;
+}
+.hp-app-viewport html[data-keyboard-open="true"] .flow-actions {
+  width: calc(100% - 16px);
+  margin: 0 8px 4px;
+  padding: 4px;
+}
+.hp-app-viewport .sheet-backdrop,
+.hp-app-viewport .dialog-backdrop {
+  padding: 0;
+}
+.hp-app-viewport .bottom-sheet {
+  max-height: calc(100dvh - 8px);
+  padding-right: var(--page-gutter);
+  padding-left: var(--page-gutter);
+  border-radius: 22px 22px 0 0;
+}
+.hp-app-viewport .confirmation-dialog {
+  width: 100%;
+  padding: 22px var(--page-gutter) calc(16px + env(safe-area-inset-bottom));
+  border-radius: 22px 22px 0 0;
+  border-bottom: 0;
+}
+.hp-app-viewport .dialog-actions {
+  flex-direction: column;
+}
+.hp-app-viewport .dialog-actions .button {
+  width: 100%;
+}
+.hp-app-viewport .mobile-tabbar {
+  position: fixed;
+  right: max(var(--space-3), env(safe-area-inset-right));
+  bottom: max(var(--space-2), env(safe-area-inset-bottom));
+  left: max(var(--space-3), env(safe-area-inset-left));
+  z-index: 30;
+  min-height: 58px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 10px;
+  padding: 4px;
+  border: 1px solid var(--separator-light);
+  border-radius: 999px;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  box-shadow: var(--floating-shadow);
 }
-.hp-demo-note {
-  margin: 10px 0 0;
-  color: var(--tertiary);
-  font-size: 0.75rem;
-}
-.hp-payload {
-  margin-top: 12px;
-  border-top: 1px solid var(--separator-light);
-  padding-top: 10px;
-  font-size: 0.75rem;
-}
-.hp-payload summary {
-  cursor: pointer;
-  font-weight: 600;
+.hp-app-viewport .mobile-tabbar button {
+  min-width: 0;
+  min-height: 48px;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
   color: var(--secondary);
+  font-size: var(--type-caption-2);
+  font-weight: 500;
 }
-.hp-payload pre {
-  margin-top: 8px;
-  padding: 12px;
-  border-radius: 12px;
+.hp-app-viewport .mobile-tabbar button svg {
+  width: 20px;
+  height: 20px;
+}
+.hp-app-viewport .mobile-tabbar button.mobile-tab-active {
   background: var(--grouped);
-  font-size: 0.6875rem;
-  line-height: 1.5;
-  overflow: auto;
+  color: var(--text);
+  font-weight: 600;
 }
-.hp-payload p {
-  margin: 8px 0 0;
-  color: var(--secondary);
-  line-height: 1.45;
+
+.hp-app-viewport .privacy-facts {
+  padding-left: var(--space-4);
+}
+.hp-app-viewport .privacy-facts > div {
+  grid-template-columns: 1fr;
+  gap: 4px;
+}
+.hp-app-viewport .consent-summary > div {
+  grid-template-columns: 1fr;
+  gap: 3px;
+}
+.hp-app-viewport .contributor-row .button {
+  width: var(--control-height);
+  padding: 0;
+}
+.hp-app-viewport .contributor-row .button span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
 }
 
 /* =========================================================================

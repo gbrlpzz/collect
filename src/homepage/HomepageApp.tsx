@@ -47,6 +47,22 @@ function TopBar() {
         </nav>
 
         <div className="hp-topbar-actions">
+          <details className="hp-signin">
+            <summary aria-label="Sign in to the app">
+              <span>Sign in</span>
+              <Icon name="chevron-down" size={13} />
+            </summary>
+            <div className="hp-signin-menu">
+              <a href="/" target="_blank" rel="noopener noreferrer">
+                Contributor app
+                <span className="hp-signin-path">/</span>
+              </a>
+              <a href="/?role=admin" target="_blank" rel="noopener noreferrer">
+                Admin console
+                <span className="hp-signin-path">/?role=admin</span>
+              </a>
+            </div>
+          </details>
           <a
             className="hp-nav-github"
             href={GITHUB_URL}
@@ -554,6 +570,12 @@ export function HomepageApp() {
               <a href="#integrity">3. Integrity & QA</a>
               <a href="#data">4. Data Package</a>
               <a href="#preview">Request access</a>
+              <a href="/" target="_blank" rel="noopener noreferrer">
+                Sign in — contributor
+              </a>
+              <a href="/?role=admin" target="_blank" rel="noopener noreferrer">
+                Sign in — admin
+              </a>
             </div>
             <div>
               <span className="hp-footer-heading">Documentation</span>
