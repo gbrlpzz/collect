@@ -146,8 +146,8 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
           </h1>
 
           <p className="hp-hero-lede">
-            Installs from the browser, no app store. Evidence arrives ready to
-            publish.
+            An offline-first field collection app for research teams. Installs
+            from the browser, exports FAIR archives.
           </p>
 
           <form className="hp-capture" onSubmit={submit} noValidate>
