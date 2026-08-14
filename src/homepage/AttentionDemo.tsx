@@ -86,9 +86,8 @@ export function AttentionDemo() {
             <span className="eyebrow">Interactive Verification Question</span>
             <h3 className="hp-attention-title">{check.prompt}</h3>
             <p className="hp-attention-desc">
-              During fieldwork, questions like this appear unannounced between
-              survey fields. Select an option below to see how collect isolates
-              and evaluates the response.
+              Appears unannounced during surveys. Answer below to inspect
+              payload isolation and scoring.
             </p>
           </div>
 

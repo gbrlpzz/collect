@@ -49,19 +49,19 @@ const demoProject: Project = {
 const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
   home: {
     title: "Field Home & Offline State",
-    body: "The contributor opens directly into their assigned project. Sync readiness is immediately clear, with the primary '+ Add observation' button anchored at the bottom.",
+    body: "Opens on the assigned project with offline sync status and '+ Add observation' anchored at the bottom.",
   },
   flow: {
     title: "One Calm Question per Screen",
-    body: "No endless scrolling forms. Full-screen steps with 52pt touch targets built for bright sunlight and gloves, with auto-advancing single choice.",
+    body: "One question per screen with 52pt touch targets for gloves and sunlight, with auto-advancing choices.",
   },
   inputs: {
     title: "Uncertainty & Original Media",
-    body: "Tri-state questions record 'Unknown' as genuine data rather than missing nulls. Photos and audio are preserved as uncompressed originals with SHA-256 integrity.",
+    body: "Tri-state 'Unknown' records genuine uncertainty. Photos and audio save uncompressed with SHA-256 hashes.",
   },
   sync: {
     title: "Durable Receipts & Resumable Sync",
-    body: "Every observation commits to device IndexedDB in under 5ms before network handshake. Background synchronization pushes metadata, media blobs, and finalization receipts.",
+    body: "IndexedDB commit in <5ms before network handshake, followed by automatic 3-stage background sync.",
   },
 };
 

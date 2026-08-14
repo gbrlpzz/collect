@@ -55,7 +55,7 @@ function TopBar() {
             <span className="hp-github-text">GitHub</span>
           </a>
           <a className="button button-primary button-small" href="#preview">
-            Request test access
+            Request access
           </a>
         </div>
       </div>
@@ -89,9 +89,9 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
         </h1>
 
         <p className="hp-hero-lede">
-          An offline-first application for scientific research and field
-          surveys. Observations and raw photos commit to device storage before
-          touching the network, syncing automatically when connection returns.
+          Offline-first field data collection. Saves observations and
+          uncompressed photos to device storage before touching the network,
+          syncing automatically when connected.
         </p>
 
         <form className="hp-capture" onSubmit={submit} noValidate>
@@ -107,7 +107,7 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
             aria-label="Institutional email"
           />
           <button className="button button-primary" type="submit">
-            Request test access
+            Request access
           </button>
         </form>
 
@@ -119,7 +119,7 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
 
         <div className="hp-hero-actions">
           <a className="text-button" href="#collection">
-            Test the live collection sandbox ↓
+            Test live collection sandbox ↓
           </a>
         </div>
       </div>
@@ -131,19 +131,19 @@ function DifferentiationSummary() {
   const items = [
     {
       title: "Durable local receipts",
-      desc: "Atomic IndexedDB writes commit form data and raw binary photos before showing “Saved on this device”. Observations are never lost.",
+      desc: "Form data and raw photos commit to IndexedDB before any network attempt. Observations are never lost.",
     },
     {
       title: "Immutable schemas",
-      desc: "Published surveys are permanent. Historical observations retain their original schema version without drift or corruption.",
+      desc: "Published forms are locked. Historical observations always keep their original schema version without drift.",
     },
     {
-      title: "Attention QA provenance",
-      desc: "Randomized vigilance checks test surveyor focus. Answers are stripped before commit, recording only a guess-adjusted reliability score.",
+      title: "Attention QA",
+      desc: "Unannounced checks verify surveyor focus. Answers are stripped before commit to keep research variables clean.",
     },
     {
       title: "Single-use device links",
-      desc: "Pair field devices in seconds using 8-character codes. Zero passwords, zero App Store accounts, zero stored credentials.",
+      desc: "Pair field devices with 8-character codes. Zero passwords, zero App Store accounts, zero stored credentials.",
     },
   ];
 
@@ -167,49 +167,43 @@ function ComparisonSection() {
   const comparisonRows = [
     {
       feature: "Storage on device",
-      collect:
-        "Atomic multi-store IndexedDB durable receipts committed before network handshake",
-      others:
-        "In-memory form drafts or fragile browser caches prone to tab eviction",
+      collect: "Atomic IndexedDB receipts committed before network handshake",
+      others: "Fragile in-memory drafts or browser caches prone to tab loss",
     },
     {
       feature: "Media preservation",
       collect:
-        "100% original uncompressed media blobs with SHA-256 integrity hashes",
-      others: "Aggressively downsampled lossy JPEGs compressed during capture",
+        "Original uncompressed media blobs with SHA-256 integrity hashes",
+      others: "Aggressively compressed lossy JPEGs downsampled in-browser",
     },
     {
       feature: "Surveyor attention QA",
       collect:
-        "Built-in guess-adjusted checks; question & answer stripped before commit",
-      others:
-        "None, or manual survey questions that pollute and bias the research dataset",
+        "Built-in guess-adjusted checks; answers stripped before database commit",
+      others: "None, or manual survey fields that pollute the research payload",
     },
     {
       feature: "Device onboarding",
       collect:
-        "Single-use 8-character link codes; 0 passwords, 0 App Store accounts",
-      others:
-        "App Store downloads, permanent passwords, or unprotected public survey links",
+        "Single-use 8-character link codes; 0 passwords, 0 store accounts",
+      others: "App store downloads, permanent credentials, or public links",
     },
     {
-      feature: "Archival export format",
+      feature: "Archival export",
       collect:
-        "Complete FAIR checkpoint ZIP (DataCite 4.4, GeoJSON, CSV, JSONL, media manifest)",
-      others: "Single flat CSV or Excel spreadsheet export without provenance",
+        "Complete FAIR checkpoint ZIP (DataCite 4.4, GeoJSON, CSV, JSONL, media)",
+      others: "Single flat CSV or spreadsheet export without provenance",
     },
     {
-      feature: "Local account isolation",
-      collect:
-        "Strict account-scoped IndexedDB instances (collect-local-v1-<userId>)",
-      others: "Shared browser storage risking cross-contributor survey leaks",
+      feature: "Account isolation",
+      collect: "Strict account-scoped IndexedDB databases per user",
+      others: "Shared browser storage risking cross-contributor leaks",
     },
     {
       feature: "License & hosting",
       collect:
         "100% Open Source (Apache-2.0), self-hostable on Supabase & Vercel",
-      others:
-        "Proprietary vendor lock-in or complex Java/XML server infrastructure",
+      others: "Proprietary vendor lock-in or complex legacy servers",
     },
   ];
 
@@ -226,9 +220,9 @@ function ComparisonSection() {
             How collect differs from generic form builders.
           </h2>
           <p>
-            Office survey tools assume constant WiFi and throw away raw media.
-            collect is purpose-built for hostile field conditions where data
-            loss is unacceptable.
+            Office survey tools assume continuous connectivity and discard raw
+            media. collect is purpose-built for field conditions where data loss
+            is unacceptable.
           </p>
         </div>
 
@@ -321,10 +315,8 @@ export function HomepageApp() {
                     Define immutable schemas and pair field devices.
                   </h2>
                   <p>
-                    Author versioned questions with typed rules. Generate
-                    single-use 8-character pairing codes to onboard field phones
-                    without passwords, monitor fleet readiness, and trigger
-                    research checkpoints.
+                    Author versioned surveys, generate single-use 8-character
+                    pairing codes, and trigger publication checkpoints.
                   </p>
                 </div>
 
@@ -359,8 +351,8 @@ export function HomepageApp() {
                       <h3>Immutable question schema</h3>
                       <p>
                         Field definitions are locked on publish. Modifying a
-                        published survey creates Version 2 without corrupting
-                        past observations.
+                        survey creates a new version without altering past
+                        observations.
                       </p>
                     </>
                   )}
@@ -369,8 +361,7 @@ export function HomepageApp() {
                       <h3>Passwordless device link</h3>
                       <p>
                         Field researchers enter an 8-character code once to pair
-                        their phone’s IndexedDB storage. No passwords or app
-                        store accounts.
+                        their phone’s storage without passwords or accounts.
                       </p>
                     </>
                   )}
@@ -379,8 +370,7 @@ export function HomepageApp() {
                       <h3>Verified sync readiness</h3>
                       <p>
                         Review received observations, monitor contributor
-                        attention rings, and generate a self-contained research
-                        archive.
+                        attention, and export self-contained research archives.
                       </p>
                     </>
                   )}
@@ -410,10 +400,10 @@ export function HomepageApp() {
                 Verify surveyor focus and context without research bias.
               </h2>
               <p>
-                Surveyor fatigue during long shifts causes random answers.
-                collect interleaves unannounced attention checks and strips them
-                at the device boundary before commit, computing a guess-adjusted
-                reliability index alongside ambient hardware telemetry.
+                Unannounced checks test surveyor focus during long transects.
+                Answers are stripped before commit, recording only a
+                guess-adjusted reliability score alongside ambient hardware
+                telemetry.
               </p>
             </div>
             <div className="hp-integrity-grid">
@@ -451,10 +441,9 @@ export function HomepageApp() {
                 Self-contained research archives ready for repository deposit.
               </h2>
               <p>
-                Every checkpoint archive includes canonical JSONL, CSV, RFC 7946
-                GeoJSON, DataCite 4.4 kernel metadata, machine-readable data
-                dictionary, and byte-for-byte original media with SHA-256
-                integrity hashes.
+                Checkpoint archives include canonical JSONL, CSV, RFC 7946
+                GeoJSON, DataCite 4.4 kernel metadata, and original media with
+                SHA-256 hashes.
               </p>
             </div>
             <PackageBrowser />
@@ -524,7 +513,7 @@ export function HomepageApp() {
               <a href="#admin">2. Fleet Setup & Schema</a>
               <a href="#integrity">3. Integrity & QA</a>
               <a href="#data">4. Data Package</a>
-              <a href="#preview">Request test access</a>
+              <a href="#preview">Request access</a>
             </div>
             <div>
               <span className="hp-footer-heading">Documentation</span>

@@ -23,9 +23,8 @@ export function ProvenanceCard() {
   return (
     <div className="hp-provenance-clean">
       <p className="hp-provenance-intro">
-        Every observation automatically captures ambient device and environment
-        context. Access is asynchronous and strictly non-blocking: if any
-        browser API is unavailable or restricted, the submission writes to
+        Every observation captures non-fingerprinting ambient device context. If
+        any browser API is restricted or unavailable, the submission writes to
         IndexedDB in under 5ms without error.
       </p>
 
