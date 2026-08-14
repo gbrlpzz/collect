@@ -7,19 +7,12 @@ import { useEffect, useState } from "react";
  * the same section from one scroll listener. The section is considered active
  * once its top edge has passed `offset` pixels below the viewport top.
  */
-export function useSectionSpy(
-  sectionIds: string[],
-  offset = 140,
-  preferLastAtBottom = false,
-): string {
+export function useSectionSpy(sectionIds: string[], offset = 140): string {
   const [active, setActive] = useState("");
 
   useEffect(() => {
     const handleScroll = () => {
       const scrollPos = window.scrollY + offset;
-      const atBottom =
-        window.scrollY + window.innerHeight >=
-        document.documentElement.scrollHeight - 2;
       let current = "";
       let last = "";
       let firstTop = Number.POSITIVE_INFINITY;
@@ -35,20 +28,9 @@ export function useSectionSpy(
         }
         if (scrollPos >= top) last = id;
       }
-      // Past the final section (footer), keep a section active so the tour
-      // and nav do not go blank while the call-to-action is on screen.
+      // Past the final section (footer), keep a section active so the nav
+      // does not go blank while the call-to-action is on screen.
       if (!current && scrollPos >= firstTop) current = last;
-      // A short final section may never scroll past the offset (too little
-      // room left). Once it is on screen at the very bottom of the page and
-      // the caller asks for it, the final section wins.
-      if (preferLastAtBottom && atBottom) {
-        const lastEl = document.getElementById(
-          sectionIds[sectionIds.length - 1],
-        );
-        if (lastEl && lastEl.offsetTop <= window.scrollY + window.innerHeight) {
-          current = sectionIds[sectionIds.length - 1];
-        }
-      }
       setActive(current);
     };
 

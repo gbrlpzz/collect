@@ -10,7 +10,6 @@ export type IconName =
   | "check"
   | "chevron-down"
   | "chevron-right"
-  | "chevron-up"
   | "cloud"
   | "download"
   | "clock"
@@ -27,7 +26,6 @@ export type IconName =
   | "menu"
   | "more"
   | "play"
-  | "pause"
   | "person"
   | "plus"
   | "refresh"
@@ -136,12 +134,6 @@ export function Icon({
           <path d="m9 6 6 6-6 6" />
         </svg>
       );
-    case "chevron-up":
-      return (
-        <svg {...common}>
-          <path d="m6 15 6-6 6 6" />
-        </svg>
-      );
     case "cloud":
       return (
         <svg {...common}>
@@ -230,12 +222,6 @@ export function Icon({
           <circle cx="5" cy="12" r="1" fill="currentColor" />
           <circle cx="12" cy="12" r="1" fill="currentColor" />
           <circle cx="19" cy="12" r="1" fill="currentColor" />
-        </svg>
-      );
-    case "pause":
-      return (
-        <svg {...common}>
-          <path d="M8 5.5v13M16 5.5v13" />
         </svg>
       );
     case "play":

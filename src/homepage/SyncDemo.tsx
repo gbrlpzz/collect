@@ -1,8 +1,32 @@
 import { DocLinks } from "./DocLinks";
+import { useScrollFocus } from "./useScrollFocus";
+
+const SYNC_STEPS = [
+  {
+    kicker: "Stage 1 · Commit",
+    title: "Saved locally",
+    code: "SAVED_LOCAL",
+    body: "Payload, media blobs, and the outbox entry commit to device storage before any network work.",
+  },
+  {
+    kicker: "Stage 2 · Transfer",
+    title: "Syncing",
+    code: "SYNCING_METADATA → SYNCING_MEDIA",
+    body: "An active /health probe, cross-tab lock, and resumable TUS upload carry the record across flaky links.",
+  },
+  {
+    kicker: "Stage 3 · Receipt",
+    title: "Finalized & Synced",
+    code: "FINALIZING → SYNCED",
+    body: "The server writes to the database and issues a signed finalization receipt.",
+  },
+] as const;
 
 export function SyncDemo() {
+  const { ref, active, activate } = useScrollFocus<HTMLDivElement>(".hp-step");
+
   return (
-    <div className="hp-flow-layout">
+    <div className="hp-flow-layout" ref={ref}>
       <div className="hp-flow-copy">
         <div className="section-heading">
           <p className="eyebrow">Synchronization</p>
@@ -16,47 +40,50 @@ export function SyncDemo() {
           </p>
           <DocLinks files={["background-automation.md", "architecture.md"]} />
         </div>
+
+        {SYNC_STEPS.map((s, i) => (
+          <div
+            key={s.code}
+            className="hp-step"
+            data-active={active === i}
+            aria-current={active === i ? "step" : undefined}
+            role="button"
+            tabIndex={0}
+            onClick={() => activate(i)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                activate(i);
+              }
+            }}
+          >
+            <p className="hp-step-kicker">{s.kicker}</p>
+            <h3>{s.title}</h3>
+            <p>{s.body}</p>
+          </div>
+        ))}
       </div>
 
       <div className="hp-flow-visual">
         <div className="hp-sync-pipeline" aria-label="Sync pipeline stages">
-          <div className="hp-sync-stage">
-            <span className="hp-sync-stage-index">1</span>
-            <div>
-              <strong>Saved locally</strong>
-              <p className="hp-sync-state-code">SAVED_LOCAL</p>
-              <p>
-                Payload, media blobs, and outbox entry commit to device storage.
-              </p>
-            </div>
-          </div>
+          {SYNC_STEPS.map((s, i) => (
+            <button
+              key={s.code}
+              type="button"
+              className="hp-sync-stage hp-sync-stage-btn"
+              data-active={active === i}
+              aria-pressed={active === i}
+              onClick={() => activate(i)}
+            >
+              <span className="hp-sync-stage-index">{i + 1}</span>
+              <span className="hp-sync-stage-body">
+                <strong>{s.title}</strong>
+                <span className="hp-sync-state-code">{s.code}</span>
+              </span>
+            </button>
+          ))}
 
-          <div className="hp-sync-stage">
-            <span className="hp-sync-stage-index">2</span>
-            <div>
-              <strong>Syncing</strong>
-              <p className="hp-sync-state-code">
-                SYNCING_METADATA → SYNCING_MEDIA
-              </p>
-              <p>
-                Active /health probe, cross-tab lock, and resumable TUS upload.
-              </p>
-            </div>
-          </div>
-
-          <div className="hp-sync-stage">
-            <span className="hp-sync-stage-index">3</span>
-            <div>
-              <strong>Finalized & Synced</strong>
-              <p className="hp-sync-state-code">FINALIZING → SYNCED</p>
-              <p>
-                Server writes to database and issues signed finalization
-                receipt.
-              </p>
-            </div>
-          </div>
-
-          <div className="hp-sync-receipt">
+          <div className="hp-sync-receipt" data-active={active === 2}>
             <span className="hp-sync-receipt-label">
               Durable Server Receipt
             </span>

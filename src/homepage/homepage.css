@@ -558,9 +558,40 @@ body {
   gap: 12px;
   padding: 14px 12px;
   border-radius: 12px;
+  opacity: 0.5;
+  transition:
+    opacity 0.2s ease,
+    background 0.2s ease;
+}
+.hp-sync-stage[data-active="true"] {
+  opacity: 1;
+  background: var(--grouped);
 }
 .hp-sync-stage + .hp-sync-stage {
   border-top: 1px solid var(--separator-light);
+}
+.hp-sync-stage-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+}
+.hp-sync-stage-btn:hover:not([data-active="true"]) {
+  opacity: 0.8;
+  background: var(--grouped);
+}
+.hp-sync-stage-btn:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+.hp-sync-stage-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 .hp-sync-stage-index {
   flex: 0 0 auto;
@@ -607,6 +638,11 @@ body {
   padding: 14px 14px 12px;
   border-radius: 14px;
   background: var(--grouped);
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+.hp-sync-receipt[data-active="true"] {
+  opacity: 1;
 }
 .hp-sync-receipt-label {
   display: block;
@@ -773,6 +809,54 @@ section[id] {
   top: 84px;
 }
 
+/* Sub-level under the Guided Flow tab: the supported input types. */
+.hp-field-types {
+  margin: 2px 0 14px 16px;
+  padding-left: 14px;
+  border-left: 1px solid var(--separator-light);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hp-field-types-label {
+  color: var(--tertiary);
+  font-size: 0.625rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.hp-field-types-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.hp-field-type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--separator-light);
+  background: var(--paper);
+  color: var(--tertiary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.hp-field-type-chip:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+.hp-field-type-chip:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
 .hp-admin-tab-selector {
   display: flex;
   gap: 6px;
@@ -829,7 +913,56 @@ section[id] {
   line-height: 1.45;
 }
 
-/* ---------- Shared iPhone Mockup Shell ---------- */
+/* ---------- Persistent Step Blocks (sticky + scroll focus) ---------- */
+/* All step content stays on screen; the active step is focused by a left
+   rail while the companion visual stays sticky on the right. */
+.hp-step {
+  min-height: 38vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px 0 24px 20px;
+  border-left: 2px solid var(--separator-light);
+  cursor: pointer;
+  max-width: 27rem;
+}
+.hp-step:hover {
+  border-left-color: var(--secondary);
+}
+.hp-step[data-active="true"] {
+  border-left-color: var(--text);
+}
+.hp-step-kicker {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--tertiary);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+.hp-step h3 {
+  font-size: 1.125rem;
+  font-weight: 650;
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+  color: var(--secondary);
+  transition: color 0.15s ease;
+}
+.hp-step[data-active="true"] h3 {
+  color: var(--text);
+}
+.hp-step > p {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.hp-step:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 4px;
+}
+
 .hp-iphone-wrap {
   display: flex;
   flex-direction: column;
@@ -2163,78 +2296,6 @@ section[id] {
 }
 
 /* =========================================================================
-   Guided tour control
-   ========================================================================= */
-.hp-tour {
-  position: fixed;
-  right: max(20px, env(safe-area-inset-right));
-  bottom: max(20px, env(safe-area-inset-bottom));
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 10px 7px 16px;
-  border-radius: 999px;
-  border: 1px solid var(--separator-light);
-  background: var(--paper);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
-  color: var(--text);
-}
-.hp-tour-step {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-}
-.hp-tour-index {
-  font-size: 0.6875rem;
-  font-weight: 650;
-  color: var(--tertiary);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.hp-tour-label {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  white-space: nowrap;
-  max-width: 11rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.hp-tour-actions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-.hp-tour-btn {
-  width: 34px;
-  height: 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  border: 0;
-  background: transparent;
-  color: var(--secondary);
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
-}
-.hp-tour-btn:hover:not(:disabled) {
-  background: var(--grouped);
-  color: var(--text);
-}
-.hp-tour-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-.hp-tour-btn:focus-visible {
-  outline: 2px solid var(--text);
-  outline-offset: 2px;
-}
-
-/* =========================================================================
    Responsive Breakpoints
    ========================================================================= */
 @media (max-width: 960px) {
@@ -2273,6 +2334,9 @@ section[id] {
   }
   .hp-preview-copy {
     max-width: 100%;
+  }
+  .hp-step {
+    min-height: 26vh;
   }
   .hp-footer-inner {
     grid-template-columns: 1fr;
@@ -2332,18 +2396,6 @@ section[id] {
   .hp-fact-grid {
     grid-template-columns: 1fr;
   }
-  .hp-tour {
-    right: 16px;
-    bottom: 16px;
-    padding: 6px 8px 6px 14px;
-  }
-  .hp-tour-label {
-    max-width: 7rem;
-  }
-  .hp-tour-btn {
-    width: 40px;
-    height: 40px;
-  }
   .hp-footer {
     padding: 44px 16px 28px;
   }
@@ -2391,6 +2443,10 @@ section[id] {
   }
   .hp-admin-tab-selector {
     gap: 6px;
+  }
+  .hp-field-type-chip {
+    min-height: 34px;
+    padding: 0 12px;
   }
   .hp-admin-step-btn {
     font-size: 0.8125rem;

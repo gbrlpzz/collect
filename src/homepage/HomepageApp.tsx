@@ -11,19 +11,32 @@ import { DocLinks, DOCS } from "./DocLinks";
 import { Icon, type IconName } from "../components/Icon";
 import { CollectBrand } from "../components/CollectBrand";
 import { useSectionSpy } from "./useSectionSpy";
-import { TourControl, type TourSection } from "./TourControl";
+import { useScrollFocus } from "./useScrollFocus";
 
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 
-const TOUR_SECTIONS: TourSection[] = [
-  { id: "collection", label: "Field collection" },
-  { id: "guarantees", label: "Guarantees" },
-  { id: "sync", label: "Sync engine" },
-  { id: "admin", label: "Setup & fleet" },
-  { id: "integrity", label: "Data integrity" },
-  { id: "data", label: "Dataset export" },
-  { id: "preview", label: "Request access" },
-];
+const ADMIN_SCENES = [
+  {
+    tab: "setup",
+    kicker: "Form Schema",
+    title: "Immutable schema versioning",
+    body: "Published field definitions are locked. Schema updates create a new version without altering historical observations.",
+  },
+  {
+    tab: "contributors",
+    kicker: "Fleet Readiness",
+    title: "Real-time fleet sync & progress monitoring",
+    body: "Track incoming observations, unsynced device queues, and contributor attention reliability scores across all field teams in real time.",
+  },
+  {
+    tab: "export",
+    kicker: "Checkpoint Export",
+    title: "Verified publication checkpoints",
+    body: "Review received observations, monitor contributor attention, and export self-contained research archives once all devices report complete.",
+  },
+] as const;
+
+type AdminSceneTab = (typeof ADMIN_SCENES)[number]["tab"];
 
 function TopBar({ activeSection }: { activeSection: string }) {
   return (
@@ -263,9 +276,6 @@ function DifferentiationSummary() {
 
 export function HomepageApp() {
   const [draftEmail, setDraftEmail] = useState("");
-  const [adminTab, setAdminTab] = useState<"setup" | "contributors" | "export">(
-    "setup",
-  );
 
   const captureEmail = (email: string) => {
     setDraftEmail(email);
@@ -279,12 +289,21 @@ export function HomepageApp() {
     });
   };
 
-  const activeSection = useSectionSpy(TOUR_SECTIONS.map((s) => s.id));
-  const tourSection = useSectionSpy(
-    TOUR_SECTIONS.map((s) => s.id),
-    140,
-    true,
-  );
+  const activeSection = useSectionSpy([
+    "collection",
+    "guarantees",
+    "sync",
+    "admin",
+    "integrity",
+    "data",
+    "preview",
+  ]);
+  const {
+    ref: adminStepsRef,
+    active: adminStep,
+    activate: activateAdminStep,
+  } = useScrollFocus<HTMLDivElement>(".hp-step");
+  const adminTab: AdminSceneTab = ADMIN_SCENES[adminStep].tab;
 
   return (
     <div className="hp-shell">
@@ -324,7 +343,7 @@ export function HomepageApp() {
           aria-labelledby="admin-title"
         >
           <div className="hp-section-inner">
-            <div className="hp-flow-layout">
+            <div className="hp-flow-layout" ref={adminStepsRef}>
               <div className="hp-flow-copy">
                 <div className="section-heading">
                   <p className="eyebrow">Setup & Operations</p>
@@ -341,70 +360,31 @@ export function HomepageApp() {
                   <DocLinks files={["flows.md", "spec.md"]} />
                 </div>
 
-                <div className="hp-admin-tab-selector">
-                  <button
-                    type="button"
-                    className={`hp-admin-step-btn ${adminTab === "setup" ? "active" : ""}`}
-                    onClick={() => setAdminTab("setup")}
+                {ADMIN_SCENES.map((scene, i) => (
+                  <div
+                    key={scene.tab}
+                    className="hp-step"
+                    data-active={adminStep === i}
+                    aria-current={adminStep === i ? "step" : undefined}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => activateAdminStep(i)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        activateAdminStep(i);
+                      }
+                    }}
                   >
-                    Form Schema
-                  </button>
-                  <button
-                    type="button"
-                    className={`hp-admin-step-btn ${adminTab === "contributors" ? "active" : ""}`}
-                    onClick={() => setAdminTab("contributors")}
-                  >
-                    Fleet Readiness
-                  </button>
-                  <button
-                    type="button"
-                    className={`hp-admin-step-btn ${adminTab === "export" ? "active" : ""}`}
-                    onClick={() => setAdminTab("export")}
-                  >
-                    Checkpoint Export
-                  </button>
-                </div>
-
-                <div className="hp-story" aria-live="polite">
-                  <span className="hp-story-kicker">Administrator Console</span>
-                  {adminTab === "setup" && (
-                    <>
-                      <h3>Immutable schema versioning</h3>
-                      <p>
-                        Published field definitions are locked. Schema updates
-                        create a new version without altering historical
-                        observations.
-                      </p>
-                    </>
-                  )}
-                  {adminTab === "contributors" && (
-                    <>
-                      <h3>Real-time fleet sync & progress monitoring</h3>
-                      <p>
-                        Track incoming observations, unsynced device queues, and
-                        contributor attention reliability scores across all
-                        field teams in real time.
-                      </p>
-                    </>
-                  )}
-                  {adminTab === "export" && (
-                    <>
-                      <h3>Verified publication checkpoints</h3>
-                      <p>
-                        Review received observations, monitor contributor
-                        attention, and export self-contained research archives
-                        once all devices report complete.
-                      </p>
-                    </>
-                  )}
-                </div>
+                    <p className="hp-step-kicker">{scene.kicker}</p>
+                    <h3>{scene.title}</h3>
+                    <p>{scene.body}</p>
+                  </div>
+                ))}
               </div>
 
               <div className="hp-flow-visual">
-                <AdminWalkthrough
-                  initialTab={adminTab}
-                  onTabChange={setAdminTab}
-                />
+                <AdminWalkthrough initialTab={adminTab} />
               </div>
             </div>
           </div>
@@ -675,7 +655,6 @@ export function HomepageApp() {
           </p>
         </div>
       </footer>
-      <TourControl sections={TOUR_SECTIONS} activeId={tourSection} />
       <Analytics />
     </div>
   );

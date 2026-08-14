@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Collector } from "../components/Collector";
 import { ContributorHome } from "../components/ContributorHome";
 import { TopBar } from "../components/TopBar";
-import { Icon } from "../components/Icon";
+import { Icon, type IconName } from "../components/Icon";
 import { DocLinks } from "./DocLinks";
 import { projectFields } from "../data/schemaFixtures";
 import type { Observation, Project } from "../types";
@@ -83,6 +83,19 @@ const initialSampleObservations: Observation[] = [
   },
 ];
 
+/** The input types the schema supports; each chip jumps the preview phone
+ *  to the matching question so visitors see the flow is not media-only. */
+const FIELD_TYPES: { icon: IconName; label: string; fieldKey: string }[] = [
+  { icon: "file", label: "Short text", fieldKey: "site_code" },
+  { icon: "check", label: "Single choice", fieldKey: "building_type" },
+  { icon: "info", label: "Tri-state", fieldKey: "building_occupancy" },
+  { icon: "more", label: "Multi-select", fieldKey: "visible_features" },
+  { icon: "clock", label: "Date", fieldKey: "observed_date" },
+  { icon: "sliders", label: "Number", fieldKey: "people_count" },
+  { icon: "camera", label: "Photo & audio", fieldKey: "site_photos" },
+  { icon: "mic", label: "Field notes", fieldKey: "notes" },
+];
+
 const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
   home: {
     title: "Field Home",
@@ -90,11 +103,11 @@ const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
   },
   flow: {
     title: "Guided Step Flow",
-    body: "One clear question per screen with large touch targets for gloves and sunlight, native inputs, and keyboard-safe viewports.",
+    body: "One clear question per screen: short text, single choice, tri-state, multi-select, dates, and counts use native inputs with large touch targets for gloves and sunlight.",
   },
   media: {
     title: "Raw Media Capture",
-    body: "Stores photos and audio as unmodified original files with SHA-256 integrity hashes, bypassing compression.",
+    body: "Photos, audio, and field notes join every other input type — originals stay unmodified with SHA-256 integrity hashes, never recompressed.",
   },
 };
 
@@ -174,6 +187,7 @@ export function FlowDemo() {
   const [phase, setPhase] = useState<"home" | "collecting">("home");
   const [activeTab, setActiveTab] = useState<ContributorTab>("home");
   const [collectorStep, setCollectorStep] = useState<number>(0);
+  const [jumpKey, setJumpKey] = useState<string | undefined>(undefined);
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [observation, setObservation] = useState<Observation | null>(null);
   const [seedObservations, setSeedObservations] = useState<Observation[]>(
@@ -194,6 +208,7 @@ export function FlowDemo() {
     setPhase("home");
     setActiveTab("home");
     setCollectorStep(0);
+    setJumpKey(undefined);
   };
 
   const handleTabClick = (tab: ContributorTab) => {
@@ -209,6 +224,13 @@ export function FlowDemo() {
       // attention check) never shifts the target screen.
       setCollectorStep(-1);
     }
+  };
+
+  const jumpToField = (fieldKey: string) => {
+    setPhase("collecting");
+    setActiveTab("flow");
+    setCollectorStep(-1);
+    setJumpKey(fieldKey);
   };
 
   const triggerSyncAnimation = () => {
@@ -282,6 +304,25 @@ export function FlowDemo() {
             Raw Media
           </button>
         </div>
+
+        {activeTab === "flow" && (
+          <div className="hp-field-types">
+            <span className="hp-field-types-label">Input types</span>
+            <div className="hp-field-types-row">
+              {FIELD_TYPES.map((type) => (
+                <button
+                  key={type.fieldKey}
+                  type="button"
+                  className="hp-field-type-chip"
+                  onClick={() => jumpToField(type.fieldKey)}
+                >
+                  <Icon name={type.icon} size={13} />
+                  {type.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="hp-story" aria-live="polite">
           <span className="hp-story-kicker">Contributor Surface</span>
@@ -361,11 +402,15 @@ export function FlowDemo() {
               ) : (
                 <div className="main-shell">
                   <Collector
-                    key={`${round}-${collectorStep}`}
+                    key={`${round}-${collectorStep}-${jumpKey ?? ""}`}
                     project={demoProject}
-                    initialStepIndex={activeTab === "media" ? 0 : collectorStep}
+                    initialStepIndex={
+                      activeTab === "media" || jumpKey ? 0 : collectorStep
+                    }
                     initialFieldKey={
-                      activeTab === "media" ? "site_photos" : undefined
+                      activeTab === "media"
+                        ? "site_photos"
+                        : (jumpKey ?? undefined)
                     }
                     draft={draft}
                     lastSavedAt={null}
