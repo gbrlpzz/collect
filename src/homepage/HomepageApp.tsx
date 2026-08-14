@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { FlowDemo } from "./FlowDemo";
 import { SyncDemo } from "./SyncDemo";
@@ -10,44 +10,22 @@ import { ProvenanceCard } from "./ProvenanceCard";
 import { DocLinks, DOCS } from "./DocLinks";
 import { Icon, type IconName } from "../components/Icon";
 import { CollectBrand } from "../components/CollectBrand";
+import { useSectionSpy } from "./useSectionSpy";
+import { TourControl, type TourSection } from "./TourControl";
 
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 
-function TopBar() {
-  const [activeSection, setActiveSection] = useState<string>("");
+const TOUR_SECTIONS: TourSection[] = [
+  { id: "collection", label: "Field collection" },
+  { id: "guarantees", label: "Guarantees" },
+  { id: "sync", label: "Sync engine" },
+  { id: "admin", label: "Setup & fleet" },
+  { id: "integrity", label: "Data integrity" },
+  { id: "data", label: "Dataset export" },
+  { id: "preview", label: "Request access" },
+];
 
-  useEffect(() => {
-    const sectionIds = [
-      "collection",
-      "guarantees",
-      "sync",
-      "admin",
-      "integrity",
-      "data",
-    ];
-
-    const handleScroll = () => {
-      const scrollPos = window.scrollY + 140;
-      let current = "";
-      for (const id of sectionIds) {
-        const el = document.getElementById(id);
-        if (el) {
-          const top = el.offsetTop;
-          const height = el.offsetHeight;
-          if (scrollPos >= top && scrollPos < top + height) {
-            current = id;
-            break;
-          }
-        }
-      }
-      setActiveSection(current);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
+function TopBar({ activeSection }: { activeSection: string }) {
   return (
     <header className="hp-topbar">
       <div className="hp-topbar-inner">
@@ -301,9 +279,16 @@ export function HomepageApp() {
     });
   };
 
+  const activeSection = useSectionSpy(TOUR_SECTIONS.map((s) => s.id));
+  const tourSection = useSectionSpy(
+    TOUR_SECTIONS.map((s) => s.id),
+    140,
+    true,
+  );
+
   return (
     <div className="hp-shell">
-      <TopBar />
+      <TopBar activeSection={activeSection} />
       <main id="main">
         <Hero onEmailSubmit={captureEmail} />
 
@@ -690,6 +675,7 @@ export function HomepageApp() {
           </p>
         </div>
       </footer>
+      <TourControl sections={TOUR_SECTIONS} activeId={tourSection} />
       <Analytics />
     </div>
   );

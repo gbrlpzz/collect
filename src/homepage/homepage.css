@@ -2163,6 +2163,78 @@ section[id] {
 }
 
 /* =========================================================================
+   Guided tour control
+   ========================================================================= */
+.hp-tour {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px 7px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--separator-light);
+  background: var(--paper);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
+  color: var(--text);
+}
+.hp-tour-step {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.hp-tour-index {
+  font-size: 0.6875rem;
+  font-weight: 650;
+  color: var(--tertiary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.hp-tour-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hp-tour-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.hp-tour-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  color: var(--secondary);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.hp-tour-btn:hover:not(:disabled) {
+  background: var(--grouped);
+  color: var(--text);
+}
+.hp-tour-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.hp-tour-btn:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+/* =========================================================================
    Responsive Breakpoints
    ========================================================================= */
 @media (max-width: 960px) {
@@ -2259,6 +2331,18 @@ section[id] {
   }
   .hp-fact-grid {
     grid-template-columns: 1fr;
+  }
+  .hp-tour {
+    right: 16px;
+    bottom: 16px;
+    padding: 6px 8px 6px 14px;
+  }
+  .hp-tour-label {
+    max-width: 7rem;
+  }
+  .hp-tour-btn {
+    width: 40px;
+    height: 40px;
   }
   .hp-footer {
     padding: 44px 16px 28px;
