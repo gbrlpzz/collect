@@ -78,13 +78,13 @@ Deno.serve(async (request) => {
       }
 
       // The code is bound to a contributor account that is already a member
-      // of this project — never to a random address.
-      const { data: contributor } = await service
-        .from("auth.users")
-        .select("id")
-        .ilike("email", email)
-        .maybeSingle();
-      if (!contributor) {
+      // of this project — never to a random address. Resolve via the
+      // security-definer RPC (the auth schema is not exposed to PostgREST).
+      const { data: contributorId } = await service.rpc(
+        "resolve_user_id_by_email",
+        { p_email: email },
+      );
+      if (typeof contributorId !== "string") {
         return json(
           { error: "This person has no account yet; invite them first" },
           { status: 404 },
@@ -94,7 +94,7 @@ Deno.serve(async (request) => {
         .from("project_members")
         .select("role")
         .eq("project_id", projectId)
-        .eq("user_id", contributor.id)
+        .eq("user_id", contributorId)
         .maybeSingle();
       if (!membership) {
         return json(
@@ -105,7 +105,7 @@ Deno.serve(async (request) => {
 
       const issued = await issueCode(
         service,
-        contributor.id,
+        contributorId,
         email,
         user.id,
         projectId,
@@ -129,21 +129,19 @@ Deno.serve(async (request) => {
       }
       // Self-service is invite-only: mint only for addresses that already
       // hold a contributor account, and answer uniformly either way.
-      const { data: user } = await service
-        .from("auth.users")
-        .select("id")
-        .ilike("email", email)
-        .maybeSingle();
-      if (user) {
+      const { data: userId } = await service.rpc("resolve_user_id_by_email", {
+        p_email: email,
+      });
+      if (typeof userId === "string") {
         const { data: member } = await service
           .from("project_members")
           .select("user_id")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .eq("role", "contributor")
           .maybeSingle();
         if (member) {
           try {
-            await issueCode(service, user.id, email, null, null, null);
+            await issueCode(service, userId, email, null, null, null);
           } catch {
             // Advisory by design: the login screen still answers uniformly.
           }

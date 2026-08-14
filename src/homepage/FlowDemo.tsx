@@ -39,7 +39,6 @@ const demoProject: Project = {
   schemaVersion: 1,
   license: "CC-BY-4.0",
   contactEmail: "valpuesta@liminal-lab.org",
-  datasetIdentifier: "10.5281/zenodo.0000000",
   contributors: 3,
   completeSubmissions: 104,
   lastReceived: "2026-08-14T09:32:00.000Z",
@@ -92,15 +91,15 @@ const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
   },
   flow: {
     title: "One Calm Question per Screen",
-    body: "One question per screen with 52pt touch targets for gloves and sunlight, with auto-advancing choices.",
+    body: "One question per screen with large touch targets for gloves and sunlight, with auto-advancing choices.",
   },
   inputs: {
-    title: "Uncertainty & Original Media",
-    body: "Tri-state 'Unknown' records genuine uncertainty. Photos and audio save uncompressed with SHA-256 hashes.",
+    title: "Genuine uncertainty is a real answer",
+    body: "The tri-state question lets a surveyor record 'Unknown' when evidence is inconclusive, instead of forcing a guess that would corrupt the variable. Photos and audio still save uncompressed with SHA-256 hashes.",
   },
   sync: {
     title: "Durable Receipts & Resumable Sync",
-    body: "IndexedDB commit in <5ms before network handshake, followed by automatic 3-stage background sync.",
+    body: "Committed to IndexedDB before any network handshake, then an automatic 3-stage background sync.",
   },
 };
 
@@ -226,8 +225,9 @@ export function FlowDemo() {
       setCollectorStep(0);
     } else if (tab === "inputs") {
       setPhase("collecting");
-      // Step 3 is building_occupancy (Tri-state "Is the building occupied?")
-      setCollectorStep(3);
+      // Jump to the tri-state question by key so the live step order
+      // (including the attention check) never shifts the target screen.
+      setCollectorStep(-1);
     } else if (tab === "sync") {
       setPhase("home");
       // If we don't have a recent local observation, create a synced receipt for demo
@@ -314,7 +314,7 @@ export function FlowDemo() {
             One calm question at a time. Built for zero signal.
           </h2>
           <p>
-            The collector presents one question per screen with 52pt touch
+            The collector presents one question per screen with large touch
             targets for gloves and sunlight, native date pickers, and raw photo
             capture. Tap the choices and test the flow yourself.
           </p>
@@ -475,7 +475,12 @@ export function FlowDemo() {
                   <Collector
                     key={`${round}-${collectorStep}`}
                     project={demoProject}
-                    initialStepIndex={collectorStep}
+                    initialStepIndex={
+                      activeTab === "inputs" ? 0 : collectorStep
+                    }
+                    initialFieldKey={
+                      activeTab === "inputs" ? "building_occupancy" : undefined
+                    }
                     draft={draft}
                     lastSavedAt={null}
                     onDraftChange={(key, value) =>

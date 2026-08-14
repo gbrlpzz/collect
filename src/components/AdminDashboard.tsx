@@ -885,8 +885,17 @@ export function ContributorsPanel({
     if (!removalRow) return;
     setRemoving(true);
     try {
-      await removeProjectContributor(projectId, removalRow.email);
-      onToast(`Removed ${removalRow.email} from the project`);
+      const removed = await removeProjectContributor(
+        projectId,
+        removalRow.email,
+      );
+      if (!removed) {
+        onToast(
+          `${removalRow.email} has no account to remove — only pending invites were revoked.`,
+        );
+      } else {
+        onToast(`Removed ${removalRow.email} from the project`);
+      }
       setRemovalRow(null);
       refresh();
     } catch {

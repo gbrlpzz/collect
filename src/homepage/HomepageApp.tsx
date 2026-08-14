@@ -163,107 +163,6 @@ function DifferentiationSummary() {
   );
 }
 
-function ComparisonSection() {
-  const comparisonRows = [
-    {
-      feature: "Storage on device",
-      collect: "Atomic IndexedDB receipts committed before network handshake",
-      others: "Fragile in-memory drafts or browser caches prone to tab loss",
-    },
-    {
-      feature: "Media preservation",
-      collect:
-        "Original uncompressed media blobs with SHA-256 integrity hashes",
-      others: "Aggressively compressed lossy JPEGs downsampled in-browser",
-    },
-    {
-      feature: "Surveyor attention QA",
-      collect:
-        "Built-in guess-adjusted checks; answers stripped before database commit",
-      others: "None, or manual survey fields that pollute the research payload",
-    },
-    {
-      feature: "Device onboarding",
-      collect:
-        "Single-use 8-character link codes; 0 passwords, 0 store accounts",
-      others: "App store downloads, permanent credentials, or public links",
-    },
-    {
-      feature: "Archival export",
-      collect:
-        "Complete FAIR checkpoint ZIP (DataCite 4.4, GeoJSON, CSV, JSONL, media)",
-      others: "Single flat CSV or spreadsheet export without provenance",
-    },
-    {
-      feature: "Account isolation",
-      collect: "Strict account-scoped IndexedDB databases per user",
-      others: "Shared browser storage risking cross-contributor leaks",
-    },
-    {
-      feature: "License & hosting",
-      collect:
-        "100% Open Source (Apache-2.0), self-hostable on Supabase & Vercel",
-      others: "Proprietary vendor lock-in or complex legacy servers",
-    },
-  ];
-
-  return (
-    <section
-      className="hp-section hp-section-paper"
-      id="comparison"
-      aria-labelledby="comp-title"
-    >
-      <div className="hp-section-inner">
-        <div className="section-heading">
-          <p className="eyebrow">Architecture Comparison</p>
-          <h2 id="comp-title">
-            How collect differs from generic form builders.
-          </h2>
-          <p>
-            Office survey tools assume continuous connectivity and discard raw
-            media. collect is purpose-built for field conditions where data loss
-            is unacceptable.
-          </p>
-        </div>
-
-        <div className="hp-comparison-table-wrapper">
-          <table className="hp-comparison-table">
-            <thead>
-              <tr>
-                <th scope="col">Capability</th>
-                <th scope="col" className="hp-col-collect">
-                  <span className="hp-badge-collect">collect</span>
-                </th>
-                <th scope="col">
-                  Generic Form Builders (Kobo, ODK, Google Forms)
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {comparisonRows.map((row) => (
-                <tr key={row.feature}>
-                  <td className="hp-table-feature">
-                    <strong>{row.feature}</strong>
-                  </td>
-                  <td className="hp-table-collect">
-                    <span className="hp-table-check">
-                      <Icon name="check" size={14} />
-                    </span>
-                    <span>{row.collect}</span>
-                  </td>
-                  <td className="hp-table-others">
-                    <span>{row.others}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export function HomepageApp() {
   const [draftEmail, setDraftEmail] = useState("");
   const [adminTab, setAdminTab] = useState<"setup" | "contributors" | "export">(
@@ -310,7 +209,7 @@ export function HomepageApp() {
             <div className="hp-flow-layout">
               <div className="hp-flow-copy">
                 <div className="section-heading">
-                  <p className="eyebrow">Step 2 · Fleet Setup & Schema</p>
+                  <p className="eyebrow">Step 2 · Setup & Schema</p>
                   <h2 id="admin-title">
                     Define immutable schemas and pair field devices.
                   </h2>
@@ -458,9 +357,6 @@ export function HomepageApp() {
           </div>
         </section>
 
-        {/* Value Differentiation & Comparison Matrix */}
-        <ComparisonSection />
-
         {/* Request Access / Pilot Form */}
         <section
           className="hp-section"
@@ -510,7 +406,7 @@ export function HomepageApp() {
             <div>
               <span className="hp-footer-heading">Lifecycle</span>
               <a href="#collection">1. Field Collection</a>
-              <a href="#admin">2. Fleet Setup & Schema</a>
+              <a href="#admin">2. Setup & Schema</a>
               <a href="#integrity">3. Integrity & QA</a>
               <a href="#data">4. Data Package</a>
               <a href="#preview">Request access</a>

@@ -249,7 +249,7 @@ const manifest =
       dataset: {
         license: "CC-BY-4.0",
         contact_email: "dataset@demo-lab.org",
-        dataset_identifier: "10.5281/zenodo.0000000",
+        dataset_identifier: "10.5281/zenodo.XXXXXXX",
       },
       contributor_readiness: contributorIds.map((contributorId) => {
         const contributorRows = rows.filter(
@@ -276,7 +276,7 @@ const datacite =
     {
       schemaVersion: "http://datacite.org/schema/kernel-4.4",
       identifier: {
-        identifier: "10.5281/zenodo.0000000",
+        identifier: "10.5281/zenodo.XXXXXXX",
         identifierType: "DOI",
       },
       creators: [
