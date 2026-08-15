@@ -27,7 +27,7 @@ interface ProfileSheetProps {
 export function ProfileSheet({
   userEmail,
   profile,
-  observations,
+  observations = [],
   lastSyncAt,
   isAdmin,
   isPreview,
@@ -36,7 +36,7 @@ export function ProfileSheet({
   onRecoveryExport,
   onSignOut,
 }: ProfileSheetProps) {
-  const pendingCount = observations.filter(
+  const pendingCount = (observations ?? []).filter(
     (observation) => observation.status !== "SYNCED",
   ).length;
   const installAvailable = canOfferIosInstall();
