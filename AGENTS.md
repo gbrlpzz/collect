@@ -24,7 +24,7 @@
 5. Service-role credentials stay inside Edge Functions.
 6. Recovery export must remain available for unsynced data.
 7. Local migrations must be forward-compatible and must never initialize a blank database over existing data.
-8. Accounts are invite-only: the generic sign-in screen must never create accounts, and administrator invitations honor the allow-list (env secret or `private.allowed_admin_patterns`).
+8. Access is layered, not gated at the door: anyone may create a contributor account (a first Google or Apple sign-in is a sign-up), but an account sees nothing until a membership exists, and administrator rights are granted only to an address on the allow-list (env secret or `private.allowed_admin_patterns`; an empty list grants nobody). The email link path must never create accounts, and invitations must never spend the authentication provider's mail allowance — they are plain Resend emails that carry no credential.
 9. Collection consent is enforced server-side: `sync-submission` rejects submissions from profiles without a granted (and not revoked) consent.
 10. The attention check is provenance, not research data: its question never enters the payload or the database (only a stable check key, the selected value, and the binary `attention_failed` flag), and its answer must be stripped from submitted values before commit.
 11. Every account reads and writes its own IndexedDB database (`collect-local-v1-<userId>`); set the local scope before any local read and never let cached data leak across accounts.

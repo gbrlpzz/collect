@@ -337,6 +337,16 @@ Re-submitting an existing submission ID succeeds only when the project, contribu
 - **Privileged functions**: Supabase Edge Functions verify caller authentication and perform server-side permission checks.
 - **Private keys**: Service-role keys exist only in Edge Function secrets.
 - **Secure views**: `project_overviews` uses `security_invoker = true` to preserve user RLS policies.
+- **Open contributor sign-up, gated visibility**: anyone may create an
+  account (a first provider sign-in is a sign-up). An account sees nothing
+  until a membership exists, and administrator rights are granted at sign-in
+  only to an address on the allow-list
+  (`private.allowed_admin_patterns` or `ALLOWED_EMAIL_PATTERNS`). An empty
+  allow-list grants nobody. See [Authentication](authentication.md).
+- **Invitations without credentials**: invitation emails carry no token. They
+  name the project and link to the sign-in screen; `claim-invites` turns the
+  pending invitation into a membership at first sign-in. They are sent
+  through Resend, never through the authentication provider's mailer.
 - **Bridge codes**: contributor sign-in and device-link codes share one
   single-use bridge table (`private.session_link_codes`): 8 characters from
   an unambiguous alphabet, stored only as SHA-256 hashes, atomic consume,
@@ -357,6 +367,7 @@ Re-submitting an existing submission ID succeeds only when the project, contribu
 
 ## Related documentation
 
+- [Authentication](authentication.md)
 - [User and system flows](flows.md)
 - [Privacy and data handling](privacy.md)
 - [Background automation](background-automation.md)

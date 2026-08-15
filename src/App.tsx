@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
-import { AuthScreen } from "./components/AuthScreen";
+import { AuthScreen } from "./components/auth/AuthScreen";
 import { ConsentScreen } from "./components/ConsentScreen";
 import { ContributorHome } from "./components/ContributorHome";
 import { Button, ConfirmationDialog, Eyebrow } from "./components/ui";

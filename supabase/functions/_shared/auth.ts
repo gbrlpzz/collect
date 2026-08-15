@@ -79,20 +79,51 @@ export async function isEmailAllowed(
   service: SupabaseClient,
   email: string,
 ): Promise<boolean> {
+  const patterns = await adminAllowPatterns(service);
+  if (!patterns.length) return true;
+  return patterns.some((pattern: string) =>
+    matchesAllowedPattern(pattern, email)
+  );
+}
+
+/**
+ * The configured administrator patterns, or an empty list when the deployment
+ * has none. The ALLOWED_EMAIL_PATTERNS secret takes precedence over the table.
+ */
+export async function adminAllowPatterns(
+  service: SupabaseClient,
+): Promise<string[]> {
   const raw = Deno.env.get("ALLOWED_EMAIL_PATTERNS")?.trim();
   if (raw) {
     return raw
       .split(",")
       .map((entry) => entry.trim())
-      .filter(Boolean)
-      .some((pattern) => matchesAllowedPattern(pattern, email));
+      .filter(Boolean);
   }
   const { data } = await service.rpc("list_allowed_admin_patterns");
   const rows: unknown[] = Array.isArray(data) ? data : [];
-  const patterns: string[] = rows
+  return rows
     .map((row: unknown) => String((row as { pattern?: unknown }).pattern ?? ""))
     .filter((pattern: string) => pattern.length > 0);
-  if (!patterns.length) return true;
+}
+
+/** True when the secret holds the allow-list, so the table cannot be edited. */
+export function allowListIsEnvironmentManaged(): boolean {
+  return Boolean(Deno.env.get("ALLOWED_EMAIL_PATTERNS")?.trim());
+}
+
+/**
+ * Strict allow-list test used to GRANT administrator access, never merely to
+ * permit an invitation. A deployment with no configured pattern grants nobody:
+ * anyone may create a contributor account, so a permissive default here would
+ * hand the workspace to the next stranger who signs in.
+ */
+export async function isEmailExplicitlyAllowed(
+  service: SupabaseClient,
+  email: string,
+): Promise<boolean> {
+  const patterns = await adminAllowPatterns(service);
+  if (!patterns.length) return false;
   return patterns.some((pattern: string) =>
     matchesAllowedPattern(pattern, email)
   );

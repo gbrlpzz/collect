@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import axe from "axe-core";
+import { AuthScreen } from "../src/components/auth/AuthScreen";
 import { ConsentScreen } from "../src/components/ConsentScreen";
 import { NewProjectWizard } from "../src/components/NewProjectWizard";
 import { ProfileSheet } from "../src/components/ProfileSheet";
@@ -20,7 +21,37 @@ async function expectNoAccessibilityViolations(container: HTMLElement) {
   );
 }
 
+const authMocks = vi.hoisted(() => ({
+  enabledAuthProviders: vi.fn().mockResolvedValue(["google", "apple"]),
+  knownAuthProviders: vi.fn().mockReturnValue(["google", "apple"]),
+}));
+
+vi.mock("../src/lib/supabaseClient", () => ({
+  authCallbackError: () => null,
+  pendingAuthEmail: () => "",
+  rememberAuthEmail: () => undefined,
+  sendMagicLink: vi.fn(),
+  signInWithPassword: vi.fn(),
+  setPassword: vi.fn(),
+  linkDeviceSession: vi.fn(),
+  requestDeviceLinkCode: vi.fn(),
+  requestContributorSigninCode: vi.fn(),
+  signInWithProvider: vi.fn(),
+  enabledAuthProviders: authMocks.enabledAuthProviders,
+  knownAuthProviders: authMocks.knownAuthProviders,
+  authProviders: ["google", "apple"],
+  authProviderLabel: { google: "Google", apple: "Apple" },
+}));
+
 describe("automated accessibility checks", () => {
+  it("keeps the sign-in screen semantically valid", async () => {
+    const { container } = render(<AuthScreen configured role="contributor" />);
+    expect(
+      await screen.findByRole("button", { name: "Continue with Apple" }),
+    ).toBeTruthy();
+    await expectNoAccessibilityViolations(container);
+  });
+
   it("keeps the consent summary and disclosure semantically valid", async () => {
     const { container } = render(
       <ConsentScreen

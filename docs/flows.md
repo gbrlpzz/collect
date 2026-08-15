@@ -53,9 +53,9 @@ flowchart TD
 
 ### 1. Onboarding and sign-in
 
-1. The administrator invites the contributor to a project by email; the invitation email creates the account on first open.
-2. The administrator issues a **sign-in code** from the roster row menu (**⋯ → Issue sign-in code**); the single-use, 20-minute code is emailed to the contributor and shown to the administrator for in-person sharing.
-3. The contributor signs in by entering the 8-character code on the login screen (**Sign in with a code**). Returning contributors can request a fresh code by email from the same screen (invite-only, uniform response).
+1. The administrator invites the contributor to a project by email. The invitation carries no credential: it names the project and links to the sign-in screen.
+2. The contributor opens the app and taps **Continue with Apple** or **Continue with Google**. The account is created on the first sign-in, and the pending invitation becomes a membership immediately.
+3. Contributors without a provider use a backup method on the same screen: an email sign-in link, a password, or an 8-character code. The administrator can issue a code from the roster row menu (**⋯ → Issue sign-in code**); an invited contributor can also request one under **Request a new code by email**. Codes are single-use and expire after 20 minutes.
 4. The contributor reviews the privacy disclosure and accepts the versioned consent.
 5. On iOS, the contributor adds `collect` to the Home Screen. Because iOS runs installed web apps in an isolated storage container, the app requires its own authentication session (device-link codes from **Profile → Sign in another device** still bridge a signed-in browser to the installed app).
 6. The app downloads assigned project definitions and published schemas into IndexedDB for offline use.
@@ -180,10 +180,10 @@ sequenceDiagram
   participant Edge as Edge Function (link-session)
   participant Auth as Supabase Auth / DB
 
-  Admin->>Auth: Send Project Invitation to Contributor Email
-  Auth-->>Contributor: Email with Magic Link
-  Contributor->>Safari: Opens Magic Link in Safari
-  Safari->>Auth: Authenticate session token
+  Admin->>Auth: Record invitation and send a plain email (Resend)
+  Auth-->>Contributor: Email naming the project and linking to the sign-in screen
+  Contributor->>Safari: Opens the app and continues with Google or Apple
+  Safari->>Auth: Provider return, authorization code exchanged for a session
   Safari->>Contributor: Displays Web App Interface
 
   Note over Contributor,PWA: iOS Container Boundary: Installed PWA has separate storage
@@ -202,11 +202,14 @@ sequenceDiagram
   PWA-->>Contributor: Ready for offline fieldwork
 ```
 
-| Client context               | Primary method                                            | Fallback method                |
-| :--------------------------- | :-------------------------------------------------------- | :----------------------------- |
-| **Contributor (any device)** | 8-character sign-in code (admin-issued or self-service)   | Password (if set)              |
-| **Installed iOS PWA**        | Sign-in code or device-link code from a signed-in browser | Password (if set)              |
-| **Administrator**            | Invitation link + password setup                          | Magic link / password (if set) |
+| Client context               | Primary method                | Fallback method                                        |
+| :--------------------------- | :---------------------------- | :----------------------------------------------------- |
+| **Contributor (any device)** | Continue with Google or Apple | Sign-in link, password, or 8-character code            |
+| **Installed iOS PWA**        | Continue with Google or Apple | Device-link code from a signed-in browser, or password |
+| **Administrator**            | Continue with Google or Apple | Sign-in link or password                               |
+
+Administrator rights do not depend on the method: an allow-listed address
+becomes an administrator at sign-in. See [Authentication](authentication.md).
 
 Contributor sign-in codes and device-link codes share the same bridge: they
 are 8 characters from an unambiguous alphabet (32⁸ ≈ 1.1×10¹²), single-use

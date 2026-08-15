@@ -38,7 +38,25 @@ verify_jwt = false
 enabled = true
 site_url = "https://collect-tawny.vercel.app"
 additional_redirect_urls = ["https://collect-tawny.vercel.app"]
-enable_signup = false
+# Anyone may create a contributor account. An account on its own shows
+# nothing: projects appear only where a membership exists, and administrator
+# rights are granted only to allow-listed addresses. Sign-up must stay open
+# for provider sign-in to work at all — a first Google or Apple sign-in is a
+# sign-up.
+enable_signup = true
+
+# Identity providers. They carry no email, so admitting people never depends
+# on a mail quota. Credentials live in the deployment, never in the repository.
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
+skip_nonce_check = false
+
+[auth.external.apple]
+enabled = true
+client_id = "env(SUPABASE_AUTH_APPLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_APPLE_SECRET)"
 
 [auth.email]
 otp_length = 6

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { AuthScreen } from "../src/components/AuthScreen";
+import { AuthScreen } from "../src/components/auth/AuthScreen";
 import { Collector } from "../src/components/Collector";
 import { ConsentScreen } from "../src/components/ConsentScreen";
 import { ContributorHome } from "../src/components/ContributorHome";
@@ -29,11 +29,14 @@ const authMocks = vi.hoisted(() => ({
     .fn()
     .mockResolvedValue({ code: "AB2D9KQX", expiresInSeconds: 120 }),
   requestContributorSigninCode: vi.fn().mockResolvedValue(undefined),
+  signInWithProvider: vi.fn().mockResolvedValue(undefined),
+  // No provider is enabled on this deployment unless a test says so.
+  enabledAuthProviders: vi.fn().mockResolvedValue([]),
+  knownAuthProviders: vi.fn().mockReturnValue([]),
 }));
 
 vi.mock("../src/lib/supabaseClient", () => ({
   authCallbackError: () => null,
-  isStandalonePwa: () => false,
   pendingAuthEmail: () => "",
   rememberAuthEmail: () => undefined,
   sendMagicLink: authMocks.sendMagicLink,
@@ -42,6 +45,11 @@ vi.mock("../src/lib/supabaseClient", () => ({
   linkDeviceSession: authMocks.linkDeviceSession,
   requestDeviceLinkCode: authMocks.requestDeviceLinkCode,
   requestContributorSigninCode: authMocks.requestContributorSigninCode,
+  signInWithProvider: authMocks.signInWithProvider,
+  enabledAuthProviders: authMocks.enabledAuthProviders,
+  knownAuthProviders: authMocks.knownAuthProviders,
+  authProviders: ["google", "apple"],
+  authProviderLabel: { google: "Google", apple: "Apple" },
 }));
 
 const project: Project = {
@@ -91,7 +99,9 @@ describe("low-friction primary actions", () => {
   it("signs in with email and password from the focused email field", async () => {
     render(<AuthScreen configured role="contributor" />);
     fireEvent.click(
-      screen.getByRole("button", { name: /sign in with a password instead/i }),
+      await screen.findByRole("button", {
+        name: /use an email address and password/i,
+      }),
     );
     const emailInput = screen.getByLabelText("Email address");
     fireEvent.change(emailInput, { target: { value: "field@example.com" } });

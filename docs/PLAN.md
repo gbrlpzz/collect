@@ -54,9 +54,9 @@ flowchart TD
 | Synchronization           | ✅     | Health-gated metadata → TUS media → finalization, durable receipt, lease, retry, permanent-failure classification                                    |
 | Recovery                  | ✅     | Pre-auth recovery path and local unsynced-data package from durable stores                                                                           |
 | Project administration    | ✅     | Project creation, typed schema builder, preview, immutable publication, contributor management (roster sign-in-code issuance and access removal)     |
-| Multi-user authorization  | ✅     | Organizations, projects, invite-only accounts, row-level security, administrator allow-list                                                          |
+| Multi-user authorization  | ✅     | Organizations, projects, open contributor accounts with membership-gated visibility, row-level security, administrator allow-list                    |
 | Access revocation         | ✅     | Roster removal revokes membership, pending invites, and readiness rows; research records and device-local observations are preserved                 |
-| iOS authentication        | ✅     | Contributor sign-in codes (admin-issued or self-service), administrator magic links, installed-app device codes, password fallback                   |
+| Authentication            | ✅     | Google and Apple sign-in, email sign-in links, passwords, contributor sign-in codes, installed-app device codes                                      |
 | Consent                   | ✅     | Versioned interface, contributor profile record, server ingestion enforcement, checkpoint fields                                                     |
 | Attention verification    | 🟡     | Server-validated advisory signal and exports; deployment-specific bank validation and localization remain operator duties                            |
 | Provenance                | ✅     | Location and environment capture when permitted, schema/app/device/time identity                                                                     |

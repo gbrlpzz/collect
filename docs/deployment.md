@@ -49,13 +49,14 @@ flowchart TB
   FrontendHosting <-->|"HTTPS / WSS"| SupabaseBackend
 ```
 
-| Component          | Provider                  | Purpose                                                                                 |
-| :----------------- | :------------------------ | :-------------------------------------------------------------------------------------- |
-| **Frontend**       | Vercel or static CDN host | Hosts the PWA client bundle and service worker.                                         |
-| **Database**       | Supabase PostgreSQL       | Stores organizations, schemas, submissions, consent, and audit logs.                    |
-| **Object storage** | Supabase Storage          | Hosts private media (`collect-media`) and checkpoint ZIPs (`collect-exports`).          |
-| **Privileged API** | Supabase Edge Functions   | Handles ingestion, invitations, device linking, and exports.                            |
-| **Email delivery** | Supabase Auth / Resend    | Sends administrator magic links, contributor sign-in codes, invitations, and reminders. |
+| Component              | Provider                  | Purpose                                                                                                      |
+| :--------------------- | :------------------------ | :----------------------------------------------------------------------------------------------------------- |
+| **Frontend**           | Vercel or static CDN host | Hosts the PWA client bundle and service worker.                                                              |
+| **Database**           | Supabase PostgreSQL       | Stores organizations, schemas, submissions, consent, and audit logs.                                         |
+| **Object storage**     | Supabase Storage          | Hosts private media (`collect-media`) and checkpoint ZIPs (`collect-exports`).                               |
+| **Privileged API**     | Supabase Edge Functions   | Handles ingestion, invitations, device linking, and exports.                                                 |
+| **Identity providers** | Google, Apple             | Admit people without email. Enabled per deployment; the sign-in screen offers only what is enabled.          |
+| **Email delivery**     | Resend / Supabase Auth    | Resend sends invitations, sign-in codes, and reminders. The provider mailer only sends backup sign-in links. |
 
 > [!WARNING]
 > Never put service-role keys or database passwords into frontend environment variables (`VITE_*`).
@@ -197,8 +198,14 @@ project is linked. The production project currently has these applied:
   homepage at `/`, app at `/app`).
 - **Redirect allow-list**: `https://collect-tawny.vercel.app`,
   `https://collect-tawny.vercel.app/app` (magic links return to the app path).
-- **Invite-only accounts**: `disable_signup = true` — the generic sign-in
-  screen can never create accounts; only administrator invitations do.
+- **Open contributor sign-up**: `disable_signup = false`. A first Google or
+  Apple sign-in is a sign-up, so this must stay open. An account on its own
+  shows nothing: projects need a membership, and administrator rights need
+  the allow-list. The email link path still refuses to create accounts.
+- **Identity providers**: Google and Apple. Credentials are set through
+  `npm run provision -- --auth-only` (or the dashboard); the sign-in screen
+  reads `/auth/v1/settings` and offers exactly what is enabled. Full setup in
+  [Authentication](authentication.md).
 - **Bridge codes**: contributor sign-in and device-link codes share one
   bridge table: 8 characters from an unambiguous alphabet (32⁸), single-use
   with an atomic consume, and stored only as SHA-256 hashes. Sign-in codes

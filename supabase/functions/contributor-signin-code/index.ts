@@ -134,19 +134,38 @@ Deno.serve(async (request) => {
       if (!(await bumpIpRateLimit(request, service))) {
         return json({ accepted: true });
       }
-      // Self-service is invite-only: mint only for addresses that already
-      // hold a contributor account, and answer uniformly either way.
-      const { data: userId } = await service.rpc("resolve_user_id_by_email", {
+      // Self-service stays invitation-bound: a code is minted only for an
+      // address that already contributes to a project or holds a pending
+      // invitation. Every answer is identical, so the sign-in screen never
+      // reveals which addresses exist.
+      const { data: resolved } = await service.rpc("resolve_user_id_by_email", {
         p_email: email,
       });
-      if (typeof userId === "string") {
+      let userId = typeof resolved === "string" ? resolved : null;
+      const { data: invite } = await service
+        .from("project_invites")
+        .select("id")
+        .eq("status", "pending")
+        .eq("email", email)
+        .maybeSingle();
+      if (!userId && invite) {
+        // An invited person who cannot use a provider still needs a way in.
+        // The account is created here — never for an uninvited address — and
+        // membership is granted by claim-invites at first sign-in.
+        const created = await service.auth.admin.createUser({
+          email,
+          email_confirm: true,
+        });
+        userId = created.data?.user?.id ?? null;
+      }
+      if (userId) {
         const { data: member } = await service
           .from("project_members")
           .select("user_id")
           .eq("user_id", userId)
           .eq("role", "contributor")
           .maybeSingle();
-        if (member) {
+        if (member || invite) {
           try {
             await issueCode(service, userId, email, null, null, null);
           } catch {

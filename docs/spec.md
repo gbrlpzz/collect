@@ -37,8 +37,13 @@ The complexity belongs in the infrastructure, not in the contributor interface.
 > - **Bridge code length.** Sign-in and device-link codes share one server
 >   alphabet: 8 characters (A–Z, 2–9, no 0/O/1/I), single-use, stored only
 >   as SHA-256 hashes, with short time-to-live windows. Email OTP codes are
->   not used; contributors authenticate with sign-in codes (admin-issued or
->   self-service) and administrators with invitation magic links.
+>   not used.
+> - **Provider-first authentication.** Everyone signs in with Google or Apple
+>   where a deployment enables them; sign-in links, passwords, and bridge
+>   codes remain as backups. Email stays the identifier. Anyone may create a
+>   contributor account and sees nothing without a membership; administrator
+>   rights are granted at sign-in only to allow-listed addresses. See
+>   [Authentication](authentication.md).
 > - **Contributor home.** The contributor surface is capture-first ("New
 >   observation"), with the project as secondary context; there is no
 >   project-selection or tab-bar navigation layer for a single assignment.

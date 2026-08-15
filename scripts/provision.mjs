@@ -31,6 +31,13 @@ Required environment:
   BOOTSTRAP_ADMIN_EMAIL       first administrator email
 
 Optional environment:
+  SUPABASE_AUTH_GOOGLE_CLIENT_ID / SUPABASE_AUTH_GOOGLE_SECRET
+  SUPABASE_AUTH_APPLE_CLIENT_ID  / SUPABASE_AUTH_APPLE_SECRET
+                              identity provider credentials; a provider is
+                              enabled only when both values are present
+  SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / SMTP_SENDER_EMAIL
+                              custom mail transport (for example Resend) for
+                              the backup email sign-in paths
   SUPABASE_DB_PASSWORD        database password, if the CLI requests it
   SUPABASE_REDIRECT_URLS      comma-separated additional Auth redirect URLs
   VITE_SUPABASE_PUBLISHABLE_KEY (required with --issue-magic-link)
@@ -39,6 +46,7 @@ Optional environment:
 
 Usage:
   npm run provision
+  npm run provision -- --auth-only
   npm run provision -- --issue-magic-link
 
 The optional flag requests one magic link for BOOTSTRAP_ADMIN_EMAIL after
@@ -105,6 +113,58 @@ function runSupabase(cli, cliArgs, env) {
   }
 }
 
+/**
+ * Identity providers. Credentials come from the environment, never the
+ * repository. A provider is left untouched when its credentials are absent,
+ * so running provisioning again never disables a provider by accident.
+ */
+function providerConfig() {
+  const google = {
+    id: process.env.SUPABASE_AUTH_GOOGLE_CLIENT_ID?.trim(),
+    secret: process.env.SUPABASE_AUTH_GOOGLE_SECRET?.trim(),
+  };
+  const apple = {
+    id: process.env.SUPABASE_AUTH_APPLE_CLIENT_ID?.trim(),
+    secret: process.env.SUPABASE_AUTH_APPLE_SECRET?.trim(),
+  };
+  const config = {};
+  if (google.id && google.secret) {
+    config.external_google_enabled = true;
+    config.external_google_client_id = google.id;
+    config.external_google_secret = google.secret;
+  }
+  if (apple.id && apple.secret) {
+    config.external_apple_enabled = true;
+    config.external_apple_client_id = apple.id;
+    config.external_apple_secret = apple.secret;
+    // Apple issues a private relay address when people hide their email.
+    // collect keeps email as the identifier, so an address is required.
+    config.external_apple_email_optional = false;
+  }
+  return config;
+}
+
+/**
+ * Optional custom SMTP (Resend). The backup email paths — sign-in links and
+ * confirmations — then leave through the project's own mail provider instead
+ * of the shared built-in mailer and its small hourly allowance.
+ */
+function smtpConfig() {
+  const host = process.env.SMTP_HOST?.trim();
+  const user = process.env.SMTP_USER?.trim();
+  const pass = process.env.SMTP_PASS?.trim();
+  const sender = process.env.SMTP_SENDER_EMAIL?.trim();
+  if (!host || !user || !pass || !sender) return {};
+  return {
+    smtp_host: host,
+    smtp_port: process.env.SMTP_PORT?.trim() || "587",
+    smtp_user: user,
+    smtp_pass: pass,
+    smtp_admin_email: sender,
+    smtp_sender_name: process.env.SMTP_SENDER_NAME?.trim() || "collect",
+  };
+}
+
 async function updateAuthConfig({
   projectRef,
   accessToken,
@@ -114,6 +174,13 @@ async function updateAuthConfig({
   const baseBody = {
     site_url: appUrl,
     uri_allow_list: redirectUrls.join(","),
+    // Sign-up stays open: a first provider sign-in is a sign-up. An account
+    // on its own shows nothing — projects need a membership, and
+    // administrator rights need the allow-list.
+    disable_signup: false,
+    external_email_enabled: true,
+    ...providerConfig(),
+    ...smtpConfig(),
     // Custom email templates require a paid plan (or a custom SMTP provider);
     // free-tier projects reject them with HTTP 400. Keep them optional so
     // provisioning still configures the URLs that make magic links work.
@@ -213,8 +280,13 @@ async function main() {
   console.log(`Configuring Supabase Auth for ${appUrl}…`);
   await updateAuthConfig({ projectRef, accessToken, appUrl, redirectUrls });
   console.log(
-    "Auth URL, redirect allow-list, and magic-link template configured.",
+    "Auth URLs, open sign-up, identity providers, and mail transport configured.",
   );
+
+  if (args.has("--auth-only")) {
+    console.log("Auth configuration only: nothing else was changed.");
+    return;
+  }
 
   console.log("Linking the local Supabase directory to the target project…");
   runSupabase(cli, ["link", "--project-ref", projectRef], cliEnv);

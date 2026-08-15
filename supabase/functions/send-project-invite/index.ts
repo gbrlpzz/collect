@@ -1,6 +1,8 @@
 import { corsHeaders, json, options } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
 import { appEntryUrl } from "../_shared/config.ts";
+import { projectInviteEmail } from "../_shared/invite.ts";
+import { sendEmail } from "../_shared/mail.ts";
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return options();
@@ -60,19 +62,17 @@ Deno.serve(async (request) => {
       .maybeSingle();
     if (existingInvite) return json({ accepted: true, already_pending: true });
 
-    let invitedUserId: string | null = null;
-    const inviteResult = await service.auth.admin.inviteUserByEmail(email, {
-      redirectTo: appEntryUrl(),
-    });
-    if (!inviteResult.error) invitedUserId = inviteResult.data.user?.id ?? null;
-    else if (!/already|registered|exists/i.test(inviteResult.error.message)) {
-      return json(
-        { error: "The invitation could not be sent" },
-        {
-          status: 502,
-        },
-      );
-    }
+    // The invitation carries no credential: it names the project and points at
+    // the sign-in screen. An address that already has an account becomes a
+    // member immediately; a new address is claimed by claim-invites at first
+    // sign-in. Nothing here uses the authentication provider's mailer.
+    const { data: resolvedUserId } = await service.rpc(
+      "resolve_user_id_by_email",
+      { p_email: email },
+    );
+    const invitedUserId = typeof resolvedUserId === "string"
+      ? resolvedUserId
+      : null;
 
     const { error: insertError } = await service
       .from("project_invites")
@@ -99,34 +99,37 @@ Deno.serve(async (request) => {
         },
         { onConflict: "project_id,user_id" },
       );
-    } else {
-      // Already-registered users never receive the sign-up email. Send them a
-      // magic link through the public auth resend endpoint so the invitation
-      // is actually visible; membership is granted by claim-invites on the
-      // next sign-in.
-      const resendUrl = `${
-        Deno.env.get("SUPABASE_URL")?.replace(/\/$/, "") ?? ""
-      }/auth/v1/resend`;
-      const resendResult = await fetch(resendUrl, {
-        method: "POST",
-        headers: {
-          apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: "magiclink",
-          email,
-          options: {
-            redirect_to: appEntryUrl(),
-          },
-        }),
+    }
+
+    const { data: projectRow } = await service
+      .from("projects")
+      .select("name,organization_id")
+      .eq("id", projectId)
+      .maybeSingle();
+    const { data: organizationRow } = await service
+      .from("organizations")
+      .select("name")
+      .eq("id", access.project.organization_id as string)
+      .maybeSingle();
+    let emailed = false;
+    try {
+      const message = projectInviteEmail({
+        email,
+        appUrl: appEntryUrl(),
+        projectName: String(projectRow?.name ?? "a field project"),
+        organizationName: organizationRow?.name
+          ? String(organizationRow.name)
+          : null,
       });
-      if (!resendResult.ok && resendResult.status !== 429) {
-        return json(
-          { error: "The invitation link could not be sent" },
-          { status: 502 },
-        );
-      }
+      await sendEmail({
+        to: email,
+        subject: message.subject,
+        text: message.text,
+      });
+      emailed = true;
+    } catch {
+      // Delivery is advisory (mail.ts contract): the invitation is recorded,
+      // and the administrator can share the app address in person.
     }
     await service.from("audit_events").insert({
       organization_id: access.project.organization_id,
@@ -138,6 +141,7 @@ Deno.serve(async (request) => {
     return json({
       accepted: true,
       invited: true,
+      emailed,
       resend: resend || !invitedUserId,
     });
   } catch (error) {

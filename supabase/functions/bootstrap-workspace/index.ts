@@ -1,5 +1,5 @@
 import { corsHeaders, json, options } from "../_shared/cors.ts";
-import { errorMessage, requireUser } from "../_shared/auth.ts";
+import { errorMessage, isEmailAllowed, requireUser } from "../_shared/auth.ts";
 
 function configuredBootstrapEmail(): string | null {
   const value = Deno.env.get("BOOTSTRAP_ADMIN_EMAIL")?.trim().toLowerCase();
@@ -20,11 +20,22 @@ Deno.serve(async (request) => {
 
   try {
     const { user, service } = await requireUser(request);
+    const email = user.email?.trim().toLowerCase() ?? "";
     const bootstrapEmail = configuredBootstrapEmail();
-    if (bootstrapEmail && user.email?.trim().toLowerCase() !== bootstrapEmail) {
+    if (bootstrapEmail && email !== bootstrapEmail) {
       return json(
         {
           error: "This account is not configured as the first administrator",
+        },
+        { status: 403 },
+      );
+    }
+    // Anyone may create a contributor account, so the first workspace must
+    // stay behind the administrator allow-list wherever one is configured.
+    if (!(await isEmailAllowed(service, email))) {
+      return json(
+        {
+          error: "This account is not on the administrator allow-list",
         },
         { status: 403 },
       );

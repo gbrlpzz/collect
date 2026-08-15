@@ -42,9 +42,11 @@ strictly metadata → media → finalization; each step is idempotent and resuma
   TUS chunked media uploads with SHA-256 checksums, exponential backoff.
 - **Immutable evidence** — published schema versions and finalized submissions
   cannot be modified; conflicts are explicit, never silently overwritten.
-- **Invite-only access** — magic links, 8-character single-use sign-in codes
-  (admin-issued or self-service), and device-link codes bridging iOS Safari
-  and installed PWA containers.
+- **Provider-first sign-in** — Continue with Google or Apple, with email
+  links, passwords, and 8-character single-use codes (admin-issued or
+  self-service) as backups. Email stays the identifier. Projects appear only
+  where a membership exists, and administrator rights only for an
+  allow-listed address. See [Authentication](docs/authentication.md).
 - **Server-enforced consent** — the backend rejects submissions from accounts
   without an active, unrevoked consent record.
 - **Attention verification** — instruction checks evaluated in memory; the
@@ -191,19 +193,20 @@ full guide.
 
 Start with the [documentation index](docs/README.md). Core guides:
 
-| Document                                               | Purpose                                                               |
-| :----------------------------------------------------- | :-------------------------------------------------------------------- |
-| [Architecture](docs/architecture.md)                   | System boundaries, storage isolation, and synchronization invariants  |
-| [Product specification](docs/spec.md)                  | Normative functional and technical requirements                       |
-| [Flows](docs/flows.md)                                 | Step-by-step contributor, administrator, and authentication workflows |
-| [Privacy](docs/privacy.md)                             | Data categories, retention rules, and operator responsibilities       |
-| [Design](docs/design.md)                               | Interface baseline, typography, touch targets, accessibility rules    |
-| [Deployment](docs/deployment.md)                       | Setup instructions, environment variables, and CLI automation         |
-| [Export format](docs/export-format.md)                 | Checkpoint archive layout, JSONL/CSV formats, and integrity hashes    |
-| [Dataset standards](docs/dataset-standards.md)         | DataCite metadata, data dictionaries, and ontology mapping            |
-| [Attention QA](docs/attention-qa.md)                   | Quality check bank, scoring formulas, and ethical boundaries          |
-| [Background automation](docs/background-automation.md) | Lifecycle hooks, sync triggers, and lease coordination                |
-| [Implementation status](docs/PLAN.md)                  | Current test coverage and roadmap status                              |
+| Document                                               | Purpose                                                                 |
+| :----------------------------------------------------- | :---------------------------------------------------------------------- |
+| [Architecture](docs/architecture.md)                   | System boundaries, storage isolation, and synchronization invariants    |
+| [Authentication](docs/authentication.md)               | Provider sign-in, backup methods, invitations, administrator allow-list |
+| [Product specification](docs/spec.md)                  | Normative functional and technical requirements                         |
+| [Flows](docs/flows.md)                                 | Step-by-step contributor, administrator, and authentication workflows   |
+| [Privacy](docs/privacy.md)                             | Data categories, retention rules, and operator responsibilities         |
+| [Design](docs/design.md)                               | Interface baseline, typography, touch targets, accessibility rules      |
+| [Deployment](docs/deployment.md)                       | Setup instructions, environment variables, and CLI automation           |
+| [Export format](docs/export-format.md)                 | Checkpoint archive layout, JSONL/CSV formats, and integrity hashes      |
+| [Dataset standards](docs/dataset-standards.md)         | DataCite metadata, data dictionaries, and ontology mapping              |
+| [Attention QA](docs/attention-qa.md)                   | Quality check bank, scoring formulas, and ethical boundaries            |
+| [Background automation](docs/background-automation.md) | Lifecycle hooks, sync triggers, and lease coordination                  |
+| [Implementation status](docs/PLAN.md)                  | Current test coverage and roadmap status                                |
 
 ## Contributing
 

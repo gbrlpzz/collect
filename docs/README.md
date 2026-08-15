@@ -25,6 +25,7 @@ This directory documents the system architecture, workflows, data formats, and d
 ### 3. Develop and contribute
 
 - [Architecture](architecture.md): Code boundaries, storage isolation, and synchronization invariants.
+- [Authentication](authentication.md): Provider sign-in, backup methods, invitations, and the administrator allow-list.
 - [Product specification](spec.md): Normative system requirements and constraints.
 - [Implementation status](PLAN.md): Current test coverage and roadmap status.
 - [Contributing](../CONTRIBUTING.md): Contribution guidelines and testing expectations.

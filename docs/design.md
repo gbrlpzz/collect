@@ -97,6 +97,36 @@ The collector presents questions one field at a time:
 
 ---
 
+## Sign-in screen
+
+The sign-in screen is the one place where two outside brands appear. It
+follows the Apple Human Interface Guidelines verbatim; no deviation record
+applies.
+
+- **Sign in with Apple** ([HIG](https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple)):
+  the title is one of Apple's approved strings (_Continue with Apple_); logo
+  and title share one colour — black on the light contributor surface, white
+  on the dark administrator surface; the button is never smaller than the
+  other sign-in buttons and needs no scrolling; the corner radius matches the
+  app's own buttons, which the guidelines allow.
+- **Managing accounts** ([HIG](https://developer.apple.com/design/human-interface-guidelines/managing-accounts)):
+  every action names its method (_Continue with Google_, _Email me a sign-in
+  link_, _Sign in with a password_, _Sign in with a code_); only methods the
+  deployment actually offers are shown; an account created through a provider
+  is never asked to invent a password.
+- **Buttons** ([HIG](https://developer.apple.com/design/human-interface-guidelines/buttons)):
+  46px control height (above the 44pt minimum hit region), one coherent set
+  of equally sized primary choices, a visible press state, and an activity
+  indicator inside the button while a request is in flight.
+- **Google** uses the unmodified four-colour mark on a white button with a
+  `#747775` border (light) or a `#131314` button with a `#8e918f` border
+  (dark).
+
+Backup methods live under one **Other ways to sign in** disclosure, so the
+first screen stays two decisions wide.
+
+---
+
 ## Accessibility requirements
 
 1. **Screen readers**: Every button, input, and icon includes explicit accessible labels (`aria-label` or `<label>`).
