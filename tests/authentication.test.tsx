@@ -87,13 +87,29 @@ describe("provider sign-in", () => {
 
     expect(screen.getByText("Other ways to sign in")).toBeTruthy();
     const rows = Array.from(document.querySelectorAll(".auth-method"));
-    expect(rows.map((row) => row.querySelector("strong")?.textContent)).toEqual(
-      [
-        "Email me a sign-in link",
-        "Sign in with a password",
-        "Sign in with a code",
-      ],
+    expect(
+      rows.map((row) => row.querySelector(".auth-method-copy")?.textContent),
+    ).toEqual([
+      "Email me a sign-in link",
+      "Sign in with a password",
+      "Sign in with a code",
+    ]);
+    // Progressive disclosure: a row names its method and explains nothing
+    // until it is opened.
+    expect(
+      screen.queryByText(/from your administrator or a signed-in device/i),
+    ).toBeNull();
+  });
+
+  it("explains a method only once it is opened", async () => {
+    render(<AuthScreen configured role="contributor" />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /sign in with a code/i }),
     );
+
+    expect(
+      screen.getByText(/from your administrator or a signed-in device/i),
+    ).toBeTruthy();
   });
 
   it("opens one method at a time, with a way back", async () => {

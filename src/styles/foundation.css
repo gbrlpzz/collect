@@ -1264,12 +1264,6 @@ p {
   justify-content: space-between;
   gap: 12px;
 }
-.admin-section-note {
-  max-width: 62ch;
-  color: var(--secondary);
-  font-size: 0.8125rem;
-  line-height: 1.45;
-}
 .admin-project-card {
   width: 100%;
   min-height: 80px;
@@ -1982,7 +1976,7 @@ p {
 }
 .auth-method {
   width: 100%;
-  min-height: 60px;
+  min-height: 52px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -2010,18 +2004,8 @@ p {
 }
 .auth-method-copy {
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.auth-method-copy strong {
   font-size: 0.9375rem;
   font-weight: 600;
-}
-.auth-method-copy span {
-  color: var(--secondary);
-  font-size: 0.8125rem;
-  line-height: 1.35;
 }
 .auth-back {
   margin: -6px 0 6px;

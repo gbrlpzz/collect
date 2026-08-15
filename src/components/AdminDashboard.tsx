@@ -163,12 +163,14 @@ export function AdminDashboard({
               Add administrator
             </Button>
           </div>
-          <p className="admin-section-note">
-            Administrator rights follow the allow-list. Adding an address allows
-            it and sends an invitation; the rights are granted when that person
-            signs in, with any method. Everyone else can sign in as a
-            contributor and sees only the projects they are assigned to.
-          </p>
+          <InfoDisclosure title="How administrator access works">
+            <p>
+              Administrator rights follow the allow-list. Adding an address
+              allows it and sends an invitation; the rights are granted when
+              that person signs in, with any method. Everyone else can sign in
+              as a contributor and sees only the projects they are assigned to.
+            </p>
+          </InfoDisclosure>
         </section>
       )}
 

@@ -189,7 +189,9 @@ describe("low-friction primary actions", () => {
         await screen.findByRole("button", { name: /sign in with a code/i }),
       );
       expect(screen.getByLabelText(/8-character code/i)).toBeTruthy();
-      expect(screen.getByText(/enter the code you were given/i)).toBeTruthy();
+      expect(
+        screen.getByText(/from your administrator or a signed-in device/i),
+      ).toBeTruthy();
       expect(
         screen.queryByRole("button", { name: /link this device/i }),
       ).toBeNull();

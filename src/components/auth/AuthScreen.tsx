@@ -30,7 +30,6 @@ const backupMethods: {
   id: BackupMethod;
   icon: IconName;
   title: string;
-  detail: string;
   heading: string;
   lede: string;
 }[] = [
@@ -38,15 +37,13 @@ const backupMethods: {
     id: "link",
     icon: "send",
     title: "Email me a sign-in link",
-    detail: "Opens collect from your inbox.",
     heading: "Sign in with a link.",
-    lede: "We send a one-time link to the address on your account.",
+    lede: "We send a one-time link to the address on your account. Open it on this device.",
   },
   {
     id: "password",
     icon: "key",
     title: "Sign in with a password",
-    detail: "For an account that already has one.",
     heading: "Sign in with a password.",
     lede: "Use the email address and password on your account.",
   },
@@ -54,9 +51,8 @@ const backupMethods: {
     id: "code",
     icon: "phone",
     title: "Sign in with a code",
-    detail: "Eight characters, from your administrator or a signed-in device.",
     heading: "Sign in with a code.",
-    lede: "Enter the code you were given, or request a fresh one below.",
+    lede: "Eight characters, from your administrator or a signed-in device. Request a fresh one below.",
   },
 ];
 
@@ -187,14 +183,19 @@ export function AuthScreen({
                 />
 
                 {providers.length > 0 && standalone && (
-                  <p className="auth-config-note">
-                    <Icon name="info" size={16} />
-                    <span>
-                      The provider opens in the browser. If it does not return
-                      to this app, sign in there and use a code from the
-                      signed-in browser.
-                    </span>
-                  </p>
+                  <details className="auth-install-help">
+                    <summary>
+                      <Icon name="info" size={16} /> If the provider does not
+                      return to this app
+                    </summary>
+                    <div className="auth-install-content">
+                      <p>
+                        The provider opens in the browser. Sign in there, then
+                        use <strong>Sign in with a code</strong> here with a
+                        code from the signed-in browser.
+                      </p>
+                    </div>
+                  </details>
                 )}
 
                 {providersChecked && (
@@ -215,8 +216,7 @@ export function AuthScreen({
                           >
                             <Icon name={candidate.icon} size={19} />
                             <span className="auth-method-copy">
-                              <strong>{candidate.title}</strong>
-                              <span>{candidate.detail}</span>
+                              {candidate.title}
                             </span>
                             <Icon name="chevron-right" size={17} />
                           </button>

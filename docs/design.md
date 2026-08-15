@@ -123,11 +123,14 @@ applies.
   (dark).
 
 Backup methods are a grouped list under **Other ways to sign in**: a leading
-symbol, a succinct title, one line of detail, and a chevron, following the
+symbol, the method name, and a chevron, following the
 ["Lists and tables"](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables)
-rule that a row which opens a view carries a disclosure indicator. Choosing a
-row opens that method alone, with **All sign-in options** to step back, so no
-screen ever presents two ways in at once.
+rule that a row which opens a view carries a disclosure indicator. A row
+names its method and explains nothing; the explanation appears when that
+method opens. Choosing a row opens it alone, with **All sign-in options** to
+step back, so no screen presents two ways in at once. Advice that only some
+people need — what to do when a provider does not return to an installed app
+— stays collapsed until it is asked for.
 
 ---
 
