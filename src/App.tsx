@@ -159,7 +159,19 @@ export default function App() {
     );
   }
 
-  if (session && consentState === "required" && consentVersion) {
+  // Consent is asked when there is fieldwork to consent to. Anyone may create
+  // an account; an account with no assigned project has nothing to collect,
+  // so it is not asked to accept a collection statement. The server still
+  // refuses any submission without a granted consent.
+  const hasAssignedProject =
+    (state.projects?.length ?? 0) > 0 || state.project.id !== "empty-project";
+
+  if (
+    session &&
+    consentState === "required" &&
+    consentVersion &&
+    hasAssignedProject
+  ) {
     return (
       <ConsentScreen
         text={consentVersion.text}

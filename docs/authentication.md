@@ -18,7 +18,10 @@ memberships, invitations, and the administrator allow-list are keyed on.
 | What identifies an account?      | The email address. Providers, links, codes, and passwords all resolve to the same address.                       |
 
 An account with no membership is not an error state. The contributor surface
-shows an empty project list, and the app stays usable offline.
+says **No assigned project**, and the app stays usable offline. Such an
+account is not asked to accept the collection consent either: there is
+nothing to collect yet. The server still refuses any submission from an
+account without a granted consent.
 
 ---
 
@@ -130,6 +133,19 @@ The Google button uses the unmodified four-colour mark.
    for Sign in with Apple, and note the Team ID and Key ID. Register the
    return URL `https://<project-ref>.supabase.co/auth/v1/callback` and the
    app domain. Apple does not accept `localhost`.
+
+   Apple issues no static secret. Build the client secret from the key:
+
+   ```bash
+   node scripts/apple-client-secret.mjs \
+     --team-id ABCDE12345 --key-id FGHIJ67890 \
+     --services-id org.example.collect.web \
+     --key ./AuthKey_FGHIJ67890.p8
+   ```
+
+   The value is valid for at most six months. Run the script again before it
+   expires and apply the new value.
+
 3. **Apply the configuration.**
 
    ```bash
@@ -151,10 +167,10 @@ The Google button uses the unmodified four-colour mark.
    running the script. Sign-in links and confirmations then leave through the
    project's own mail provider instead of the shared built-in mailer.
 
-The Apple client secret is a JWT built from the Team ID, Key ID, Services ID,
-and the `.p8` key. Supabase accepts the `.p8` contents in the dashboard and
-computes it; when configuring through the Management API, supply the
-generated JWT as `SUPABASE_AUTH_APPLE_SECRET`.
+The Apple client secret is an ES256 JWT built from the Team ID, Key ID,
+Services ID, and the `.p8` key, which is what
+`scripts/apple-client-secret.mjs` produces. It expires; renewing it is a
+recurring operational task, not a one-time setup step.
 
 ---
 
