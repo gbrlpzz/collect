@@ -117,6 +117,26 @@ export interface MediaAsset {
   blob?: Blob;
 }
 
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue =
+  | JsonPrimitive
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
+export type FormScalar = string | number | boolean | null | undefined;
+export type FormValue =
+  | FormScalar
+  | FormScalar[]
+  | MediaAsset
+  | MediaAsset[]
+  | LocationValue
+  | { [key: string]: FormValue }
+  | Array<{ [key: string]: FormValue }>;
+
+export type EnvironmentContext = Record<string, JsonValue>;
+export type FormDraft = Record<string, FormValue>;
+export type SubmissionValues = Record<string, FormValue>;
+
 export interface Observation {
   id: string;
   projectId?: string;
@@ -125,11 +145,11 @@ export interface Observation {
   schemaVersion?: number;
   deviceId?: string;
   status: SubmissionState;
-  values: Record<string, unknown>;
+  values: SubmissionValues;
   media?: MediaAsset[];
   /** Everything recorded automatically with the observation (device, screen,
    * connection, battery, timezone); never shown in the collection UI. */
-  environment?: Record<string, unknown>;
+  environment?: EnvironmentContext;
   /** The automatic attention-check answer (check key + selected value). */
   attentionResponse?: { checkKey: string; selectedValue: string } | null;
   correctsSubmissionId?: string;
@@ -138,7 +158,7 @@ export interface Observation {
 export interface AppState {
   view: View;
   mode: AppMode;
-  draft: Record<string, unknown>;
+  draft: FormDraft;
   observations: Observation[];
   lastSavedAt: string | null;
   lastSyncAt: string | null;
@@ -149,4 +169,14 @@ export interface AppState {
   fieldworkComplete?: Record<string, boolean>;
   /** Projects whose metadata, schema, and shell assets have been stored for offline use. */
   offlineReady?: Record<string, boolean>;
+}
+
+export function isRecord(val: FormValue): val is Record<string, FormValue>;
+export function isRecord(
+  val: JsonValue | undefined,
+): val is Record<string, JsonValue>;
+export function isRecord(
+  val: FormValue | JsonValue | undefined,
+): val is Record<string, FormValue> | Record<string, JsonValue> {
+  return Boolean(val) && val instanceof Object && !Array.isArray(val);
 }

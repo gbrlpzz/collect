@@ -1,4 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
+
+const errorJsonSchema = z.object({
+  error: z.string().min(1),
+});
 
 /**
  * Supabase wraps non-2xx Edge Function responses in FunctionsHttpError whose
@@ -6,24 +11,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * body; this helper extracts it so callers get the real, user-facing error.
  */
 export async function readFunctionErrorBody(
-  error: unknown,
+  error: Error | { context?: Response } | null | undefined,
 ): Promise<string | null> {
-  const context =
-    error && typeof error === "object"
-      ? (error as { context?: unknown }).context
-      : null;
-  if (
-    context &&
-    typeof context === "object" &&
-    "clone" in context &&
-    typeof (context as { clone?: unknown }).clone === "function"
-  ) {
+  if (!error) return null;
+  const context = "context" in error ? error.context : null;
+  if (context instanceof Response) {
     try {
-      const body = (await (context as Response).clone().json()) as {
-        error?: unknown;
-      };
-      if (typeof body.error === "string" && body.error.trim())
-        return body.error;
+      const json: unknown = await context.clone().json();
+      const parsed = errorJsonSchema.safeParse(json);
+      if (parsed.success) return parsed.data.error;
     } catch {
       // The response is not JSON; fall back to the caller's fallback/error.
     }
@@ -36,11 +32,16 @@ export async function readFunctionErrorBody(
  * call fails. The schema is optional and used only to shape the success
  * payload.
  */
-export async function invokeFunction<T>(
+import type { JsonValue } from "../types";
+
+export async function invokeFunction<
+  T,
+  B extends Record<string, JsonValue> = Record<string, JsonValue>,
+>(
   client: SupabaseClient,
   name: string,
-  body: Record<string, unknown>,
-  schema?: { parse: (value: unknown) => T },
+  body: B,
+  schema?: z.ZodType<T>,
 ): Promise<T> {
   const { data, error } = await client.functions.invoke(name, { body });
   if (error) {
@@ -48,5 +49,7 @@ export async function invokeFunction<T>(
     if (message) throw new Error(message);
     throw error;
   }
-  return schema ? schema.parse(data) : (data as T);
+  if (schema) return schema.parse(data);
+  // SAFETY: when no schema is provided, the caller assumes responsibility for the response type.
+  return data as T;
 }

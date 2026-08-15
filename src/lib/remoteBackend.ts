@@ -1,6 +1,6 @@
 import { Upload } from "tus-js-client";
 import { z } from "zod";
-import type { MediaAsset, Observation, Project } from "../types";
+import type { JsonValue, MediaAsset, Observation, Project } from "../types";
 import { markOutboxOperation, setLocalSubmissionStatus } from "./localStore";
 import { invokeFunction } from "./functionError";
 import { buildMediaObjectPath } from "./syncProtocol";
@@ -19,9 +19,9 @@ function requireClient() {
   return supabase;
 }
 
-async function invoke<T>(
+async function invoke<T, B extends Record<string, JsonValue>>(
   functionName: string,
-  body: Record<string, unknown>,
+  body: B,
   schema: z.ZodType<T>,
 ): Promise<T> {
   const client = requireClient();
@@ -61,7 +61,9 @@ export async function createRemoteSubmission({
       submission_id: observation.id,
       project_id: project.id,
       schema_version: observation.schemaVersion ?? project.schemaVersion,
-      payload: observation.values,
+      // SAFETY: observation.values holds JSON-serializable scalars at the sync boundary;
+      // media blobs are uploaded separately and stripped before this call.
+      payload: observation.values as Record<string, JsonValue>,
       payload_hash: null,
       client_created_at:
         observation.clientCreatedAt ?? new Date().toISOString(),
@@ -129,7 +131,9 @@ export async function uploadRemoteMedia({
   const accessToken = sessionData.session?.access_token;
   if (!accessToken)
     throw new Error("Authentication is required before media upload");
+  // SAFETY: Vite injects the Supabase URL and keys at build time.
   const projectUrl = import.meta.env.VITE_SUPABASE_URL as string;
+  // SAFETY: Vite injects publishable or anon key at build time.
   const publishableKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
     import.meta.env.VITE_SUPABASE_ANON_KEY) as string;
   const endpoint = `${projectUrl.replace(/\/$/, "")}/storage/v1/upload/resumable`;
@@ -274,7 +278,9 @@ export async function syncRemoteObservation(
 
 export async function probeRemoteHealth(): Promise<boolean> {
   if (!supabase) return false;
+  // SAFETY: Vite injects build-time environment variables as strings or undefined.
   const projectUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  // SAFETY: Vite injects build-time environment variables as strings or undefined.
   const publishableKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
     import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
   if (!projectUrl || !publishableKey) return false;
@@ -300,8 +306,18 @@ export async function probeRemoteHealth(): Promise<boolean> {
   }
 }
 
+export interface DeviceStatusPayload extends Record<string, JsonValue> {
+  device_id: string;
+  project_id: string;
+  pending_submissions: number;
+  pending_media: number;
+  app_version: string;
+  schema_versions_cached: number[];
+  fieldwork_complete: boolean;
+}
+
 export async function reportDeviceStatus(
-  payload: Record<string, unknown>,
+  payload: DeviceStatusPayload,
 ): Promise<void> {
   await invoke("device-status", payload, z.object({ accepted: z.boolean() }));
 }
