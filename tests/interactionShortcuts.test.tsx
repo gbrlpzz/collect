@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { AdminDashboard, AdminProject } from "../src/components/AdminDashboard";
 import { AuthScreen } from "../src/components/auth/AuthScreen";
 import { Collector } from "../src/components/Collector";
 import { ConsentScreen } from "../src/components/ConsentScreen";
@@ -36,6 +37,7 @@ const authMocks = vi.hoisted(() => ({
 }));
 
 vi.mock("../src/lib/supabaseClient", () => ({
+  isSupabaseConfigured: true,
   authCallbackError: () => null,
   pendingAuthEmail: () => "",
   rememberAuthEmail: () => undefined,
@@ -132,7 +134,10 @@ describe("low-friction primary actions", () => {
     fireEvent.submit(emailInput.closest("form")!);
 
     await waitFor(() =>
-      expect(authMocks.sendMagicLink).toHaveBeenCalledWith("field@example.com"),
+      expect(authMocks.sendMagicLink).toHaveBeenCalledWith(
+        "field@example.com",
+        "admin",
+      ),
     );
     expect(screen.getByText(/open the newest link sent to/i)).toBeTruthy();
   });
@@ -731,5 +736,85 @@ describe("low-friction primary actions", () => {
       screen.getByRole("button", { name: /publish project/i }),
     ).toBeTruthy();
     expect(screen.queryByText("Step 4 of 4")).toBeNull();
+  });
+
+  it("renders the quiet wordmark footer across contributor and admin surfaces", () => {
+    const project: Project = {
+      id: "project-footer-test",
+      organization: "Research Group",
+      name: "Survey Area A",
+      description: "Field data collection",
+      instructions: "Collect evidence",
+      status: "active",
+      schemaVersion: 1,
+      completeSubmissions: 0,
+      contributors: 1,
+      fields: [],
+    };
+
+    const { unmount: unmountHome } = render(
+      <ContributorHome
+        projects={[project]}
+        activeProject={project}
+        observations={[]}
+        hasDraft={false}
+        onStartObservation={() => undefined}
+        onChooseProject={() => undefined}
+        onResumeObservation={() => undefined}
+        onDiscardAndStartObservation={() => undefined}
+        onOpenSync={() => undefined}
+      />,
+    );
+    expect(screen.getByLabelText("collect by gbrlpzz")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "gbrlpzz" })).toBeTruthy();
+    unmountHome();
+
+    const { unmount: unmountAdmin } = render(
+      <AdminDashboard
+        project={project}
+        projects={[project]}
+        onNavigate={() => undefined}
+        onSelectProject={() => undefined}
+        onToast={() => undefined}
+      />,
+    );
+    expect(screen.getByLabelText("collect by gbrlpzz")).toBeTruthy();
+    unmountAdmin();
+
+    const { unmount: unmountAdminProject } = render(
+      <AdminProject
+        project={project}
+        onBack={() => undefined}
+        onToast={() => undefined}
+        onExport={() => undefined}
+        onSchemaPublished={() => undefined}
+        onToggleStatus={() => undefined}
+      />,
+    );
+    expect(screen.getByLabelText("collect by gbrlpzz")).toBeTruthy();
+    unmountAdminProject();
+
+    const { unmount: unmountWizard } = render(
+      <NewProjectWizard onBack={() => undefined} onPublish={vi.fn()} />,
+    );
+    expect(screen.getByLabelText("collect by gbrlpzz")).toBeTruthy();
+    unmountWizard();
+
+    const { unmount: unmountAuth } = render(
+      <AuthScreen configured role="admin" />,
+    );
+    expect(screen.getByLabelText("collect by gbrlpzz")).toBeTruthy();
+    unmountAuth();
+
+    const { unmount: unmountConsent } = render(
+      <ConsentScreen
+        text="Consent statement"
+        version={1}
+        onAccept={vi.fn()}
+        onDecline={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText("collect by gbrlpzz")).toBeTruthy();
+    unmountConsent();
   });
 });

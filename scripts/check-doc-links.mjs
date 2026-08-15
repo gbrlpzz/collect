@@ -5,7 +5,13 @@ import { dirname, extname, resolve } from "node:path";
 import process from "node:process";
 
 const ROOT = process.cwd();
-const ROOT_DOCUMENTS = ["README.md", "CONTRIBUTING.md", "AGENTS.md"];
+const ROOT_DOCUMENTS = [
+  "README.md",
+  "CONTRIBUTING.md",
+  "AGENTS.md",
+  "CODE_OF_CONDUCT.md",
+  "SECURITY.md",
+];
 
 function markdownFiles(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {

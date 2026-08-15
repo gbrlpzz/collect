@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { AuthScreen } from "./components/auth/AuthScreen";
 import { ConsentScreen } from "./components/ConsentScreen";
+import { AppCredit } from "./components/AppCredit";
 import { ContributorHome } from "./components/ContributorHome";
 import { Button, ConfirmationDialog, Eyebrow } from "./components/ui";
 import { Icon } from "./components/Icon";
@@ -138,6 +139,7 @@ export default function App() {
             Export recovery package
           </Button>
         </section>
+        <AppCredit />
       </main>
     );
   }
@@ -192,7 +194,7 @@ export default function App() {
     (adminAccess === "checking" || adminAccess === "unavailable")
   ) {
     return (
-      <main className="page page-contributor">
+      <main className="page page-admin" data-surface="admin">
         <div className="page-heading page-heading-home">
           <h1>
             {adminAccess === "checking"
@@ -211,13 +213,14 @@ export default function App() {
             Try again
           </Button>
         )}
+        <AppCredit />
       </main>
     );
   }
 
   if (surface === "admin" && configured && adminAccess === "denied") {
     return (
-      <main className="page page-contributor">
+      <main className="page page-admin" data-surface="admin">
         <div className="page-heading page-heading-home">
           <h1>Administrator access required</h1>
           <p className="page-lede">
@@ -228,6 +231,7 @@ export default function App() {
         <Button variant="primary" onClick={() => void signOut()}>
           Sign out
         </Button>
+        <AppCredit />
       </main>
     );
   }
@@ -379,9 +383,6 @@ export default function App() {
           </button>
         </div>
       )}
-      <footer className="app-footer" role="contentinfo">
-        <p>collect. by gbrlpzz</p>
-      </footer>
       <Analytics />
     </div>
   );

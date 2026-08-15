@@ -117,6 +117,7 @@ describe("visual system contract", () => {
       /@media \(max-width: 680px\)[\s\S]*?\.topbar-new-project\s*\{[^}]*display:\s*none/s,
     );
     expect(geometry).toMatch(/\.app-credit\s*\{[^}]*align-items:\s*baseline/s);
+    expect(styles).not.toContain(".app-footer");
   });
 
   it("keeps resume and deliberate restart together in the mobile reach zone", () => {

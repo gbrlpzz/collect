@@ -51,14 +51,30 @@ export async function setPassword(password: string): Promise<void> {
   if (error) throw error;
 }
 
+import { rememberAuthRole } from "./providers";
+
 /**
  * Email sign-in link. This is a backup path: it never creates an account, so
  * a stranger cannot spend the deployment's mail quota, and people who already
  * have an account can always get in without a provider.
  */
-export async function sendMagicLink(email: string): Promise<void> {
+export async function sendMagicLink(
+  email: string,
+  role?: "admin" | "contributor",
+): Promise<void> {
+  const targetRole =
+    role ??
+    (typeof window !== "undefined"
+      ? (new URLSearchParams(window.location.search).get("role") as
+          | "admin"
+          | "contributor"
+          | null)
+      : null);
+  if (targetRole) {
+    rememberAuthRole(targetRole);
+  }
   const client = requireAuthClient();
-  const emailRedirectTo = authReturnUrl();
+  const emailRedirectTo = authReturnUrl(targetRole);
   if (isLocalOrigin(emailRedirectTo) && !hasConfiguredAppUrl()) {
     // A link that returns to localhost can only be opened in the same browser
     // that requested it — never on a phone or another device. This instance

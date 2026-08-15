@@ -9,19 +9,3 @@
 @import "./styles/native.css" layer(native);
 @import "./styles/geometry.css" layer(geometry);
 @import "./styles/device-link.css" layer(geometry);
-
-/* =========================================================================
-   App Footer
-   ========================================================================= */
-.app-footer {
-  padding: 16px 24px;
-  border-top: 1px solid var(--separator-light);
-  background: var(--canvas);
-  text-align: center;
-}
-.app-footer p {
-  margin: 0;
-  color: var(--tertiary);
-  font-size: 0.6875rem;
-  font-weight: 500;
-}

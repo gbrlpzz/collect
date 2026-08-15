@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AppCredit } from "./AppCredit";
 import { Icon } from "./Icon";
 import { Button, Divider, IconButton, InfoDisclosure } from "./ui";
 import { projectFields } from "../data/schemaFixtures";
@@ -446,6 +447,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
           )}
         </div>
       </form>
+      <AppCredit />
     </main>
   );
 }

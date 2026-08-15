@@ -67,4 +67,14 @@ describe("provider discovery", () => {
     const { enabledAuthProviders } = await loadProviders();
     expect(await enabledAuthProviders()).toEqual([]);
   });
+
+  it("stores and consumes pending auth role across OAuth redirects", async () => {
+    const { rememberAuthRole, consumePendingAuthRole } = await loadProviders();
+    expect(consumePendingAuthRole()).toBeNull();
+
+    rememberAuthRole("admin");
+    expect(consumePendingAuthRole()).toBe("admin");
+    // Once consumed, it is cleared from storage so it does not leak into later logins.
+    expect(consumePendingAuthRole()).toBeNull();
+  });
 });

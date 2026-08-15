@@ -29,8 +29,10 @@ export {
 export {
   authProviderLabel,
   authProviders,
+  consumePendingAuthRole,
   enabledAuthProviders,
   knownAuthProviders,
+  rememberAuthRole,
   signInWithProvider,
   type AuthProvider,
 } from "./auth/providers";

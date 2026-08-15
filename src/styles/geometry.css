@@ -66,6 +66,10 @@
 
 :root[data-collect-surface="admin"],
 .app-shell[data-mode="admin"],
+.auth-page[data-role="admin"],
+.auth-page[data-surface="admin"],
+.page-admin,
+.page-admin-project,
 .hp-iphone-dark {
   color-scheme: dark;
   --canvas: #000000;
@@ -1331,6 +1335,10 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   }
   :root[data-collect-surface="admin"],
   .app-shell[data-mode="admin"],
+  .auth-page[data-role="admin"],
+  .auth-page[data-surface="admin"],
+  .page-admin,
+  .page-admin-project,
   .hp-iphone-dark {
     --text: #ffffff;
     --secondary: #f2f2f7;
@@ -1582,6 +1590,10 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 }
 .app-credit a:active {
   opacity: 0.55;
+}
+.auth-page .app-credit {
+  margin-top: auto;
+  padding-top: var(--space-7);
 }
 
 /* Project privacy reads like a native settings disclosure, not legal fine
@@ -2148,6 +2160,19 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 }
 .profile-about-content a:not(.profile-feedback) {
   color: var(--text);
+}
+.profile-about-legal {
+  color: var(--tertiary);
+  font-size: 0.6875rem;
+}
+.profile-about-legal a {
+  color: var(--tertiary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+.profile-about-legal a:hover {
+  color: var(--secondary);
 }
 .profile-feedback {
   justify-content: center;

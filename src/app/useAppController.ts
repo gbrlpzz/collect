@@ -32,6 +32,7 @@ import {
 } from "../lib/localStore";
 import {
   authSession,
+  consumePendingAuthRole,
   isSupabaseConfigured,
   localBackendKey,
   supabase,
@@ -57,8 +58,28 @@ import { APP_VERSION } from "../lib/appMeta";
 
 const entryRole = (() => {
   if (typeof window === "undefined") return null;
-  const role = new URLSearchParams(window.location.search).get("role");
-  return role === "admin" || role === "contributor" ? role : null;
+  const paramRole = new URLSearchParams(window.location.search).get("role");
+  if (paramRole === "admin" || paramRole === "contributor") return paramRole;
+  const pendingRole = consumePendingAuthRole();
+  if (pendingRole === "admin" || pendingRole === "contributor") {
+    // Preserve the role in the address bar so reloads and bookmarks stay on the
+    // intended surface after OAuth returns.
+    if (
+      pendingRole === "admin" &&
+      window.history?.replaceState &&
+      !window.location.search.includes("role=")
+    ) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("role", "admin");
+      window.history.replaceState(
+        window.history.state,
+        document.title,
+        `${url.pathname}${url.search}`,
+      );
+    }
+    return pendingRole;
+  }
+  return null;
 })();
 
 // The two installable apps have fixed entry roles. The contributor app is the

@@ -60,4 +60,11 @@ describe("sign-in return origin", () => {
     const { authRedirectOrigin } = await loadConfig("");
     expect(authRedirectOrigin()).toBe("http://localhost:5173");
   });
+
+  it("appends role=admin to return URL when signing in from the admin surface", async () => {
+    serveFrom("https://collect.example.org");
+    const { authReturnUrl } = await loadConfig("https://collect.example.org");
+    expect(authReturnUrl("admin")).toContain("?role=admin");
+    expect(authReturnUrl("contributor")).not.toContain("?role=admin");
+  });
 });

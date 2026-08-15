@@ -71,8 +71,17 @@ export function authRedirectOrigin(): string {
 }
 
 /** The exact URL every provider, link, and invitation returns to. */
-export function authReturnUrl(): string {
-  return authRedirectOrigin() + appBasePath;
+export function authReturnUrl(role?: "admin" | "contributor" | null): string {
+  const base = authRedirectOrigin() + appBasePath;
+  const targetRole =
+    role ??
+    (typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("role")
+      : null);
+  if (targetRole === "admin") {
+    return `${base}?role=admin`;
+  }
+  return base;
 }
 
 /** True when this deployment has no canonical origin of its own. */

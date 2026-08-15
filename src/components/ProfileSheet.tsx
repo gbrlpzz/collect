@@ -218,6 +218,16 @@ export function ProfileSheet({
               </a>
               .
             </p>
+            <p className="profile-about-legal">
+              © 2026 Gabriele Pizzi ·{" "}
+              <a
+                href="https://github.com/gbrlpzz/collect/blob/main/LICENSE"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Apache-2.0
+              </a>
+            </p>
             <a
               className="button button-secondary button-full profile-feedback"
               href={FEEDBACK_URL}
