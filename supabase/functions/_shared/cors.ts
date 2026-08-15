@@ -27,21 +27,16 @@ function allowOriginFor(request?: Request): string | null {
   return allowed[0];
 }
 
-interface CorsResponseHeaders {
-  "Access-Control-Allow-Origin"?: string;
-  "Access-Control-Allow-Headers": string;
-  "Access-Control-Allow-Methods": string;
-  Vary: string;
-}
-
-function corsHeaderRecord(origin: string | null): CorsResponseHeaders {
-  const headers: CorsResponseHeaders = {
+function corsHeaderRecord(origin: string | null) {
+  const headers = {
     "Access-Control-Allow-Headers":
       "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
     Vary: "Origin",
   };
-  if (origin) headers["Access-Control-Allow-Origin"] = origin;
+  if (origin) {
+    return { ...headers, "Access-Control-Allow-Origin": origin };
+  }
   return headers;
 }
 
