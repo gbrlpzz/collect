@@ -38,7 +38,8 @@ export function SyncDemo({
           <p>
             Flaky cellular links shouldn't jeopardize weeks of fieldwork.
             Submissions commit to device storage first, media transfers resume
-            in chunks, and records mark synced only upon signed server receipt.
+            in chunks, and records mark synced only upon server-confirmed
+            receipt.
           </p>
           <DocLinks files={["background-automation.md", "architecture.md"]} />
         </div>

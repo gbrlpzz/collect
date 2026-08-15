@@ -128,6 +128,17 @@ The Google button uses the unmodified four-colour mark.
 
 ## Setting it up
 
+`supabase/config.toml` pins the session and credential posture explicitly
+instead of inheriting platform defaults: passwords for the email backup path
+require at least 10 characters, access tokens expire after one hour, refresh
+tokens rotate on every use, and a rotated token stays valid for ten seconds
+so two open tabs do not sign each other out. CAPTCHA stays off for a calm
+first-run sign-in surface; a deployment that sees account or mail farming
+should enable it (see `docs/deployment.md`) — open sign-up plus free
+transactional email is the exposure. Apply configuration changes with the
+auth push flow described in the deployment guide; never leave a provider
+enabled without its credentials.
+
 **Google (enabled on this deployment).** Create an OAuth client of type _Web
 application_ in Google Cloud, then add exactly one authorized redirect URI:
 

@@ -85,9 +85,9 @@ unchanged (removal revokes membership and readiness rows, never evidence).
 3. A cross-tab mutex lease elects one active sync worker.
 4. The client uploads metadata, sends media files via resumable TUS, and calls the finalization endpoint.
 5. The server validates contributor consent, project membership, payload hashes, and media completeness.
-6. The server returns a signed finalization receipt.
+6. The server returns a server-confirmed finalization receipt (authenticated HTTPS response from the edge function).
 7. The client matches the receipt and updates the local record status to `SYNCED`.
-8. Transient errors retry automatically with exponential backoff. Irrecoverable conflicts transition to `ACTION_REQUIRED`.
+8. Transient errors retry automatically with exponential backoff. Irrecoverable conflicts transition to `ACTION_REQUIRED`; the sync sheet lists each blocked record with its cause and the single next step instead of promising an automatic retry.
 
 ### 4. Local data recovery
 
