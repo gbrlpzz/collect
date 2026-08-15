@@ -376,9 +376,9 @@ export async function publishSchemaDraft(draft: SchemaDraft): Promise<void> {
 }
 
 /**
- * Invite a new workspace administrator. Account creation and membership are
- * handled server-side by the send-admin-invite function; the generic sign-in
- * screen can never create accounts.
+ * Invite a new workspace administrator. The server adds the address to the
+ * administrator allow-list and emails a plain invitation; the rights
+ * themselves are granted when that address signs in, whatever method it uses.
  */
 export async function inviteAdministrator(email: string): Promise<void> {
   const client = requireClient();

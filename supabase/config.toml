@@ -47,14 +47,21 @@ enable_signup = true
 
 # Identity providers. They carry no email, so admitting people never depends
 # on a mail quota. Credentials live in the deployment, never in the repository.
+#
+# `enabled` stays false here until the deployment holds real credentials: a
+# provider enabled without them would show a sign-in button that always fails.
+# Set the four environment variables, flip `enabled` to true, and run
+# `supabase config push` — or apply them directly with
+# `npm run provision -- --auth-only`. The sign-in screen reads
+# /auth/v1/settings, so a provider appears as soon as the server accepts it.
 [auth.external.google]
-enabled = true
+enabled = false
 client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
 skip_nonce_check = false
 
 [auth.external.apple]
-enabled = true
+enabled = false
 client_id = "env(SUPABASE_AUTH_APPLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_APPLE_SECRET)"
 
@@ -63,6 +70,15 @@ otp_length = 6
 otp_expiry = 600
 double_confirm_changes = true
 enable_confirmations = true
+# One authentication email per address per minute. Open sign-up makes this
+# throttle the first defence of the mail allowance.
+max_frequency = "1m0s"
+
+# Multi-factor enrolment stays available on the account; collect does not
+# drive it, but pushing this file must never silently switch it off.
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
 
 [auth.email.template.invite]
 subject = "You're invited to collect"

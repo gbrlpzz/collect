@@ -369,8 +369,10 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
             </label>
             <InfoDisclosure title="How invitations work">
               <p>
-                Existing accounts are assigned immediately. Unknown addresses
-                receive an email invitation.
+                Existing accounts are assigned immediately. New addresses get an
+                email naming this project and linking to the sign-in screen.
+                They sign in with Google, Apple, or a backup method, and the
+                project appears.
               </p>
             </InfoDisclosure>
             <div className="publish-summary">
