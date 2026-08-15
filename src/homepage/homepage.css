@@ -344,7 +344,7 @@ body {
    rhythmic pacing:
      1. "collect." — anchors first, pauses with quiet authority.
      2. "trustworthy field evidence" — arrives as a swift, fluid couplet.
-     3. "offline" — key capability keyword focuses and holds for a beat.
+     3. "offline" — key capability keyword focuses with distinct optical emphasis and holds for a full beat.
      4. "on any phone." — finishes the sentence with authoritative resolve.
      5. Lede & CTA — gently unfold after the full headline resolves.
 
@@ -361,24 +361,24 @@ body {
 .hp-hero-clause {
   display: block;
   --clause-delay: 0s;
-  --clause-duration: 0.48s;
+  --clause-duration: 0.46s;
   will-change: transform, opacity;
 }
 /* Act 1: Brand anchor — deliberate focus and hold */
 .hp-hero-clause:nth-child(1) {
   --clause-delay: 0.08s;
-  --clause-duration: 0.46s;
+  --clause-duration: 0.44s;
 }
 /* Act 2: Couplet — "trustworthy" into "field evidence" */
 .hp-hero-clause:nth-child(2) {
-  --clause-delay: 0.76s;
-  --clause-duration: 0.36s;
+  --clause-delay: 0.72s;
+  --clause-duration: 0.34s;
 }
 .hp-hero-clause:nth-child(3) {
-  --clause-delay: 1s;
-  --clause-duration: 0.38s;
+  --clause-delay: 0.94s;
+  --clause-duration: 0.36s;
 }
-/* Act 3: "offline" keyword focus & hold, followed by "on any phone." */
+/* Act 3: "offline" emphasis & generous hold, followed by "on any phone." */
 .hp-hero-beat {
   display: inline-block;
   --clause-delay: 0s;
@@ -386,12 +386,12 @@ body {
   will-change: transform, opacity;
 }
 .hp-hero-clause:nth-child(4) .hp-hero-beat:first-child {
-  --clause-delay: 1.45s;
-  --clause-duration: 0.38s;
+  --clause-delay: 1.38s;
+  --clause-duration: 0.46s;
 }
 .hp-hero-clause:nth-child(4) .hp-hero-beat:last-child {
-  --clause-delay: 2.05s;
-  --clause-duration: 0.42s;
+  --clause-delay: 2.42s;
+  --clause-duration: 0.44s;
 }
 @media (max-width: 680px) {
   .hp-hero-clause {
@@ -430,6 +430,14 @@ body {
   animation: hp-hero-focus var(--clause-duration) var(--hero-ease)
     var(--clause-delay) both;
   will-change: transform, opacity, filter;
+}
+.hp-hero[data-hero-motion="focus"]
+  .hp-hero-clause:nth-child(4)
+  .hp-hero-beat:first-child,
+.hp-hero[data-hero-motion="lens"]
+  .hp-hero-clause:nth-child(4)
+  .hp-hero-beat:first-child {
+  animation-name: hp-hero-focus-emphasis;
 }
 @media (max-width: 680px) {
   /* Flowing inline text: blur and opacity transition cleanly */
@@ -491,7 +499,7 @@ body {
     background-repeat: no-repeat;
     -webkit-background-clip: text;
     background-clip: text;
-    animation: hp-hero-pass 2.2s var(--hero-ease) 0.12s both;
+    animation: hp-hero-pass 2.4s var(--hero-ease) 0.12s both;
   }
 }
 
@@ -573,12 +581,12 @@ body {
 .hp-hero[data-hero-motion]:not([data-hero-motion="off"]) .hp-hero-lede {
   opacity: 0;
   transform: translate3d(0, 8px, 0);
-  animation: hp-hero-rise 0.5s var(--hero-ease) 2.5s both;
+  animation: hp-hero-rise 0.48s var(--hero-ease) 2.9s both;
 }
 .hp-hero[data-hero-motion]:not([data-hero-motion="off"]) .hp-capture {
   opacity: 0;
   transform: translate3d(0, 8px, 0);
-  animation: hp-hero-rise 0.5s var(--hero-ease) 2.7s both;
+  animation: hp-hero-rise 0.48s var(--hero-ease) 3.08s both;
 }
 
 /* Keyframes */
@@ -596,6 +604,23 @@ body {
     opacity: 1;
     filter: blur(0px);
     transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes hp-hero-focus-emphasis {
+  0% {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translate3d(0, 10px, 0) scale(0.97);
+  }
+  50% {
+    opacity: 0.9;
+    filter: blur(2px);
+    transform: translate3d(0, 2px, 0) scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 @keyframes hp-hero-focus-inline {
