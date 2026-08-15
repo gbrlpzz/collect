@@ -22,3 +22,24 @@ export async function bumpIpRateLimit(
     .maybeSingle();
   return allowed !== false;
 }
+
+/**
+ * Per-administrator budget for minting sign-in codes. Generous by design
+ * (onboarding a roster is a burst of legitimate mints) but bounded, so a
+ * compromised administrator session cannot mint codes without limit. Uses
+ * the same throttling table under a distinct hashed key; 60 codes per hour.
+ */
+export async function bumpAdminMintLimit(
+  service: SupabaseClient,
+  adminUserId: string,
+): Promise<boolean> {
+  const key = await sha256(`admin-code-mint:${adminUserId}`);
+  const { data: allowed } = await service
+    .rpc("bump_signin_code_request", {
+      p_ip_hash: key,
+      p_window_minutes: 60,
+      p_max_requests: 60,
+    })
+    .maybeSingle();
+  return allowed !== false;
+}
