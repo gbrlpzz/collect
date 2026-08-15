@@ -208,13 +208,13 @@ export function ProfileSheet({
               <span>Version {APP_VERSION}</span>
             </div>
             <p>
-              Offline-first field collection developed by{" "}
+              Developed by{" "}
               <a
                 href="https://gbrlpzz.com/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                gbrlpzz
+                Gabriele Pizzi
               </a>
               .
             </p>
