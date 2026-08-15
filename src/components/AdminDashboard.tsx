@@ -1,4 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import type { ToastTone } from "../app/useTransientMessage";
+
+type ToastNotifier = (message: string, tone?: ToastTone) => void;
 import type { FieldDefinition, FieldOption, Project, View } from "../types";
 import { Icon } from "./Icon";
 import {
@@ -28,6 +31,7 @@ import {
   type ContributorReadiness,
   type SchemaDraft,
 } from "../lib/adminBackend";
+import { readFunctionErrorBody } from "../lib/functionError";
 import {
   createFieldForType,
   fieldWithType,
@@ -61,7 +65,7 @@ interface AdminDashboardProps {
   projects?: Project[];
   onNavigate: (view: View) => void;
   onSelectProject: (project: Project) => void;
-  onToast?: (message: string) => void;
+  onToast?: ToastNotifier;
 }
 
 export function AdminDashboard({
@@ -87,11 +91,18 @@ export function AdminDashboard({
       await inviteAdministrator(email);
       onToast?.(`${email} can now administer this workspace`);
     } catch (error) {
-      onToast?.(
-        error instanceof Error && error.message
-          ? error.message
-          : "The administrator could not be added",
+      // Prefer the server's curated reason; a bare transport status line is
+      // never shown raw. supabase-js failures are FunctionsHttpError (an
+      // Error carrying the Response) or network Errors — both fit the
+      // helper's contract.
+      // SAFETY: catch variable narrowed to the helper's accepted shapes.
+      const reason = await readFunctionErrorBody(
+        error as Error | { context?: Response } | null,
       );
+      const message = error instanceof Error ? error.message : null;
+      const usable =
+        reason ?? (message && !/^fetch failed/i.test(message) ? message : null);
+      onToast?.(usable ?? "The administrator could not be added", "failure");
     } finally {
       setAddingAdministrator(false);
     }
@@ -196,7 +207,7 @@ function fieldTypeLabel(type: FieldDefinition["type"]): string {
 export interface AdminProjectProps {
   project: Project;
   onBack: () => void;
-  onToast: (message: string) => void;
+  onToast: ToastNotifier;
   onExport: () => Promise<void> | void;
   onSchemaPublished: (project: Project) => void;
   onToggleStatus: () => void;
@@ -399,7 +410,7 @@ function SchemaPanel({
   onPreview,
 }: {
   project: Project;
-  onToast: (message: string) => void;
+  onToast: ToastNotifier;
   onPublished: (project: Project) => void;
   onPreview?: () => void;
 }) {
@@ -412,7 +423,7 @@ function SchemaPanel({
     try {
       setDraft(await createSchemaDraft(project));
     } catch {
-      onToast("The schema draft could not be opened");
+      onToast("The schema draft could not be opened", "failure");
     } finally {
       setBusy(false);
     }
@@ -682,7 +693,7 @@ function SchemaDraftEditor({
   busy: boolean;
   setBusy: (value: boolean) => void;
   onCancel: () => void;
-  onToast: (message: string) => void;
+  onToast: ToastNotifier;
   onPublished: (project: Project) => void;
 }) {
   const [fields, setFields] = useState<FieldDefinition[]>(draft.fields);
@@ -717,7 +728,7 @@ function SchemaDraftEditor({
       });
       onToast(`Schema v${draft.version} published`);
     } catch {
-      onToast("The schema could not be published");
+      onToast("The schema could not be published", "failure");
     } finally {
       setBusy(false);
     }
@@ -974,7 +985,7 @@ export function ContributorsPanel({
   refresh,
 }: {
   projectId: string;
-  onToast: (message: string) => void;
+  onToast: ToastNotifier;
   rows: ContributorReadiness[] | null;
   error: boolean;
   refresh: () => void;
@@ -996,22 +1007,30 @@ export function ContributorsPanel({
   } | null>(null);
   const [issuing, setIssuing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [codeIssueFailed, setCodeIssueFailed] = useState(false);
 
   const issueCode = useCallback(
     async (row: ContributorReadiness) => {
       setCodeRow(row);
       setIssuedCode(null);
       setCopied(false);
+      setCodeIssueFailed(false);
       setIssuing(true);
       try {
         setIssuedCode(await mintContributorSigninCode(projectId, row.email));
       } catch {
-        // In preview / demo mode, generate an authentic demo sign-in code
-        setIssuedCode({
-          code: "K9XP-4M7B",
-          expiresInSeconds: 86400,
-          emailed: true,
-        });
+        if (!isSupabaseConfigured) {
+          // Only the preview surface may show a fabricated code; on a real
+          // deployment a dead credential in the recovery path is worse than
+          // an honest failure.
+          setIssuedCode({
+            code: "K9XP-4M7B",
+            expiresInSeconds: 86400,
+            emailed: true,
+          });
+        } else {
+          setCodeIssueFailed(true);
+        }
       } finally {
         setIssuing(false);
       }
@@ -1025,7 +1044,7 @@ export function ContributorsPanel({
       await navigator.clipboard.writeText(issuedCode.code);
       setCopied(true);
     } catch {
-      onToast("Copy was unavailable; read the code above");
+      onToast("Copy was unavailable; read the code above", "failure");
     }
   };
 
@@ -1033,6 +1052,7 @@ export function ContributorsPanel({
     setCodeRow(null);
     setIssuedCode(null);
     setCopied(false);
+    setCodeIssueFailed(false);
   };
 
   const invite = async (email: string) => {
@@ -1043,7 +1063,7 @@ export function ContributorsPanel({
       onToast(`Invitation sent to ${email}`);
       refresh();
     } catch {
-      onToast("The invitation could not be sent");
+      onToast("The invitation could not be sent", "failure");
     } finally {
       setInviting(false);
     }
@@ -1072,7 +1092,7 @@ export function ContributorsPanel({
         onToast(`Invitation sent to ${email}`);
         refresh();
       } catch {
-        onToast("The invitation link could not be sent");
+        onToast("The invitation link could not be sent", "failure");
       }
     },
     [projectId, onToast, refresh],
@@ -1098,7 +1118,7 @@ export function ContributorsPanel({
       setRemovalRow(null);
       refresh();
     } catch {
-      onToast("The contributor could not be removed");
+      onToast("The contributor could not be removed", "failure");
     } finally {
       setRemoving(false);
     }
@@ -1218,11 +1238,13 @@ export function ContributorsPanel({
                 </p>
                 <div
                   className="device-code"
-                  aria-label={`Code ${issuedCode.code}`}
-                  aria-live="polite"
+                  role="img"
+                  aria-label={`Code ${issuedCode.code.split("").join(" ")}`}
                 >
                   {issuedCode.code.split("").map((digit, index) => (
-                    <span key={index}>{digit}</span>
+                    <span key={index} aria-hidden="true">
+                      {digit}
+                    </span>
                   ))}
                 </div>
                 <p className="device-code-expiry">
@@ -1243,6 +1265,27 @@ export function ContributorsPanel({
                   </Button>
                 </div>
               </>
+            ) : codeRow && codeIssueFailed ? (
+              <>
+                <p className="sheet-copy" role="alert">
+                  The code for <strong>{codeRow.email}</strong> could not be
+                  issued. Nothing was sent — try again, or share an invitation
+                  link instead.
+                </p>
+                <div className="device-link-actions">
+                  <Button
+                    variant="primary"
+                    icon="refresh"
+                    fullWidth
+                    onClick={() => void issueCode(codeRow)}
+                  >
+                    Try again
+                  </Button>
+                  <Button variant="quiet" fullWidth onClick={closeCodeSheet}>
+                    Close
+                  </Button>
+                </div>
+              </>
             ) : null}
           </ModalSurface>
         )}
@@ -1256,8 +1299,15 @@ export function ContributorsPanel({
             <h2>
               {error ? "Roster temporarily unavailable" : "Checking the roster"}
             </h2>
-            {error && <p>It will retry automatically.</p>}
+            {error && <p>It will retry automatically — or try again now.</p>}
           </div>
+          {error && (
+            <div className="admin-context-actions">
+              <Button variant="secondary" icon="refresh" onClick={refresh}>
+                Try again
+              </Button>
+            </div>
+          )}
         </div>
       </section>
     );

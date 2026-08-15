@@ -207,6 +207,12 @@ export function ContributorHome({
               <div className="recent-observation-list">
                 {recent.map((observation) => {
                   const waiting = observation.status !== "SYNCED";
+                  const statusLabel =
+                    observation.status === "ACTION_REQUIRED"
+                      ? "Needs attention"
+                      : waiting
+                        ? "Saved here"
+                        : "Sent";
                   return (
                     <div
                       className="recent-observation-row"
@@ -222,7 +228,15 @@ export function ContributorHome({
                           {formatRelativeTime(observation.createdAt)}
                         </span>
                       </span>
-                      <span>{waiting ? "Saved here" : "Sent"}</span>
+                      <span
+                        className={
+                          observation.status === "ACTION_REQUIRED"
+                            ? "recent-observation-flag"
+                            : undefined
+                        }
+                      >
+                        {statusLabel}
+                      </span>
                     </div>
                   );
                 })}

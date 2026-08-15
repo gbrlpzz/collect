@@ -6,6 +6,7 @@ import {
   getOutboxOperations,
   type OutboxOperation,
 } from "../lib/localStore";
+import { failureGuidance } from "../lib/syncErrors";
 import { formatExactTime, formatRelativeTime } from "../lib/formatTime";
 import { Icon } from "./Icon";
 import { Button, IconButton, InfoDisclosure, ModalSurface } from "./ui";
@@ -40,10 +41,11 @@ export function SyncSheet({
 }: SyncSheetProps) {
   const pending = observations.filter((item) => item.status !== "SYNCED");
   const hasPending = pending.length > 0;
-  const needsAttention = pending.filter(
-    (item) =>
-      item.status === "ACTION_REQUIRED" || item.status === "RETRYABLE_ERROR",
-  );
+  // Two different situations share this sheet: records the automation will
+  // retry, and records it will deliberately never retry (a person must act).
+  // Merging them promised retries that never come.
+  const retrying = pending.filter((item) => item.status !== "ACTION_REQUIRED");
+  const blocked = pending.filter((item) => item.status === "ACTION_REQUIRED");
   const [technicalOpen, setTechnicalOpen] = useState(false);
   const [storage, setStorage] = useState<{
     usage: number | null;
@@ -53,7 +55,9 @@ export function SyncSheet({
   const [operations, setOperations] = useState<OutboxOperation[] | null>(null);
 
   useEffect(() => {
-    if (!technicalOpen) return;
+    // Blocked records need their per-record reason without opening the
+    // technical disclosure first.
+    if (!technicalOpen && blocked.length === 0) return;
     let active = true;
     void Promise.all([estimateLocalStorage(), getOutboxOperations()])
       .then(([storageValue, operationValue]) => {
@@ -65,7 +69,21 @@ export function SyncSheet({
     return () => {
       active = false;
     };
-  }, [technicalOpen]);
+  }, [technicalOpen, blocked.length]);
+
+  const lastErrorFor = (observation: Observation): string | null => {
+    if (!operations) return null;
+    const mediaIds = new Set(
+      (observation.media ?? []).map((asset) => asset.id),
+    );
+    const match = operations.find(
+      (operation) =>
+        (operation.entityId === observation.id ||
+          mediaIds.has(operation.entityId)) &&
+        operation.lastError,
+    );
+    return match?.lastError ?? null;
+  };
 
   const activeProgress = pending
     .map((item) => ({ observation: item, entry: progress[item.id] }))
@@ -87,8 +105,10 @@ export function SyncSheet({
         <h2 id="sync-sheet-title">
           {isSyncing
             ? "Sending observations…"
-            : needsAttention.length
-              ? "Sync needs attention"
+            : blocked.length
+              ? `${blocked.length} ${
+                  blocked.length === 1 ? "record" : "records"
+                } need attention`
               : hasPending
                 ? `${pending.length} waiting to send`
                 : "Everything is up to date"}
@@ -103,8 +123,8 @@ export function SyncSheet({
 
       {hasPending && (
         <p className="sheet-copy" id="sync-sheet-copy">
-          {needsAttention.length
-            ? "Your observations remain saved here and will retry automatically."
+          {blocked.length
+            ? "The records listed below will not retry on their own — they need one step from you or your administrator."
             : "They are saved here and will send automatically."}
         </p>
       )}
@@ -146,16 +166,37 @@ export function SyncSheet({
         </div>
       )}
 
-      {needsAttention.length > 0 && !isSyncing && (
+      {blocked.length > 0 && !isSyncing && (
+        <div
+          className="sync-blocked-list"
+          aria-label="Records needing attention"
+        >
+          {blocked.map((observation) => {
+            const guidance = failureGuidance(lastErrorFor(observation));
+            return (
+              <div className="sync-blocked-row" key={observation.id}>
+                <div className="sync-blocked-copy">
+                  <strong>
+                    {String(observation.values.site_code ?? "New observation")}
+                  </strong>
+                  <span>{guidance.title}</span>
+                  <span className="sync-blocked-action">{guidance.action}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {retrying.length > 0 && !isSyncing && (
         <InfoDisclosure
           className="sync-attention-disclosure"
           title="About automatic retries and recovery"
         >
           <p>
-            {needsAttention.length}{" "}
-            {needsAttention.length === 1 ? "record" : "records"} will retry.
-            Export a recovery copy below only if you need to move the data off
-            this device.
+            {retrying.length} {retrying.length === 1 ? "record" : "records"}{" "}
+            will retry automatically. Export a recovery copy below only if you
+            need to move the data off this device.
           </p>
         </InfoDisclosure>
       )}
