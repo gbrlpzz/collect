@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { requestDeviceLinkCode } from "../lib/supabaseClient";
 import { Button, IconButton, ModalSurface } from "./ui";
 
@@ -78,6 +78,17 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
   const minutes = Math.floor(remaining / 60);
   const seconds = remaining % 60;
   const expired = remaining <= 0;
+  const wasExpiredRef = useRef(false);
+
+  // Expiry disables the copy action; the recovery path is "New code", so
+  // that is where focus should land instead of a dead control.
+  useEffect(() => {
+    if (expired && !wasExpiredRef.current) {
+      wasExpiredRef.current = true;
+      document.getElementById("device-new-code")?.focus();
+    }
+    if (!expired) wasExpiredRef.current = false;
+  }, [expired]);
 
   return (
     <ModalSurface
@@ -106,11 +117,13 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
         <>
           <div
             className="device-code"
-            aria-label={`Code ${code}`}
-            aria-live="polite"
+            role="img"
+            aria-label={`Code ${code.split("").join(" ")}`}
           >
             {code.split("").map((digit, index) => (
-              <span key={index}>{digit}</span>
+              <span key={index} aria-hidden="true">
+                {digit}
+              </span>
             ))}
           </div>
           <p className="device-code-expiry" aria-live="polite">
@@ -132,6 +145,7 @@ export function DeviceLinkSheet({ onClose }: DeviceLinkSheetProps) {
               variant="quiet"
               icon="refresh"
               fullWidth
+              id="device-new-code"
               onClick={() => void requestCode()}
               disabled={busy}
               busy={busy}

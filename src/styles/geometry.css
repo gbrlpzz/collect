@@ -415,6 +415,10 @@ h3 {
 .recent-observation-list .recent-observation-row:last-child {
   border-bottom: 0;
 }
+.recent-observation-flag {
+  font-weight: 600;
+  color: var(--text);
+}
 .project-row,
 .list-row {
   min-height: var(--row-height);

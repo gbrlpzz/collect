@@ -114,17 +114,26 @@ export function CodeSignIn({ autoFocus = false }: { autoFocus?: boolean }) {
       <button
         type="button"
         className="text-button"
+        aria-expanded={requestOpen}
+        aria-controls="auth-code-request-panel"
         onClick={() => {
           setRequestOpen((current) => !current);
           setRequestSent(false);
           setRequestError(null);
+          // Move focus into the revealed form so keyboard and screen-reader
+          // users are not left tabbing blindly past the toggle.
+          if (!requestOpen) {
+            window.setTimeout(() => {
+              document.getElementById("auth-request-email")?.focus();
+            }, 0);
+          }
         }}
       >
         {requestOpen ? "Hide" : "Request a new code by email"}{" "}
         <Icon name="arrow-right" size={15} />
       </button>
       {requestOpen && (
-        <div className="auth-code-request">
+        <div className="auth-code-request" id="auth-code-request-panel">
           {requestSent ? (
             <p className="auth-sent-note" role="status">
               If an account exists, a code is on its way to that address.

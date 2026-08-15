@@ -14,6 +14,7 @@ interface TopBarProps {
   isPreview?: boolean;
   observations?: Observation[];
   lastSyncAt?: string | null;
+  storagePersistence?: "unknown" | "granted" | "not-granted";
   onLinkDevice?: () => void;
   onRecoveryExport?: () => void;
   onSignOut?: () => void;
@@ -30,6 +31,7 @@ export function TopBar({
   isPreview = false,
   observations = [],
   lastSyncAt = null,
+  storagePersistence = "unknown",
   onLinkDevice,
   onRecoveryExport,
   onSignOut,
@@ -88,6 +90,7 @@ export function TopBar({
           organizationName={organizationName}
           observations={observations}
           lastSyncAt={lastSyncAt}
+          storagePersistence={storagePersistence}
           isAdmin={isAdmin}
           isPreview={isPreview}
           onClose={() => setProfileOpen(false)}

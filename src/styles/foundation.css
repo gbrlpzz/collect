@@ -1143,6 +1143,40 @@ p {
 .operation-status {
   white-space: nowrap;
 }
+.sync-blocked-list {
+  margin-bottom: 18px;
+  border-top: 1px solid var(--separator);
+  border-bottom: 1px solid var(--separator-light);
+}
+.sync-blocked-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--separator-light);
+}
+.sync-blocked-row:last-child {
+  border-bottom: 0;
+}
+.sync-blocked-copy {
+  min-width: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+.sync-blocked-copy strong {
+  overflow: hidden;
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sync-blocked-copy span {
+  color: var(--secondary);
+  font-size: 0.6875rem;
+}
+.sync-blocked-copy .sync-blocked-action {
+  color: var(--text);
+}
 .sync-facts {
   margin: 18px 0;
   padding: 14px 0;
@@ -1231,6 +1265,17 @@ p {
   border-radius: 50%;
   background: var(--grouped);
   color: var(--secondary);
+}
+.storage-alert .storage-alert-action {
+  width: auto;
+  height: auto;
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--grouped);
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* Admin list and project detail */

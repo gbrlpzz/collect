@@ -49,7 +49,9 @@ export function signInErrorMessage(cause: unknown, step: SignInStep): string {
         message.includes("not found") ||
         message.includes("user")
       )
-        return "No account uses that address yet. Continue with Google or Apple, or ask your administrator for an invitation.";
+        // Enumeration-safe: the answer must match the code path's uniform
+        // contract and never confirm whether the address has an account.
+        return "If an account exists for that address, a sign-in link is on its way. Continue with Google or Apple, or ask your administrator for an invitation.";
       return "That sign-in link could not be sent. Check the address and try again.";
     case "password":
       if (
@@ -76,9 +78,10 @@ export function signInErrorMessage(cause: unknown, step: SignInStep): string {
       if (
         message.includes("weak") ||
         message.includes("short") ||
-        message.includes("6")
+        message.includes("characters")
       )
-        return "Choose a stronger password (at least 6 characters).";
+        // Matches the deployment's configured minimum (10).
+        return "Choose a stronger password (at least 10 characters).";
       return "The password could not be saved. Try again.";
   }
 }

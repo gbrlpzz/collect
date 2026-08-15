@@ -63,15 +63,19 @@ export default function App() {
     hydrated,
     authLoading,
     requiresAuthentication,
+    sessionExpiredWithPendingWork,
+    pendingUnsyncedCount,
     session,
     adminAccess,
     syncSheetOpen,
     isSyncing,
     syncProgress,
     isSaving,
+    draftSaving,
     storageError,
     dbError,
     toast,
+    toastTone,
     collectorPreview,
     consentState,
     consentVersion,
@@ -253,6 +257,7 @@ export default function App() {
         isPreview={!configured}
         observations={state.observations}
         lastSyncAt={state.lastSyncAt}
+        storagePersistence={state.storagePersistence}
         onLinkDevice={
           session && configured ? () => setDeviceLinkOpen(true) : undefined
         }
@@ -289,6 +294,7 @@ export default function App() {
               project={state.project}
               draft={state.draft}
               lastSavedAt={state.lastSavedAt}
+              draftSaving={draftSaving}
               onDraftChange={updateDraft}
               onSubmit={
                 collectorPreview
@@ -363,10 +369,39 @@ export default function App() {
         />
       )}
 
+      {sessionExpiredWithPendingWork && (
+        <div className="storage-alert" role="alert">
+          <Icon name="lock" size={16} />
+          <span>
+            Sign-in expired · {pendingUnsyncedCount}{" "}
+            {pendingUnsyncedCount === 1 ? "observation" : "observations"}{" "}
+            {pendingUnsyncedCount === 1 ? "waits" : "wait"} to sync. Your
+            records are safe — sign out and sign in again once you have a
+            connection.
+          </span>
+        </div>
+      )}
+
       {storageError && (
         <div className="storage-alert" role="alert">
           <Icon name="info" size={16} />
           <span>{storageError}</span>
+          {surface === "contributor" && (
+            <>
+              <button
+                className="storage-alert-action"
+                onClick={openSyncSheetAndSync}
+              >
+                Sync now
+              </button>
+              <button
+                className="storage-alert-action"
+                onClick={() => void exportRecoveryPackage()}
+              >
+                Export copy
+              </button>
+            </>
+          )}
           <button
             onClick={dismissStorageError}
             aria-label="Dismiss local storage alert"
@@ -377,8 +412,11 @@ export default function App() {
       )}
 
       {toast && (
-        <div className="toast" role="status">
-          <Icon name="check" size={16} />
+        <div
+          className={`toast toast-${toastTone}`}
+          role={toastTone === "failure" ? "alert" : "status"}
+        >
+          <Icon name={toastTone === "failure" ? "info" : "check"} size={16} />
           <span>{toast}</span>
           <button onClick={dismissToast} aria-label="Dismiss message">
             <Icon name="x" size={14} />

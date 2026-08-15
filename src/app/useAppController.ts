@@ -33,6 +33,7 @@ import {
   setExplicitSignOut,
   setLocalScope,
 } from "../lib/localStore";
+import { nextLocalScope } from "../lib/auth/scopePolicy";
 import {
   authSession,
   consumePendingAuthRole,
@@ -126,11 +127,13 @@ export function useAppController() {
     Record<string, SyncProgressEntry>
   >({});
   const [isSaving, setIsSaving] = useState(false);
+  const [draftSaving, setDraftSaving] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const [dbError, setDbError] = useState<string | null>(null);
   const [collectorPreview, setCollectorPreview] = useState(false);
   const {
     message: toast,
+    tone: toastTone,
     show: showToast,
     dismiss: dismissToast,
   } = useTransientMessage();
@@ -162,32 +165,33 @@ export function useAppController() {
     }
     let active = true;
     let lastUserId: string | null = null;
-    const applySession = (nextSession: Session | null) => {
+    const applySession = (event: string, nextSession: Session | null) => {
       if (!active) return;
       const userId = nextSession?.user.id ?? null;
-      if (userId !== lastUserId) {
-        // Every account gets its own IndexedDB database. Switching accounts
-        // (or signing out to an anonymous scope) must never reuse another
-        // person's cached projects, drafts, media, or outbox.
-        setLocalScope(userId ?? "default");
-        if (lastUserId !== null && userId !== null) {
-          // A different person signed in: reset in-memory state and reload so
-          // every effect re-runs against the new account's local database.
-          setHydrated(false);
-          setLocalCacheAvailable(false);
-          setState((current) => ({
-            ...current,
-            observations: [],
-            project: emptyProject,
-            projects: [],
-            draft: { observed_date: new Date().toISOString().slice(0, 10) },
-            fieldworkComplete: {},
-          }));
-          window.location.reload();
-          return;
-        }
-        lastUserId = userId;
+      // Every account gets its own IndexedDB database. Switching accounts
+      // (or signing out to an anonymous scope) must never reuse another
+      // person's cached projects, drafts, media, or outbox — while a
+      // transient null session (offline refresh failure) must never flip a
+      // live app into the wrong database either.
+      const transition = nextLocalScope(lastUserId, userId, event);
+      if (transition.scope !== null) setLocalScope(transition.scope);
+      if (transition.reloadForAccountSwitch) {
+        // A different person signed in: reset in-memory state and reload so
+        // every effect re-runs against the new account's local database.
+        setHydrated(false);
+        setLocalCacheAvailable(false);
+        setState((current) => ({
+          ...current,
+          observations: [],
+          project: emptyProject,
+          projects: [],
+          draft: { observed_date: new Date().toISOString().slice(0, 10) },
+          fieldworkComplete: {},
+        }));
+        window.location.reload();
+        return;
       }
+      lastUserId = userId;
       setSession(nextSession);
       if (nextSession) {
         setExplicitSignOutState(false);
@@ -196,9 +200,11 @@ export function useAppController() {
       setAuthLoading(false);
       if (nextSession) void claimInvites().catch(() => undefined);
     };
-    void authSession().then(({ data }) => applySession(data.session));
+    void authSession().then(({ data }) =>
+      applySession("INITIAL_SESSION", data.session),
+    );
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, nextSession) => applySession(nextSession),
+      (event, nextSession) => applySession(event, nextSession),
     );
     return () => {
       active = false;
@@ -357,6 +363,7 @@ export function useAppController() {
           if (active)
             showToast(
               "Could not load your projects. Check your connection and reopen the app.",
+              "failure",
             );
           return;
         }
@@ -401,7 +408,19 @@ export function useAppController() {
     };
     const persist = () => {
       void saveAppState(state, localBackendKey)
-        .then(markReady)
+        .then(() => {
+          markReady();
+          // The durable receipt moment: only now may the UI claim the draft
+          // is saved on the device. Keystrokes alone say "Saving…".
+          setState((current) => ({
+            ...current,
+            lastSavedAt: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          }));
+          setDraftSaving(false);
+        })
         .catch((error) =>
           setStorageError(
             error instanceof Error && /quota|space|storage/i.test(error.message)
@@ -517,13 +536,13 @@ export function useAppController() {
       if (removedIds.length)
         void deleteDraftMedia(removedIds).catch(() => undefined);
     }
+    if (!collectorPreview) setDraftSaving(true);
+    // lastSavedAt is only refreshed by the debounced save commit; a per
+    // keystroke timestamp both churned the shell render and claimed
+    // durability that had not happened yet.
     setState((current) => ({
       ...current,
       draft: { ...current.draft, [key]: value },
-      lastSavedAt: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
     }));
   };
 
@@ -622,7 +641,7 @@ export function useAppController() {
           ? "Device storage is becoming full. Sync collected data soon; unsynced records will not be deleted."
           : "This observation could not be committed locally. Keep the form open and try again.",
       );
-      showToast("Could not complete the local save");
+      showToast("Could not complete the local save", "failure");
     } finally {
       submitInFlightRef.current = false;
       setIsSaving(false);
@@ -691,14 +710,17 @@ export function useAppController() {
       project: state.project,
       observations: state.observations,
       onComplete: () => showToast("Recovery package downloaded"),
-    }).catch(() => showToast("The recovery package could not be created"));
+    }).catch(() =>
+      showToast("The recovery package could not be created", "failure"),
+    );
   };
 
   const publishProject = async (
     input: Parameters<typeof createRemoteProject>[0],
   ) => {
     if (isSupabaseConfigured && session) {
-      const remoteProject = await createRemoteProject(input);
+      const { project: remoteProject, failedInvites } =
+        await createRemoteProject(input);
       setState((current) => ({
         ...current,
         project: remoteProject,
@@ -709,7 +731,16 @@ export function useAppController() {
           remoteProject,
         ],
       }));
-      showToast("Project published and invitations sent");
+      if (failedInvites.length > 0) {
+        showToast(
+          failedInvites.length === 1
+            ? `Project published · the invitation to ${failedInvites[0]} could not be sent — resend it from the roster`
+            : `Project published · ${failedInvites.length} invitations could not be sent — resend them from the roster`,
+          "failure",
+        );
+      } else {
+        showToast("Project published and invitations sent");
+      }
     } else {
       showToast("Project published in local demo mode");
     }
@@ -756,7 +787,7 @@ export function useAppController() {
       });
       showToast("Checkpoint archive downloaded");
     } catch {
-      showToast("Checkpoint could not be prepared");
+      showToast("Checkpoint could not be prepared", "failure");
     }
   };
 
@@ -776,7 +807,7 @@ export function useAppController() {
       try {
         await updateProjectStatus(state.project.id, nextStatus);
       } catch {
-        showToast("Project status could not be updated");
+        showToast("Project status could not be updated", "failure");
         return;
       }
     }
@@ -802,6 +833,21 @@ export function useAppController() {
     ? !session &&
       (launchMode === "admin" || !localCacheAvailable || explicitSignOut)
     : !previewUnlocked;
+
+  // The offline contributor keeps working past the auth gate, but once the
+  // session has expired they cannot sync until they sign in again. Say so
+  // persistently instead of relying on toasts from background sync runs.
+  const pendingUnsyncedCount = state.observations.filter(
+    (observation) => observation.status !== "SYNCED",
+  ).length;
+  const sessionExpiredWithPendingWork =
+    isSupabaseConfigured &&
+    session === null &&
+    !authLoading &&
+    hydrated &&
+    !explicitSignOut &&
+    !requiresAuthentication &&
+    pendingUnsyncedCount > 0;
 
   // One-time collection consent: shown at first sign-in; the server refuses
   // submissions without it. Recorded on the contributor profile.
@@ -918,6 +964,8 @@ export function useAppController() {
     hydrated,
     authLoading,
     requiresAuthentication,
+    sessionExpiredWithPendingWork,
+    pendingUnsyncedCount,
     session,
     canAdmin: adminAccess === "allowed",
     adminAccess,
@@ -926,9 +974,11 @@ export function useAppController() {
     isSyncing,
     syncProgress,
     isSaving,
+    draftSaving,
     storageError,
     dbError,
     toast,
+    toastTone,
     collectorPreview,
     consentState,
     consentVersion,

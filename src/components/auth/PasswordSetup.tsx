@@ -15,8 +15,8 @@ export function PasswordSetup({ onDone }: { onDone?: () => void }) {
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
-    if (password.length < 6) {
-      setError("Choose a password with at least 6 characters.");
+    if (password.length < 10) {
+      setError("Choose a password with at least 10 characters.");
       return;
     }
     if (password !== confirmation) {
@@ -53,14 +53,14 @@ export function PasswordSetup({ onDone }: { onDone?: () => void }) {
             className="field-input"
             type="password"
             required
-            minLength={6}
+            minLength={10}
             autoComplete="new-password"
             value={password}
             onChange={(event) => {
               setPasswordValue(event.target.value);
               setError(null);
             }}
-            placeholder="At least 6 characters"
+            placeholder="At least 10 characters"
             autoFocus
             disabled={busy}
           />
@@ -72,7 +72,7 @@ export function PasswordSetup({ onDone }: { onDone?: () => void }) {
             className="field-input"
             type="password"
             required
-            minLength={6}
+            minLength={10}
             autoComplete="new-password"
             value={confirmation}
             onChange={(event) => {
@@ -92,7 +92,7 @@ export function PasswordSetup({ onDone }: { onDone?: () => void }) {
           type="submit"
           variant="primary"
           fullWidth
-          disabled={busy || password.length < 6 || confirmation.length < 6}
+          disabled={busy || password.length < 10 || confirmation.length < 10}
           busy={busy}
         >
           {busy ? "Saving…" : "Save password"}

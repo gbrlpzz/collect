@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Observation } from "../types";
 import type { ContributorProfile } from "../lib/consent";
 import { canOfferIosInstall } from "../lib/platform";
@@ -8,7 +9,13 @@ import {
 } from "../lib/formatTime";
 import { Icon } from "./Icon";
 import { CollectBrand } from "./CollectBrand";
-import { AttentionScoreRing, Button, IconButton, ModalSurface } from "./ui";
+import {
+  AttentionScoreRing,
+  Button,
+  ConfirmationDialog,
+  IconButton,
+  ModalSurface,
+} from "./ui";
 import { APP_VERSION, FEEDBACK_URL } from "../lib/appMeta";
 
 interface ProfileSheetProps {
@@ -17,6 +24,7 @@ interface ProfileSheetProps {
   organizationName?: string | null;
   observations?: Observation[];
   lastSyncAt: string | null;
+  storagePersistence?: "unknown" | "granted" | "not-granted";
   isAdmin: boolean;
   isPreview: boolean;
   onClose: () => void;
@@ -31,6 +39,7 @@ export function ProfileSheet({
   organizationName,
   observations = [],
   lastSyncAt,
+  storagePersistence = "unknown",
   isAdmin,
   isPreview,
   onClose,
@@ -42,6 +51,7 @@ export function ProfileSheet({
   const pendingCount = (observations ?? []).filter(
     (observation) => observation.status !== "SYNCED",
   ).length;
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const installAvailable = canOfferIosInstall();
   const exactSyncTime = formatExactTime(lastSyncAt);
 
@@ -115,6 +125,16 @@ export function ProfileSheet({
                   : "Not recorded"}
               </dd>
             </div>
+            <div>
+              <dt>Storage protection</dt>
+              <dd>
+                {storagePersistence === "granted"
+                  ? "Persistent"
+                  : storagePersistence === "not-granted"
+                    ? "Standard (browser may evict)"
+                    : "Unknown"}
+              </dd>
+            </div>
           </dl>
         </>
       )}
@@ -186,6 +206,13 @@ export function ProfileSheet({
                   Saved on this device first, then sent to the project server.
                 </dd>
               </div>
+              <div>
+                <dt>After sign-out</dt>
+                <dd>
+                  Saved observations and media stay on this device; signing out
+                  does not remove them. They sync after you sign back in here.
+                </dd>
+              </div>
             </dl>
             {onRecoveryExport && (
               <Button
@@ -252,12 +279,32 @@ export function ProfileSheet({
           type="button"
           className="profile-signout"
           onClick={() => {
+            if (!isPreview && pendingCount > 0) {
+              setConfirmingSignOut(true);
+              return;
+            }
             onClose();
             onSignOut();
           }}
         >
           {isPreview ? "Exit preview" : "Sign out"}
         </button>
+      )}
+
+      {confirmingSignOut && onSignOut && (
+        <ConfirmationDialog
+          title="Sign out with unsaved work?"
+          message={`${pendingCount} ${
+            pendingCount === 1 ? "observation is" : "observations are"
+          } saved on this device but not yet synced. They stay here safely and will sync after you sign back in on this device.`}
+          confirmLabel="Sign out"
+          onConfirm={() => {
+            setConfirmingSignOut(false);
+            onClose();
+            onSignOut();
+          }}
+          onCancel={() => setConfirmingSignOut(false)}
+        />
       )}
     </ModalSurface>
   );
