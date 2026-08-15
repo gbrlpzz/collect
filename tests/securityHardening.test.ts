@@ -111,11 +111,12 @@ describe("Security hardening", () => {
       expect(claim).toContain("if (!user.email_confirmed_at) return false;");
     });
 
-    it("keeps the first workspace behind the allow-list", () => {
+    it("keeps the first workspace behind the strict allow-list (empty list grants nobody)", () => {
       const bootstrap = read(
         "../supabase/functions/bootstrap-workspace/index.ts",
       );
-      expect(bootstrap).toContain("isEmailAllowed");
+      expect(bootstrap).toContain("isEmailExplicitlyAllowed");
+      expect(bootstrap).not.toContain("isEmailAllowed(");
       expect(bootstrap).toContain("administrator allow-list");
     });
 

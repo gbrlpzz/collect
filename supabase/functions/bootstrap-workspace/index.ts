@@ -1,6 +1,10 @@
 import { z } from "npm:zod@4.4.3";
 import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
-import { errorMessage, isEmailAllowed, requireUser } from "../_shared/auth.ts";
+import {
+  errorMessage,
+  isEmailExplicitlyAllowed,
+  requireUser,
+} from "../_shared/auth.ts";
 
 function configuredBootstrapEmail(): string | null {
   const value = Deno.env.get("BOOTSTRAP_ADMIN_EMAIL")?.trim().toLowerCase();
@@ -35,9 +39,13 @@ serve(async (request) => {
         { status: 403 },
       );
     }
-    // Anyone may create a contributor account, so the first workspace must
-    // stay behind the administrator allow-list wherever one is configured.
-    if (!(await isEmailAllowed(service, email))) {
+    // Anyone may create a contributor account, so the first workspace stays
+    // behind the configured first-administrator secret or the strict
+    // administrator allow-list (an empty list grants nobody).
+    if (
+      !bootstrapEmail &&
+      !(await isEmailExplicitlyAllowed(service, email))
+    ) {
       return json(
         {
           error: "This account is not on the administrator allow-list",

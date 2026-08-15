@@ -73,25 +73,6 @@ function matchesAllowedPattern(pattern: string, email: string): boolean {
 }
 
 /**
- * Administrator allow-list. The ALLOWED_EMAIL_PATTERNS secret (a
- * comma-separated list of exact addresses and/or @domain suffixes) takes
- * precedence; otherwise private.allowed_admin_patterns decides. Contributor
- * invitations are unrestricted: admins invite whoever they need. When no
- * patterns are configured anywhere, any address may become an administrator
- * (the default for self-hosted deployments).
- */
-export async function isEmailAllowed(
-  service: SupabaseClient,
-  email: string,
-): Promise<boolean> {
-  const patterns = await adminAllowPatterns(service);
-  if (!patterns.length) return true;
-  return patterns.some((pattern: string) =>
-    matchesAllowedPattern(pattern, email)
-  );
-}
-
-/**
  * The configured administrator patterns, or an empty list when the deployment
  * has none. The ALLOWED_EMAIL_PATTERNS secret takes precedence over the table.
  */
