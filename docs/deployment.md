@@ -23,7 +23,7 @@ flowchart TB
       SessionManager["JWT & Refresh Tokens"]
     end
 
-    subgraph EdgeModule["12 Edge Functions (Deno Runtime)"]
+    subgraph EdgeModule["13 Edge Functions (Deno Runtime)"]
       FnSync["sync-submission & health"]
       FnAuth["link-session & claim-invites"]
       FnSignIn["contributor-signin-code"]
@@ -31,6 +31,7 @@ flowchart TB
       FnAdmin["send-admin-invite & bootstrap-workspace"]
       FnExport["export-checkpoint"]
       FnPing["device-status & send-project-ping"]
+      FnNotify["notify-preview-request"]
     end
 
     subgraph DBModule["PostgreSQL Engine"]
@@ -96,7 +97,7 @@ npm run provision -- --issue-magic-link
 3. Links the local project directory to the Supabase project.
 4. Applies all ordered SQL migrations (`supabase db push`).
 5. Sets Edge Function secrets (`APP_URL`, `BOOTSTRAP_ADMIN_EMAIL`).
-6. Deploys all 12 Edge Functions listed in `scripts/provision.mjs`.
+6. Deploys all 13 Edge Functions listed in `scripts/provision.mjs`.
 7. Sends an initial bootstrap authentication link to `BOOTSTRAP_ADMIN_EMAIL`.
 
 ---
@@ -127,9 +128,10 @@ for fn in \
   send-project-ping \
   export-checkpoint \
   sync-submission \
-  bootstrap-workspace
+  bootstrap-workspace \
+  notify-preview-request
 do
-  supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF"
+  supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
 done
 ```
 
@@ -150,6 +152,37 @@ supabase secrets set \
   MAIL_FROM='Collect <fieldwork@example.org>' \
   ALLOWED_EMAIL_PATTERNS='admin@example.org,@org.example.org' \
   --project-ref "$SUPABASE_PROJECT_REF"
+```
+
+### 4. Configure the homepage "Request access" email notification
+
+The homepage's `PreviewForm` inserts anonymously into `preview_requests`
+(`src/homepage/PreviewForm.tsx`). A database trigger
+(`20260815070533_notify_preview_request.sql`) calls the
+`notify-preview-request` Edge Function after every accepted insert, which
+emails a maintainer inbox through the shared `sendEmail` helper. This needs
+`RESEND_API_KEY`/`MAIL_FROM` (above) plus one Edge Function secret and two
+Supabase Vault entries, none of which are set by this migration file on
+purpose — a self-hosted fork that skips this step gets a silent no-op
+instead of a notification e-mailed to the wrong inbox:
+
+```bash
+# Edge Function secret: destination inbox and the shared value the trigger
+# must present. Pick your own random token for the second one.
+supabase secrets set \
+  PREVIEW_REQUEST_NOTIFY_TO=you@example.org \
+  PREVIEW_REQUEST_WEBHOOK_SECRET='<random-token>' \
+  --project-ref "$SUPABASE_PROJECT_REF"
+```
+
+```sql
+-- Run once against the project database (SQL editor or `execute_sql`).
+-- Use the exact same random token as PREVIEW_REQUEST_WEBHOOK_SECRET above.
+select vault.create_secret(
+  'https://YOUR-PROJECT-REF.supabase.co/functions/v1/notify-preview-request',
+  'preview_request_webhook_url'
+);
+select vault.create_secret('<random-token>', 'preview_request_webhook_secret');
 ```
 
 ---
@@ -190,6 +223,12 @@ sends its default-styled emails.
 `send-project-ping` (`RESEND_API_KEY`, `MAIL_FROM`). Delivery is advisory:
 if the secrets are missing the administrator still sees the issued code and
 can share it in person.
+
+`notify-preview-request` uses the same Resend helper to email a maintainer
+inbox whenever the homepage "Request access" form gets a new submission (see
+"Configure the homepage 'Request access' email notification" above). It is
+invoked by a database trigger, not by a signed-in user, so it also needs
+`PREVIEW_REQUEST_NOTIFY_TO` and `PREVIEW_REQUEST_WEBHOOK_SECRET`.
 
 ---
 

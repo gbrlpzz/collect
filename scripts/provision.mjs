@@ -16,6 +16,7 @@ const FUNCTIONS = [
   "export-checkpoint",
   "sync-submission",
   "bootstrap-workspace",
+  "notify-preview-request",
 ];
 
 const args = new Set(process.argv.slice(2));
