@@ -378,7 +378,14 @@ export function HomepageApp() {
           >
             <div className="hp-scrolly-panel">
               <div className="hp-section-inner">
-                <FlowDemo tab={contribTab} onTabChange={setContribTab} />
+                <FlowDemo
+                  tab={contribTab}
+                  onTabChange={(nextTab) => {
+                    setContribTab(nextTab);
+                    const idx = CONTRIB_TABS.indexOf(nextTab);
+                    if (idx !== -1) collection.goToStep(idx);
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -462,7 +469,15 @@ export function HomepageApp() {
                   </div>
 
                   <div className="hp-flow-visual">
-                    <AdminWalkthrough initialTab={adminScene.tab} />
+                    <AdminWalkthrough
+                      initialTab={adminScene.tab}
+                      onTabChange={(tab) => {
+                        const idx = ADMIN_SCENES.findIndex(
+                          (s) => s.tab === tab,
+                        );
+                        if (idx !== -1) admin.goToStep(idx);
+                      }}
+                    />
                   </div>
                 </div>
               </div>

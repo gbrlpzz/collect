@@ -37,7 +37,7 @@ export function useScrollytelling<T extends HTMLElement>(
       const travel = el.offsetHeight - window.innerHeight;
       if (travel <= 0) {
         // Panel is not pinned (short viewport / stacked mobile layout).
-        apply(0);
+        // Preserve user-selected interactive tab state on mobile without scroll resets.
         return;
       }
       const scrolled = Math.min(
