@@ -127,7 +127,10 @@ function requestedHeroMotion(): HeroMotion {
   if (typeof window === "undefined") return DEFAULT_HERO_MOTION;
   const requested = new URLSearchParams(window.location.search).get("motion");
   const match = HERO_MOTIONS.find((motion) => motion === requested);
-  return match ?? DEFAULT_HERO_MOTION;
+  if (match) return match;
+  // Disable hero animation on mobile (≤680px, matching CSS breakpoint)
+  if (window.innerWidth <= 680) return "off";
+  return DEFAULT_HERO_MOTION;
 }
 
 function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
