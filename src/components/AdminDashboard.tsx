@@ -156,28 +156,19 @@ export function AdminDashboard({
       </section>
 
       {isSupabaseConfigured && (
-        <section className="admin-section">
-          <div className="section-heading-row admin-access-row">
-            <h2>Workspace access</h2>
-            <Button
-              variant="secondary"
-              icon="plus"
-              onClick={() => setAdministratorPromptOpen(true)}
-              disabled={addingAdministrator}
-              busy={addingAdministrator}
-            >
-              Add administrator
-            </Button>
-          </div>
-          <InfoDisclosure title="How administrator access works">
-            <p>
-              Administrator rights follow the allow-list. Adding an address
-              allows it and sends an invitation; the rights are granted when
-              that person signs in, with any method. Everyone else can sign in
-              as a contributor and sees only the projects they are assigned to.
-            </p>
-          </InfoDisclosure>
-        </section>
+        <div className="admin-workspace-access">
+          <button
+            type="button"
+            className="text-button admin-access-trigger"
+            onClick={() => setAdministratorPromptOpen(true)}
+            disabled={addingAdministrator}
+          >
+            <Icon name="users" size={16} />
+            <span>
+              {addingAdministrator ? "Adding…" : "Add workspace administrator"}
+            </span>
+          </button>
+        </div>
       )}
 
       {administratorPromptOpen && (

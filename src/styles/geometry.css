@@ -490,6 +490,21 @@ h3 {
 .admin-section {
   margin-bottom: var(--space-8);
 }
+.admin-workspace-access {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-4);
+}
+.admin-access-trigger {
+  color: var(--tertiary);
+  font-size: var(--type-footnote);
+  gap: var(--space-2);
+  transition: color 0.15s ease;
+}
+.admin-access-trigger:hover {
+  color: var(--secondary);
+}
 .admin-readiness {
   margin-top: var(--space-8);
 }
