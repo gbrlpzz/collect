@@ -279,7 +279,7 @@ describe("low-friction primary actions", () => {
     expect(screen.getByLabelText("collect by gbrlpzz")).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "gbrlpzz" }).getAttribute("href"),
-    ).toBe("https://gbrlpzz.com/");
+    ).toBe("https://gabrielepizzi.com/");
     expect(screen.queryByRole("heading", { name: /^projects$/i })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /add observation/i }));
     expect(onStartObservation).toHaveBeenCalledWith(project);

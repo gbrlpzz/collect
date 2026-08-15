@@ -9,7 +9,7 @@ export function AppCredit() {
       <span>
         by{" "}
         <a
-          href="https://gbrlpzz.com/"
+          href="https://gabrielepizzi.com/"
           target="_blank"
           rel="noopener noreferrer"
         >

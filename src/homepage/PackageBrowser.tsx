@@ -1,14 +1,13 @@
 import { useState } from "react";
-import { PACKAGE_FILES, type PackageFile } from "./packageData";
+import { strToU8, zipSync } from "fflate";
+import { PACKAGE_FILES } from "./packageData";
 import { Icon } from "../components/Icon";
+import { downloadZip } from "../lib/download";
 
 /**
  * Interactive checkpoint-package browser.
  * Directly explores the canonical demo research archive specification (docs/export-format.md).
  */
-const bytes = (n: number) =>
-  n >= 1024 ? (n / 1024).toFixed(1) + " KB" : `${n} B`;
-
 function FileTypeIcon({ path }: { path: string }) {
   if (path.endsWith("/")) return <Icon name="folder" size={15} />;
   if (
@@ -38,6 +37,16 @@ export function PackageBrowser() {
     }
   };
 
+  const downloadDemoArchive = () => {
+    const entries: Record<string, Uint8Array> = {};
+    for (const file of PACKAGE_FILES) {
+      if (file.path.endsWith("/")) continue;
+      entries[file.path] = strToU8(file.content);
+    }
+    const archive = zipSync(entries, { level: 0 });
+    downloadZip(archive, "valpuesta_checkpoint-2026-08-04.zip");
+  };
+
   // Group files into root and folders
   const rootFiles = PACKAGE_FILES.filter(
     (file) => !file.path.includes("/") || file.path.endsWith("/"),
@@ -59,8 +68,37 @@ export function PackageBrowser() {
         aria-label="Export package files"
       >
         <div className="hp-package-heading">
-          <Icon name="archive" size={15} />
-          <span>valpuesta_checkpoint-2026-08-04.zip</span>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              flex: 1,
+              minWidth: 0,
+              overflow: "hidden",
+            }}
+          >
+            <Icon name="archive" size={15} />
+            <span
+              style={{
+                textOverflow: "ellipsis",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+              }}
+            >
+              valpuesta_checkpoint-2026-08-04.zip
+            </span>
+          </div>
+          <button
+            type="button"
+            className="hp-package-copy-btn"
+            onClick={downloadDemoArchive}
+            aria-label="Download demo archive ZIP"
+            title="Download ZIP"
+          >
+            <Icon name="download" size={13} />
+            <span>ZIP</span>
+          </button>
         </div>
 
         <div className="hp-package-list">

@@ -200,7 +200,7 @@ export interface AdminProjectProps {
   project: Project;
   onBack: () => void;
   onToast: (message: string) => void;
-  onExport: () => void;
+  onExport: () => Promise<void> | void;
   onSchemaPublished: (project: Project) => void;
   onToggleStatus: () => void;
   onPreviewContributor?: () => void;
@@ -1264,12 +1264,24 @@ function ExportPanel({
   project: Project;
   receivedCount: number;
   readiness: ContributorReadiness[] | null;
-  onExport: () => void;
+  onExport: () => Promise<void> | void;
 }) {
+  const [isExporting, setIsExporting] = useState(false);
   const total = readiness?.length ?? project.contributors;
   const ready = readiness?.filter((row) => row.ready).length ?? 0;
   const readinessKnown = !isSupabaseConfigured || readiness !== null;
   const percentage = total ? Math.round((ready / total) * 100) : 0;
+
+  const handleExport = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      await onExport();
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <section className="admin-panel export-panel">
       <div className="panel-heading">
@@ -1291,8 +1303,15 @@ function ExportPanel({
         </div>
       </div>
       <div className="admin-context-actions admin-context-actions-single">
-        <Button variant="primary" icon="download" onClick={onExport} fullWidth>
-          Export checkpoint
+        <Button
+          variant="primary"
+          icon="download"
+          onClick={() => void handleExport()}
+          disabled={isExporting}
+          busy={isExporting}
+          fullWidth
+        >
+          {isExporting ? "Preparing checkpoint…" : "Export checkpoint"}
         </Button>
       </div>
       <InfoDisclosure title="Checkpoint coverage">

@@ -47,6 +47,8 @@ import {
   loadUserAdminAccess,
   updateProjectStatus,
 } from "../lib/adminBackend";
+import { downloadUrl } from "../lib/download";
+import { exportClientCheckpoint } from "../lib/checkpointExport";
 import { syncNow as runSync } from "./syncController";
 import { exportRecoveryPackage as downloadRecoveryPackage } from "./recovery";
 import { requestStoragePersistence } from "./storage";
@@ -688,15 +690,28 @@ export function useAppController() {
   };
 
   const exportCheckpoint = async () => {
-    if (!isSupabaseConfigured || !session) {
-      showToast("Checkpoint export is available after connecting Supabase");
-      return;
-    }
     try {
-      const result = await createCheckpoint(state.project.id);
-      if (result.downloadUrl)
-        window.open(result.downloadUrl, "_blank", "noopener,noreferrer");
-      showToast("Checkpoint package is ready");
+      if (isSupabaseConfigured && session) {
+        const result = await createCheckpoint(state.project.id);
+        if (result.downloadUrl) {
+          const safeSlug =
+            (state.project.name || "project")
+              .toLowerCase()
+              .replace(/[^a-z0-9_-]/g, "-")
+              .replace(/-+/g, "-")
+              .replace(/^-|-$/g, "") || "project";
+          const filename = `${safeSlug}_checkpoint-${new Date().toISOString().slice(0, 10)}.zip`;
+          downloadUrl(result.downloadUrl, filename);
+          showToast("Checkpoint archive downloaded");
+          return;
+        }
+      }
+      // Demo / offline / unconfigured fallback: generate client-side checkpoint package
+      await exportClientCheckpoint({
+        project: state.project,
+        observations: state.observations,
+      });
+      showToast("Checkpoint archive downloaded");
     } catch {
       showToast("Checkpoint could not be prepared");
     }

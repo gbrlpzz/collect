@@ -1,18 +1,19 @@
-import { strToU8, zip } from "fflate";
+import { strToU8, zip, zipSync } from "fflate";
 import type { Observation, Project } from "../types";
 import { readStoredRecoveryData } from "../lib/localStore";
+import { downloadZip } from "../lib/download";
 
 interface RecoveryExportInput {
   project: Project;
   observations: Observation[];
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
 /**
  * Durable recovery package: built from the IndexedDB stores directly, so it
  * still works in recovery mode (unreadable/absent app-state singleton) and
  * includes outbox, receipts, drafts, projects, and media rows that exist only
- * in MEDIA_STORE. This is the explicit escape hatch for unsynced data.
+ * in MEDIA_STORE. This is the explicit escape hatch for local data.
  */
 export async function exportRecoveryPackage({
   project,
@@ -22,8 +23,8 @@ export async function exportRecoveryPackage({
   const durable = await readStoredRecoveryData().catch(() => null);
   const durableSubmissions = durable?.submissions ?? [];
   const submissions = durableSubmissions.length
-    ? durableSubmissions.filter((item) => item.status !== "SYNCED")
-    : observations.filter((item) => item.status !== "SYNCED");
+    ? durableSubmissions
+    : observations;
 
   // Media blobs come from the durable store first (they are the canonical
   // copy); in-memory assets are the fallback for a fresh un-persisted pick.
@@ -31,16 +32,37 @@ export async function exportRecoveryPackage({
     (durable?.media ?? []).map((media) => [media.id, media]),
   );
   const mediaEntries: Record<string, Uint8Array> = {};
+  const processedMediaIds = new Set<string>();
+
   for (const observation of submissions) {
     for (const asset of observation.media ?? []) {
       const blob = asset.blob ?? mediaById.get(asset.id)?.blob ?? null;
       if (!blob) continue;
+      const safeName = (asset.name || `${asset.id}.bin`).replace(
+        /[^a-zA-Z0-9._-]/g,
+        "_",
+      );
       try {
-        mediaEntries[`media/${observation.id}/${asset.id}-${asset.name}`] =
+        mediaEntries[`media/${observation.id}/${asset.id}-${safeName}`] =
           new Uint8Array(await blob.arrayBuffer());
+        processedMediaIds.add(asset.id);
       } catch {
         // A corrupt single blob must not abort the whole export.
       }
+    }
+  }
+
+  // Include any remaining standalone/orphan media blobs from MEDIA_STORE so no media is lost
+  for (const durableMedia of durable?.media ?? []) {
+    if (processedMediaIds.has(durableMedia.id) || !durableMedia.blob) continue;
+    const safeName = (
+      durableMedia.originalFilename || `${durableMedia.id}.bin`
+    ).replace(/[^a-zA-Z0-9._-]/g, "_");
+    try {
+      mediaEntries[`media/stored/${durableMedia.id}-${safeName}`] =
+        new Uint8Array(await durableMedia.blob.arrayBuffer());
+    } catch {
+      // ignore single blob read error
     }
   }
 
@@ -53,6 +75,12 @@ export async function exportRecoveryPackage({
           project_id: project.id,
           schema_version: project.schemaVersion,
           observation_count: submissions.length,
+          synced_observation_count: submissions.filter(
+            (item) => item.status === "SYNCED",
+          ).length,
+          unsynced_observation_count: submissions.filter(
+            (item) => item.status !== "SYNCED",
+          ).length,
           outbox_operation_count: durable?.outbox.length ?? 0,
           receipt_count:
             durable && Array.isArray(durable.receipts)
@@ -98,21 +126,20 @@ export async function exportRecoveryPackage({
   }
 
   // fflate's async zip runs on its worker pool, keeping the export off the
-  // main thread for large media.
-  const archive = await new Promise<Uint8Array>((resolve, reject) => {
-    zip(entries, { level: 0 }, (error, data) => {
-      if (error) reject(error);
-      else resolve(data);
+  // main thread for large media. Falls back to zipSync if workers are unavailable.
+  let archive: Uint8Array;
+  try {
+    archive = await new Promise<Uint8Array>((resolve, reject) => {
+      zip(entries, { level: 0 }, (error, data) => {
+        if (error) reject(error);
+        else resolve(data);
+      });
     });
-  });
-  const blob = new Blob([new Uint8Array(archive)], { type: "application/zip" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `collect-recovery-${new Date().toISOString().slice(0, 10)}.zip`;
-  link.click();
-  // Defer revocation: some browsers cancel the download if the URL is gone
-  // before the download starts.
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-  onComplete();
+  } catch {
+    archive = zipSync(entries, { level: 0 });
+  }
+
+  const filename = `collect-recovery-${new Date().toISOString().slice(0, 10)}.zip`;
+  downloadZip(archive, filename);
+  onComplete?.();
 }

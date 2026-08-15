@@ -35,10 +35,31 @@ function locationFeature(
   submission: Record<string, unknown>,
 ): Record<string, unknown> | null {
   const payload = submission.payload as Record<string, unknown> | null;
-  const location = payload?.location as Record<string, unknown> | null;
-  const latitude = Number(location?.latitude);
-  const longitude = Number(location?.longitude);
+  if (!payload || typeof payload !== "object") return null;
+
+  let loc = payload.location as Record<string, unknown> | null;
+  if (
+    !loc ||
+    !Number.isFinite(Number(loc.latitude)) ||
+    !Number.isFinite(Number(loc.longitude))
+  ) {
+    for (const val of Object.values(payload)) {
+      if (
+        val &&
+        typeof val === "object" &&
+        Number.isFinite(Number((val as Record<string, unknown>).latitude)) &&
+        Number.isFinite(Number((val as Record<string, unknown>).longitude))
+      ) {
+        loc = val as Record<string, unknown>;
+        break;
+      }
+    }
+  }
+
+  const latitude = Number(loc?.latitude);
+  const longitude = Number(loc?.longitude);
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+
   return {
     type: "Feature",
     geometry: { type: "Point", coordinates: [longitude, latitude] },
@@ -48,7 +69,7 @@ function locationFeature(
       contributor_id: submission.contributor_id,
       schema_id: submission.schema_id,
       captured_at: submission.client_created_at,
-      accuracy_m: location?.accuracy ?? null,
+      accuracy_m: loc?.accuracy ?? null,
       payload,
     },
   };
@@ -100,6 +121,8 @@ async function buildExport(
         "id,submission_id,field_id,object_path,mime_type,byte_size,original_filename,sha256,captured_at,status",
       )
       .in("submission_id", submissionIds)
+      .eq("status", "UPLOADED")
+      .not("object_path", "is", null)
       .order("created_at", {
         ascending: true,
       })
@@ -482,6 +505,7 @@ async function buildExport(
     );
   }
   for (const item of media) {
+    if (!item.object_path) continue;
     const { data: file, error: downloadError } = await service.storage
       .from("collect-media")
       .download(String(item.object_path));
@@ -542,9 +566,19 @@ async function buildExport(
       media_count: media.length,
     },
   });
+
+  const safeSlug = (project?.name ? String(project.name) : "project")
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "") || "project";
+  const exportFilename = `${safeSlug}_checkpoint-${cutoff.slice(0, 10)}.zip`;
+
   const { data: signed } = await service.storage
     .from("collect-exports")
-    .createSignedUrl(objectPath, 3600);
+    .createSignedUrl(objectPath, 3600, {
+      download: exportFilename,
+    });
   return json({
     checkpoint_id: checkpointId,
     download_url: signed?.signedUrl ?? null,
