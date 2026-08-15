@@ -641,6 +641,7 @@ body {
 }
 .hp-sync-receipt pre {
   margin: 0;
+  max-width: 100%;
   padding: 12px 14px;
   border-radius: 10px;
   background: var(--paper);
@@ -729,6 +730,29 @@ body {
 @media (min-width: 961px) and (max-height: 580px) {
   .hp-shell {
     --hp-phone-scale: 0.64;
+  }
+}
+
+/* Narrow screens: the same visual scale keeps the phone inside the column
+   without touching the app's own 375x740 layout. */
+@media (max-width: 430px) {
+  .hp-shell {
+    --hp-phone-scale: 0.94;
+  }
+}
+@media (max-width: 400px) {
+  .hp-shell {
+    --hp-phone-scale: 0.88;
+  }
+}
+@media (max-width: 370px) {
+  .hp-shell {
+    --hp-phone-scale: 0.82;
+  }
+}
+@media (max-width: 340px) {
+  .hp-shell {
+    --hp-phone-scale: 0.74;
   }
 }
 
@@ -826,6 +850,7 @@ body {
 .hp-doc-ref-item {
   font-size: 0.75rem;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 .hp-doc-ref a {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -868,12 +893,15 @@ section[id] {
 }
 .hp-flow-copy {
   max-width: 500px;
+  /* Long doc filenames must not force the column wider than the screen. */
+  min-width: 0;
 }
 .hp-flow-visual {
   display: flex;
   justify-content: center;
   align-items: flex-start;
   width: 100%;
+  min-width: 0;
 }
 
 /* Sub-level under the Guided Flow tab: the supported input types, kept as a
@@ -970,9 +998,12 @@ section[id] {
 .hp-iphone-wrap {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-start;
   width: 100%;
+  /* The frame keeps a 375px layout box; it must not widen the grid column
+     on narrow screens (it is scaled visually to fit instead). */
+  min-width: 0;
   /* The frame keeps real 375x740 iPhone metrics so the embedded app lays out
      exactly as it does on device (same container queries, same breakpoints);
      only its drawn size shrinks on short screens. The box is reserved at the
@@ -982,11 +1013,12 @@ section[id] {
 .hp-iphone {
   position: relative;
   width: 375px;
-  max-width: 100%;
   height: 740px;
   /* Keep the real device box: flex must not shrink it, or the frame distorts.
-     Only the visual scale changes on short screens. */
+     Only the visual scale changes on short screens. Centre it explicitly, so
+     it stays centred even when the 375px box is wider than a narrow column. */
   flex: 0 0 auto;
+  margin-left: calc((100% - 375px) / 2);
   transform: scale(var(--hp-phone-scale, 1));
   transform-origin: top center;
   border-radius: 48px;
@@ -998,7 +1030,6 @@ section[id] {
     inset 0 0 2px 2px rgba(0, 0, 0, 0.8);
   padding: 9px;
   box-sizing: border-box;
-  margin: 0 auto;
 }
 .hp-iphone-dark {
   background: #000000;
@@ -2331,6 +2362,10 @@ section[id] {
   .hp-scrolly-hold {
     height: auto;
   }
+  /* Nothing pins here, so the hold spacer would only be dead space. */
+  .hp-scrolly-hold::after {
+    display: none;
+  }
   .hp-scrolly-panel {
     position: static;
     min-height: 0;
@@ -2363,9 +2398,6 @@ section[id] {
 }
 
 @media (max-width: 820px) {
-  .hp-iphone-wrap {
-    display: none;
-  }
   .hp-auto-bar,
   .hp-demo-note {
     display: none;
@@ -2540,4 +2572,51 @@ section[id] {
   color: var(--secondary);
   margin: 6px 0 0;
   line-height: 1.4;
+}
+
+/* Touch screens: give the small text controls a comfortable hit area without
+   changing how they look. */
+@media (max-width: 820px) {
+  .hp-doc-ref {
+    gap: 0;
+  }
+  .hp-doc-ref a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+  }
+  .hp-admin-step-btn {
+    min-height: 40px;
+    padding: 0 14px;
+  }
+  .hp-field-types {
+    line-height: 2.6;
+  }
+  .hp-field-type {
+    padding: 6px 0;
+  }
+  .hp-footer-links a {
+    min-height: 40px;
+  }
+  .hp-package-file {
+    min-height: 40px;
+  }
+  .hp-package-copy-btn {
+    min-height: 40px;
+  }
+  .hp-diff-doc-link a,
+  .hp-section-note a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+  }
+  .hp-footer-brand .hp-brand {
+    min-height: 40px;
+  }
+  /* Stacked layout leaves little scroll travel per stage, so keep every
+     stage legible and let the active one show through its background only. */
+  .hp-sync-stage,
+  .hp-sync-receipt {
+    opacity: 1;
+  }
 }
