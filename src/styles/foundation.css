@@ -1956,6 +1956,78 @@ p {
 .auth-sent .text-button {
   margin-top: 20px;
 }
+/* Backup methods.
+   A grouped list in the platform idiom: a leading symbol, a succinct title
+   with one line of detail, and a chevron for the row that opens a view.
+   Apple HIG "Lists and tables": use a disclosure indicator for rows that
+   drill in, and give every row a clear press state. */
+.auth-list-heading {
+  margin: 26px 0 8px;
+  color: var(--secondary);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.auth-method-list {
+  margin: 14px 0 0;
+  padding: 0;
+  border: 1px solid var(--separator-light);
+  border-radius: 14px;
+  list-style: none;
+  overflow: hidden;
+}
+.auth-method-list li + li {
+  border-top: 1px solid var(--separator-light);
+}
+.auth-method {
+  width: 100%;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  transition: background 0.16s ease;
+}
+.auth-method:hover {
+  background: var(--grouped);
+}
+.auth-method:active {
+  background: var(--grouped-strong);
+}
+.auth-method > svg:first-child {
+  flex: 0 0 auto;
+  color: var(--secondary);
+}
+.auth-method > svg:last-child {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--tertiary);
+}
+.auth-method-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.auth-method-copy strong {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.auth-method-copy span {
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+.auth-back {
+  margin: -6px 0 6px;
+  color: var(--secondary);
+}
+
 .auth-install-help,
 .auth-alternatives {
   margin-top: 22px;

@@ -68,15 +68,21 @@ const project: Project = {
 };
 
 describe("low-friction primary actions", () => {
-  it("leaves the entry keyboard closed until the person chooses a field", () => {
+  it("leaves the entry keyboard closed until the person chooses a method", async () => {
     render(<AuthScreen configured role="contributor" />);
 
-    expect(screen.getByLabelText(/8-character code/i)).toBeTruthy();
+    expect(
+      await screen.findByRole("button", { name: /sign in with a code/i }),
+    ).toBeTruthy();
+    expect(screen.queryByLabelText(/8-character code/i)).toBeNull();
     expect(document.activeElement).toBe(document.body);
   });
 
-  it("opens on the code entry for contributors and requests a fresh code by email", async () => {
+  it("opens code entry from the method list and requests a fresh code by email", async () => {
     render(<AuthScreen configured role="contributor" />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /sign in with a code/i }),
+    );
     expect(screen.getByLabelText(/8-character code/i)).toBeTruthy();
 
     fireEvent.click(
@@ -99,9 +105,7 @@ describe("low-friction primary actions", () => {
   it("signs in with email and password from the focused email field", async () => {
     render(<AuthScreen configured role="contributor" />);
     fireEvent.click(
-      await screen.findByRole("button", {
-        name: /use an email address and password/i,
-      }),
+      await screen.findByRole("button", { name: /sign in with a password/i }),
     );
     const emailInput = screen.getByLabelText("Email address");
     fireEvent.change(emailInput, { target: { value: "field@example.com" } });
@@ -120,6 +124,9 @@ describe("low-friction primary actions", () => {
 
   it("falls back to a magic link for administrators", async () => {
     render(<AuthScreen configured role="admin" />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /email me a sign-in link/i }),
+    );
     const emailInput = screen.getByLabelText("Email address");
     fireEvent.change(emailInput, { target: { value: "field@example.com" } });
     fireEvent.submit(emailInput.closest("form")!);
@@ -156,6 +163,9 @@ describe("low-friction primary actions", () => {
 
   it("links this device with the code shown on the signed-in device", async () => {
     render(<AuthScreen configured role="contributor" />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /sign in with a code/i }),
+    );
     const codeInput = screen.getByLabelText(/8-character code/i);
     fireEvent.change(codeInput, { target: { value: "ab2d9kqx" } });
 
@@ -164,7 +174,7 @@ describe("low-friction primary actions", () => {
     );
   });
 
-  it("opens device-code entry first in an installed iOS app", () => {
+  it("keeps code entry reachable in an installed iOS app", async () => {
     const standaloneNavigator = navigator as Navigator & {
       standalone?: boolean;
     };
@@ -175,10 +185,11 @@ describe("low-friction primary actions", () => {
     });
     try {
       render(<AuthScreen configured role="contributor" />);
+      fireEvent.click(
+        await screen.findByRole("button", { name: /sign in with a code/i }),
+      );
       expect(screen.getByLabelText(/8-character code/i)).toBeTruthy();
-      expect(
-        screen.getByText(/enter the code your administrator issued/i),
-      ).toBeTruthy();
+      expect(screen.getByText(/enter the code you were given/i)).toBeTruthy();
       expect(
         screen.queryByRole("button", { name: /link this device/i }),
       ).toBeNull();

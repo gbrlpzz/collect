@@ -122,8 +122,12 @@ applies.
   `#747775` border (light) or a `#131314` button with a `#8e918f` border
   (dark).
 
-Backup methods live under one **Other ways to sign in** disclosure, so the
-first screen stays two decisions wide.
+Backup methods are a grouped list under **Other ways to sign in**: a leading
+symbol, a succinct title, one line of detail, and a chevron, following the
+["Lists and tables"](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables)
+rule that a row which opens a view carries a disclosure indicator. Choosing a
+row opens that method alone, with **All sign-in options** to step back, so no
+screen ever presents two ways in at once.
 
 ---
 

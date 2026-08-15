@@ -81,34 +81,50 @@ describe("provider sign-in", () => {
     ).toBeNull();
   });
 
-  it("keeps every backup method available under one disclosure", async () => {
+  it("lists every backup method as one named row", async () => {
     render(<AuthScreen configured role="contributor" />);
     await screen.findByRole("button", { name: "Continue with Apple" });
 
     expect(screen.getByText("Other ways to sign in")).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: /email me a sign-in link/i }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("button", {
-        name: /use an email address and password/i,
-      }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("button", {
-        name: /use a code from your administrator or another device/i,
-      }),
-    ).toBeTruthy();
+    const rows = Array.from(document.querySelectorAll(".auth-method"));
+    expect(rows.map((row) => row.querySelector("strong")?.textContent)).toEqual(
+      [
+        "Email me a sign-in link",
+        "Sign in with a password",
+        "Sign in with a code",
+      ],
+    );
   });
 
-  it("falls back to a named method when no provider is enabled", async () => {
+  it("opens one method at a time, with a way back", async () => {
+    render(<AuthScreen configured role="contributor" />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /sign in with a password/i }),
+    );
+
+    // The chosen method is alone on the screen: no provider buttons, no list.
+    expect(screen.getByLabelText("Password")).toBeTruthy();
+    expect(document.querySelectorAll(".auth-method").length).toBe(0);
+    expect(document.querySelectorAll(".provider-button").length).toBe(0);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /all sign-in options/i }),
+    );
+    expect(
+      await screen.findByRole("button", { name: "Continue with Apple" }),
+    ).toBeTruthy();
+    expect(document.querySelectorAll(".auth-method").length).toBe(3);
+  });
+
+  it("offers the same named methods when no provider is enabled", async () => {
     authMocks.enabledAuthProviders.mockResolvedValue([]);
     render(<AuthScreen configured role="contributor" />);
 
     await waitFor(() =>
-      expect(document.querySelectorAll(".provider-button").length).toBe(0),
+      expect(document.querySelectorAll(".auth-method").length).toBe(3),
     );
-    expect(screen.getByLabelText(/8-character code/i)).toBeTruthy();
+    expect(document.querySelectorAll(".provider-button").length).toBe(0);
+    expect(screen.getByText(/choose how to sign in/i)).toBeTruthy();
   });
 
   it("never asks a provider account to invent a password", async () => {

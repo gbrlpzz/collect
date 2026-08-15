@@ -6,7 +6,7 @@ import {
   type AuthProvider,
 } from "../../lib/supabaseClient";
 import { CollectBrand } from "../CollectBrand";
-import { Icon } from "../Icon";
+import { Icon, type IconName } from "../Icon";
 import { isAppleMobileBrowser, isStandaloneApp } from "../../lib/platform";
 import { CodeSignIn } from "./CodeSignIn";
 import { EmailLinkForm } from "./EmailLinkForm";
@@ -23,22 +23,42 @@ interface AuthScreenProps {
   onPasswordSet?: () => void;
 }
 
-/** Sign-in methods, in the order the screen offers them. */
-type EntryMode = "provider" | "link" | "password" | "code";
+/** The backup methods, in the order the list offers them. */
+type BackupMethod = "link" | "password" | "code";
 
-const modeTitle: Record<EntryMode, string> = {
-  provider: "Sign in.",
-  link: "Sign in with a link.",
-  password: "Sign in with a password.",
-  code: "Sign in with a code.",
-};
-
-const modeAction: Record<EntryMode, string> = {
-  provider: "Continue with Google or Apple",
-  link: "Email me a sign-in link",
-  password: "Use an email address and password",
-  code: "Use a code from your administrator or another device",
-};
+const backupMethods: {
+  id: BackupMethod;
+  icon: IconName;
+  title: string;
+  detail: string;
+  heading: string;
+  lede: string;
+}[] = [
+  {
+    id: "link",
+    icon: "send",
+    title: "Email me a sign-in link",
+    detail: "Opens collect from your inbox.",
+    heading: "Sign in with a link.",
+    lede: "We send a one-time link to the address on your account.",
+  },
+  {
+    id: "password",
+    icon: "key",
+    title: "Sign in with a password",
+    detail: "For an account that already has one.",
+    heading: "Sign in with a password.",
+    lede: "Use the email address and password on your account.",
+  },
+  {
+    id: "code",
+    icon: "phone",
+    title: "Sign in with a code",
+    detail: "Eight characters, from your administrator or a signed-in device.",
+    heading: "Sign in with a code.",
+    lede: "Enter the code you were given, or request a fresh one below.",
+  },
+];
 
 function isLocalDevelopmentOrigin(): boolean {
   if (typeof window === "undefined") return false;
@@ -51,11 +71,10 @@ function isLocalDevelopmentOrigin(): boolean {
 /**
  * The single sign-in surface for both installed apps.
  *
- * Providers come first: they need no email, so a deployment never depends on a
- * mail quota to admit people. Every other method stays available underneath,
- * each named after the authentication it performs, as Apple's "Managing
- * accounts" guidance requires. Only methods this deployment actually offers
- * are shown.
+ * One decision at a time. Providers come first: they need no email, so a
+ * deployment never depends on a mail quota to admit people. Everything else
+ * sits in one list of named methods, and choosing one opens that method alone
+ * with an explicit way back — no screen ever shows two ways in at once.
  */
 export function AuthScreen({
   configured,
@@ -71,7 +90,7 @@ export function AuthScreen({
     configured ? knownAuthProviders() : [],
   );
   const [providersChecked, setProvidersChecked] = useState(false);
-  const [mode, setMode] = useState<EntryMode | null>(null);
+  const [method, setMethod] = useState<BackupMethod | null>(null);
   const [callbackIssue, setCallbackIssue] = useState<string | null>(() =>
     authCallbackError(),
   );
@@ -92,18 +111,7 @@ export function AuthScreen({
     };
   }, [configured]);
 
-  // Before the deployment answers, keep the screen quiet rather than guessing
-  // a method that may not exist here.
-  const entryMode: EntryMode =
-    mode ??
-    (providers.length ? "provider" : role === "admin" ? "link" : "code");
-  const alternatives = (
-    ["provider", "link", "password", "code"] as const
-  ).filter(
-    (candidate) =>
-      candidate !== entryMode &&
-      (candidate !== "provider" || providers.length > 0),
-  );
+  const chosen = backupMethods.find((candidate) => candidate.id === method);
 
   if (requirePasswordSetup) {
     return (
@@ -122,19 +130,34 @@ export function AuthScreen({
         <CollectBrand />
       </div>
       <section className="auth-card" aria-labelledby="auth-title">
+        {chosen && (
+          <button
+            type="button"
+            className="text-button auth-back"
+            onClick={() => {
+              setMethod(null);
+              setCallbackIssue(null);
+            }}
+          >
+            <Icon name="chevron-left" size={16} /> All sign-in options
+          </button>
+        )}
+
         <h1 id="auth-title">
-          {role === "admin" && entryMode === "provider"
-            ? "Admin sign in."
-            : modeTitle[entryMode]}
+          {chosen
+            ? chosen.heading
+            : role === "admin"
+              ? "Admin sign in."
+              : "Sign in."}
         </h1>
         <p>
           {!configured
             ? "Authentication is not configured for this deployment."
-            : entryMode === "provider"
-              ? "Sign in to reach the projects you contribute to. Your email address stays your identifier."
-              : entryMode === "code"
-                ? "Enter the code your administrator issued, or request a new one below."
-                : "Use the email address your invitation was sent to."}
+            : chosen
+              ? chosen.lede
+              : providers.length
+                ? "Sign in to reach the projects you contribute to."
+                : "Choose how to sign in."}
         </p>
 
         {configured && (
@@ -145,48 +168,64 @@ export function AuthScreen({
               </p>
             )}
 
-            {entryMode === "provider" && (
-              <ProviderSignIn
-                providers={providers}
-                surface={role}
-                onFailure={() => setCallbackIssue(null)}
-              />
-            )}
-            {entryMode === "link" && (
-              <EmailLinkForm showLocalRedirectHint={showLocalRedirectHint} />
-            )}
-            {entryMode === "password" && <PasswordForm />}
-            {entryMode === "code" && <CodeSignIn autoFocus={mode === "code"} />}
+            {chosen ? (
+              <>
+                {chosen.id === "link" && (
+                  <EmailLinkForm
+                    showLocalRedirectHint={showLocalRedirectHint}
+                  />
+                )}
+                {chosen.id === "password" && <PasswordForm />}
+                {chosen.id === "code" && <CodeSignIn autoFocus />}
+              </>
+            ) : (
+              <>
+                <ProviderSignIn
+                  providers={providers}
+                  surface={role}
+                  onFailure={() => setCallbackIssue(null)}
+                />
 
-            {entryMode === "provider" && standalone && (
-              <p className="auth-config-note">
-                <Icon name="info" size={16} />
-                <span>
-                  The provider opens in the browser. If it does not return to
-                  this app, sign in there and use a code from the signed-in
-                  browser.
-                </span>
-              </p>
-            )}
+                {providers.length > 0 && standalone && (
+                  <p className="auth-config-note">
+                    <Icon name="info" size={16} />
+                    <span>
+                      The provider opens in the browser. If it does not return
+                      to this app, sign in there and use a code from the
+                      signed-in browser.
+                    </span>
+                  </p>
+                )}
 
-            {providersChecked && alternatives.length > 0 && (
-              <details className="auth-alternatives">
-                <summary>Other ways to sign in</summary>
-                {alternatives.map((candidate) => (
-                  <button
-                    key={candidate}
-                    type="button"
-                    className="text-button"
-                    onClick={() => {
-                      setMode(candidate);
-                      setCallbackIssue(null);
-                    }}
-                  >
-                    {modeAction[candidate]}{" "}
-                    <Icon name="arrow-right" size={15} />
-                  </button>
-                ))}
-              </details>
+                {providersChecked && (
+                  <>
+                    {providers.length > 0 && (
+                      <p className="auth-list-heading">Other ways to sign in</p>
+                    )}
+                    <ul className="auth-method-list">
+                      {backupMethods.map((candidate) => (
+                        <li key={candidate.id}>
+                          <button
+                            type="button"
+                            className="auth-method"
+                            onClick={() => {
+                              setMethod(candidate.id);
+                              setCallbackIssue(null);
+                            }}
+                          >
+                            <Icon name={candidate.icon} size={19} />
+                            <span className="auth-method-copy">
+                              <strong>{candidate.title}</strong>
+                              <span>{candidate.detail}</span>
+                            </span>
+                            <Icon name="chevron-right" size={17} />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </>
             )}
           </>
         )}
@@ -197,7 +236,7 @@ export function AuthScreen({
           </button>
         )}
 
-        {showInstallHint && (
+        {showInstallHint && !chosen && (
           <details className="auth-install-help">
             <summary>
               <Icon name="plus" size={16} /> Add collect to Home Screen
