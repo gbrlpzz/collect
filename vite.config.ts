@@ -1,10 +1,30 @@
+import * as fs from "node:fs";
+import * as crypto from "node:crypto";
 import { loadEnv, type HtmlTagDescriptor } from "vite";
 import { defineConfig, type Plugin } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
+declare module "node:fs" {
+  export function readFileSync(path: string): Uint8Array;
+}
+declare module "node:crypto" {
+  export function createHash(algo: string): {
+    update(data: Uint8Array): { digest(enc: "hex"): string };
+  };
+}
+
 const SOCIAL_TITLE = "Offline Field Data Collection App — collect";
 const SOCIAL_DESCRIPTION =
   "Offline-first field data collection for research teams. Capture observations, photos, audio, and GPS with no signal, then sync and export FAIR datasets.";
+
+function previewImageHash(): string {
+  try {
+    const data = fs.readFileSync("public/collect-preview.png");
+    return crypto.createHash("sha256").update(data).digest("hex").slice(0, 8);
+  } catch {
+    return "v1";
+  }
+}
 
 /**
  * Emits crawler-readable social metadata and structured data at build time.
@@ -13,9 +33,10 @@ const SOCIAL_DESCRIPTION =
  */
 function socialMetadata(appUrl: string | undefined): Plugin {
   const origin = appUrl?.trim().replace(/\/+$/, "");
+  const version = previewImageHash();
   const image = origin
-    ? `${origin}/collect-preview.png`
-    : "/collect-preview.png";
+    ? `${origin}/collect-preview.png?v=${version}`
+    : `/collect-preview.png?v=${version}`;
   const tags: HtmlTagDescriptor[] = [
     { tag: "meta", attrs: { property: "og:type", content: "website" } },
     { tag: "meta", attrs: { property: "og:site_name", content: "collect" } },

@@ -1,7 +1,7 @@
 // collect service worker: precached app shell + runtime cache-first assets.
 // The hashed asset list is emitted by the Vite build (precache-manifest.json)
 // so an installed app loads offline from the first launch.
-const CACHE = "collect-shell-v6";
+const CACHE = "collect-shell-v7";
 const CORE = [
   "/index.html",
   "/manifest.webmanifest",

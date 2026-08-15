@@ -1120,16 +1120,46 @@ body {
   }
 }
 
-/* Narrow screens: fluid adaptive scale ensures the iPhone mockup scales
-   seamlessly to fit any viewport width without breaking the 375x812 internal layout. */
+/* Narrow screens: precise step scale preserves real 375x812 iPhone layout
+   and fits comfortably inside any mobile viewport width from 320px up. */
 @media (max-width: 480px) {
   .hp-shell {
-    --hp-phone-scale: clamp(0.68, calc((100vw - 32px) / 393), 1);
+    --hp-phone-scale: 0.92;
+  }
+}
+@media (max-width: 440px) {
+  .hp-shell {
+    --hp-phone-scale: 0.88;
+  }
+}
+@media (max-width: 414px) {
+  .hp-shell {
+    --hp-phone-scale: 0.84;
+  }
+}
+@media (max-width: 390px) {
+  .hp-shell {
+    --hp-phone-scale: 0.8;
+  }
+}
+@media (max-width: 375px) {
+  .hp-shell {
+    --hp-phone-scale: 0.77;
+  }
+}
+@media (max-width: 360px) {
+  .hp-shell {
+    --hp-phone-scale: 0.73;
   }
 }
 @media (max-width: 340px) {
   .hp-shell {
-    --hp-phone-scale: clamp(0.6, calc((100vw - 24px) / 393), 0.74);
+    --hp-phone-scale: 0.68;
+  }
+}
+@media (max-width: 320px) {
+  .hp-shell {
+    --hp-phone-scale: 0.64;
   }
 }
 
