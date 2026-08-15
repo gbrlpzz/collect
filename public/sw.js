@@ -4,6 +4,7 @@
 const CACHE = "collect-shell-v8";
 const CORE = [
   "/index.html",
+  "/boot.js",
   "/manifest.webmanifest",
   "/manifest-admin.webmanifest",
   "/icon.svg",

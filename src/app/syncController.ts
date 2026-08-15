@@ -19,6 +19,7 @@ import {
   reportDeviceStatus,
   syncRemoteObservation,
 } from "../lib/remoteBackend";
+import type { ToastTone } from "./useTransientMessage";
 
 interface SyncControllerArgs {
   state: AppState;
@@ -31,7 +32,7 @@ interface SyncControllerArgs {
   setState: Dispatch<SetStateAction<AppState>>;
   setIsSyncing: Dispatch<SetStateAction<boolean>>;
   setSyncProgress: Dispatch<SetStateAction<Record<string, SyncProgressEntry>>>;
-  showToast: (message: string) => void;
+  showToast: (message: string, tone?: ToastTone) => void;
   /** Background (lifecycle) runs stay quiet; manual taps keep feedback. */
   silent?: boolean;
   /** Injectable for tests; production always runs the real remote sync. */
@@ -100,7 +101,10 @@ export function syncNow({
   ).length;
   if (!retryableCount || isSyncing) {
     if (!silent && pendingCount && !retryableCount)
-      showToast("A saved observation needs attention before it can sync");
+      showToast(
+        "A saved observation needs attention before it can sync",
+        "failure",
+      );
     return Promise.resolve(false);
   }
 
@@ -117,13 +121,17 @@ export function syncNow({
       leaseAcquired = await acquireSyncLease(syncOwner);
     } catch {
       setIsSyncing(false);
-      if (!silent) showToast("Sync is unavailable while local storage is busy");
+      if (!silent)
+        showToast("Sync is unavailable while local storage is busy", "failure");
       return false;
     }
     if (!leaseAcquired) {
       setIsSyncing(false);
       if (!silent)
-        showToast("Another collect window is already syncing this project");
+        showToast(
+          "Another collect window is already syncing this project",
+          "failure",
+        );
       return false;
     }
     const leaseRefreshTimer = window.setInterval(() => {
@@ -337,9 +345,13 @@ export function syncNow({
           if (!silent)
             showToast(
               "Sign in again when you have a connection to sync this fieldwork",
+              "failure",
             );
         } else if (!silent)
-          showToast("Sync paused · your local records are still safe");
+          showToast(
+            "Sync paused · your local records are still safe",
+            "failure",
+          );
       }
     } finally {
       window.clearInterval(leaseRefreshTimer);

@@ -272,6 +272,125 @@ body {
   color: var(--text);
   background: var(--grouped);
 }
+
+/* Mobile section menu. Below 960px the topbar nav is hidden; this sheet is
+   its replacement, anchored under the sticky topbar. */
+.hp-menu-btn {
+  display: none;
+  appearance: none;
+  border: 1px solid var(--separator-light);
+  background: var(--paper);
+  color: var(--text);
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 0.15s ease,
+    transform 0.12s ease;
+}
+.hp-menu-btn:hover {
+  background: var(--grouped);
+}
+.hp-menu-btn:active {
+  transform: scale(0.96);
+}
+.hp-menu-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.hp-menu-root {
+  position: fixed;
+  inset: calc(52px + var(--sat)) 0 0 0;
+  z-index: 60;
+}
+.hp-menu-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.32);
+  animation: hp-menu-fade 0.18s ease;
+}
+.hp-menu {
+  position: absolute;
+  top: 0;
+  left: max(10px, var(--sal));
+  right: max(10px, var(--sar));
+  max-height: calc(100% - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background: rgba(245, 245, 247, 0.96);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--separator-light);
+  border-radius: 20px;
+  box-shadow: 0 18px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 6px;
+  animation: hp-menu-enter 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes hp-menu-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes hp-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.hp-menu-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--secondary);
+  font-size: 1rem;
+  font-weight: 550;
+  -webkit-tap-highlight-color: transparent;
+}
+.hp-menu-link span {
+  flex: 1 1 auto;
+  text-align: left;
+}
+.hp-menu-link:hover {
+  color: var(--text);
+  background: var(--grouped);
+}
+.hp-menu-link.active {
+  color: var(--text);
+  font-weight: 650;
+  background: var(--paper);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.hp-menu-link:active {
+  transform: scale(0.98);
+}
+.hp-menu-link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+.hp-menu-cta {
+  margin-top: 6px;
+  border-top: 1px solid var(--separator-light);
+  border-radius: 0 0 12px 12px;
+  color: var(--text);
+  font-weight: 650;
+}
 @media (max-width: 640px) {
   .hp-github-text {
     display: none;
@@ -960,15 +1079,30 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 .hp-sync-stage {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
   display: flex;
   align-items: flex-start;
   gap: 12px;
   padding: 14px 12px;
   border-radius: 12px;
   opacity: 0.5;
+  -webkit-tap-highlight-color: transparent;
   transition:
     opacity 0.2s ease,
     background 0.2s ease;
+}
+.hp-sync-stage:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+.hp-sync-stage:active {
+  transform: scale(0.99);
 }
 .hp-sync-stage[data-active="true"] {
   opacity: 1;
@@ -1294,7 +1428,8 @@ body {
 }
 main [id],
 section[id] {
-  scroll-margin-top: 76px;
+  /* Anchor jumps land below the sticky topbar, safe-area aware. */
+  scroll-margin-top: calc(76px + var(--sat));
 }
 
 /* =========================================================================
@@ -2808,6 +2943,55 @@ section[id] {
   .hp-nav {
     display: none;
   }
+  .hp-menu-btn {
+    display: inline-flex;
+  }
+  /* One full viewport per demo state: the device, its tab pills, and the
+     story note together fill the height below the sticky topbar, so the
+     reader sees the whole interactive unit at once and never scrolls
+     trapped inside the frame. Each term divides a length by a length so
+     the clamp compares unitless ratios for scale(). The 280px reserve is
+     the topbar (52) + pills (48) + note (~110) + gaps; the floor keeps the
+     embedded app legible on short screens, the cap tames tall tablets. */
+  .hp-shell {
+    --hp-phone-scale: clamp(
+      0.36,
+      min((100vw - 32px) / 393px, (100svh - 280px) / 830px),
+      0.85
+    );
+  }
+  /* Phone-first demo order: heading, device, tab pills, chips, story. The
+     copy wrapper becomes transparent so its children interleave with the
+     device; the desktop grid above is untouched. */
+  .hp-flow-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .hp-flow-copy {
+    display: contents;
+  }
+  .hp-iphone-wrap {
+    order: 1;
+    /* The frame keeps a 393px layout box; clip it so the box cannot widen
+       the page when the drawn (scaled) frame is narrower than it. */
+    overflow-x: clip;
+  }
+  .hp-flow-visual {
+    order: 1;
+  }
+  .hp-admin-visual {
+    order: 6;
+  }
+  .hp-admin-tab-selector {
+    order: 2;
+  }
+  .hp-field-types {
+    order: 3;
+  }
+  .hp-story {
+    order: 4;
+  }
   .hp-diff-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2833,13 +3017,6 @@ section[id] {
     position: static;
     min-height: 0;
     padding: 48px max(16px, var(--sal)) 48px max(16px, var(--sar));
-  }
-  .hp-flow-layout {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-  .hp-flow-copy {
-    max-width: 100%;
   }
   .hp-integrity-grid {
     grid-template-columns: 1fr;
@@ -2892,11 +3069,14 @@ section[id] {
     display: flex;
     width: 100%;
     max-width: 440px;
+    /* Sit centered under the device mockup, matching its axis. */
+    align-self: center;
     background: var(--grouped);
     padding: 3px;
     border-radius: 999px;
     gap: 2px;
-    margin-bottom: 16px;
+    /* The stacked layout's flex gap provides the rhythm below the pills. */
+    margin-bottom: 0;
     box-sizing: border-box;
   }
   .hp-admin-step-btn {
@@ -2918,11 +3098,19 @@ section[id] {
   }
   .hp-field-types {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
-    gap: 6px 8px;
-    margin: 0 0 16px;
+    gap: 8px;
     line-height: normal;
+    /* One calm scrolling row instead of a wrapping wall of pills. */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+    margin: 0;
+  }
+  .hp-field-types::-webkit-scrollbar {
+    display: none;
   }
   .hp-field-type-item {
     display: inline-flex;
@@ -2985,6 +3173,11 @@ section[id] {
 }
 
 @media (max-width: 680px) {
+  /* Desktop-oriented demos drop out on phones; the narrative and the file
+     tree remain. */
+  .hp-package-pane {
+    display: none;
+  }
   .hp-topbar-inner {
     padding: 0 max(16px, var(--sal));
   }
@@ -3000,7 +3193,7 @@ section[id] {
       max(16px, var(--sar));
   }
   .hp-hero h1 {
-    font-size: clamp(1.85rem, 7.5vw, 2.75rem);
+    font-size: clamp(2rem, 9vw, 2.85rem);
     max-width: 100%;
     line-height: 1.1;
   }
@@ -3069,7 +3262,7 @@ section[id] {
     gap: 8px;
   }
   .hp-topbar-actions .button {
-    min-height: 40px;
+    min-height: 44px;
     padding: 0 16px;
     font-size: 0.8125rem;
   }

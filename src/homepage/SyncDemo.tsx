@@ -18,7 +18,13 @@ const SYNC_STEPS = [
   },
 ] as const;
 
-export function SyncDemo({ active }: { active: number }) {
+export function SyncDemo({
+  active,
+  onStepChange = () => undefined,
+}: {
+  active: number;
+  onStepChange?: (index: number) => void;
+}) {
   const step = SYNC_STEPS[active];
 
   return (
@@ -32,7 +38,8 @@ export function SyncDemo({ active }: { active: number }) {
           <p>
             Flaky cellular links shouldn't jeopardize weeks of fieldwork.
             Submissions commit to device storage first, media transfers resume
-            in chunks, and records mark synced only upon signed server receipt.
+            in chunks, and records mark synced only upon server-confirmed
+            receipt.
           </p>
           <DocLinks files={["background-automation.md", "architecture.md"]} />
         </div>
@@ -47,17 +54,22 @@ export function SyncDemo({ active }: { active: number }) {
       <div className="hp-flow-visual">
         <div className="hp-sync-pipeline" aria-label="Sync pipeline stages">
           {SYNC_STEPS.map((s, i) => (
-            <div
+            <button
               key={s.code}
+              type="button"
               className="hp-sync-stage"
               data-active={active === i}
+              aria-current={active === i ? "step" : undefined}
+              onClick={() => onStepChange(i)}
             >
-              <span className="hp-sync-stage-index">{i + 1}</span>
+              <span className="hp-sync-stage-index" aria-hidden="true">
+                {i + 1}
+              </span>
               <div>
                 <strong>{s.title}</strong>
                 <p className="hp-sync-state-code">{s.code}</p>
               </div>
-            </div>
+            </button>
           ))}
 
           <div className="hp-sync-receipt" data-active={active === 2}>

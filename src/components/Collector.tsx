@@ -26,6 +26,8 @@ interface CollectorProps {
   project: Project;
   draft: FormDraft;
   lastSavedAt: string | null;
+  /** True between a draft change and its debounced durable commit. */
+  draftSaving?: boolean;
   onDraftChange: (key: string, value: FormValue) => void;
   onSubmit: (
     values: SubmissionValues,
@@ -95,6 +97,7 @@ export function Collector({
   project,
   draft,
   lastSavedAt,
+  draftSaving = false,
   onDraftChange,
   onSubmit,
   onBack,
@@ -739,7 +742,9 @@ export function Collector({
           <strong>{project.name}</strong>
         </div>
         <span className="collector-save-state" aria-live="polite">
-          {lastSavedAt ? (
+          {draftSaving ? (
+            "Saving…"
+          ) : lastSavedAt ? (
             <>
               <Icon name="check" size={14} /> Saved on device
             </>

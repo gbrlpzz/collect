@@ -1,6 +1,7 @@
 import { z } from "npm:zod@4.4.3";
 import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
+import { bumpIpRateLimit } from "../_shared/rateLimit.ts";
 
 function nonNegativeInteger(value: number | string | null | undefined): number {
   const parsed = Number(value ?? 0);
@@ -13,10 +14,10 @@ const deviceStatusSchema = z.object({
   pending_submissions: z.union([z.number(), z.string()]).optional(),
   pending_media: z.union([z.number(), z.string()]).optional(),
   fieldwork_complete: z.boolean().optional(),
-  app_version: z.string().optional(),
-  device_model: z.string().optional(),
-  device_os: z.string().optional(),
-  browser: z.string().optional(),
+  app_version: z.string().max(64).optional(),
+  device_model: z.string().max(120).optional(),
+  device_os: z.string().max(40).optional(),
+  browser: z.string().max(40).optional(),
   schema_versions_cached: z.array(z.number()).optional(),
 });
 
@@ -33,6 +34,14 @@ serve(async (request) => {
   }
   try {
     const { user, service } = await requireUser(request);
+    // Heartbeats are routine telemetry; a runaway or hostile client must not
+    // be able to hammer device and status writes without limit.
+    if (!(await bumpIpRateLimit(request, service))) {
+      return json(
+        { error: "Too many device reports; retry later" },
+        { status: 429 },
+      );
+    }
     const rawJson = await request.json().catch(() => ({}));
     const parsed = deviceStatusSchema.safeParse(rawJson);
     if (!parsed.success) {

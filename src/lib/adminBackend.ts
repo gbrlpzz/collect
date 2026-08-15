@@ -180,9 +180,16 @@ export async function loadUserOrganizationName(): Promise<string | null> {
   return null;
 }
 
+export interface CreateRemoteProjectResult {
+  project: Project;
+  /** Addresses whose invitation could not be sent; the project itself is
+   * published and these can be resent from the roster. */
+  failedInvites: string[];
+}
+
 export async function createRemoteProject(
   input: NewProjectInput,
-): Promise<Project> {
+): Promise<CreateRemoteProjectResult> {
   const client = requireClient();
   const { data: userData, error: userError } = await client.auth.getUser();
   if (userError || !userData.user)
@@ -254,10 +261,13 @@ export async function createRemoteProject(
   if (schemaError) throw new Error("Schema could not be published");
   // Invitations are independent; a few run at a time instead of one serial
   // round-trip per address, bounded so a large roster cannot stampede the
-  // mail provider.
+  // mail provider. A failed invitation must NOT fail the whole publish: the
+  // project and schema are already durable, and surfacing a generic error
+  // here invited a retry that would duplicate the project with a fresh id.
   const emails = input.emails
     .map((email) => email.trim())
     .filter((email) => email.length > 0);
+  const failedInvites: string[] = [];
   let inviteCursor = 0;
   const inviteWorkers = Array.from(
     { length: Math.min(3, emails.length) },
@@ -268,12 +278,12 @@ export async function createRemoteProject(
         const response = await client.functions.invoke("send-project-invite", {
           body: { project_id: project.id, email },
         });
-        if (response.error) throw response.error;
+        if (response.error) failedInvites.push(email);
       }
     },
   );
   await Promise.all(inviteWorkers);
-  return (
+  const created =
     (await loadAssignedProjects())?.find(
       (candidate) => candidate.id === project.id,
     ) ??
@@ -286,8 +296,8 @@ export async function createRemoteProject(
       contributor_count: input.emails.length,
       complete_submission_count: 0,
       last_received_at: null,
-    })
-  );
+    });
+  return { project: created, failedInvites };
 }
 
 const checkpointResultSchema = z.object({

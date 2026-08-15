@@ -284,6 +284,29 @@ npm run check
 vercel --prod
 ```
 
+### HTTP security headers
+
+`vercel.json` ships a `headers` block for every route: a strict
+Content-Security-Policy (`script-src 'self'` — the app shell's boot logic
+lives in the external `/boot.js`, never inline), `X-Frame-Options: DENY`,
+`X-Content-Type-Options: nosniff` (mirrored on Edge Function responses),
+`Referrer-Policy`, `Permissions-Policy` (camera, microphone, geolocation
+allowed only for the app itself), and HSTS. Edge Function JSON responses add
+`nosniff` in `_shared/cors.ts`.
+
+After the first deploy of these headers, verify the CSP on the preview
+deployment before merging: load the homepage, open `/app`, complete a
+provider sign-in, capture a photo, sync, and run an admin export. A
+browser-console CSP violation report means a source is missing — extend the
+policy rather than weakening it to `unsafe-inline` for scripts.
+
+### Vercel preview deployments
+
+Enable **Deployment Protection** (Vercel → Project → Settings → Domains) so
+PR previews are not publicly reachable: the production auth redirect
+allow-list already includes the deployment's Vercel origin, and previews
+inherit the same site URL configuration.
+
 ---
 
 ## Installing on iOS (iPhone / iPad)

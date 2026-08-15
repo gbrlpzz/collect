@@ -64,7 +64,7 @@ describe("contributor sign-in codes (admin side)", () => {
         "alice@lab.org",
       ),
     );
-    expect(screen.getByLabelText(/code ab2d9kqx/i)).toBeTruthy();
+    expect(screen.getByLabelText(/code.*a.*b.*2.*d.*9.*k.*q.*x/i)).toBeTruthy();
     expect(screen.getByText(/emailed to/i)).toBeTruthy();
     expect(screen.getByText(/expires in 20 minutes/i)).toBeTruthy();
   });
