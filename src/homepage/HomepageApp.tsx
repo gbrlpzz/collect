@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { FlowDemo, type ContributorTab } from "./FlowDemo";
 import { SyncDemo } from "./SyncDemo";
@@ -45,7 +45,24 @@ const ADMIN_SCENES = [
   },
 ] as const;
 
-function TopBar({ activeSection }: { activeSection: string }) {
+const SECTION_LINKS = [
+  { id: "collection", label: "Collector" },
+  { id: "guarantees", label: "Guarantees" },
+  { id: "sync", label: "Sync" },
+  { id: "admin", label: "Setup" },
+  { id: "integrity", label: "Integrity" },
+  { id: "data", label: "Dataset" },
+] as const;
+
+function TopBar({
+  activeSection,
+  menuOpen,
+  onMenuToggle,
+}: {
+  activeSection: string;
+  menuOpen: boolean;
+  onMenuToggle: () => void;
+}) {
   return (
     <header className="hp-topbar">
       <div className="hp-topbar-inner">
@@ -54,45 +71,28 @@ function TopBar({ activeSection }: { activeSection: string }) {
         </a>
 
         <nav className="hp-nav" aria-label="Sections">
-          <a
-            className={`hp-nav-link ${activeSection === "collection" ? "active" : ""}`}
-            href="#collection"
-          >
-            Collector
-          </a>
-          <a
-            className={`hp-nav-link ${activeSection === "guarantees" ? "active" : ""}`}
-            href="#guarantees"
-          >
-            Guarantees
-          </a>
-          <a
-            className={`hp-nav-link ${activeSection === "sync" ? "active" : ""}`}
-            href="#sync"
-          >
-            Sync
-          </a>
-          <a
-            className={`hp-nav-link ${activeSection === "admin" ? "active" : ""}`}
-            href="#admin"
-          >
-            Setup
-          </a>
-          <a
-            className={`hp-nav-link ${activeSection === "integrity" ? "active" : ""}`}
-            href="#integrity"
-          >
-            Integrity
-          </a>
-          <a
-            className={`hp-nav-link ${activeSection === "data" ? "active" : ""}`}
-            href="#data"
-          >
-            Dataset
-          </a>
+          {SECTION_LINKS.map((link) => (
+            <a
+              key={link.id}
+              className={`hp-nav-link ${activeSection === link.id ? "active" : ""}`}
+              href={`#${link.id}`}
+            >
+              {link.label}
+            </a>
+          ))}
         </nav>
 
         <div className="hp-topbar-actions">
+          <button
+            type="button"
+            className="hp-menu-btn"
+            aria-expanded={menuOpen}
+            aria-controls="hp-menu"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            onClick={onMenuToggle}
+          >
+            <Icon name={menuOpen ? "x" : "menu"} size={20} />
+          </button>
           <a
             className="hp-nav-github"
             href={GITHUB_URL}
@@ -109,6 +109,118 @@ function TopBar({ activeSection }: { activeSection: string }) {
         </div>
       </div>
     </header>
+  );
+}
+
+/**
+ * Section navigation for viewports below 960px, where the topbar nav is
+ * hidden. A sheet anchored under the sticky topbar: scrim dismiss, Escape,
+ * a focus trap while open (per docs/design.md), and a scroll lock on the
+ * page behind it.
+ */
+function MobileMenu({
+  open,
+  activeSection,
+  onClose,
+}: {
+  open: boolean;
+  activeSection: string;
+  onClose: () => void;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    // SAFETY: document.activeElement is an Element or null; every element
+    // that can hold focus here implements HTMLElement.focus().
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const focusables = () =>
+      Array.from(panel.querySelectorAll<HTMLAnchorElement>("a[href]"));
+    focusables()[0]?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const items = focusables();
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    const onResize = () => {
+      // Crossing into the desktop layout closes the sheet (the button is
+      // hidden there, so it could no longer be dismissed from the bar).
+      if (window.innerWidth > 960) onClose();
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", onResize);
+    const { overflow } = document.body.style;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", onResize);
+      document.body.style.overflow = overflow;
+      document.documentElement.style.overflow = "";
+      previouslyFocused?.focus();
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="hp-menu-root">
+      <div className="hp-menu-scrim" onClick={onClose} aria-hidden="true" />
+      <div
+        className="hp-menu"
+        id="hp-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Sections"
+        ref={panelRef}
+      >
+        <nav>
+          {SECTION_LINKS.map((link) => {
+            const active = activeSection === link.id;
+            return (
+              <a
+                key={link.id}
+                className={`hp-menu-link ${active ? "active" : ""}`}
+                href={`#${link.id}`}
+                aria-current={active ? "true" : undefined}
+                onClick={onClose}
+              >
+                <span>{link.label}</span>
+                <Icon name={active ? "check" : "chevron-right"} size={15} />
+              </a>
+            );
+          })}
+          <a
+            className="hp-menu-link hp-menu-cta"
+            href="#preview"
+            onClick={onClose}
+          >
+            <span>Request access</span>
+            <Icon name="arrow-right" size={15} />
+          </a>
+        </nav>
+      </div>
+    </div>
   );
 }
 
@@ -170,6 +282,8 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
           alt=""
           className="hp-hero-bg-img"
           loading="eager"
+          fetchPriority="high"
+          decoding="async"
         />
         <div className="hp-hero-bg-overlay" />
       </div>
@@ -340,6 +454,7 @@ const CONTRIB_TABS: ContributorTab[] = ["home", "flow", "media"];
 export function HomepageApp() {
   const [draftEmail, setDraftEmail] = useState("");
   const [contribTab, setContribTab] = useState<ContributorTab>("home");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const captureEmail = (email: string) => {
     setDraftEmail(email);
@@ -374,7 +489,16 @@ export function HomepageApp() {
   }, [collection.active]);
   return (
     <div className="hp-shell">
-      <TopBar activeSection={activeSection} />
+      <TopBar
+        activeSection={activeSection}
+        menuOpen={menuOpen}
+        onMenuToggle={() => setMenuOpen((open) => !open)}
+      />
+      <MobileMenu
+        open={menuOpen}
+        activeSection={activeSection}
+        onClose={() => setMenuOpen(false)}
+      />
       <main id="main">
         <Hero onEmailSubmit={captureEmail} />
 
@@ -420,7 +544,7 @@ export function HomepageApp() {
           >
             <div className="hp-scrolly-panel">
               <div className="hp-section-inner">
-                <SyncDemo active={sync.active} />
+                <SyncDemo active={sync.active} onStepChange={sync.goToStep} />
               </div>
             </div>
           </div>
@@ -481,7 +605,7 @@ export function HomepageApp() {
                     </div>
                   </div>
 
-                  <div className="hp-flow-visual">
+                  <div className="hp-flow-visual hp-admin-visual">
                     <AdminWalkthrough
                       initialTab={adminScene.tab}
                       onTabChange={(tab) => {

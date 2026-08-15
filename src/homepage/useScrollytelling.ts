@@ -35,9 +35,18 @@ export function useScrollytelling<T extends HTMLElement>(
     const el = ref.current;
     if (!el || stepCount <= 1) return;
 
+    // The sticky panel only pins above 960px (see the responsive block in
+    // homepage.css); below that the section is a plain stack whose height
+    // says nothing about pinning, so steps switch only by direct control.
+    const pinned = () =>
+      Boolean(
+        globalThis.window?.matchMedia &&
+          window.matchMedia("(min-width: 961px)").matches,
+      );
+
     const compute = () => {
       const travel = el.offsetHeight - window.innerHeight;
-      if (travel <= 0) {
+      if (!pinned() || travel <= 0) {
         // Panel is not pinned (short viewport / stacked mobile layout).
         // Preserve user-selected interactive tab state on mobile without scroll resets.
         return;
@@ -59,12 +68,17 @@ export function useScrollytelling<T extends HTMLElement>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepCount]);
 
-  /** Pills stay usable: clicking one scrolls to that step's band. */
+  /** Pills stay usable: clicking one scrolls to that step's band on pinned
+   *  layouts, or switches the step in place on stacked mobile layouts. */
   const goToStep = (index: number) => {
     const el = ref.current;
     if (!el) return;
     const travel = el.offsetHeight - window.innerHeight;
-    if (travel <= 0) {
+    const pinned = Boolean(
+      globalThis.window?.matchMedia &&
+        window.matchMedia("(min-width: 961px)").matches,
+    );
+    if (!pinned || travel <= 0) {
       apply(index);
       return;
     }
