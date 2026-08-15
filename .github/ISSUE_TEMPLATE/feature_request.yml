@@ -1,0 +1,39 @@
+name: Feature request / Fieldwork proposal
+description: Propose a capability, field requirement, or improvement for collect
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        `collect` is infrastructure for trustworthy field evidence. Proposals should preserve local durability, receipt clarity, accessibility, and schema immutability.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Fieldwork context & problem
+      description: What field research scenario or operational need motivates this request?
+      placeholder: "When conducting surveys in areas with ..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed behavior
+      description: How should the feature work for contributors or administrators?
+      placeholder: "The interface should allow ..."
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered / current workaround
+      description: How is this handled currently? What alternative designs were considered?
+    validations:
+      required: false
+  - type: textarea
+    id: invariants
+    attributes:
+      label: Invariant & trust boundary impact
+      description: How does this change affect offline durability, receipt semantics, schema immutability, or export packaging?
+    validations:
+      required: false

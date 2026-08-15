@@ -29,6 +29,8 @@ This directory documents the system architecture, workflows, data formats, and d
 - [Product specification](spec.md): Normative system requirements and constraints.
 - [Implementation status](PLAN.md): Current test coverage and roadmap status.
 - [Contributing](../CONTRIBUTING.md): Contribution guidelines and testing expectations.
+- [Code of Conduct](../CODE_OF_CONDUCT.md): Community standards and reporting guidelines.
+- [Security policy](../SECURITY.md): Vulnerability reporting process and threat model scope.
 - [Agent guidance](../AGENTS.md): Strict system invariants for automated and human developers.
 
 ---

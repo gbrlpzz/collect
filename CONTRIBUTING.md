@@ -10,7 +10,10 @@ Read:
 2. [Architecture](docs/architecture.md)
 3. [Product specification](docs/spec.md)
 4. [Agent guidance](AGENTS.md)
-5. The document for the subsystem you plan to change
+5. [Code of Conduct](CODE_OF_CONDUCT.md)
+6. The document for the subsystem you plan to change
+
+For security vulnerabilities, see the [Security policy](SECURITY.md). Do not report vulnerabilities in public issues or pull requests.
 
 Open an issue or draft pull request early for changes to the synchronization protocol, database model, export format, consent model, or schema compatibility.
 

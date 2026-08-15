@@ -1,0 +1,88 @@
+name: Bug report
+description: Report a reproducible defect or unexpected behavior in collect
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue.
+
+        > [!CAUTION]
+        > **Do not include sensitive research data, live GPS coordinates, private media URLs, session tokens, or credentials in public issues.**
+        > For security vulnerabilities, report privately via [Security Advisories](https://github.com/gbrlpzz/collect/security/advisories/new).
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      description: Which part of the application is affected?
+      options:
+        - "Guided Field Capture (Collector / PWA)"
+        - "Local Ledger / Persistence (IndexedDB)"
+        - "Synchronization Lifecycle & Receipts"
+        - "Administrator Dashboard & Schema Editor"
+        - "Authentication, Invitations & Device Linking"
+        - "FAIR Checkpoint Export & Data Package"
+        - "Edge Functions & Database Migrations"
+        - "Marketing / Demo Homepage"
+        - "Documentation & Provisioning Scripts"
+        - "Other"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, device model, and operating system (e.g. Safari on iOS 18, Chrome 130 on macOS).
+      placeholder: "e.g., Safari 18 on iPhone 15 Pro (iOS 18.2)"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Collect version or commit
+      description: Version number or commit hash (see Profile menu or package version).
+      placeholder: "e.g., v0.1.2 or commit abc1234"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: What steps lead to the behavior?
+      placeholder: |
+        1. Open the project '...'
+        2. Record an observation while offline
+        3. Tap Submit
+        4. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected vs. observed behavior
+      description: What did you expect to happen, and what happened instead?
+      placeholder: "Expected local receipt 'Saved on this device', but observed ..."
+    validations:
+      required: true
+  - type: dropdown
+    id: offline_state
+    attributes:
+      label: Network & sync state
+      description: Was the device offline, transitioning, or online during the issue?
+      options:
+        - "Offline throughout"
+        - "Online throughout"
+        - "Transitioned from offline to online"
+        - "Intermittent / unstable connection"
+        - "Not applicable"
+    validations:
+      required: false
+  - type: checkboxes
+    id: data_integrity
+    attributes:
+      label: Data safety check
+      description: Please verify that no sensitive data is included.
+      options:
+        - label: "I confirmed that all logs, screenshots, and payloads are stripped of sensitive research data, live coordinates, and credentials."
+          required: true
