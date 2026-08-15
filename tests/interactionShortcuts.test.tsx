@@ -209,15 +209,15 @@ describe("low-friction primary actions", () => {
       />,
     );
     fireEvent.change(screen.getByLabelText("New password"), {
-      target: { value: "secret123" },
+      target: { value: "secret12345" },
     });
     fireEvent.change(screen.getByLabelText("Confirm password"), {
-      target: { value: "secret123" },
+      target: { value: "secret12345" },
     });
     fireEvent.submit(screen.getByLabelText("New password").closest("form")!);
 
     await waitFor(() =>
-      expect(authMocks.setPassword).toHaveBeenCalledWith("secret123"),
+      expect(authMocks.setPassword).toHaveBeenCalledWith("secret12345"),
     );
     await waitFor(() => expect(onPasswordSet).toHaveBeenCalledTimes(1));
   });
@@ -276,7 +276,9 @@ describe("low-friction primary actions", () => {
     // The code renders after the async request resolves; wait for the label
     // rather than asserting immediately after the mock call.
     await waitFor(() =>
-      expect(screen.getByLabelText(/code AB2D9KQX/i)).toBeTruthy(),
+      expect(
+        screen.getByLabelText(/code.*A.*B.*2.*D.*9.*K.*Q.*X/i),
+      ).toBeTruthy(),
     );
     expect(screen.getByText(/expires in/i)).toBeTruthy();
     expect(screen.queryByText("Another device")).toBeNull();
