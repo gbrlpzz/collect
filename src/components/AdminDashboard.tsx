@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type { FieldDefinition, FieldOption, Project, View } from "../types";
 import { Icon } from "./Icon";
 import {
@@ -833,6 +833,139 @@ function SchemaDraftEditor({
   );
 }
 
+/**
+ * One roster row. Memoized with stable callbacks so roster-wide re-renders
+ * (typing in the schema editor, opening a sheet) do not re-run the menu
+ * markup for every contributor on large rosters.
+ */
+const ContributorRow = memo(function ContributorRow({
+  row,
+  onPing,
+  onResend,
+  onIssueCode,
+  onViewProfile,
+  onRemove,
+}: {
+  row: ContributorReadiness;
+  onPing: (id: string, email: string) => void | Promise<void>;
+  onResend: (email: string) => void | Promise<void>;
+  onIssueCode: (row: ContributorReadiness) => void | Promise<void>;
+  onViewProfile: (row: ContributorReadiness) => void;
+  onRemove: (row: ContributorReadiness) => void;
+}) {
+  return (
+    <div className="contributor-row">
+      <div className="contributor-copy">
+        <strong>{row.email}</strong>
+        <span>{row.status}</span>
+      </div>
+      {row.attentionChecksTotal ? (
+        <AttentionScoreRing
+          score={row.attentionScore}
+          total={row.attentionChecksTotal}
+          size={38}
+        />
+      ) : null}
+      {!row.ready && !row.invitedOnly && (
+        <Button
+          variant="quiet"
+          icon="send"
+          onClick={() => void onPing(row.id, row.email)}
+        >
+          Remind
+        </Button>
+      )}
+      <details
+        className="admin-project-actions"
+        onToggle={(event) => {
+          const details = event.currentTarget;
+          // Keep only one row menu open at a time.
+          if (!details.open) return;
+          for (const other of document.querySelectorAll(
+            ".contributor-row details[open]",
+          )) {
+            if (other !== details)
+              if (other instanceof HTMLDetailsElement)
+                other.removeAttribute("open");
+          }
+          // The menu may open past the roster box, but it must never run off
+          // the bottom of the window: flip it upward when there is more room
+          // above the row than below it.
+          const menu = details.querySelector<HTMLElement>(
+            ".admin-project-actions-menu",
+          );
+          if (!menu) return;
+          const bubbleRect = details.getBoundingClientRect();
+          const menuHeight = menu.offsetHeight;
+          const roomBelow = window.innerHeight - bubbleRect.bottom;
+          const roomAbove = bubbleRect.top;
+          details.classList.toggle(
+            "menu-up",
+            roomBelow < menuHeight + 8 && roomAbove > roomBelow,
+          );
+          dismissMenuOnOutside(details);
+        }}
+      >
+        <summary aria-label={`Actions for ${row.email}`} role="button">
+          <Icon name="more" size={20} />
+        </summary>
+        <div className="admin-project-actions-menu">
+          {!row.invitedOnly && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.currentTarget.closest("details")?.removeAttribute("open");
+                onViewProfile(row);
+              }}
+            >
+              <Icon name="person" size={17} />
+              View profile
+            </button>
+          )}
+          {!row.invitedOnly && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.currentTarget.closest("details")?.removeAttribute("open");
+                void onIssueCode(row);
+              }}
+            >
+              <Icon name="key" size={17} />
+              Issue sign-in code
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={(event) => {
+              event.currentTarget.closest("details")?.removeAttribute("open");
+              void onResend(row.email);
+            }}
+          >
+            <Icon name="send" size={17} />
+            Resend invitation
+          </button>
+          <span
+            className="menu-separator"
+            role="separator"
+            aria-hidden="true"
+          />
+          <button
+            type="button"
+            className="action-danger"
+            onClick={(event) => {
+              event.currentTarget.closest("details")?.removeAttribute("open");
+              onRemove(row);
+            }}
+          >
+            <Icon name="x" size={17} />
+            {row.invitedOnly ? "Revoke invitation" : "Remove contributor"}
+          </button>
+        </div>
+      </details>
+    </div>
+  );
+});
+
 export function ContributorsPanel({
   projectId,
   onToast,
@@ -864,24 +997,27 @@ export function ContributorsPanel({
   const [issuing, setIssuing] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const issueCode = async (row: ContributorReadiness) => {
-    setCodeRow(row);
-    setIssuedCode(null);
-    setCopied(false);
-    setIssuing(true);
-    try {
-      setIssuedCode(await mintContributorSigninCode(projectId, row.email));
-    } catch {
-      // In preview / demo mode, generate an authentic demo sign-in code
-      setIssuedCode({
-        code: "K9XP-4M7B",
-        expiresInSeconds: 86400,
-        emailed: true,
-      });
-    } finally {
-      setIssuing(false);
-    }
-  };
+  const issueCode = useCallback(
+    async (row: ContributorReadiness) => {
+      setCodeRow(row);
+      setIssuedCode(null);
+      setCopied(false);
+      setIssuing(true);
+      try {
+        setIssuedCode(await mintContributorSigninCode(projectId, row.email));
+      } catch {
+        // In preview / demo mode, generate an authentic demo sign-in code
+        setIssuedCode({
+          code: "K9XP-4M7B",
+          expiresInSeconds: 86400,
+          emailed: true,
+        });
+      } finally {
+        setIssuing(false);
+      }
+    },
+    [projectId],
+  );
 
   const copyIssuedCode = async () => {
     if (!issuedCode) return;
@@ -917,24 +1053,30 @@ export function ContributorsPanel({
     onToast("Contributor invites are available after connecting Supabase");
   };
 
-  const ping = async (contributorId: string, email: string) => {
-    try {
-      await sendProjectPing(projectId, contributorId);
-      onToast(`Reminder sent to ${email}`);
-    } catch {
-      onToast("Email reminders need a configured mail provider");
-    }
-  };
+  const ping = useCallback(
+    async (contributorId: string, email: string) => {
+      try {
+        await sendProjectPing(projectId, contributorId);
+        onToast(`Reminder sent to ${email}`);
+      } catch {
+        onToast("Email reminders need a configured mail provider");
+      }
+    },
+    [projectId, onToast],
+  );
 
-  const resend = async (email: string) => {
-    try {
-      await sendProjectInvite(projectId, email, "contributor", true);
-      onToast(`Invitation sent to ${email}`);
-      refresh();
-    } catch {
-      onToast("The invitation link could not be sent");
-    }
-  };
+  const resend = useCallback(
+    async (email: string) => {
+      try {
+        await sendProjectInvite(projectId, email, "contributor", true);
+        onToast(`Invitation sent to ${email}`);
+        refresh();
+      } catch {
+        onToast("The invitation link could not be sent");
+      }
+    },
+    [projectId, onToast, refresh],
+  );
 
   const remove = async () => {
     if (!removalRow) return;
@@ -985,128 +1127,15 @@ export function ContributorsPanel({
         <div className="contributor-list">
           {rows.length ? (
             rows.map((row) => (
-              <div className="contributor-row" key={row.id}>
-                <div className="contributor-copy">
-                  <strong>{row.email}</strong>
-                  <span>{row.status}</span>
-                </div>
-                {row.attentionChecksTotal ? (
-                  <AttentionScoreRing
-                    score={row.attentionScore}
-                    total={row.attentionChecksTotal}
-                    size={38}
-                  />
-                ) : null}
-                {!row.ready && !row.invitedOnly && (
-                  <Button
-                    variant="quiet"
-                    icon="send"
-                    onClick={() => void ping(row.id, row.email)}
-                  >
-                    Remind
-                  </Button>
-                )}
-                <details
-                  className="admin-project-actions"
-                  onToggle={(event) => {
-                    const details = event.currentTarget;
-                    // Keep only one row menu open at a time.
-                    if (!details.open) return;
-                    for (const other of document.querySelectorAll(
-                      ".contributor-row details[open]",
-                    )) {
-                      if (other !== details)
-                        if (other instanceof HTMLDetailsElement)
-                          other.removeAttribute("open");
-                    }
-                    // The menu may open past the roster box, but it must
-                    // never run off the bottom of the window: flip it upward
-                    // when there is more room above the row than below it.
-                    const menu = details.querySelector<HTMLElement>(
-                      ".admin-project-actions-menu",
-                    );
-                    if (!menu) return;
-                    const bubbleRect = details.getBoundingClientRect();
-                    const menuHeight = menu.offsetHeight;
-                    const roomBelow = window.innerHeight - bubbleRect.bottom;
-                    const roomAbove = bubbleRect.top;
-                    details.classList.toggle(
-                      "menu-up",
-                      roomBelow < menuHeight + 8 && roomAbove > roomBelow,
-                    );
-                    dismissMenuOnOutside(details);
-                  }}
-                >
-                  <summary
-                    aria-label={`Actions for ${row.email}`}
-                    role="button"
-                  >
-                    <Icon name="more" size={20} />
-                  </summary>
-                  <div className="admin-project-actions-menu">
-                    {!row.invitedOnly && (
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.currentTarget
-                            .closest("details")
-                            ?.removeAttribute("open");
-                          setProfileRow(row);
-                        }}
-                      >
-                        <Icon name="person" size={17} />
-                        View profile
-                      </button>
-                    )}
-                    {!row.invitedOnly && (
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.currentTarget
-                            .closest("details")
-                            ?.removeAttribute("open");
-                          void issueCode(row);
-                        }}
-                      >
-                        <Icon name="key" size={17} />
-                        Issue sign-in code
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.currentTarget
-                          .closest("details")
-                          ?.removeAttribute("open");
-                        void resend(row.email);
-                      }}
-                    >
-                      <Icon name="send" size={17} />
-                      Resend invitation
-                    </button>
-                    <span
-                      className="menu-separator"
-                      role="separator"
-                      aria-hidden="true"
-                    />
-                    <button
-                      type="button"
-                      className="action-danger"
-                      onClick={(event) => {
-                        event.currentTarget
-                          .closest("details")
-                          ?.removeAttribute("open");
-                        setRemovalRow(row);
-                      }}
-                    >
-                      <Icon name="x" size={17} />
-                      {row.invitedOnly
-                        ? "Revoke invitation"
-                        : "Remove contributor"}
-                    </button>
-                  </div>
-                </details>
-              </div>
+              <ContributorRow
+                key={row.id}
+                row={row}
+                onPing={ping}
+                onResend={resend}
+                onIssueCode={issueCode}
+                onViewProfile={setProfileRow}
+                onRemove={setRemovalRow}
+              />
             ))
           ) : (
             <div className="empty-list-state">
