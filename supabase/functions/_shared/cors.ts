@@ -32,6 +32,9 @@ function corsHeaderRecord(origin: string | null) {
     "Access-Control-Allow-Headers":
       "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
+    // Function responses are JSON with fixed error strings; browsers must
+    // never reinterpret them as a different content type.
+    "X-Content-Type-Options": "nosniff",
     Vary: "Origin",
   };
   if (origin) {
