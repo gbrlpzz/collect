@@ -2,6 +2,8 @@
 
 A **checkpoint** is an immutable server snapshot of complete submissions finalized at or before a specified cutoff timestamp. Each export creates a new checkpoint record and an independent, self-contained ZIP archive.
 
+Archives are assembled in memory. A project whose media exceeds `EXPORT_MAX_ARCHIVE_BYTES` (default 512 MiB) is refused with an explicit 413 error rather than crashing the function; split the project or raise the limit for very large datasets.
+
 ---
 
 ## Package structure

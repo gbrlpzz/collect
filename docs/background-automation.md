@@ -91,8 +91,9 @@ flowchart TD
 
 - **Reachability check**: Probes the `/health` endpoint with a timeout; ignores `navigator.onLine`.
 - **Single-flight mutex**: Cross-tab lease ensures only one active upload worker runs at a time.
-- **Exponential backoff**: Transient network errors retry automatically with randomized jitter.
-- **Permanent failure isolation**: Schema conflicts or missing media become `ACTION_REQUIRED` and do not block unrelated records.
+- **Exponential backoff**: Transient network errors retry automatically with randomized jitter. Background runs (online/visibility/interval triggers) honor the outbox `nextAttemptAt` schedule, so a failing observation is not re-attempted on every tab focus; a manual "Sync now" tap bypasses the schedule as an explicit user instruction.
+- **Permanent failure isolation**: Schema conflicts, missing media, or an upload the server never acknowledges become `ACTION_REQUIRED` and do not block unrelated records.
+- **Local media pruning**: Once a durable server finalization receipt is committed, the local media blob is deleted in the same transaction — the server is the copy of record. Demo-mode receipts (no server) keep the local blob because it is the only copy.
 
 ---
 

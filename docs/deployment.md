@@ -245,6 +245,12 @@ inbox whenever the homepage "Request access" form gets a new submission (see
 invoked by a database trigger, not by a signed-in user, so it also needs
 `PREVIEW_REQUEST_NOTIFY_TO` and `PREVIEW_REQUEST_WEBHOOK_SECRET`.
 
+Optional Edge Function settings:
+
+- `EXPORT_MAX_ARCHIVE_BYTES` — upper bound on the media bytes a checkpoint
+  export will pack in memory (default 512 MiB). A project whose media exceeds
+  the limit gets an explicit 413 instead of a function crash.
+
 ---
 
 ## Bootstrapping the initial administrator
