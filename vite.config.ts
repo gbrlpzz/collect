@@ -212,14 +212,26 @@ function precacheManifest(): Plugin {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "VITE_");
+  const supabaseUrl = env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey =
+    env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    env.VITE_SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY;
+  const appUrl = env.VITE_APP_URL || process.env.VITE_APP_URL;
+
   // A production deploy built without Supabase coordinates silently ships
   // the demo adapter, which marks observations "synced" with no server
-  // behind them. Refuse that build on CI/hosting platforms; local demo
-  // builds without environment variables stay possible.
-  if (mode === "production" && (process.env.CI || process.env.VERCEL)) {
+  // behind them. Refuse that build on hosting platforms (Vercel, Netlify,
+  // Cloudflare Pages); local demo builds and CI verification without
+  // environment variables stay possible.
+  if (
+    mode === "production" &&
+    (process.env.VERCEL || process.env.NETLIFY || process.env.CF_PAGES)
+  ) {
     const missing: string[] = [];
-    if (!env.VITE_SUPABASE_URL) missing.push("VITE_SUPABASE_URL");
-    if (!(env.VITE_SUPABASE_PUBLISHABLE_KEY ?? env.VITE_SUPABASE_ANON_KEY)) {
+    if (!supabaseUrl) missing.push("VITE_SUPABASE_URL");
+    if (!supabaseKey) {
       missing.push("VITE_SUPABASE_PUBLISHABLE_KEY (or VITE_SUPABASE_ANON_KEY)");
     }
     if (missing.length > 0) {
@@ -231,7 +243,7 @@ export default defineConfig(({ mode }) => {
     }
   }
   return {
-    plugins: [react(), socialMetadata(env.VITE_APP_URL), precacheManifest()],
+    plugins: [react(), socialMetadata(appUrl), precacheManifest()],
     build: {
       target: "es2020",
       rollupOptions: {
