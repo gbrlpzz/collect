@@ -10,13 +10,15 @@ import { useEffect, useRef, useState } from "react";
  * reader scrolls (and reverse when scrolling back). Scrolling stays entirely
  * native: no wheel interception, no timers, nothing to fight the browser.
  */
-export function useScrollytelling<T extends HTMLElement>(
-  stepCount: number,
-): {
+export interface ScrollytellingState<T extends HTMLElement> {
   ref: React.RefObject<T | null>;
   active: number;
   goToStep: (index: number) => void;
-} {
+}
+
+export function useScrollytelling<T extends HTMLElement>(
+  stepCount: number,
+): ScrollytellingState<T> {
   const ref = useRef<T>(null);
   const [active, setActive] = useState(0);
   const activeRef = useRef(0);
@@ -66,10 +68,11 @@ export function useScrollytelling<T extends HTMLElement>(
       apply(index);
       return;
     }
-    const reduceMotion =
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceMotion = Boolean(
+      globalThis.window?.matchMedia &&
+        globalThis.window.matchMedia("(prefers-reduced-motion: reduce)")
+          .matches,
+    );
     window.scrollTo({
       top: el.offsetTop + (travel * (index + 0.5)) / stepCount,
       behavior: reduceMotion ? "auto" : "smooth",

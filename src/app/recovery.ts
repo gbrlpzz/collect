@@ -66,7 +66,7 @@ export async function exportRecoveryPackage({
     }
   }
 
-  const entries: Record<string, Uint8Array> = {
+  const entries = {
     "manifest.json": strToU8(
       JSON.stringify(
         {
@@ -100,43 +100,47 @@ export async function exportRecoveryPackage({
         .map((observation) =>
           JSON.stringify({
             ...observation,
-            media: observation.media?.map(({ blob, ...metadata }) => metadata),
+            media: observation.media?.map(
+              ({ blob: _blob, ...metadata }) => metadata,
+            ),
           }),
         )
         .join("\n"),
     ),
     ...mediaEntries,
-  };
+  } satisfies Record<string, Uint8Array>;
 
+  const durableEntries: Record<string, Uint8Array> = {};
   if (durable) {
-    entries["durable/outbox.json"] = strToU8(
+    durableEntries["durable/outbox.json"] = strToU8(
       JSON.stringify(durable.outbox, null, 2),
     );
-    entries["durable/receipts.json"] = strToU8(
+    durableEntries["durable/receipts.json"] = strToU8(
       JSON.stringify(durable.receipts, null, 2),
     );
     if (durable.drafts !== undefined)
-      entries["durable/drafts.json"] = strToU8(
+      durableEntries["durable/drafts.json"] = strToU8(
         JSON.stringify(durable.drafts, null, 2),
       );
     if (durable.projects !== undefined)
-      entries["durable/projects.json"] = strToU8(
+      durableEntries["durable/projects.json"] = strToU8(
         JSON.stringify(durable.projects, null, 2),
       );
   }
+  const allEntries = { ...entries, ...durableEntries };
 
   // fflate's async zip runs on its worker pool, keeping the export off the
   // main thread for large media. Falls back to zipSync if workers are unavailable.
   let archive: Uint8Array;
   try {
     archive = await new Promise<Uint8Array>((resolve, reject) => {
-      zip(entries, { level: 0 }, (error, data) => {
+      zip(allEntries, { level: 0 }, (error, data) => {
         if (error) reject(error);
         else resolve(data);
       });
     });
   } catch {
-    archive = zipSync(entries, { level: 0 });
+    archive = zipSync(allEntries, { level: 0 });
   }
 
   const filename = `collect-recovery-${new Date().toISOString().slice(0, 10)}.zip`;

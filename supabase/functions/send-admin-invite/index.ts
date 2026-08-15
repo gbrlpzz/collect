@@ -1,3 +1,4 @@
+import { z } from "npm:zod@4.4.3";
 import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import {
   allowListIsEnvironmentManaged,
@@ -8,6 +9,10 @@ import {
 import { appEntryUrl } from "../_shared/config.ts";
 import { adminInviteEmail } from "../_shared/invite.ts";
 import { sendEmail } from "../_shared/mail.ts";
+
+const adminInviteSchema = z.object({
+  email: z.string().email().max(320),
+});
 
 serve(async (request) => {
   if (request.method === "OPTIONS") return options();
@@ -23,11 +28,9 @@ serve(async (request) => {
   try {
     const { user, service } = await requireUser(request);
     const inviterEmail = user.email?.trim().toLowerCase() ?? null;
-    const body = (await request.json()) as Record<string, unknown>;
-    const email = String(body.email ?? "")
-      .trim()
-      .toLowerCase();
-    if (!email || !email.includes("@") || email.length > 320) {
+    const rawJson = await request.json().catch(() => ({}));
+    const parsed = adminInviteSchema.safeParse(rawJson);
+    if (!parsed.success) {
       return json(
         { error: "An administrator email is required" },
         {
@@ -35,6 +38,7 @@ serve(async (request) => {
         },
       );
     }
+    const email = parsed.data.email.trim().toLowerCase();
 
     // The inviter must already administer the workspace.
     const { data: membership } = await service
@@ -52,9 +56,7 @@ serve(async (request) => {
         },
       );
     }
-    // The allow-list is the single source of administrator rights: an address
-    // on it becomes an administrator when it signs in, whatever method it
-    // used. Inviting an address therefore means adding it to the list.
+
     if (!(await isEmailExplicitlyAllowed(service, email))) {
       if (allowListIsEnvironmentManaged()) {
         return json(
@@ -77,18 +79,12 @@ serve(async (request) => {
       }
     }
 
-    // Grant immediately when the address already has an account; otherwise the
-    // grant happens at first sign-in, from the allow-list.
     const { data: resolvedUserId } = await service.rpc(
       "resolve_user_id_by_email",
       { p_email: email },
     );
-    const invitedUserId = typeof resolvedUserId === "string"
-      ? resolvedUserId
-      : null;
+    const invitedUserId = resolvedUserId ? String(resolvedUserId) : null;
 
-    // Record the organization invitation so the invited administrator is
-    // joined to this specific organization when they sign in.
     await service.from("organization_invites").upsert(
       {
         organization_id: membership.organization_id,
@@ -143,8 +139,7 @@ serve(async (request) => {
       });
       emailed = true;
     } catch {
-      // Delivery is advisory: the allow-list entry and any membership are
-      // already recorded, so the invitation works as soon as they sign in.
+      // Delivery is advisory.
     }
 
     await service.from("audit_events").insert({

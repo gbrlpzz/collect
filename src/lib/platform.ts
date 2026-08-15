@@ -1,29 +1,32 @@
 export function isAppleMobileBrowser(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const iPadDesktopMode =
-    navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
-  return /iPhone|iPad|iPod/.test(navigator.userAgent) || iPadDesktopMode;
+  const nav = globalThis.navigator;
+  if (!nav) return false;
+  const iPadDesktopMode = nav.platform === "MacIntel" && nav.maxTouchPoints > 1;
+  return /iPhone|iPad|iPod/.test(nav.userAgent) || iPadDesktopMode;
 }
 
 export function isStandaloneApp(): boolean {
-  if (typeof window === "undefined" || typeof navigator === "undefined")
-    return false;
-  const standaloneNavigator = navigator as Navigator & { standalone?: boolean };
+  const win = globalThis.window;
+  const nav = globalThis.navigator;
+  if (!win || !nav) return false;
+  // SAFETY: iOS Safari attaches a non-standard boolean 'standalone' property to navigator.
+  const standaloneNavigator = nav as Navigator & { standalone?: boolean };
   return Boolean(
-    window.matchMedia?.("(display-mode: standalone)").matches ||
+    win.matchMedia?.("(display-mode: standalone)").matches ||
       standaloneNavigator.standalone,
   );
 }
 
 export function isMobileDevice(): boolean {
-  if (typeof window === "undefined" || typeof navigator === "undefined")
-    return false;
+  const win = globalThis.window;
+  const nav = globalThis.navigator;
+  if (!win || !nav) return false;
   if (isAppleMobileBrowser()) return true;
-  const userAgent = navigator.userAgent || "";
+  const userAgent = nav.userAgent || "";
   if (/Android|webOS|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(userAgent))
     return true;
   return (
-    window.matchMedia?.("(max-width: 768px) and (pointer: coarse)").matches ??
+    win.matchMedia?.("(max-width: 768px) and (pointer: coarse)").matches ??
     false
   );
 }

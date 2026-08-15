@@ -1,4 +1,5 @@
-import type { FieldDefinition } from "../types";
+import { z } from "zod";
+import type { FieldDefinition, SubmissionValues } from "../types";
 import {
   ATTENTION_CHECKS,
   ATTENTION_FIELD_KEY,
@@ -16,6 +17,11 @@ export interface AttentionInsertion {
   index: number;
   /** One-based research-field ordinal, independent of heading steps. */
   afterField: number;
+}
+
+export interface ExtractedAttention {
+  values: SubmissionValues;
+  response: AttentionResponse | null;
 }
 
 /**
@@ -86,15 +92,16 @@ export function attentionFieldFor(check: AttentionCheck): FieldDefinition {
 }
 
 /** Pull the answer out of the collected values; the payload stays clean. */
-export function extractAttentionResponse(values: Record<string, unknown>): {
-  values: Record<string, unknown>;
-  response: AttentionResponse | null;
-} {
-  const raw = values[ATTENTION_FIELD_KEY];
-  const cleaned = { ...values };
+export function extractAttentionResponse(
+  values: SubmissionValues,
+): ExtractedAttention {
+  const parsed = z.string().safeParse(values[ATTENTION_FIELD_KEY]);
+  const cleaned: SubmissionValues = { ...values };
   delete cleaned[ATTENTION_FIELD_KEY];
-  if (typeof raw !== "string" || !raw.includes(":"))
+  if (!parsed.success || !parsed.data.includes(":")) {
     return { values: cleaned, response: null };
+  }
+  const raw = parsed.data;
   const separator = raw.indexOf(":");
   return {
     values: cleaned,

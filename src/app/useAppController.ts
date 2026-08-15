@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { isSubmissionPending } from "../types";
-import type {
-  AppMode,
-  AppState,
-  Project,
-  SyncProgressEntry,
-  View,
+import {
+  isRecord,
+  isSubmissionPending,
+  type AppMode,
+  type AppState,
+  type FormValue,
+  type MediaAsset,
+  type Project,
+  type SubmissionValues,
+  type SyncProgressEntry,
+  type View,
 } from "../types";
-import type { MediaAsset } from "../types";
 import { emptyProject, initialState } from "../data/demoState";
 import {
   acceptConsent,
@@ -61,7 +64,7 @@ import { useConfirmation } from "./useConfirmation";
 import { APP_VERSION } from "../lib/appMeta";
 
 const entryRole = (() => {
-  if (typeof window === "undefined") return null;
+  if (!globalThis.window) return null;
   const paramRole = new URLSearchParams(window.location.search).get("role");
   if (paramRole === "admin" || paramRole === "contributor") return paramRole;
   const pendingRole = consumePendingAuthRole();
@@ -251,10 +254,10 @@ export function useAppController() {
               saved.view &&
               // Legacy caches may hold the removed project-detail view;
               // restore it onto the single home surface.
-              (saved.view as string) !== "project"
+              String(saved.view) !== "project"
                 ? saved.view
                 : launchView,
-            project: { ...current.project, ...(saved.project ?? {}) },
+            project: { ...current.project, ...saved.project },
             projects:
               saved.projects ??
               (saved.project ? [saved.project] : current.projects),
@@ -385,7 +388,7 @@ export function useAppController() {
       ).map((candidate) => candidate.id);
       setState((current) => {
         const offlineReady = {
-          ...(current.offlineReady ?? {}),
+          ...current.offlineReady,
           ...Object.fromEntries(readyIds.map((id) => [id, true])),
         };
         if (
@@ -443,15 +446,13 @@ export function useAppController() {
     if (!("serviceWorker" in navigator) || !pendingCount) return;
     let active = true;
     void navigator.serviceWorker.ready
-      .then((registration) =>
-        (
-          registration as unknown as {
-            sync?: { register: (tag: string) => Promise<void> };
-          }
-        ).sync
-          ?.register("collect-sync")
-          .catch(() => undefined),
-      )
+      .then((registration) => {
+        // SAFETY: Background Sync API attaches a non-standard sync property to ServiceWorkerRegistration.
+        const syncReg = registration as ServiceWorkerRegistration & {
+          sync?: { register: (tag: string) => Promise<void> };
+        };
+        return syncReg.sync?.register("collect-sync").catch(() => undefined);
+      })
       .catch(() => undefined);
     const onMessage = (event: MessageEvent) => {
       if (!active || event.data?.type !== "collect-sync") return;
@@ -495,29 +496,20 @@ export function useAppController() {
     setSyncSheetOpen(false);
   };
 
-  const updateDraft = (key: string, value: unknown) => {
+  const isAsset = (item: FormValue): item is MediaAsset =>
+    isRecord(item) && "id" in item && "name" in item;
+
+  const updateDraft = (key: string, value: FormValue) => {
     // Photos/audio persist to MEDIA_STORE immediately (before any debounced
     // autosave), so a force-kill cannot lose a selection. Removed assets are
     // dropped from the draft store in the same step. Admin previews never
     // touch the durable draft.
     if (!collectorPreview && Array.isArray(value)) {
-      const assets = value.filter(
-        (item): item is MediaAsset =>
-          typeof item === "object" &&
-          item !== null &&
-          "id" in item &&
-          "name" in item,
-      );
+      const assets = value.filter(isAsset);
       const previous = state.draft[key];
       const removedIds = Array.isArray(previous)
         ? previous
-            .filter(
-              (item): item is MediaAsset =>
-                typeof item === "object" &&
-                item !== null &&
-                "id" in item &&
-                "name" in item,
-            )
+            .filter(isAsset)
             .filter((asset) => !assets.some((next) => next.id === asset.id))
             .map((asset) => asset.id)
         : [];
@@ -549,16 +541,11 @@ export function useAppController() {
     // Confirmation may stay open while background synchronization updates the
     // controller. Read the latest state now, not the render that opened it.
     const currentState = stateRef.current;
+    const isAsset = (item: FormValue): item is MediaAsset =>
+      isRecord(item) && "id" in item && "name" in item;
     const mediaIds = Object.values(currentState.draft).flatMap((value) =>
       Array.isArray(value)
-        ? value.flatMap((item) =>
-            typeof item === "object" &&
-            item !== null &&
-            "id" in item &&
-            typeof item.id === "string"
-              ? [item.id]
-              : [],
-          )
+        ? value.filter(isAsset).map((asset) => asset.id)
         : [],
     );
     const nextState: AppState = {
@@ -595,7 +582,7 @@ export function useAppController() {
 
   const submitInFlightRef = useRef(false);
   const submitObservation = async (
-    values: Record<string, unknown>,
+    values: SubmissionValues,
     mediaAssets: MediaAsset[],
   ) => {
     // Synchronous guard: two rapid taps before React re-renders must not
@@ -614,7 +601,7 @@ export function useAppController() {
         ...current,
         observations: [...current.observations, observation],
         fieldworkComplete: {
-          ...(current.fieldworkComplete ?? {}),
+          ...current.fieldworkComplete,
           [state.project.id]: false,
         },
         draft: { observed_date: new Date().toISOString().slice(0, 10) },
@@ -794,9 +781,9 @@ export function useAppController() {
       }
     }
     setState((current) => {
-      const project = {
+      const project: Project = {
         ...current.project,
-        status: nextStatus as "active" | "closed",
+        status: nextStatus,
       };
       return {
         ...current,

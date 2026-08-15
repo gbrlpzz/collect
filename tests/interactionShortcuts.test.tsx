@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AdminDashboard, AdminProject } from "../src/components/AdminDashboard";
 import { AuthScreen } from "../src/components/auth/AuthScreen";
@@ -13,15 +13,14 @@ import { TopBar } from "../src/components/TopBar";
 import { EmailPrompt } from "../src/components/ui";
 import type { FieldDefinition, Project } from "../src/types";
 
-const consentMocks = vi.hoisted(() => ({
+import * as consent from "../src/lib/consent";
+import * as supabaseClient from "../src/lib/supabaseClient";
+
+const consentMocks = {
   getMyProfile: vi.fn().mockResolvedValue(null),
-}));
+};
 
-vi.mock("../src/lib/consent", () => ({
-  getMyProfile: consentMocks.getMyProfile,
-}));
-
-const authMocks = vi.hoisted(() => ({
+const authMocks = {
   sendMagicLink: vi.fn().mockResolvedValue(undefined),
   signInWithPassword: vi.fn().mockResolvedValue(undefined),
   setPassword: vi.fn().mockResolvedValue(undefined),
@@ -34,25 +33,45 @@ const authMocks = vi.hoisted(() => ({
   // No provider is enabled on this deployment unless a test says so.
   enabledAuthProviders: vi.fn().mockResolvedValue([]),
   knownAuthProviders: vi.fn().mockReturnValue([]),
-}));
+};
 
-vi.mock("../src/lib/supabaseClient", () => ({
-  isSupabaseConfigured: true,
-  authCallbackError: () => null,
-  pendingAuthEmail: () => "",
-  rememberAuthEmail: () => undefined,
-  sendMagicLink: authMocks.sendMagicLink,
-  signInWithPassword: authMocks.signInWithPassword,
-  setPassword: authMocks.setPassword,
-  linkDeviceSession: authMocks.linkDeviceSession,
-  requestDeviceLinkCode: authMocks.requestDeviceLinkCode,
-  requestContributorSigninCode: authMocks.requestContributorSigninCode,
-  signInWithProvider: authMocks.signInWithProvider,
-  enabledAuthProviders: authMocks.enabledAuthProviders,
-  knownAuthProviders: authMocks.knownAuthProviders,
-  authProviders: ["google", "apple"],
-  authProviderLabel: { google: "Google", apple: "Apple" },
-}));
+beforeEach(() => {
+  vi.spyOn(consent, "getMyProfile").mockImplementation(
+    consentMocks.getMyProfile,
+  );
+  vi.spyOn(supabaseClient, "authCallbackError").mockReturnValue(null);
+  vi.spyOn(supabaseClient, "pendingAuthEmail").mockReturnValue("");
+  vi.spyOn(supabaseClient, "rememberAuthEmail").mockImplementation(
+    () => undefined,
+  );
+  vi.spyOn(supabaseClient, "sendMagicLink").mockImplementation(
+    authMocks.sendMagicLink,
+  );
+  vi.spyOn(supabaseClient, "signInWithPassword").mockImplementation(
+    authMocks.signInWithPassword,
+  );
+  vi.spyOn(supabaseClient, "setPassword").mockImplementation(
+    authMocks.setPassword,
+  );
+  vi.spyOn(supabaseClient, "linkDeviceSession").mockImplementation(
+    authMocks.linkDeviceSession,
+  );
+  vi.spyOn(supabaseClient, "requestDeviceLinkCode").mockImplementation(
+    authMocks.requestDeviceLinkCode,
+  );
+  vi.spyOn(supabaseClient, "requestContributorSigninCode").mockImplementation(
+    authMocks.requestContributorSigninCode,
+  );
+  vi.spyOn(supabaseClient, "signInWithProvider").mockImplementation(
+    authMocks.signInWithProvider,
+  );
+  vi.spyOn(supabaseClient, "enabledAuthProviders").mockImplementation(
+    authMocks.enabledAuthProviders,
+  );
+  vi.spyOn(supabaseClient, "knownAuthProviders").mockImplementation(
+    authMocks.knownAuthProviders,
+  );
+});
 
 const project: Project = {
   id: "shortcut-project",
@@ -70,6 +89,43 @@ const project: Project = {
 };
 
 describe("low-friction primary actions", () => {
+  beforeEach(() => {
+    vi.spyOn(consent, "getMyProfile").mockImplementation(
+      consentMocks.getMyProfile,
+    );
+    vi.spyOn(supabaseClient, "authCallbackError").mockReturnValue(null);
+    vi.spyOn(supabaseClient, "pendingAuthEmail").mockReturnValue("");
+    vi.spyOn(supabaseClient, "rememberAuthEmail").mockImplementation(
+      () => undefined,
+    );
+    vi.spyOn(supabaseClient, "sendMagicLink").mockImplementation(
+      authMocks.sendMagicLink,
+    );
+    vi.spyOn(supabaseClient, "signInWithPassword").mockImplementation(
+      authMocks.signInWithPassword,
+    );
+    vi.spyOn(supabaseClient, "setPassword").mockImplementation(
+      authMocks.setPassword,
+    );
+    vi.spyOn(supabaseClient, "linkDeviceSession").mockImplementation(
+      authMocks.linkDeviceSession,
+    );
+    vi.spyOn(supabaseClient, "requestDeviceLinkCode").mockImplementation(
+      authMocks.requestDeviceLinkCode,
+    );
+    vi.spyOn(supabaseClient, "requestContributorSigninCode").mockImplementation(
+      authMocks.requestContributorSigninCode,
+    );
+    vi.spyOn(supabaseClient, "signInWithProvider").mockImplementation(
+      authMocks.signInWithProvider,
+    );
+    vi.spyOn(supabaseClient, "enabledAuthProviders").mockImplementation(
+      authMocks.enabledAuthProviders,
+    );
+    vi.spyOn(supabaseClient, "knownAuthProviders").mockImplementation(
+      authMocks.knownAuthProviders,
+    );
+  });
   it("leaves the entry keyboard closed until the person chooses a method", async () => {
     render(<AuthScreen configured role="contributor" />);
 
@@ -180,6 +236,7 @@ describe("low-friction primary actions", () => {
   });
 
   it("keeps code entry reachable in an installed iOS app", async () => {
+    // SAFETY: standalone is a non-standard iOS property on navigator.
     const standaloneNavigator = navigator as Navigator & {
       standalone?: boolean;
     };

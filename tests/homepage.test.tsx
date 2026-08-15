@@ -16,9 +16,9 @@ import { HomepageApp } from "../src/homepage/HomepageApp";
 import { ATTENTION_CHECKS } from "../src/data/attentionChecks";
 
 const storageEmpty = () => {
-  if (typeof localStorage !== "undefined") expect(localStorage.length).toBe(0);
-  if (typeof sessionStorage !== "undefined")
-    expect(sessionStorage.length).toBe(0);
+  if (globalThis.localStorage) expect(globalThis.localStorage.length).toBe(0);
+  if (globalThis.sessionStorage)
+    expect(globalThis.sessionStorage.length).toBe(0);
 };
 
 beforeEach(() => {
@@ -34,8 +34,8 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
-  if (typeof localStorage !== "undefined") localStorage.clear();
-  if (typeof sessionStorage !== "undefined") sessionStorage.clear();
+  if (globalThis.localStorage) globalThis.localStorage.clear();
+  if (globalThis.sessionStorage) globalThis.sessionStorage.clear();
 });
 
 /**
@@ -239,6 +239,7 @@ describe("PreviewForm — research preview email CTA", () => {
       expect(screen.getByText(/request received/i)).toBeTruthy(),
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    // SAFETY: fetchMock receives [url, init] tuple.
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain("/rest/v1/preview_requests");
     const body = JSON.parse(String(init.body));
@@ -290,6 +291,7 @@ describe("HomepageApp — promotional home with email CTA", () => {
 
   it("prefills the research-preview form from the hero capture", async () => {
     const { container } = render(<HomepageApp />);
+    // SAFETY: querySelector returns hero input element.
     const heroInput = container.querySelector(
       ".hp-capture input",
     ) as HTMLInputElement;
@@ -297,6 +299,7 @@ describe("HomepageApp — promotional home with email CTA", () => {
     fireEvent.click(container.querySelector(".hp-capture button")!);
     // The research-preview form receives the hero email (scoped: the hero
     // capture also has an email input).
+    // SAFETY: querySelector returns preview email input element.
     const formEmail = container.querySelector(
       '#preview input[type="email"]',
     ) as HTMLInputElement;

@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
-import type { FieldDefinition, MediaAsset, Project } from "../types";
+import {
+  isRecord,
+  type FieldDefinition,
+  type FormDraft,
+  type FormValue,
+  type LocationValue,
+  type MediaAsset,
+  type Project,
+  type SubmissionValues,
+} from "../types";
 import { Icon } from "./Icon";
 import { Button } from "./ui";
 import { FieldRenderer } from "./FieldRenderer";
@@ -15,11 +24,11 @@ import { sha256Blob } from "../lib/mediaIntegrity";
 
 interface CollectorProps {
   project: Project;
-  draft: Record<string, unknown>;
+  draft: FormDraft;
   lastSavedAt: string | null;
-  onDraftChange: (key: string, value: unknown) => void;
+  onDraftChange: (key: string, value: FormValue) => void;
   onSubmit: (
-    values: Record<string, unknown>,
+    values: SubmissionValues,
     media: MediaAsset[],
   ) => void | Promise<void>;
   onBack: () => void;
@@ -99,28 +108,22 @@ export function Collector({
   const [stepIndex, setStepIndex] = useState(initialStepIndex ?? 0);
 
   useEffect(() => {
-    if (typeof initialStepIndex === "number") {
+    if (Number.isFinite(initialStepIndex) && initialStepIndex !== undefined) {
       setStepIndex(initialStepIndex);
     }
   }, [initialStepIndex]);
 
   const [capturingLocation, setCapturingLocation] = useState(false);
   const locationPermissionCheckStartedRef = useRef(false);
+  const isAsset = (asset: FormValue): asset is MediaAsset =>
+    isRecord(asset) && "id" in asset && "name" in asset;
   const [mediaByField, setMediaByField] = useState<
     Record<string, MediaAsset[]>
   >(() =>
     project.fields.reduce<Record<string, MediaAsset[]>>((result, field) => {
       if (field.type !== "photo" && field.type !== "audio") return result;
       const value = draft[field.key];
-      result[field.key] = Array.isArray(value)
-        ? (value.filter(
-            (asset): asset is MediaAsset =>
-              typeof asset === "object" &&
-              asset !== null &&
-              "id" in asset &&
-              "name" in asset,
-          ) as MediaAsset[])
-        : [];
+      result[field.key] = Array.isArray(value) ? value.filter(isAsset) : [];
       return result;
     }, {}),
   );
@@ -131,7 +134,6 @@ export function Collector({
   const [locationAccess, setLocationAccess] =
     useState<LocationAccessState>("checking");
   const [errorText, setErrorText] = useState<string | null>(null);
-  const locationAttemptedFieldRef = useRef<string | null>(null);
 
   // Collection order follows requirement #6: the key identifier comes first,
   // then the highest-effort questions (photos/audio, location, long text)
@@ -169,12 +171,9 @@ export function Collector({
     if (attentionCheck && dataFieldCount > 0) {
       const previous = recentAttentionPlans.get(project.id);
       const existingAnswer = draft[ATTENTION_FIELD_KEY];
-      const separator =
-        typeof existingAnswer === "string" ? existingAnswer.indexOf(":") : -1;
-      const existingKey =
-        typeof existingAnswer === "string" && separator > 0
-          ? existingAnswer.slice(0, separator)
-          : "";
+      const answerStr = existingAnswer ? String(existingAnswer) : "";
+      const separator = answerStr.indexOf(":");
+      const existingKey = separator > 0 ? answerStr.slice(0, separator) : "";
       const existingCheck = ATTENTION_CHECKS.find(
         (check) => check.key === existingKey,
       );
@@ -238,17 +237,22 @@ export function Collector({
   );
   const isLastStep = stepIndex === steps.length - 1;
 
-  const hasValue = (value: unknown) => {
+  const hasValue = (value: FormValue): boolean => {
     if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === "number" && !Number.isFinite(value)) return false;
-    if (value && typeof value === "object" && "localDatetime" in value)
-      return Boolean((value as { localDatetime?: string }).localDatetime);
-    if (value && typeof value === "object" && "value" in value) {
+    if (Number.isFinite(value)) return true;
+    if (isRecord(value) && "localDatetime" in value) {
+      // SAFETY: datetime value contains localDatetime string.
+      const dt = (value as { localDatetime?: unknown }).localDatetime;
+      return Boolean(dt && String(dt).trim());
+    }
+    if (isRecord(value) && "value" in value) {
+      // SAFETY: wrapped choice value contains value property.
       const nestedValue = (value as { value?: unknown }).value;
       return (
         nestedValue !== undefined &&
+        nestedValue !== null &&
         nestedValue !== "" &&
-        !(typeof nestedValue === "number" && !Number.isFinite(nestedValue))
+        !Number.isNaN(nestedValue)
       );
     }
     return value !== undefined && value !== null && value !== "";
@@ -258,23 +262,30 @@ export function Collector({
     const value = draft[field.key];
     const config = field.config ?? {};
     if (field.type === "short_text" || field.type === "long_text") {
+      const strVal =
+        value !== null &&
+        value !== undefined &&
+        !Array.isArray(value) &&
+        Object(value) !== value
+          ? String(value)
+          : "";
       if (
-        typeof value === "string" &&
+        strVal &&
         config.minLength !== undefined &&
-        value.length < Number(config.minLength)
+        strVal.length < Number(config.minLength)
       )
         return `Enter at least ${config.minLength} characters.`;
       return null;
     }
     if (field.type === "number") {
+      // SAFETY: number value may be wrapped in an object with a value property.
       const rawNumber =
-        value && typeof value === "object" && "value" in value
+        isRecord(value) && "value" in value
           ? (value as { value?: unknown }).value
           : value;
       if (rawNumber === undefined || rawNumber === null || rawNumber === "")
         return null;
-      const numberValue =
-        typeof rawNumber === "number" ? rawNumber : Number(rawNumber);
+      const numberValue = Number(rawNumber);
       if (!Number.isFinite(numberValue)) return "Enter a valid number.";
       if (config.integer && !Number.isInteger(numberValue))
         return "Enter a whole number.";
@@ -337,7 +348,7 @@ export function Collector({
     if (isLastStep) {
       // Most projects have no location field. Keep the ordinary save path
       // synchronous so a completed form never waits on an invisible task.
-      const saveValues = (values: Record<string, unknown>) => {
+      const saveValues = (values: SubmissionValues) => {
         const mediaValues = Object.fromEntries(
           project.fields
             .filter((field) => field.type === "photo" || field.type === "audio")
@@ -387,7 +398,7 @@ export function Collector({
     setStepIndex((index) => index - 1);
   };
 
-  const handleChange = (key: string, value: unknown) => {
+  const handleChange = (key: string, value: FormValue) => {
     onDraftChange(key, value);
     setErrorText(null);
     if (current.kind !== "field") return;
@@ -398,11 +409,12 @@ export function Collector({
       const otherOption = field.options?.find(
         (option) => option.value === "other" || option.id.endsWith("-other"),
       );
-      const isOther =
-        value && typeof value === "object" && "value" in value
-          ? (value as { value?: unknown }).value === otherOption?.id ||
-            (value as { value?: unknown }).value === "other"
-          : value === otherOption?.id || value === "other";
+      // SAFETY: single choice field value may be wrapped in an object with a value property.
+      const rawVal =
+        isRecord(value) && "value" in value
+          ? String((value as { value?: unknown }).value ?? "")
+          : String(value ?? "");
+      const isOther = rawVal === otherOption?.id || rawVal === "other";
       if (isOther) return;
     }
     const fromStep = stepIndex;
@@ -414,7 +426,7 @@ export function Collector({
   };
 
   const captureLocation = useCallback(
-    (): Promise<Record<string, unknown> | null> =>
+    (): Promise<LocationValue | null> =>
       new Promise((resolve) => {
         if (!("geolocation" in navigator)) {
           setLocationAccess("unavailable");

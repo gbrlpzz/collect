@@ -11,8 +11,13 @@ export type SignInStep =
   | "code-request"
   | "password-setup";
 
-function detail(caught: unknown): string {
-  return caught instanceof Error ? caught.message.toLowerCase() : "";
+function detail(cause: unknown): string {
+  if (cause instanceof Error) return cause.message.toLowerCase();
+  if (cause && cause instanceof Object && "message" in cause) {
+    // SAFETY: cause object message property.
+    return String((cause as { message?: unknown }).message ?? "").toLowerCase();
+  }
+  return "";
 }
 
 function isNetwork(message: string): boolean {
@@ -24,8 +29,8 @@ function isNetwork(message: string): boolean {
   );
 }
 
-export function signInErrorMessage(caught: unknown, step: SignInStep): string {
-  const message = detail(caught);
+export function signInErrorMessage(cause: unknown, step: SignInStep): string {
+  const message = detail(cause);
   if (isNetwork(message))
     return "We couldn’t reach the sign-in service. Check your connection and try again.";
   if (message.includes("rate") || message.includes("too many"))

@@ -2,7 +2,7 @@ import type { MediaAsset } from "../types";
 
 /** Compute a browser-native SHA-256 without copying media into application state. */
 export async function sha256Blob(blob: Blob): Promise<string | undefined> {
-  if (typeof crypto === "undefined" || !crypto.subtle) return undefined;
+  if (!globalThis.crypto?.subtle) return undefined;
   const digest = await crypto.subtle.digest(
     "SHA-256",
     await blob.arrayBuffer(),

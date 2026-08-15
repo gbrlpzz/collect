@@ -44,7 +44,7 @@ function dismissMenuOnOutside(details: HTMLDetailsElement): void {
       if (event.key === "Escape") details.removeAttribute("open");
       return;
     }
-    if (!details.contains(event.target as Node))
+    if (event.target instanceof Node && !details.contains(event.target))
       details.removeAttribute("open");
   };
   const release = () => {
@@ -185,7 +185,8 @@ export function AdminDashboard({
   );
 }
 
-export type AdminTab = "setup" | "contributors" | "export";
+export const ADMIN_TABS = ["setup", "contributors", "export"] as const;
+export type AdminTab = (typeof ADMIN_TABS)[number];
 
 function fieldTypeLabel(type: FieldDefinition["type"]): string {
   const label = type.replaceAll("_", " ");
@@ -308,7 +309,7 @@ export function AdminProject({
         role="tablist"
         aria-label="Project administration"
       >
-        {(["setup", "contributors", "export"] as AdminTab[]).map((item) => (
+        {ADMIN_TABS.map((item) => (
           <button
             key={item}
             type="button"
@@ -323,7 +324,7 @@ export function AdminProject({
               if (event.key !== "ArrowLeft" && event.key !== "ArrowRight")
                 return;
               event.preventDefault();
-              const tabs = ["setup", "contributors", "export"] as AdminTab[];
+              const tabs = ADMIN_TABS;
               const direction = event.key === "ArrowLeft" ? -1 : 1;
               const next =
                 tabs[
@@ -750,18 +751,14 @@ function SchemaDraftEditor({
                   className="builder-select"
                   value={field.type}
                   aria-label={`${field.label} type`}
-                  onChange={(event) =>
-                    updateField(
-                      field.id,
-                      fieldWithType(
-                        field,
-                        event.target.value as Exclude<
-                          FieldDefinition["type"],
-                          "heading"
-                        >,
-                      ),
-                    )
-                  }
+                  onChange={(event) => {
+                    const nextType = schemaFieldTypes.find(
+                      (t) => t === event.target.value,
+                    );
+                    if (nextType) {
+                      updateField(field.id, fieldWithType(field, nextType));
+                    }
+                  }}
                 >
                   {schemaFieldTypes.map((type) => (
                     <option value={type} key={type}>
@@ -857,7 +854,7 @@ export function ContributorsPanel({
   const [removalRow, setRemovalRow] = useState<ContributorReadiness | null>(
     null,
   );
-  const [removing, setRemoving] = useState(false);
+  const [_removing, setRemoving] = useState(false);
   const [codeRow, setCodeRow] = useState<ContributorReadiness | null>(null);
   const [issuedCode, setIssuedCode] = useState<{
     code: string;
@@ -1019,7 +1016,8 @@ export function ContributorsPanel({
                       ".contributor-row details[open]",
                     )) {
                       if (other !== details)
-                        (other as HTMLDetailsElement).removeAttribute("open");
+                        if (other instanceof HTMLDetailsElement)
+                          other.removeAttribute("open");
                     }
                     // The menu may open past the roster box, but it must
                     // never run off the bottom of the window: flip it upward

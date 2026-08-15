@@ -28,9 +28,8 @@ export function ModalSurface({
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const previousFocusRef = useRef<HTMLElement | null>(
-    typeof document !== "undefined" &&
-      document.activeElement instanceof HTMLElement
-      ? document.activeElement
+    globalThis.document?.activeElement instanceof HTMLElement
+      ? globalThis.document.activeElement
       : null,
   );
 

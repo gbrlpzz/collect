@@ -1,3 +1,4 @@
+import { z } from "npm:zod@4.4.3";
 import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage, isEmailAllowed, requireUser } from "../_shared/auth.ts";
 
@@ -5,6 +6,10 @@ function configuredBootstrapEmail(): string | null {
   const value = Deno.env.get("BOOTSTRAP_ADMIN_EMAIL")?.trim().toLowerCase();
   return value || null;
 }
+
+const bootstrapSchema = z.object({
+  organization_name: z.string().min(1).max(160),
+});
 
 serve(async (request) => {
   if (request.method === "OPTIONS") return options();
@@ -41,9 +46,9 @@ serve(async (request) => {
       );
     }
 
-    const body = (await request.json()) as Record<string, unknown>;
-    const organizationName = String(body.organization_name ?? "").trim();
-    if (!organizationName || organizationName.length > 160) {
+    const rawJson = await request.json().catch(() => ({}));
+    const parsed = bootstrapSchema.safeParse(rawJson);
+    if (!parsed.success) {
       return json(
         {
           error: "A workspace name between 1 and 160 characters is required",
@@ -51,6 +56,7 @@ serve(async (request) => {
         { status: 400 },
       );
     }
+    const organizationName = parsed.data.organization_name.trim();
 
     const { data, error } = await service.rpc("bootstrap_organization", {
       target_name: organizationName,

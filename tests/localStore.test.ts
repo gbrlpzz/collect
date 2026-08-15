@@ -198,6 +198,7 @@ describe("automatic persistence hardening", () => {
       captureSource: "picker",
       blob: new Blob([new Uint8Array([9, 8, 7, 6])]),
     };
+    // SAFETY: test fixture creates valid MediaAsset object.
     await saveDraftMedia([asset as never]);
 
     await saveAppState(
@@ -220,7 +221,13 @@ describe("automatic persistence hardening", () => {
       "preview",
     );
     const loaded = await loadAppState();
-    const restored = (loaded?.draft?.site_photos as Array<{ blob?: Blob }>)[0];
+    // SAFETY: draft site_photos is an array of media asset objects.
+    const photos = (
+      Array.isArray(loaded?.draft?.site_photos)
+        ? loaded?.draft?.site_photos
+        : []
+    ) as Array<{ blob?: Blob }>;
+    const restored = photos[0];
     expect(restored.blob).toBeDefined();
     expect(new Uint8Array(await restored.blob!.arrayBuffer())).toEqual(
       new Uint8Array([9, 8, 7, 6]),

@@ -58,10 +58,10 @@ const backupMethods: {
 ];
 
 function isLocalDevelopmentOrigin(): boolean {
-  if (typeof window === "undefined") return false;
+  if (!globalThis.window) return false;
   return (
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1"
+    globalThis.window.location.hostname === "localhost" ||
+    globalThis.window.location.hostname === "127.0.0.1"
   );
 }
 

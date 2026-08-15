@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import axe from "axe-core";
 import { AuthScreen } from "../src/components/auth/AuthScreen";
@@ -21,27 +21,38 @@ async function expectNoAccessibilityViolations(container: HTMLElement) {
   );
 }
 
-const authMocks = vi.hoisted(() => ({
+import * as supabaseClient from "../src/lib/supabaseClient";
+
+const authMocks = {
   enabledAuthProviders: vi.fn().mockResolvedValue(["google", "apple"]),
   knownAuthProviders: vi.fn().mockReturnValue(["google", "apple"]),
-}));
+};
 
-vi.mock("../src/lib/supabaseClient", () => ({
-  authCallbackError: () => null,
-  pendingAuthEmail: () => "",
-  rememberAuthEmail: () => undefined,
-  sendMagicLink: vi.fn(),
-  signInWithPassword: vi.fn(),
-  setPassword: vi.fn(),
-  linkDeviceSession: vi.fn(),
-  requestDeviceLinkCode: vi.fn(),
-  requestContributorSigninCode: vi.fn(),
-  signInWithProvider: vi.fn(),
-  enabledAuthProviders: authMocks.enabledAuthProviders,
-  knownAuthProviders: authMocks.knownAuthProviders,
-  authProviders: ["google", "apple"],
-  authProviderLabel: { google: "Google", apple: "Apple" },
-}));
+beforeEach(() => {
+  vi.spyOn(supabaseClient, "authCallbackError").mockReturnValue(null);
+  vi.spyOn(supabaseClient, "pendingAuthEmail").mockReturnValue("");
+  vi.spyOn(supabaseClient, "rememberAuthEmail").mockImplementation(
+    () => undefined,
+  );
+  vi.spyOn(supabaseClient, "sendMagicLink").mockResolvedValue(undefined);
+  vi.spyOn(supabaseClient, "signInWithPassword").mockResolvedValue(undefined);
+  vi.spyOn(supabaseClient, "setPassword").mockResolvedValue(undefined);
+  vi.spyOn(supabaseClient, "linkDeviceSession").mockResolvedValue(undefined);
+  vi.spyOn(supabaseClient, "requestDeviceLinkCode").mockResolvedValue({
+    code: "AB2D9KQX",
+    expiresInSeconds: 120,
+  });
+  vi.spyOn(supabaseClient, "requestContributorSigninCode").mockResolvedValue(
+    undefined,
+  );
+  vi.spyOn(supabaseClient, "signInWithProvider").mockResolvedValue(undefined);
+  vi.spyOn(supabaseClient, "enabledAuthProviders").mockImplementation(
+    authMocks.enabledAuthProviders,
+  );
+  vi.spyOn(supabaseClient, "knownAuthProviders").mockImplementation(
+    authMocks.knownAuthProviders,
+  );
+});
 
 describe("automated accessibility checks", () => {
   it("keeps the sign-in screen semantically valid", async () => {

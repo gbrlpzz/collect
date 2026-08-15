@@ -130,7 +130,7 @@ export function syncNow({
                           phase:
                             current[submissionId]?.phase ?? "SYNCING_MEDIA",
                           media: {
-                            ...(current[submissionId]?.media ?? {}),
+                            ...current[submissionId]?.media,
                             [mediaId]: percent,
                           },
                         },
@@ -234,7 +234,6 @@ export function syncNow({
           }
         }
         if (configured) {
-          const completedIds = syncedIds;
           const draftDirty = Object.entries(state.draft).some(
             ([key, value]) =>
               key !== "observed_date" && value !== "" && value !== undefined,

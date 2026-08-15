@@ -4,7 +4,12 @@ import { ContributorHome } from "../components/ContributorHome";
 import { TopBar } from "../components/TopBar";
 import { DocLinks } from "./DocLinks";
 import { projectFields } from "../data/schemaFixtures";
-import type { Observation, Project } from "../types";
+import type {
+  FormDraft,
+  Observation,
+  Project,
+  SubmissionValues,
+} from "../types";
 
 /**
  * Step 1: Field Collection Preview.
@@ -21,7 +26,7 @@ const demoFields = projectFields
       ? {
           ...field,
           required: false,
-          config: { ...(field.config ?? {}), minCount: 0 },
+          config: { ...field.config, minCount: 0 },
         }
       : field,
   );
@@ -95,7 +100,7 @@ const FIELD_TYPES: { label: string; fieldKey: string }[] = [
   { label: "Field notes", fieldKey: "notes" },
 ];
 
-const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
+const TAB_NARRATION = {
   home: {
     title: "Field Home",
     body: "Shows active survey guidance, offline sync status, and a single dominant action to begin collecting.",
@@ -108,12 +113,12 @@ const TAB_NARRATION: Record<ContributorTab, { title: string; body: string }> = {
     title: "Raw Media Capture",
     body: "Photos, audio, and field notes join every other input type — originals stay unmodified with SHA-256 integrity hashes, never recompressed.",
   },
-};
+} as const satisfies Record<ContributorTab, { title: string; body: string }>;
 
-const reducedMotion =
-  typeof window !== "undefined" && window.matchMedia
-    ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    : false;
+const reducedMotion = Boolean(
+  globalThis.window?.matchMedia &&
+    globalThis.window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+);
 
 function StatusBar() {
   return (
@@ -188,11 +193,11 @@ export function FlowDemo({
   tab?: ContributorTab;
   onTabChange?: (tab: ContributorTab) => void;
 }) {
-  const [round, setRound] = useState(0);
+  const [round] = useState(0);
   const [phase, setPhase] = useState<"home" | "collecting">("home");
   const [collectorStep, setCollectorStep] = useState<number>(0);
   const [jumpKey, setJumpKey] = useState<string | undefined>(undefined);
-  const [draft, setDraft] = useState<Record<string, unknown>>({});
+  const [draft, setDraft] = useState<FormDraft>({});
   const [observation, setObservation] = useState<Observation | null>(null);
   const [seedObservations, setSeedObservations] = useState<Observation[]>(
     initialSampleObservations,
@@ -242,7 +247,7 @@ export function FlowDemo({
     );
   };
 
-  const handleSubmit = (values: Record<string, unknown>) => {
+  const handleSubmit = (values: SubmissionValues) => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
     const newObs: Observation = {

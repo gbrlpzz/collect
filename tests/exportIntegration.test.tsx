@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { AdminProject } from "../src/components/AdminDashboard";
@@ -171,6 +171,7 @@ describe("Export UI integration", () => {
         const el = originalCreateElement(tagName);
         if (tagName === "a") {
           el.click = () => {
+            // SAFETY: created anchor element is HTMLAnchorElement.
             downloadedName = (el as HTMLAnchorElement).download;
           };
         }

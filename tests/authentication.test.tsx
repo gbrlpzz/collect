@@ -9,7 +9,9 @@ import {
 } from "@testing-library/react";
 import { AuthScreen } from "../src/components/auth/AuthScreen";
 
-const authMocks = vi.hoisted(() => ({
+import * as supabaseClient from "../src/lib/supabaseClient";
+
+const authMocks = {
   signInWithProvider: vi.fn().mockResolvedValue(undefined),
   enabledAuthProviders: vi.fn().mockResolvedValue(["google", "apple"]),
   knownAuthProviders: vi.fn().mockReturnValue([]),
@@ -21,24 +23,42 @@ const authMocks = vi.hoisted(() => ({
   requestDeviceLinkCode: vi
     .fn()
     .mockResolvedValue({ code: "AB2D9KQX", expiresInSeconds: 120 }),
-}));
+};
 
-vi.mock("../src/lib/supabaseClient", () => ({
-  authCallbackError: () => null,
-  pendingAuthEmail: () => "",
-  rememberAuthEmail: () => undefined,
-  sendMagicLink: authMocks.sendMagicLink,
-  signInWithPassword: authMocks.signInWithPassword,
-  setPassword: authMocks.setPassword,
-  linkDeviceSession: authMocks.linkDeviceSession,
-  requestDeviceLinkCode: authMocks.requestDeviceLinkCode,
-  requestContributorSigninCode: authMocks.requestContributorSigninCode,
-  signInWithProvider: authMocks.signInWithProvider,
-  enabledAuthProviders: authMocks.enabledAuthProviders,
-  knownAuthProviders: authMocks.knownAuthProviders,
-  authProviders: ["google", "apple"],
-  authProviderLabel: { google: "Google", apple: "Apple" },
-}));
+beforeEach(() => {
+  vi.spyOn(supabaseClient, "authCallbackError").mockReturnValue(null);
+  vi.spyOn(supabaseClient, "pendingAuthEmail").mockReturnValue("");
+  vi.spyOn(supabaseClient, "rememberAuthEmail").mockImplementation(
+    () => undefined,
+  );
+  vi.spyOn(supabaseClient, "sendMagicLink").mockImplementation(
+    authMocks.sendMagicLink,
+  );
+  vi.spyOn(supabaseClient, "signInWithPassword").mockImplementation(
+    authMocks.signInWithPassword,
+  );
+  vi.spyOn(supabaseClient, "setPassword").mockImplementation(
+    authMocks.setPassword,
+  );
+  vi.spyOn(supabaseClient, "linkDeviceSession").mockImplementation(
+    authMocks.linkDeviceSession,
+  );
+  vi.spyOn(supabaseClient, "requestDeviceLinkCode").mockImplementation(
+    authMocks.requestDeviceLinkCode,
+  );
+  vi.spyOn(supabaseClient, "requestContributorSigninCode").mockImplementation(
+    authMocks.requestContributorSigninCode,
+  );
+  vi.spyOn(supabaseClient, "signInWithProvider").mockImplementation(
+    authMocks.signInWithProvider,
+  );
+  vi.spyOn(supabaseClient, "enabledAuthProviders").mockImplementation(
+    authMocks.enabledAuthProviders,
+  );
+  vi.spyOn(supabaseClient, "knownAuthProviders").mockImplementation(
+    authMocks.knownAuthProviders,
+  );
+});
 
 describe("provider sign-in", () => {
   beforeEach(() => {
@@ -56,6 +76,7 @@ describe("provider sign-in", () => {
       name: "Continue with Google",
     });
     // Apple's guidance: an approved title, and never below the other buttons.
+    // SAFETY: querySelectorAll returns provider button elements.
     const buttons = Array.from(
       document.querySelectorAll(".provider-button"),
     ) as HTMLElement[];
@@ -193,6 +214,7 @@ describe("provider sign-in", () => {
   });
 
   it("tells an installed app how to finish sign-in, with the remedy attached", async () => {
+    // SAFETY: standalone is a non-standard iOS property on navigator.
     const standaloneNavigator = navigator as Navigator & {
       standalone?: boolean;
     };
@@ -208,6 +230,7 @@ describe("provider sign-in", () => {
       // Visible, not collapsed: this is a real situation the person can act
       // on, and the action sits inside the message.
       expect(screen.getByText(/this is the installed app/i)).toBeTruthy();
+      // SAFETY: querySelector returns auth callout HTMLElement.
       const callout = document.querySelector(".auth-callout") as HTMLElement;
       fireEvent.click(
         within(callout).getByRole("button", { name: "Sign in with a code" }),

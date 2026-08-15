@@ -1,3 +1,4 @@
+import { z } from "npm:zod@4.4.3";
 import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage, requireUser, serviceClient } from "../_shared/auth.ts";
 import { appEntryUrl } from "../_shared/config.ts";
@@ -5,23 +6,16 @@ import { bumpIpRateLimit } from "../_shared/rateLimit.ts";
 import { sha256 } from "../_shared/hash.ts";
 
 function randomCode(): string {
-  // 8 characters from an unambiguous alphabet (no 0/O/1/I).
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const bytes = crypto.getRandomValues(new Uint8Array(8));
   return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
 }
 
-/**
- * Device-link bridge across iOS containers.
- *
- * POST { action: "create" }            (authenticated) mints a one-time code
- *                                      for the signed-in user and returns it.
- * POST { action: "exchange", code }    (any container) consumes the code and
- *                                      returns a fresh magic-link token for
- *                                      the owning user; the caller verifies it
- *                                      with supabase.auth.verifyOtp and the
- *                                      session lands in the current container.
- */
+const linkSessionSchema = z.object({
+  action: z.string(),
+  code: z.string().optional(),
+});
+
 serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
@@ -31,8 +25,12 @@ serve(async (request) => {
     );
   }
   try {
-    const body = (await request.json()) as Record<string, unknown>;
-    const action = String(body.action ?? "");
+    const rawJson = await request.json().catch(() => ({}));
+    const parsed = linkSessionSchema.safeParse(rawJson);
+    if (!parsed.success) {
+      return json({ error: "Invalid request" }, { status: 400 });
+    }
+    const { action } = parsed.data;
 
     if (action === "create") {
       const { user, service } = await requireUser(request);
@@ -55,7 +53,7 @@ serve(async (request) => {
     }
 
     if (action === "exchange") {
-      const code = String(body.code ?? "")
+      const code = (parsed.data.code ?? "")
         .trim()
         .toUpperCase();
       if (!/^[A-HJ-NP-Z2-9]{8}$/.test(code)) {
@@ -65,8 +63,6 @@ serve(async (request) => {
         );
       }
       const service = serviceClient();
-      // A short-lived code is unguessable in practice (32^8), but a per-IP
-      // budget still keeps one host from hammering the exchange endpoint.
       if (!(await bumpIpRateLimit(request, service))) {
         return json(
           {
@@ -77,22 +73,21 @@ serve(async (request) => {
         );
       }
       const codeHash = await sha256(code);
-      // Resolve the redirect target before consuming the single-use code so a
-      // misconfigured deployment cannot burn a valid code and then fail.
       const redirectTo = appEntryUrl();
-      // Consume in the same statement that validates the one-time code. Two
-      // containers racing the same code can never both receive a session.
       const { data: userId } = await service.rpc("consume_session_link_code", {
         p_code_hash: codeHash,
       });
-      if (typeof userId !== "string") {
+      const resolvedUserId = userId ? String(userId) : null;
+      if (!resolvedUserId) {
         return json(
           { error: "That sign-in code is invalid or expired" },
           { status: 404 },
         );
       }
 
-      const { data: owner } = await service.auth.admin.getUserById(userId);
+      const { data: owner } = await service.auth.admin.getUserById(
+        resolvedUserId,
+      );
       const email = owner?.user?.email;
       if (!email) {
         return json(
@@ -116,9 +111,6 @@ serve(async (request) => {
         );
       }
 
-      // The hashed token is what verifyOtp accepts as token_hash; it is
-      // single-use and short-lived, so handing it to the linking container is
-      // equivalent to opening the magic-link email there.
       return json({
         accepted: true,
         token_hash: link.properties.hashed_token,

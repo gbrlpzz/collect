@@ -53,13 +53,14 @@ export function ContributorProfileSheet({
     (item) => item.status === "CONFLICT",
   ).length;
   const devices = details?.devices ?? [];
+  const initialSeen: string | null = null;
   const latestSeen = devices.length
-    ? devices.reduce(
+    ? devices.reduce<string | null>(
         (latest, device) =>
           device.lastSeenAt && (!latest || device.lastSeenAt > latest)
             ? device.lastSeenAt
             : latest,
-        null as string | null,
+        initialSeen,
       )
     : null;
 

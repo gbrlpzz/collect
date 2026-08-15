@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { requireAuthClient } from "./client";
 import {
   authReturnUrl,
@@ -14,18 +15,18 @@ import {
 export const authProviders = ["google", "apple"] as const;
 export type AuthProvider = (typeof authProviders)[number];
 
-export const authProviderLabel: Record<AuthProvider, string> = {
+export const authProviderLabel = {
   google: "Google",
   apple: "Apple",
-};
+} as const satisfies Record<AuthProvider, string>;
 
 const providerCacheKey = `${localBackendKey}:auth-providers`;
 const settingsTimeoutMs = 6000;
 
 function readCachedProviders(): AuthProvider[] | null {
-  if (typeof window === "undefined") return null;
+  if (!globalThis.window) return null;
   try {
-    const raw = window.sessionStorage.getItem(providerCacheKey);
+    const raw = globalThis.window.sessionStorage.getItem(providerCacheKey);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return null;
@@ -36,15 +37,19 @@ function readCachedProviders(): AuthProvider[] | null {
 }
 
 function writeCachedProviders(providers: AuthProvider[]): void {
-  if (typeof window === "undefined") return;
+  if (!globalThis.window) return;
   try {
-    window.sessionStorage.setItem(providerCacheKey, JSON.stringify(providers));
+    globalThis.window.sessionStorage.setItem(
+      providerCacheKey,
+      JSON.stringify(providers),
+    );
   } catch {
     // The cache is a convenience only; it must never block sign-in.
   }
 }
 
 function configuredProviders(): AuthProvider[] | null {
+  // SAFETY: Vite injects build-time environment variables as strings or undefined.
   const raw = (
     import.meta.env.VITE_AUTH_PROVIDERS as string | undefined
   )?.trim();
@@ -57,6 +62,10 @@ function configuredProviders(): AuthProvider[] | null {
 }
 
 let inFlight: Promise<AuthProvider[]> | null = null;
+
+const settingsResponseSchema = z.object({
+  external: z.record(z.string(), z.boolean()).optional(),
+});
 
 /**
  * Ask the deployment which providers are actually enabled. Supabase publishes
@@ -78,10 +87,9 @@ export async function enabledAuthProviders(): Promise<AuthProvider[]> {
         signal: controller.signal,
       });
       if (!response.ok) throw new Error("settings unavailable");
-      const payload = (await response.json()) as {
-        external?: Record<string, boolean>;
-      };
-      const external = payload.external ?? {};
+      const json: unknown = await response.json();
+      const parsed = settingsResponseSchema.safeParse(json);
+      const external = parsed.success ? (parsed.data.external ?? {}) : {};
       const available = authProviders.filter(
         (provider) => external[provider] === true,
       );
@@ -110,12 +118,12 @@ export function knownAuthProviders(): AuthProvider[] {
 const pendingAuthRoleKey = `${localBackendKey}:pending-auth-role`;
 
 export function rememberAuthRole(role: "admin" | "contributor" | null): void {
-  if (typeof window === "undefined") return;
+  if (!globalThis.window) return;
   try {
     if (role) {
-      window.sessionStorage.setItem(pendingAuthRoleKey, role);
+      globalThis.window.sessionStorage.setItem(pendingAuthRoleKey, role);
     } else {
-      window.sessionStorage.removeItem(pendingAuthRoleKey);
+      globalThis.window.sessionStorage.removeItem(pendingAuthRoleKey);
     }
   } catch {
     // Session storage is a convenience only; it must never block sign-in.
@@ -123,16 +131,21 @@ export function rememberAuthRole(role: "admin" | "contributor" | null): void {
 }
 
 export function consumePendingAuthRole(): "admin" | "contributor" | null {
-  if (typeof window === "undefined") return null;
+  if (!globalThis.window) return null;
   try {
-    const role = window.sessionStorage.getItem(pendingAuthRoleKey);
+    const role = globalThis.window.sessionStorage.getItem(pendingAuthRoleKey);
     if (role) {
-      window.sessionStorage.removeItem(pendingAuthRoleKey);
+      globalThis.window.sessionStorage.removeItem(pendingAuthRoleKey);
     }
     return role === "admin" || role === "contributor" ? role : null;
   } catch {
     return null;
   }
+}
+
+function parseRoleQuery(param: string | null): "admin" | "contributor" | null {
+  if (param === "admin" || param === "contributor") return param;
+  return null;
 }
 
 /**
@@ -146,11 +159,10 @@ export async function signInWithProvider(
 ): Promise<void> {
   const targetRole =
     role ??
-    (typeof window !== "undefined"
-      ? (new URLSearchParams(window.location.search).get("role") as
-          | "admin"
-          | "contributor"
-          | null)
+    (globalThis.window
+      ? parseRoleQuery(
+          new URLSearchParams(globalThis.window.location.search).get("role"),
+        )
       : null);
   if (targetRole) {
     rememberAuthRole(targetRole);

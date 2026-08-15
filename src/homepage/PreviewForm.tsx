@@ -80,6 +80,7 @@ export function PreviewForm({ initialEmail = "" }: { initialEmail?: string }) {
       if (!response.ok) {
         let code = "";
         try {
+          // SAFETY: response JSON may contain a Supabase error code property.
           const data = (await response.json()) as { code?: string };
           code = data?.code ?? "";
         } catch {

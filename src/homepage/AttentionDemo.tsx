@@ -4,6 +4,7 @@ import { Icon } from "../components/Icon";
 import { FieldRenderer } from "../components/FieldRenderer";
 import { ATTENTION_CHECKS } from "../data/attentionChecks";
 import { attentionFieldFor, attentionScore } from "../lib/attention";
+import type { FormValue, JsonValue } from "../types";
 
 /**
  * Interactive attention-verification explanation. It renders the check with
@@ -26,7 +27,7 @@ export function AttentionDemo() {
   const field = attentionFieldFor(check);
 
   const [stored, setStored] = useState<{
-    record: Record<string, unknown>;
+    record: Record<string, JsonValue>;
     score: number | null;
   } | null>(null);
 
@@ -41,8 +42,14 @@ export function AttentionDemo() {
     setStored(null);
   };
 
-  const handleAnswer = (value: unknown) => {
-    const optionId = typeof value === "string" ? value : "";
+  const handleAnswer = (value: FormValue) => {
+    const optionId =
+      value !== null &&
+      value !== undefined &&
+      !Array.isArray(value) &&
+      Object(value) !== value
+        ? String(value)
+        : "";
     const selectedValue = optionId.split(":").slice(1).join(":");
     const correct = selectedValue === check.correctValue;
     const score = attentionScore([

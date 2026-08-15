@@ -287,18 +287,17 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
                           className="builder-select"
                           value={field.type}
                           aria-label={`${field.label} type`}
-                          onChange={(event) =>
-                            updateField(
-                              field.id,
-                              fieldWithType(
-                                field,
-                                event.target.value as Exclude<
-                                  FieldDefinition["type"],
-                                  "heading"
-                                >,
-                              ),
-                            )
-                          }
+                          onChange={(event) => {
+                            const nextType = schemaFieldTypes.find(
+                              (t) => t === event.target.value,
+                            );
+                            if (nextType) {
+                              updateField(
+                                field.id,
+                                fieldWithType(field, nextType),
+                              );
+                            }
+                          }}
                         >
                           {schemaFieldTypes.map((type) => (
                             <option value={type} key={type}>

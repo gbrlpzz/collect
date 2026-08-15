@@ -10,11 +10,18 @@ const REFRESH_MS = 30_000;
  * visible and refreshes immediately on focus/visibility, so no manual
  * refresh is ever needed.
  */
-export function useReadiness(projectId: string | null): {
+export interface ReadinessHookResult {
   readiness: ContributorReadiness[] | null;
   error: boolean;
   refresh: () => void;
-} {
+}
+
+/**
+ * Auto-refreshing contributor readiness: polls while the admin surface is
+ * visible and refreshes immediately on focus/visibility, so no manual
+ * refresh is ever needed.
+ */
+export function useReadiness(projectId: string | null): ReadinessHookResult {
   const [readiness, setReadiness] = useState<ContributorReadiness[] | null>(
     null,
   );

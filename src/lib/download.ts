@@ -20,7 +20,7 @@ function sanitizeFilename(filename: string): string {
  * Safe on iOS Safari, Chrome, Firefox, Safari desktop, and Android.
  */
 export function downloadBlob(blob: Blob, filename: string): void {
-  if (typeof document === "undefined" || !document.body) return;
+  if (!globalThis.document?.body) return;
 
   const safeName = sanitizeFilename(filename);
   const url = URL.createObjectURL(blob);
@@ -40,8 +40,8 @@ export function downloadBlob(blob: Blob, filename: string): void {
 
   // Defer revocation: iOS Safari and slow mobile devices need time to stream
   // the blob into the download directory after user confirmation.
-  if (typeof window !== "undefined") {
-    window.setTimeout(() => {
+  if (globalThis.window) {
+    globalThis.window.setTimeout(() => {
       try {
         URL.revokeObjectURL(url);
       } catch {
@@ -66,7 +66,7 @@ export function downloadZip(archive: Uint8Array, filename: string): void {
  * without triggering popup blockers or opening orphaned blank tabs.
  */
 export function downloadUrl(url: string, filename?: string): void {
-  if (typeof document === "undefined" || !document.body) return;
+  if (!globalThis.document?.body) return;
 
   const link = document.createElement("a");
   link.href = url;

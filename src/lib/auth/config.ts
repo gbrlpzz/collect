@@ -6,13 +6,16 @@
  * module means the rest of the auth code never re-derives an origin or a key.
  */
 
+// SAFETY: Vite injects build-time environment variables as strings or undefined.
 const rawUrl = (
   import.meta.env.VITE_SUPABASE_URL as string | undefined
 )?.trim();
+// SAFETY: Vite injects build-time environment variables as strings or undefined.
 const rawKey = (
   (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
     import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined
 )?.trim();
+// SAFETY: Vite injects build-time environment variables as strings or undefined.
 const configuredAppUrl = (
   import.meta.env.VITE_APP_URL as string | undefined
 )?.trim();
@@ -57,8 +60,7 @@ export function isLocalOrigin(origin: string): boolean {
  * a returned link could never be opened on a phone.
  */
 export function authRedirectOrigin(): string {
-  const currentOrigin =
-    typeof window === "undefined" ? "" : window.location.origin;
+  const currentOrigin = globalThis.window?.location.origin ?? "";
   if (currentOrigin && !isLocalOrigin(currentOrigin)) return currentOrigin;
   if (!configuredAppUrl) return currentOrigin;
   try {
@@ -75,8 +77,8 @@ export function authReturnUrl(role?: "admin" | "contributor" | null): string {
   const base = authRedirectOrigin() + appBasePath;
   const targetRole =
     role ??
-    (typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("role")
+    (globalThis.window
+      ? new URLSearchParams(globalThis.window.location.search).get("role")
       : null);
   if (targetRole === "admin") {
     return `${base}?role=admin`;

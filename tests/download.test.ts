@@ -28,6 +28,7 @@ describe("download module", () => {
         const el = originalCreateElement(tagName);
         if (tagName === "a") {
           el.click = clickSpy;
+          // SAFETY: document.createElement('a') creates an HTMLAnchorElement.
           createdLinks.push(el as HTMLAnchorElement);
         }
         return el;
@@ -36,6 +37,7 @@ describe("download module", () => {
 
     const originalAppendChild = document.body.appendChild.bind(document.body);
     vi.spyOn(document.body, "appendChild").mockImplementation((node: Node) => {
+      // SAFETY: appended nodes in this test are HTMLElements.
       appendedElements.push(node as HTMLElement);
       return originalAppendChild(node);
     });

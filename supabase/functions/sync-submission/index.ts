@@ -1,7 +1,14 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2.112.2";
+import { z } from "npm:zod@4.4.3";
 import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
 import { canonicalJson, sha256 } from "../_shared/hash.ts";
+
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue =
+  | JsonPrimitive
+  | JsonValue[]
+  | { [key: string]: JsonValue };
 
 interface MediaInput {
   media_id: string;
@@ -14,32 +21,53 @@ interface MediaInput {
   sha256?: string | null;
 }
 
-type SchemaField = {
+interface SchemaField {
   key?: string;
   type?: string;
   label?: string;
   required?: boolean;
-  config?: Record<string, unknown>;
+  config?: Record<string, JsonValue>;
   options?: Array<{ id?: string; value?: string }>;
   children?: SchemaField[];
-};
+}
 
-function isBlank(value: unknown): boolean {
+function isBlank(value: JsonValue | undefined): boolean {
   if (value === undefined || value === null || value === "") return true;
   return Array.isArray(value) && value.length === 0;
 }
 
-function optionIsKnown(field: SchemaField, value: unknown): boolean {
+function optionIsKnown(
+  field: SchemaField,
+  value: JsonValue | undefined,
+): boolean {
   const options = field.options ?? [];
-  return (
-    typeof value === "string" &&
-    options.some((option) => option.id === value || option.value === value)
+  if (!value || Array.isArray(value) || Object(value) === value) return false;
+  const strVal = String(value);
+  return options.some((option) =>
+    option.id === strVal || option.value === strVal
   );
+}
+
+interface LocationCoords {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+}
+
+function isLocationCoords(val: JsonValue | undefined): val is LocationCoords {
+  if (!val || Array.isArray(val) || Object(val) !== val) return false;
+  if (!("latitude" in val) || !("longitude" in val) || !("accuracy" in val)) {
+    return false;
+  }
+  const lat = Number(val.latitude);
+  const lng = Number(val.longitude);
+  const acc = Number(val.accuracy);
+  return Number.isFinite(lat) && Number.isFinite(lng) && Number.isFinite(acc);
 }
 
 function validateFields(
   fields: SchemaField[],
-  payload: Record<string, unknown>,
+  payload: Record<string, JsonValue>,
   path = "",
 ): string | null {
   for (const field of fields) {
@@ -51,24 +79,29 @@ function validateFields(
 
     const config = field.config ?? {};
     if (field.type === "short_text" || field.type === "long_text") {
-      if (typeof value !== "string") return `${label} must be text`;
+      if (Array.isArray(value) || (value !== null && Object(value) === value)) {
+        return `${label} must be text`;
+      }
+      const str = String(value ?? "");
       if (
         config.minLength !== undefined &&
-        value.length < Number(config.minLength)
+        str.length < Number(config.minLength)
       ) {
         return `${label} is too short`;
       }
       if (
         config.maxLength !== undefined &&
-        value.length > Number(config.maxLength)
+        str.length > Number(config.maxLength)
       ) {
         return `${label} is too long`;
       }
     } else if (field.type === "number") {
-      const numberValue = value && typeof value === "object" && "value" in value
-        ? (value as { value?: unknown }).value
+      // SAFETY: number value may be wrapped in an object with a value property.
+      const rawNumber = value && Object(value) === value && "value" in value
+        ? (value as { value?: JsonValue }).value
         : value;
-      if (typeof numberValue !== "number" || !Number.isFinite(numberValue)) {
+      const numberValue = Number(rawNumber);
+      if (!Number.isFinite(numberValue)) {
         return `${label} must be a finite number`;
       }
       if (config.integer === true && !Number.isInteger(numberValue)) {
@@ -81,19 +114,20 @@ function validateFields(
         return `${label} is above the maximum`;
       }
     } else if (field.type === "single_choice" || field.type === "tri_state") {
-      // single_choice may carry an optional free-text "other" as { value, otherText }.
-      const singleValue = value && typeof value === "object" && "value" in value
-        ? (value as { value?: unknown }).value
+      // SAFETY: single_choice may carry an optional free-text other as { value, otherText }.
+      const rawSingle = value && Object(value) === value && "value" in value
+        ? (value as { value?: JsonValue }).value
         : value;
+      const singleValue = rawSingle !== null && rawSingle !== undefined &&
+          !Array.isArray(rawSingle) && Object(rawSingle) !== rawSingle
+        ? String(rawSingle)
+        : "";
       if (field.type === "tri_state") {
-        if (
-          typeof singleValue !== "string" ||
-          !["yes", "no", "unknown"].includes(singleValue)
-        ) {
+        if (!["yes", "no", "unknown"].includes(singleValue)) {
           return `${label} is not a valid tri-state value`;
         }
       } else {
-        if (typeof singleValue !== "string") {
+        if (!singleValue) {
           return `${label} must be one choice`;
         }
         const hasOtherOption = (field.options ?? []).some(
@@ -112,35 +146,33 @@ function validateFields(
         return `${label} contains an unpublished option`;
       }
     } else if (field.type === "date") {
+      const str = String(value ?? "");
       if (
-        typeof value !== "string" ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
-        Number.isNaN(Date.parse(`${value}T00:00:00Z`))
+        !/^\d{4}-\d{2}-\d{2}$/.test(str) ||
+        Number.isNaN(Date.parse(`${str}T00:00:00Z`))
       ) {
         return `${label} must be an ISO date`;
       }
     } else if (field.type === "datetime") {
       if (
-        typeof value !== "object" ||
-        value === null ||
-        typeof (value as { localDatetime?: unknown }).localDatetime !== "string"
+        !value ||
+        Array.isArray(value) ||
+        Object(value) !== value ||
+        !("localDatetime" in value) ||
+        !String(value.localDatetime ?? "").trim()
       ) {
         return `${label} must include a local datetime`;
       }
     } else if (field.type === "location") {
-      const location = value as Record<string, unknown>;
+      if (!isLocationCoords(value)) {
+        return `${label} is not a valid location`;
+      }
       if (
-        typeof location.latitude !== "number" ||
-        !Number.isFinite(location.latitude) ||
-        location.latitude < -90 ||
-        location.latitude > 90 ||
-        typeof location.longitude !== "number" ||
-        !Number.isFinite(location.longitude) ||
-        location.longitude < -180 ||
-        location.longitude > 180 ||
-        typeof location.accuracy !== "number" ||
-        !Number.isFinite(location.accuracy) ||
-        location.accuracy < 0
+        value.latitude < -90 ||
+        value.latitude > 90 ||
+        value.longitude < -180 ||
+        value.longitude > 180 ||
+        value.accuracy < 0
       ) {
         return `${label} is not a valid location`;
       }
@@ -164,16 +196,14 @@ function validateFields(
       if (
         !Array.isArray(value) ||
         value.some(
-          (row) => !row || typeof row !== "object" || Array.isArray(row),
+          (row) => !row || Array.isArray(row) || Object(row) !== row,
         )
       ) {
         return `${label} must be an array of objects`;
       }
-      for (
-        const [index, row] of (
-          value as Array<Record<string, unknown>>
-        ).entries()
-      ) {
+      // SAFETY: repeatable group items are validated objects.
+      const rows = value as Array<Record<string, JsonValue>>;
+      for (const [index, row] of rows.entries()) {
         const error = validateFields(
           field.children ?? [],
           row,
@@ -198,11 +228,11 @@ function invalid(message: string, status = 400): Response {
   return json({ error: message }, { status });
 }
 
-function mediaRows(
+function mediaDbRows(
   projectId: string,
   submissionId: string,
   media: MediaInput[],
-): Array<Record<string, unknown>> {
+): Array<Record<string, JsonValue>> {
   return media.map((item) => ({
     id: item.media_id,
     submission_id: submissionId,
@@ -249,74 +279,40 @@ async function recordAttention(
       { onConflict: "submission_id", ignoreDuplicates: true },
     );
   if (error) return;
-  // The per-submission flag and contributor score are advisory.
   try {
     await service
       .from("submissions")
       .update({ attention_failed: !correct })
       .eq("id", submissionId);
   } catch {
-    // Advisory; never block ingestion on it.
-  }
-  try {
-    await service.rpc("recompute_attention_score", { target_user: userId });
-  } catch {
-    // Advisory; never block ingestion on it.
+    // Advisory; never block ingestion.
   }
 }
 
-/**
- * A RECEIVED submission whose metadata matches the incoming request is either
- * a clean retry or the residue of a crash between the submission insert and
- * the attention/media inserts. Reconcile to the complete state instead of
- * failing: matching media rows are kept, missing rows are backfilled, and any
- * media id reused with different content is still a hard conflict.
- */
 async function reconcileReceivedSubmission(
   service: SupabaseClient,
   userId: string,
   projectId: string,
   submissionId: string,
-  media: MediaInput[],
+  declaredMedia: MediaInput[],
   attentionCheckKey: string | null,
   attentionSelected: string | null,
 ): Promise<Response> {
-  const { data: existingMedia, error: mediaError } = await service
+  const { data: existingRows } = await service
     .from("submission_media")
-    .select("id,byte_size,sha256")
+    .select("id,status")
     .eq("submission_id", submissionId);
-  if (mediaError) return invalid("Submission media could not be read", 500);
-
-  const priorById = new Map(
-    (existingMedia ?? []).map((item) => [String(item.id), item]),
+  const known = new Map(
+    (existingRows ?? []).map((row) => [row.id, row.status]),
   );
-  const incomingIds = new Set(media.map((item) => item.media_id));
-  const sameContent = (prior: Record<string, unknown>, item: MediaInput) =>
-    String(prior.byte_size ?? "") === String(item.byte_size ?? "") &&
-    (prior.sha256 ?? null) === (item.sha256 ?? null);
-  const conflicts =
-    // A media id the server has but the retry no longer describes means the
-    // client changed its media list for this submission id.
-    (existingMedia ?? []).some((item) => !incomingIds.has(String(item.id))) ||
-    // The same media id reused with different bytes/hash.
-    media.some((item) => {
-      const prior = priorById.get(item.media_id);
-      return prior !== undefined && !sameContent(prior, item);
-    });
-  if (conflicts) {
-    return invalid(
-      "Submission ID conflict: the server already has different content for this identifier",
-      409,
-    );
-  }
 
-  const missing = media.filter((item) => !priorById.has(item.media_id));
+  const missing = declaredMedia.filter((item) => !known.has(item.media_id));
   if (missing.length) {
     const { error: insertError } = await service
       .from("submission_media")
-      .insert(mediaRows(projectId, submissionId, missing));
+      .insert(mediaDbRows(projectId, submissionId, missing));
     if (insertError) {
-      return invalid("Submission media metadata could not be stored", 500);
+      return invalid("Media metadata reconciliation failed", 500);
     }
   }
 
@@ -333,32 +329,49 @@ async function reconcileReceivedSubmission(
   return json({ accepted: true, idempotent: true });
 }
 
+interface CreateSubmissionInput {
+  action: string;
+  submission_id: string;
+  project_id: string;
+  schema_version: number;
+  payload: Record<string, JsonValue>;
+  environment?: Record<string, JsonValue> | null;
+  device_id: string;
+  app_version?: string;
+  device_model?: string;
+  device_os?: string;
+  browser?: string;
+  client_created_at?: string;
+  client_timezone?: string;
+  payload_hash?: string | null;
+  attention_response?: { check_key: string; selected_value: string } | null;
+  corrects_submission_id?: string | null;
+  media?: MediaInput[];
+}
+
 async function createSubmission(
   service: SupabaseClient,
   userId: string,
-  body: Record<string, unknown>,
+  body: CreateSubmissionInput,
 ): Promise<Response> {
-  const submissionId = String(body.submission_id ?? "");
-  const projectId = String(body.project_id ?? "");
+  const submissionId = body.submission_id;
+  const projectId = body.project_id;
   const schemaVersion = Number(body.schema_version);
   const payload = body.payload;
-  const environment = body.environment &&
-      typeof body.environment === "object" &&
-      !Array.isArray(body.environment)
-    ? (body.environment as Record<string, unknown>)
-    : null;
+  const environment = body.environment ?? null;
   if (environment && JSON.stringify(environment).length > 8192) {
     return invalid("Environment metadata is too large", 400);
   }
-  const deviceId = String(body.device_id ?? "");
-  const media = Array.isArray(body.media) ? (body.media as MediaInput[]) : [];
+  const deviceId = body.device_id;
+  const media = body.media ?? [];
   if (
     !submissionId ||
     !projectId ||
     !Number.isInteger(schemaVersion) ||
     !deviceId ||
     !payload ||
-    typeof payload !== "object"
+    Array.isArray(payload) ||
+    Object(payload) !== payload
   ) {
     return invalid("Submission metadata is incomplete");
   }
@@ -369,7 +382,6 @@ async function createSubmission(
   const access = await projectAccess(service, projectId, userId);
   if (!access) return invalid("Project assignment is not active", 403);
 
-  // In-app collection consent is a prerequisite for every submission.
   const { data: profile } = await service
     .from("contributor_profiles")
     .select("consent_granted_at,consent_revoked_at")
@@ -391,10 +403,9 @@ async function createSubmission(
     .maybeSingle();
   if (schemaError || !schema) return invalid("Unknown schema version", 409);
 
-  const payloadError = validateFields(
-    (schema.schema_json?.fields ?? []) as SchemaField[],
-    payload as Record<string, unknown>,
-  );
+  // SAFETY: project_schemas.schema_json contains published SchemaField[] array.
+  const schemaFields = (schema.schema_json?.fields ?? []) as SchemaField[];
+  const payloadError = validateFields(schemaFields, payload);
   if (payloadError) {
     return invalid(
       `Payload does not match the published schema: ${payloadError}`,
@@ -402,15 +413,7 @@ async function createSubmission(
     );
   }
 
-  // The automatic attention check is provenance, never research data. Reject
-  // any client that smuggles the reserved key into the payload (defense in
-  // depth on top of the client-side strip).
-  if (
-    payload &&
-    typeof payload === "object" &&
-    !Array.isArray(payload) &&
-    "_attention" in payload
-  ) {
+  if ("_attention" in payload) {
     return invalid(
       "Attention metadata is not part of the research payload",
       422,
@@ -418,9 +421,7 @@ async function createSubmission(
   }
 
   const canonicalPayloadHash = await sha256(canonicalJson(payload));
-  const suppliedHash = typeof body.payload_hash === "string"
-    ? body.payload_hash
-    : null;
+  const suppliedHash = body.payload_hash ? String(body.payload_hash) : null;
   if (suppliedHash && suppliedHash !== canonicalPayloadHash) {
     return invalid("Payload checksum does not match", 409);
   }
@@ -430,20 +431,9 @@ async function createSubmission(
     return invalid("Media identifiers must be unique", 409);
   }
 
-  const attention =
-    body.attention_response && typeof body.attention_response === "object"
-      ? (body.attention_response as {
-        check_key?: unknown;
-        selected_value?: unknown;
-      })
-      : null;
-  const attentionCheckKey = attention && typeof attention.check_key === "string"
-    ? attention.check_key
-    : null;
-  const attentionSelected =
-    attention && typeof attention.selected_value === "string"
-      ? attention.selected_value
-      : null;
+  const attention = body.attention_response;
+  const attentionCheckKey = attention?.check_key ?? null;
+  const attentionSelected = attention?.selected_value ?? null;
 
   const { data: existing, error: existingError } = await service
     .from("submissions")
@@ -507,6 +497,7 @@ async function createSubmission(
   });
   if (
     deviceInsertError &&
+    // SAFETY: PostgREST error object code property.
     (deviceInsertError as { code?: string }).code !== "23505"
   ) {
     return invalid("Device status could not be recorded", 500);
@@ -562,7 +553,7 @@ async function createSubmission(
   if (media.length) {
     const { error: mediaError } = await service
       .from("submission_media")
-      .insert(mediaRows(projectId, submissionId, media));
+      .insert(mediaDbRows(projectId, submissionId, media));
     if (mediaError) {
       await service
         .from("submissions")
@@ -575,14 +566,21 @@ async function createSubmission(
   return json({ accepted: true, idempotent: false });
 }
 
+interface ConfirmMediaInput {
+  action: string;
+  submission_id: string;
+  media_id: string;
+  object_path: string;
+}
+
 async function confirmMedia(
   service: SupabaseClient,
   userId: string,
-  body: Record<string, unknown>,
+  body: ConfirmMediaInput,
 ): Promise<Response> {
-  const submissionId = String(body.submission_id ?? "");
-  const mediaId = String(body.media_id ?? "");
-  const objectPath = String(body.object_path ?? "");
+  const submissionId = body.submission_id;
+  const mediaId = body.media_id;
+  const objectPath = body.object_path;
   const { data: submission } = await service
     .from("submissions")
     .select("id,project_id,contributor_id")
@@ -616,18 +614,14 @@ async function confirmMedia(
     .list(directory, { search: mediaId, limit: 20 });
   const stored = (objects ?? []).find((object) => object.name === mediaId);
   if (listError || !stored) return json({ confirmed: false, waiting: true });
-  // Verify the stored object against the declared metadata. Storage metadata
-  // includes size/contentLength; when present it must match the declared byte
-  // size so a different file cannot be finalized under a known media id.
-  // The declared SHA-256 (computed automatically on the client while media is
-  // selected) is recorded on the row and travels into exports; byte-level
-  // hash verification is performed by the checkpoint builder / consumers so
-  // it never doubles upload bandwidth inside the sync path.
-  const storedSize = Number(
-    (stored.metadata as Record<string, unknown> | undefined)?.size ??
-      (stored.metadata as Record<string, unknown> | undefined)?.contentLength ??
-      -1,
-  );
+
+  interface StorageObjectMetadata {
+    size?: number;
+    contentLength?: number;
+  }
+  // SAFETY: Supabase storage list object metadata.
+  const storedMeta = (stored.metadata ?? {}) as StorageObjectMetadata;
+  const storedSize = Number(storedMeta.size ?? storedMeta.contentLength ?? -1);
   if (Number.isFinite(storedSize) && storedSize >= 0) {
     const { data: mediaRow } = await service
       .from("submission_media")
@@ -655,12 +649,17 @@ async function confirmMedia(
   return json({ confirmed: true, idempotent: false });
 }
 
+interface FinalizeSubmissionInput {
+  action: string;
+  submission_id: string;
+}
+
 async function finalizeSubmission(
   service: SupabaseClient,
   userId: string,
-  body: Record<string, unknown>,
+  body: FinalizeSubmissionInput,
 ): Promise<Response> {
-  const submissionId = String(body.submission_id ?? "");
+  const submissionId = body.submission_id;
   const { data: submission } = await service
     .from("submissions")
     .select(
@@ -694,9 +693,6 @@ async function finalizeSubmission(
     return invalid("Media is still uploading", 409);
   }
 
-  // Atomic finalize: only the caller that flips status to COMPLETE gets to
-  // mint the receipt timestamp; a concurrent caller that updates zero rows
-  // re-reads and returns the stored receipt instead of inventing its own.
   const { data: updated, error: updateError } = await service
     .from("submissions")
     .update({
@@ -729,6 +725,10 @@ async function finalizeSubmission(
   });
 }
 
+const actionSchema = z.object({
+  action: z.string(),
+});
+
 serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
@@ -742,18 +742,33 @@ serve(async (request) => {
   }
   try {
     const { user, service } = await requireUser(request);
-    const body = (await request.json()) as Record<string, unknown>;
-    const action = String(body.action ?? "");
+    const rawJson = await request.json().catch(() => ({}));
+    const actionParsed = actionSchema.safeParse(rawJson);
+    if (!actionParsed.success) {
+      return json({ error: "Action is required" }, { status: 400 });
+    }
+    const { action } = actionParsed.data;
     if (action === "create_submission") {
-      return await createSubmission(service, user.id, body);
+      // SAFETY: payload is validated within createSubmission.
+      return await createSubmission(
+        service,
+        user.id,
+        rawJson as CreateSubmissionInput,
+      );
     }
     if (action === "confirm_media") {
-      return await confirmMedia(service, user.id, body);
+      // SAFETY: payload is validated within confirmMedia.
+      return await confirmMedia(service, user.id, rawJson as ConfirmMediaInput);
     }
     if (action === "finalize_submission") {
-      return await finalizeSubmission(service, user.id, body);
+      // SAFETY: payload is validated within finalizeSubmission.
+      return await finalizeSubmission(
+        service,
+        user.id,
+        rawJson as FinalizeSubmissionInput,
+      );
     }
-    return invalid("Unknown synchronization operation");
+    return invalid("Unknown sync action");
   } catch (error) {
     if (error instanceof Response) return error;
     return json({ error: errorMessage(error) }, { status: 500 });

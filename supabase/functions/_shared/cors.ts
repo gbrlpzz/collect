@@ -34,13 +34,16 @@ export const corsHeaders = {
   Vary: "Origin",
 };
 
-export function json(body: unknown, init: ResponseInit = {}): Response {
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+
+export function json(body: JsonValue, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(body), {
     ...init,
     headers: {
       ...corsHeaders,
       "Content-Type": "application/json; charset=utf-8",
-      ...(init.headers ?? {}),
+      ...init.headers,
     },
   });
 }

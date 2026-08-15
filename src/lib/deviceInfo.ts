@@ -6,15 +6,27 @@ export interface DeviceInfo {
   language: string;
 }
 
-/**
- * Lightweight, non-fingerprinting device context recorded with every
- * submission (and visible in exports). Parsed from the user agent; the raw
- * UA string is not stored.
- */
+interface NetworkInformation {
+  effectiveType?: string;
+  downlink?: number;
+  rtt?: number;
+  saveData?: boolean;
+}
+
+interface BatteryManager {
+  level: number;
+  charging: boolean;
+}
+
+interface ExtendedNavigator extends Navigator {
+  deviceMemory?: number;
+  connection?: NetworkInformation;
+  getBattery?: () => Promise<BatteryManager>;
+}
+
 export function collectDeviceInfo(): DeviceInfo {
-  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-  const platform =
-    typeof navigator !== "undefined" ? (navigator.platform ?? "") : "";
+  const ua = globalThis.navigator?.userAgent ?? "";
+  const platform = globalThis.navigator?.platform ?? "";
   let os = "unknown";
   if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
   else if (/Android/i.test(ua)) os = "Android";
@@ -36,13 +48,7 @@ export function collectDeviceInfo(): DeviceInfo {
   const isIos =
     /iPhone|iPad|iPod/i.test(ua) ||
     (platform === "MacIntel" &&
-      typeof navigator !== "undefined" &&
-      navigator.maxTouchPoints > 1);
-  const isIpad =
-    /iPad/i.test(ua) ||
-    (platform === "MacIntel" &&
-      typeof navigator !== "undefined" &&
-      navigator.maxTouchPoints > 1);
+      Boolean(globalThis.navigator && globalThis.navigator.maxTouchPoints > 1));
   if (isIos) {
     deviceModel = iosModelFromScreen();
   } else {
@@ -57,8 +63,7 @@ export function collectDeviceInfo(): DeviceInfo {
     os,
     browser,
     deviceModel,
-    language:
-      typeof navigator !== "undefined" ? (navigator.language ?? "") : "",
+    language: globalThis.navigator?.language ?? "",
   };
 }
 
@@ -85,22 +90,16 @@ export interface EnvironmentInfo {
   online: boolean;
 }
 
-/**
- * Everything that can be recorded without any user input, captured at the
- * moment a submission is created. Contributors are consented professionals;
- * this provenance is the scientific record of the collecting environment.
- * Every API access is guarded so no capability ever blocks collection.
- */
 export async function collectEnvironment(): Promise<EnvironmentInfo> {
   const device = collectDeviceInfo();
   let screen = "unknown";
   let orientation: string | null = null;
   let pixelRatio = 1;
   try {
-    if (typeof window !== "undefined" && window.screen) {
-      screen = `${Math.round(window.screen.width)}x${Math.round(window.screen.height)}`;
-      pixelRatio = window.devicePixelRatio || 1;
-      orientation = window.screen.orientation?.type ?? null;
+    if (globalThis.window?.screen) {
+      screen = `${Math.round(globalThis.window.screen.width)}x${Math.round(globalThis.window.screen.height)}`;
+      pixelRatio = globalThis.window.devicePixelRatio || 1;
+      orientation = globalThis.window.screen.orientation?.type ?? null;
     }
   } catch {
     // Screen access is never required.
@@ -109,38 +108,36 @@ export async function collectEnvironment(): Promise<EnvironmentInfo> {
   let memory: number | null = null;
   let connection: EnvironmentInfo["connection"] = null;
   try {
-    concurrency = navigator.hardwareConcurrency ?? null;
-    memory =
-      (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? null;
-    const net = (
-      navigator as Navigator & {
-        connection?: {
-          effectiveType?: string;
-          downlink?: number;
-          rtt?: number;
-          saveData?: boolean;
+    const nav = globalThis.navigator;
+    if (nav) {
+      concurrency = nav.hardwareConcurrency ?? null;
+      // SAFETY: deviceMemory is a non-standard Chromium property on navigator.
+      const extNav = nav as ExtendedNavigator;
+      memory = extNav.deviceMemory ?? null;
+      const net = extNav.connection;
+      if (net) {
+        connection = {
+          type: net.effectiveType ?? null,
+          downlink: Number.isFinite(net.downlink)
+            ? (net.downlink ?? null)
+            : null,
+          rtt: Number.isFinite(net.rtt) ? (net.rtt ?? null) : null,
+          saveData: net.saveData ?? null,
         };
       }
-    ).connection;
-    if (net) {
-      connection = {
-        type: net.effectiveType ?? null,
-        downlink: typeof net.downlink === "number" ? net.downlink : null,
-        rtt: typeof net.rtt === "number" ? net.rtt : null,
-        saveData: net.saveData ?? null,
-      };
     }
   } catch {
     // Connection/memory APIs are Chromium-only and optional.
   }
   let battery: EnvironmentInfo["battery"] = null;
   try {
-    const bat = await (
-      navigator as Navigator & {
-        getBattery?: () => Promise<{ level: number; charging: boolean }>;
-      }
-    ).getBattery?.();
-    if (bat) battery = { level: bat.level, charging: bat.charging };
+    const nav = globalThis.navigator;
+    if (nav) {
+      // SAFETY: getBattery is a non-standard Chromium method on navigator.
+      const extNav = nav as ExtendedNavigator;
+      const bat = await extNav.getBattery?.();
+      if (bat) battery = { level: bat.level, charging: bat.charging };
+    }
   } catch {
     // Battery API is Chromium-only and optional.
   }
@@ -159,25 +156,25 @@ export async function collectEnvironment(): Promise<EnvironmentInfo> {
     deviceMemory: memory,
     connection,
     battery,
-    online: typeof navigator !== "undefined" ? navigator.onLine : true,
+    online: globalThis.navigator?.onLine ?? true,
   };
 }
 
-/**
- * Best-effort iOS model from screen size (CSS points) x devicePixelRatio x
- * OS version. Apple hides the exact model from the user agent; this is the
- * standard screen-based identification. Generations that share a screen and
- * support overlapping OS versions are reported as a family.
- */
 function iosModelFromScreen(): string {
-  if (typeof window === "undefined") return "iOS device";
-  const width = Math.min(window.screen.width, window.screen.height);
-  const height = Math.max(window.screen.width, window.screen.height);
-  const dpr = window.devicePixelRatio || 2;
+  if (!globalThis.window) return "iOS device";
+  const width = Math.min(
+    globalThis.window.screen.width,
+    globalThis.window.screen.height,
+  );
+  const height = Math.max(
+    globalThis.window.screen.width,
+    globalThis.window.screen.height,
+  );
+  const dpr = globalThis.window.devicePixelRatio || 2;
   const key = `${Math.round(width * dpr)}x${Math.round(height * dpr)}`;
   const iosVersion = parseIosVersion();
 
-  const iphoneTable: Record<string, [string, number?][]> = {
+  const iphoneTable = {
     "640x1136": [["iPhone SE (1st gen) / 5s", 12]],
     "750x1334": [
       ["iPhone SE (2nd/3rd gen)", 14],
@@ -195,8 +192,9 @@ function iosModelFromScreen(): string {
     "1290x2796": [["iPhone 15 Pro Max / 16 Plus"]],
     "1206x2622": [["iPhone 16 Pro"]],
     "1320x2868": [["iPhone 16 Pro Max"]],
-  };
-  const ipadTable: Record<string, string[]> = {
+  } as const;
+
+  const ipadTable = {
     "1536x2048": ["iPad 5–9 / Air 1–2 / mini 2–5 (9.7-inch)"],
     "1620x2160": ["iPad 10 (10.9-inch)"],
     "1640x2360": ["iPad Air 4/5 (10.9-inch)"],
@@ -204,21 +202,26 @@ function iosModelFromScreen(): string {
     "1668x2388": ["iPad Pro 11 (all generations)"],
     "2048x2732": ["iPad Pro 12.9 (3rd gen and later)"],
     "1488x2266": ["iPad mini 6"],
-  };
+  } as const;
 
-  const candidates = iphoneTable[key];
-  if (candidates) {
+  type IphoneKey = keyof typeof iphoneTable;
+  type IpadKey = keyof typeof ipadTable;
+  const isIphoneKey = (k: string): k is IphoneKey => k in iphoneTable;
+  const isIpadKey = (k: string): k is IpadKey => k in ipadTable;
+
+  if (isIphoneKey(key)) {
+    const candidates = iphoneTable[key];
     const [family, cutoff] = candidates[0];
     if (cutoff === undefined || iosVersion === 0 || iosVersion >= cutoff)
       return family;
     return family;
   }
-  if (ipadTable[key]) return ipadTable[key][0];
+  if (isIpadKey(key)) return ipadTable[key][0];
   return `${Math.round(width)}x${Math.round(height)}pt iOS device`;
 }
 
 function parseIosVersion(): number {
-  if (typeof navigator === "undefined") return 0;
-  const match = navigator.userAgent.match(/OS (\d+)[._]/);
+  if (!globalThis.navigator) return 0;
+  const match = globalThis.navigator.userAgent.match(/OS (\d+)[._]/);
   return match ? Number(match[1]) : 0;
 }

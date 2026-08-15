@@ -1,13 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
-import type { FieldDefinition, LocationValue, MediaAsset } from "../types";
+import {
+  isRecord,
+  type FieldDefinition,
+  type FormDraft,
+  type FormValue,
+  type LocationValue,
+  type MediaAsset,
+} from "../types";
 import { Icon } from "./Icon";
 import { Button, ClearButton, SegmentedControl } from "./ui";
 
 interface FieldRendererProps {
   field: FieldDefinition;
-  value: unknown;
-  onChange: (value: unknown) => void;
+  value?: FormValue;
+  onChange: (value: FormValue) => void;
   onCaptureLocation: () => void;
   onAddPhoto: () => void;
   /** Kept for the small, string-only renderer API used by older callers. */
@@ -92,7 +99,13 @@ export function FieldRenderer({
   autoFocus = false,
 }: FieldRendererProps) {
   const repeatableFocusRowRef = useRef<number | null>(null);
-  const stringValue = typeof value === "string" ? value : "";
+  const stringValue =
+    value !== null &&
+    value !== undefined &&
+    !Array.isArray(value) &&
+    Object(value) !== value
+      ? String(value)
+      : "";
   const accessibilityProps = {
     "aria-label": field.label,
     "aria-describedby": describedBy || undefined,
@@ -155,14 +168,14 @@ export function FieldRenderer({
   }
 
   if (field.type === "number") {
+    // SAFETY: number value may be wrapped in an object with a value property.
     const numberValue =
-      value && typeof value === "object" && "value" in value
+      isRecord(value) && "value" in value
         ? (value as { value?: unknown }).value
         : value;
-    const numericValue =
-      typeof numberValue === "number" && !Number.isNaN(numberValue)
-        ? numberValue
-        : null;
+    const numericValue = Number.isFinite(numberValue)
+      ? Number(numberValue)
+      : null;
     const min =
       field.config?.min === undefined ? undefined : Number(field.config.min);
     const max =
@@ -178,6 +191,14 @@ export function FieldRenderer({
         unit: field.config?.unit ? String(field.config.unit) : null,
       });
     };
+    const displayValue = Number.isFinite(numberValue)
+      ? String(numberValue)
+      : numberValue !== null &&
+          numberValue !== undefined &&
+          !Array.isArray(numberValue) &&
+          Object(numberValue) !== numberValue
+        ? String(numberValue)
+        : "";
     return (
       <div className={showStepper ? "number-stepper" : "number-input-wrap"}>
         {showStepper && (
@@ -199,13 +220,7 @@ export function FieldRenderer({
           type="number"
           required={required}
           {...accessibilityProps}
-          value={
-            typeof numberValue === "number" && !Number.isNaN(numberValue)
-              ? String(numberValue)
-              : typeof numberValue === "string"
-                ? numberValue
-                : ""
-          }
+          value={displayValue}
           onChange={(event) => {
             const raw = event.target.value;
             const parsed = Number(raw);
@@ -249,12 +264,14 @@ export function FieldRenderer({
     const otherOption = field.options?.find(
       (option) => option.value === "other" || option.id.endsWith("-other"),
     );
+    // SAFETY: single choice value may be wrapped in an object with a value property.
     const storedValue =
-      value && typeof value === "object" && "value" in value
+      isRecord(value) && "value" in value
         ? (value as { value?: unknown }).value
         : value;
+    // SAFETY: single choice value may be wrapped in an object with an otherText property.
     const storedOtherText =
-      value && typeof value === "object" && "otherText" in value
+      isRecord(value) && "otherText" in value
         ? String((value as { otherText?: unknown }).otherText ?? "")
         : "";
     const isOther =
@@ -336,7 +353,14 @@ export function FieldRenderer({
       <SegmentedControl
         className="tri-state"
         options={values}
-        value={typeof value === "string" ? value : undefined}
+        value={
+          value !== null &&
+          value !== undefined &&
+          !Array.isArray(value) &&
+          Object(value) !== value
+            ? String(value)
+            : undefined
+        }
         onChange={onChange}
         label={field.label}
         describedBy={describedBy}
@@ -364,8 +388,9 @@ export function FieldRenderer({
   }
 
   if (field.type === "datetime") {
+    // SAFETY: datetime value is stored as an object with localDatetime string.
     const datetime =
-      value && typeof value === "object"
+      value && Object(value) === value
         ? (value as { localDatetime?: string })
         : {};
     return (
@@ -427,6 +452,7 @@ export function FieldRenderer({
   }
 
   if (field.type === "location") {
+    // SAFETY: location value is stored as LocationValue.
     const location = value as LocationValue | undefined;
     const problem = locationError ?? locationNotice;
     return (
@@ -496,7 +522,7 @@ export function FieldRenderer({
               key={`${asset.id}-${index}`}
               asset={asset}
               index={index}
-              type={field.type as "photo" | "audio"}
+              type={field.type === "audio" ? "audio" : "photo"}
               fieldLabel={field.label}
               onRemove={onRemoveMedia ? () => onRemoveMedia(index) : undefined}
             />
@@ -537,9 +563,8 @@ export function FieldRenderer({
   }
 
   if (field.type === "repeatable_group") {
-    const rows = Array.isArray(value)
-      ? (value as Array<Record<string, unknown>>)
-      : [];
+    // SAFETY: repeatable group rows are stored as an array of FormDraft records.
+    const rows = Array.isArray(value) ? (value as FormDraft[]) : [];
     return (
       <div className="repeatable-group" role="group" {...accessibilityProps}>
         {rows.map((row, rowIndex) => (

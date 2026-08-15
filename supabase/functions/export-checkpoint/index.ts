@@ -1,11 +1,18 @@
 import { strToU8, zipSync } from "npm:fflate@0.8.3";
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2.112.2";
+import { z } from "npm:zod@4.4.3";
 import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
-import { csvCell, csvRow } from "../_shared/csv.ts";
-import { canonicalJson, sha256 } from "../_shared/hash.ts";
+import { csvRow } from "../_shared/csv.ts";
+import { sha256 } from "../_shared/hash.ts";
 
-const MIME_EXTENSIONS: Record<string, string> = {
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue =
+  | JsonPrimitive
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
+const MIME_EXTENSIONS = {
   "image/jpeg": ".jpg",
   "image/png": ".png",
   "image/webp": ".webp",
@@ -18,47 +25,108 @@ const MIME_EXTENSIONS: Record<string, string> = {
   "video/mp4": ".mp4",
   "video/quicktime": ".mov",
   "application/octet-stream": ".bin",
-};
+} as const satisfies Record<string, string>;
 
-function mediaExportName(media: Record<string, unknown>): string {
+interface MediaItem {
+  id: string;
+  submission_id: string;
+  field_id: string;
+  object_path?: string | null;
+  mime_type: string;
+  byte_size: number;
+  original_filename?: string;
+  sha256?: string | null;
+  captured_at: string;
+  status: string;
+}
+
+function mediaExportName(media: MediaItem): string {
   const original = String(media.original_filename ?? "").replace(
     /[^a-zA-Z0-9._-]/g,
     "_",
   );
+  const mime = String(media.mime_type ?? "");
+  type MimeKey = keyof typeof MIME_EXTENSIONS;
+  const isMimeKey = (m: string): m is MimeKey => m in MIME_EXTENSIONS;
   const extension = original.includes(".")
     ? original.slice(original.lastIndexOf("."))
-    : (MIME_EXTENSIONS[String(media.mime_type ?? "")] ?? "");
+    : (isMimeKey(mime) ? MIME_EXTENSIONS[mime] : "");
   return `${media.id}${extension}`;
 }
 
-function locationFeature(
-  submission: Record<string, unknown>,
-): Record<string, unknown> | null {
-  const payload = submission.payload as Record<string, unknown> | null;
-  if (!payload || typeof payload !== "object") return null;
+interface LocationCoords {
+  latitude: number;
+  longitude: number;
+  accuracy?: number | null;
+}
 
-  let loc = payload.location as Record<string, unknown> | null;
-  if (
-    !loc ||
-    !Number.isFinite(Number(loc.latitude)) ||
-    !Number.isFinite(Number(loc.longitude))
-  ) {
+interface GeoJsonExportFeature {
+  type: "Feature";
+  geometry: { type: "Point"; coordinates: [number, number] };
+  properties: {
+    submission_id: string;
+    project_id: string;
+    contributor_id: string;
+    schema_id: string;
+    captured_at: string;
+    accuracy_m: number | null;
+    payload: Record<string, JsonValue>;
+  };
+}
+
+interface ExportSubmissionRow {
+  id: string;
+  project_id: string;
+  schema_id: string;
+  contributor_id: string;
+  device_id: string;
+  payload: Record<string, JsonValue>;
+  environment?: Record<string, JsonValue>;
+  client_created_at: string;
+  client_timezone: string;
+  server_received_at: string;
+  status: string;
+  finalized_at: string;
+  app_version: string;
+  device_model?: string;
+  device_os?: string;
+  browser?: string;
+  attention_failed?: boolean;
+  collected_after_remote_close?: boolean;
+  corrects_submission_id?: string | null;
+}
+
+function isLocationCoords(val: JsonValue | undefined): val is LocationCoords {
+  if (!val || Array.isArray(val) || Object(val) !== val) return false;
+  if (!("latitude" in val) || !("longitude" in val)) return false;
+  const lat = Number(val.latitude);
+  const lng = Number(val.longitude);
+  return Number.isFinite(lat) && Number.isFinite(lng);
+}
+
+function locationFeature(
+  submission: ExportSubmissionRow,
+): GeoJsonExportFeature | null {
+  const payload = submission.payload;
+  if (!payload || Array.isArray(payload) || Object(payload) !== payload) {
+    return null;
+  }
+
+  let loc: LocationCoords | null = isLocationCoords(payload.location)
+    ? payload.location
+    : null;
+  if (!loc) {
     for (const val of Object.values(payload)) {
-      if (
-        val &&
-        typeof val === "object" &&
-        Number.isFinite(Number((val as Record<string, unknown>).latitude)) &&
-        Number.isFinite(Number((val as Record<string, unknown>).longitude))
-      ) {
-        loc = val as Record<string, unknown>;
+      if (isLocationCoords(val)) {
+        loc = val;
         break;
       }
     }
   }
 
-  const latitude = Number(loc?.latitude);
-  const longitude = Number(loc?.longitude);
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  if (!loc) return null;
+  const latitude = Number(loc.latitude);
+  const longitude = Number(loc.longitude);
 
   return {
     type: "Feature",
@@ -69,10 +137,28 @@ function locationFeature(
       contributor_id: submission.contributor_id,
       schema_id: submission.schema_id,
       captured_at: submission.client_created_at,
-      accuracy_m: loc?.accuracy ?? null,
+      accuracy_m: loc.accuracy ?? null,
       payload,
     },
   };
+}
+
+interface SchemaRow {
+  id: string;
+  version: number;
+  schema_json: {
+    fields?: Array<{
+      key?: string;
+      label?: string;
+      type?: string;
+      required?: boolean;
+      description?: string | null;
+      semantic_uri?: string | null;
+      options?: Array<{ id: string; value: string; label: string }> | null;
+      config?: Record<string, string | number | boolean>;
+    }>;
+  };
+  published_at: string;
 }
 
 async function buildExport(
@@ -110,7 +196,8 @@ async function buildExport(
   if (submissionError) {
     return json({ error: "Submissions could not be read" }, { status: 500 });
   }
-  const submissionRows = (submissions ?? []) as Record<string, unknown>[];
+  // SAFETY: Supabase submissions query returns records matching ExportSubmissionRow.
+  const submissionRows = (submissions ?? []) as ExportSubmissionRow[];
   const submissionIds = submissionRows.map((submission) =>
     String(submission.id)
   );
@@ -130,7 +217,8 @@ async function buildExport(
   if (mediaError) {
     return json({ error: "Media metadata could not be read" }, { status: 500 });
   }
-  const media = (mediaRows ?? []) as Record<string, unknown>[];
+  // SAFETY: Supabase submission_media query returns records matching MediaItem.
+  const media = (mediaRows ?? []) as MediaItem[];
   const schemaIds = [
     ...new Set(
       submissionRows.map((submission) => String(submission.schema_id)),
@@ -147,6 +235,9 @@ async function buildExport(
   if (schemaError) {
     return json({ error: "Schema history could not be read" }, { status: 500 });
   }
+  // SAFETY: Supabase project_schemas query returns SchemaRow[] records.
+  const schemaRows = (schemas ?? []) as SchemaRow[];
+
   const { data: readiness } = await service
     .from("device_project_status")
     .select(
@@ -215,9 +306,7 @@ async function buildExport(
     };
   });
   const checkpointId = crypto.randomUUID();
-  const schemaVersions = ((schemas ?? []) as Record<string, unknown>[]).map(
-    (schema) => schema.version,
-  );
+  const schemaVersions = schemaRows.map((schema) => schema.version);
 
   const jsonl = submissionRows
     .map((submission) =>
@@ -257,7 +346,7 @@ async function buildExport(
         submission.server_received_at,
         submission.finalized_at,
         submission.status,
-        submission.attention_failed,
+        Boolean(submission.attention_failed),
         submission.payload,
       ])
     ),
@@ -281,7 +370,7 @@ async function buildExport(
         item.field_id,
         item.mime_type,
         item.byte_size,
-        item.sha256,
+        item.sha256 ?? "",
         item.captured_at,
         item.status,
         `media/${item.submission_id}/${mediaExportName(item)}`,
@@ -359,20 +448,16 @@ async function buildExport(
 
   const features = submissionRows
     .map(locationFeature)
-    .filter((feature): feature is Record<string, unknown> => Boolean(feature));
+    .filter((feature): feature is GeoJsonExportFeature => Boolean(feature));
   const geojson = JSON.stringify({ type: "FeatureCollection", features });
 
-  // DataCite 4.4 metadata: machine-readable description of the dataset for
-  // DOI registration and repository ingestion (Zenodo, OSF, Dataverse).
   const projectName = String(project?.name ?? "Untitled field project");
   const organizationName = String(organization?.name ?? "Field organization");
   const nowIso = new Date().toISOString();
   const creators = [{ name: organizationName, nameType: "Organizational" }];
-  const dataDictionaryFields = (schemas ?? [])
+  const dataDictionaryFields = schemaRows
     .map((schema) => {
-      const fields = (schema.schema_json?.fields ?? []) as Array<
-        Record<string, unknown>
-      >;
+      const fields = schema.schema_json?.fields ?? [];
       return fields.map((field) => ({
         schema_version: schema.version,
         key: field.key ?? null,
@@ -381,65 +466,40 @@ async function buildExport(
         required: Boolean(field.required),
         description: field.description ?? null,
         semantic_uri: field.semantic_uri ?? null,
-        unit: (field.config as Record<string, unknown> | undefined)?.unit ??
-          null,
-        options: Array.isArray(field.options) ? field.options : null,
+        unit: field.config?.unit ?? null,
+        options: field.options ?? null,
       }));
     })
     .flat();
-  const datacite = {
-    schemaVersion: "http://datacite.org/schema/kernel-4.4",
-    identifier: project?.dataset_identifier
-      ? {
-        identifier: String(project.dataset_identifier),
-        identifierType: "DOI",
-      }
-      : undefined,
-    creators,
-    titles: [{ title: `${projectName} — checkpoint dataset` }],
-    publisher: organizationName,
-    publicationYear: String(new Date().getUTCFullYear()),
-    resourceType: { resourceTypeGeneral: "Dataset" },
-    version: `checkpoint-${checkpointId}`,
-    descriptions: [
-      {
-        description: String(project?.description ?? ""),
-        descriptionType: "Abstract",
-      },
-    ],
-    license: project?.license ?? null,
-    contributors: project?.contact_email
-      ? [
-        {
-          name: "Dataset contact",
-          contributorType: "ContactPerson",
-          nameType: "Organizational",
-          contactEmail: String(project.contact_email),
-        },
-      ]
-      : [],
-    dates: [{ date: nowIso, dateType: "Created" }],
-    subjects: [{ subject: projectName }, { subject: "field data collection" }],
-    alternateIdentifiers: project
-      ? [
-        {
-          alternateIdentifier: String(project.id),
-          alternateIdentifierType: "collect-project",
-        },
-      ]
-      : [],
-  };
+
   const datasetReadme = [
     `# ${projectName}`,
     "",
-    String(project?.description ?? ""),
+    project?.description || "",
+    "",
+    "## Fieldwork instructions",
+    project?.instructions || "",
     "",
     "## Dataset metadata",
-    `- License: ${project?.license ?? "not specified"}`,
-    `- Contact: ${project?.contact_email ?? "not specified"}`,
-    `- Identifier: ${project?.dataset_identifier ?? "not specified"}`,
+    `- License: ${project?.license || "not specified"}`,
+    `- Contact: ${project?.contact_email || "not specified"}`,
+    `- Identifier: ${project?.dataset_identifier || "not specified"}`,
     `- Publisher: ${organizationName}`,
     `- Checkpoint: ${checkpointId} (cutoff ${cutoff})`,
+    `- Generated by: collect ${submissionRows[0]?.app_version ?? "0.1.2"}`,
+    "",
+    "## Files in this checkpoint",
+    "- `manifest.json`: checkpoint metadata, contributor counts, and dataset SHA-256 hashes.",
+    "- `data/submissions.jsonl`: canonical stream of complete, finalized observations.",
+    "- `data/submissions.csv`: flat tabular export of all submissions.",
+    "- `data/media.csv`: catalog of all media objects with SHA-256 integrity hashes.",
+    "- `data/contributors.csv`: contributor participation, consent status, and attention scores.",
+    "- `data/attention.csv`: attention-check answers (separated from research data).",
+    "- `data/submissions.geojson`: RFC 7946 GeoJSON FeatureCollection of spatial observations.",
+    "- `dataset/datacite.json`: DataCite 4.4 kernel for DOI registration and repository deposit.",
+    "- `dataset/data-dictionary.json`: field types, labels, units, and semantic mapping hooks.",
+    "- `schema/`: immutable field definitions for each schema version in the checkpoint.",
+    "- `media/`: unmodified media originals, preserved byte-for-byte.",
     "",
     "## FAIR notes",
     "- **Findable**: machine-readable DataCite metadata (`dataset/datacite.json`) and this README.",
@@ -450,13 +510,66 @@ async function buildExport(
     "Formats are documented in docs/export-format.md of the collect repository.",
   ].join("\n");
 
+  const datacite = {
+    schemaVersion: "http://datacite.org/schema/kernel-4.4",
+    identifier: project?.dataset_identifier
+      ? { identifier: project.dataset_identifier, identifierType: "DOI" }
+      : undefined,
+    creators,
+    titles: [{ title: `${projectName} — checkpoint dataset` }],
+    publisher: organizationName,
+    publicationYear: String(new Date().getUTCFullYear()),
+    resourceType: { resourceTypeGeneral: "Dataset" },
+    version: `checkpoint-${checkpointId}`,
+    descriptions: [
+      {
+        description: project?.description || "",
+        descriptionType: "Abstract",
+      },
+    ],
+    license: project?.license || "CC-BY-4.0",
+    contributors: project?.contact_email
+      ? [
+        {
+          name: "Dataset contact",
+          contributorType: "ContactPerson",
+          nameType: "Organizational",
+          contactEmail: project.contact_email,
+        },
+      ]
+      : [],
+    dates: [{ date: nowIso, dateType: "Created" }],
+    subjects: [{ subject: projectName }, { subject: "field data collection" }],
+    alternateIdentifiers: [
+      {
+        alternateIdentifier: project?.id ?? projectId,
+        alternateIdentifierType: "collect-project",
+      },
+    ],
+  };
+
   const manifest = {
     export_format_version: "1",
-    software_version: Deno.env.get("APP_VERSION") ?? "0.1.2",
-    project,
-    organization,
+    software_version: submissionRows[0]?.app_version ?? "0.1.2",
+    project: {
+      id: project?.id ?? projectId,
+      organization_id: project?.organization_id ??
+        access.project.organization_id,
+      name: project?.name ?? null,
+      description: project?.description ?? null,
+      instructions: project?.instructions ?? null,
+      status: project?.status ?? null,
+      license: project?.license ?? null,
+      contact_email: project?.contact_email ?? null,
+      dataset_identifier: project?.dataset_identifier ?? null,
+    },
+    organization: {
+      id: organization?.id ?? access.project.organization_id,
+      name: organization?.name ?? organizationName,
+      logo_path: organization?.logo_path ?? null,
+    },
     checkpoint_id: checkpointId,
-    created_at: new Date().toISOString(),
+    created_at: nowIso,
     cutoff_server_timestamp: cutoff,
     schema_versions: schemaVersions,
     submission_count: submissionRows.length,
@@ -470,9 +583,7 @@ async function buildExport(
       contact_email: project?.contact_email ?? null,
       dataset_identifier: project?.dataset_identifier ?? null,
     },
-    // Device-reported readiness frozen at the export cutoff: what each
-    // contributor's device had pending and whether fieldwork was complete.
-    contributor_readiness: (readiness ?? []).map((row) => ({
+    contributor_readiness: contributorReadiness.map((row) => ({
       device_id: row.device_id,
       contributor_id: row.contributor_id,
       last_seen_at: row.last_seen_at,
@@ -485,7 +596,7 @@ async function buildExport(
       "A checkpoint contains only complete submissions received by the server at the cutoff timestamp. Offline devices may hold additional unseen data.",
   };
 
-  const entries: Record<string, Uint8Array> = {
+  const entries = {
     "manifest.json": strToU8(JSON.stringify(manifest, null, 2)),
     "data/submissions.jsonl": strToU8(jsonl),
     "data/submissions.csv": strToU8(submissionsCsv),
@@ -498,9 +609,11 @@ async function buildExport(
       JSON.stringify(dataDictionaryFields, null, 2),
     ),
     "dataset/README.md": strToU8(datasetReadme),
-  };
-  for (const schema of (schemas ?? []) as Record<string, unknown>[]) {
-    entries[`schema/schema-v${schema.version}.json`] = strToU8(
+  } satisfies Record<string, Uint8Array>;
+
+  const additionalEntries: Record<string, Uint8Array> = {};
+  for (const schema of schemaRows) {
+    additionalEntries[`schema/schema-v${schema.version}.json`] = strToU8(
       JSON.stringify(schema.schema_json, null, 2),
     );
   }
@@ -517,11 +630,11 @@ async function buildExport(
         { status: 500 },
       );
     }
-    entries[`media/${item.submission_id}/${mediaExportName(item)}`] =
+    additionalEntries[`media/${item.submission_id}/${mediaExportName(item)}`] =
       new Uint8Array(await file.arrayBuffer());
   }
 
-  const archive = zipSync(entries, { level: 0 });
+  const archive = zipSync({ ...entries, ...additionalEntries }, { level: 0 });
   const objectPath = `projects/${projectId}/checkpoints/${checkpointId}.zip`;
   const { error: uploadError } = await service.storage
     .from("collect-exports")
@@ -587,6 +700,10 @@ async function buildExport(
   });
 }
 
+const exportBodySchema = z.object({
+  project_id: z.string().min(1),
+});
+
 serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
@@ -600,11 +717,12 @@ serve(async (request) => {
   }
   try {
     const { user, service } = await requireUser(request);
-    const body = (await request.json()) as Record<string, unknown>;
-    const projectId = String(body.project_id ?? "");
-    if (!projectId) {
+    const rawJson = await request.json().catch(() => ({}));
+    const parsed = exportBodySchema.safeParse(rawJson);
+    if (!parsed.success) {
       return json({ error: "Project is required" }, { status: 400 });
     }
+    const projectId = parsed.data.project_id;
     return await buildExport(service, user.id, projectId);
   } catch (error) {
     if (error instanceof Response) return error;

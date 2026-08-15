@@ -1,15 +1,14 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { ContributorHome } from "../src/components/ContributorHome";
 import type { Project } from "../src/types";
 
-const consentMocks = vi.hoisted(() => ({
+import * as consent from "../src/lib/consent";
+
+const consentMocks = {
   getMyProfile: vi.fn(),
-}));
-vi.mock("../src/lib/consent", () => ({
-  getMyProfile: consentMocks.getMyProfile,
-}));
+};
 
 const project: Project = {
   id: "p1",
@@ -43,6 +42,11 @@ function renderHome() {
 }
 
 describe("contributor removal state", () => {
+  beforeEach(() => {
+    vi.spyOn(consent, "getMyProfile").mockImplementation(
+      consentMocks.getMyProfile,
+    );
+  });
   it("shows 'Project access removed' with local-data note when access was revoked", async () => {
     consentMocks.getMyProfile.mockResolvedValue({
       userId: "u1",

@@ -210,8 +210,8 @@ async function updateAuthConfig({
   ) {
     // Free tier: retry without the custom mailer template.
     const {
-      mailer_subjects_magic_link,
-      mailer_templates_magic_link_content,
+      mailer_subjects_magic_link: _mailer_subjects_magic_link,
+      mailer_templates_magic_link_content: _mailer_templates_magic_link_content,
       ...urlsOnly
     } = baseBody;
     console.warn(

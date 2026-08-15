@@ -2,15 +2,17 @@
 // node-environment ledger tests (localStore guards use `"indexedDB" in window`).
 import "fake-indexeddb/auto";
 
-if (typeof globalThis.window === "undefined") {
-  (globalThis as Record<string, unknown>).window = globalThis;
+if (!("window" in globalThis)) {
+  // SAFETY: shim window on globalThis for node test environment.
+  (globalThis as { window?: unknown }).window = globalThis;
 }
-if (typeof globalThis.navigator === "undefined") {
-  (globalThis as Record<string, unknown>).navigator = {
+if (!("navigator" in globalThis)) {
+  // SAFETY: shim navigator on globalThis for node test environment.
+  (globalThis as { navigator?: unknown }).navigator = {
     onLine: true,
-  } as Navigator;
+  };
 }
 
-if (typeof Element !== "undefined" && !Element.prototype.scrollIntoView) {
+if (globalThis.Element && !Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = () => undefined;
 }

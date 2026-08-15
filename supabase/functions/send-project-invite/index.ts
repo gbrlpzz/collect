@@ -1,8 +1,16 @@
+import { z } from "npm:zod@4.4.3";
 import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
 import { appEntryUrl } from "../_shared/config.ts";
 import { projectInviteEmail } from "../_shared/invite.ts";
 import { sendEmail } from "../_shared/mail.ts";
+
+const projectInviteSchema = z.object({
+  project_id: z.string().min(1),
+  email: z.string().email().max(320),
+  role: z.string().optional(),
+  resend: z.boolean().optional(),
+});
 
 serve(async (request) => {
   if (request.method === "OPTIONS") return options();
@@ -17,14 +25,9 @@ serve(async (request) => {
   }
   try {
     const { user, service } = await requireUser(request);
-    const body = (await request.json()) as Record<string, unknown>;
-    const projectId = String(body.project_id ?? "");
-    const email = String(body.email ?? "")
-      .trim()
-      .toLowerCase();
-    const role = body.role === "admin" ? "admin" : "contributor";
-    const resend = body.resend === true;
-    if (!projectId || !email || !email.includes("@")) {
+    const rawJson = await request.json().catch(() => ({}));
+    const parsed = projectInviteSchema.safeParse(rawJson);
+    if (!parsed.success) {
       return json(
         { error: "Project and contributor email are required" },
         {
@@ -32,6 +35,11 @@ serve(async (request) => {
         },
       );
     }
+    const projectId = parsed.data.project_id;
+    const email = parsed.data.email.trim().toLowerCase();
+    const role = parsed.data.role === "admin" ? "admin" : "contributor";
+    const resend = parsed.data.resend === true;
+
     const access = await projectAccess(service, projectId, user.id);
     if (!access?.admin) {
       return json(
@@ -42,8 +50,6 @@ serve(async (request) => {
       );
     }
 
-    // An explicit resend supersedes any earlier pending invitation; the
-    // partial unique index only allows one pending invite per address.
     if (resend) {
       await service
         .from("project_invites")
@@ -62,17 +68,11 @@ serve(async (request) => {
       .maybeSingle();
     if (existingInvite) return json({ accepted: true, already_pending: true });
 
-    // The invitation carries no credential: it names the project and points at
-    // the sign-in screen. An address that already has an account becomes a
-    // member immediately; a new address is claimed by claim-invites at first
-    // sign-in. Nothing here uses the authentication provider's mailer.
     const { data: resolvedUserId } = await service.rpc(
       "resolve_user_id_by_email",
       { p_email: email },
     );
-    const invitedUserId = typeof resolvedUserId === "string"
-      ? resolvedUserId
-      : null;
+    const invitedUserId = resolvedUserId ? String(resolvedUserId) : null;
 
     const { error: insertError } = await service
       .from("project_invites")
@@ -109,7 +109,7 @@ serve(async (request) => {
     const { data: organizationRow } = await service
       .from("organizations")
       .select("name")
-      .eq("id", access.project.organization_id as string)
+      .eq("id", String(access.project.organization_id))
       .maybeSingle();
     let emailed = false;
     try {
@@ -128,8 +128,7 @@ serve(async (request) => {
       });
       emailed = true;
     } catch {
-      // Delivery is advisory (mail.ts contract): the invitation is recorded,
-      // and the administrator can share the app address in person.
+      // Delivery is advisory.
     }
     await service.from("audit_events").insert({
       organization_id: access.project.organization_id,

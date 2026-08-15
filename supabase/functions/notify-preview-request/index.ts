@@ -1,19 +1,16 @@
+import { z } from "npm:zod@4.4.3";
 import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage } from "../_shared/auth.ts";
 import { sendEmail } from "../_shared/mail.ts";
 
-// Notifies a maintainer inbox whenever someone submits the homepage
-// "Request access" interest form. A Postgres trigger on preview_requests
-// (see the matching migration) calls this function after every accepted
-// insert, so the notification fires regardless of which client wrote the
-// row. This is advisory only: it never feeds back into signup, RLS, or
-// account provisioning, and its failure never blocks the insert (the
-// trigger's HTTP call is fire-and-forget via pg_net).
-//
-// The destination address is deployment-specific, so it is read from
-// PREVIEW_REQUEST_NOTIFY_TO rather than hardcoded: a self-hosted fork must
-// configure its own inbox instead of silently emailing this project's
-// maintainer.
+const previewNotifySchema = z.object({
+  email: z.string().min(1),
+  name: z.string().nullable().optional(),
+  organization: z.string().nullable().optional(),
+  use_case: z.string().nullable().optional(),
+  source: z.string().nullable().optional(),
+});
+
 serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
@@ -41,36 +38,24 @@ serve(async (request) => {
   }
 
   try {
-    const body = (await request.json()) as Record<string, unknown>;
-    const email = typeof body.email === "string" ? body.email.trim() : "";
-    if (!email) {
+    const rawJson = await request.json().catch(() => ({}));
+    const parsed = previewNotifySchema.safeParse(rawJson);
+    if (!parsed.success) {
       return json({ error: "Missing email" }, { status: 400 });
     }
-    const organization =
-      typeof body.organization === "string" && body.organization.trim()
-        ? body.organization.trim()
-        : null;
-    const name = typeof body.name === "string" && body.name.trim()
-      ? body.name.trim()
-      : null;
-    const useCase = typeof body.use_case === "string" && body.use_case.trim()
-      ? body.use_case.trim()
-      : null;
-    const source = typeof body.source === "string" && body.source.trim()
-      ? body.source.trim()
-      : "homepage";
+    const { email, name, organization, use_case, source } = parsed.data;
 
     const lines = [
-      `New preview access request from ${email}`,
-      name ? `Name: ${name}` : null,
-      organization ? `Organization: ${organization}` : null,
-      `Source: ${source}`,
-      useCase ? `\n${useCase}` : null,
+      `New preview access request from ${email.trim()}`,
+      name?.trim() ? `Name: ${name.trim()}` : null,
+      organization?.trim() ? `Organization: ${organization.trim()}` : null,
+      `Source: ${source?.trim() || "homepage"}`,
+      use_case?.trim() ? `\n${use_case.trim()}` : null,
     ].filter((line): line is string => Boolean(line));
 
     await sendEmail({
       to: notifyTo,
-      subject: `New collect preview request — ${email}`,
+      subject: `New collect preview request — ${email.trim()}`,
       text: lines.join("\n"),
     });
     return json({ notified: true });

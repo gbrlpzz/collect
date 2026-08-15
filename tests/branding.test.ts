@@ -30,6 +30,7 @@ describe("installable surface identity", () => {
     ["manifest.webmanifest", "#f5f5f7", "icon"],
     ["manifest-admin.webmanifest", "#000000", "icon-admin"],
   ])("ships a complete %s icon set", (filename, theme, stem) => {
+    // SAFETY: parsed manifest file matches webmanifest structure.
     const manifest = JSON.parse(
       readFileSync(new URL(filename, PUBLIC), "utf8"),
     ) as {

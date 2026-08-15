@@ -5,7 +5,6 @@ import {
   buildClientCheckpointArchive,
   exportClientCheckpoint,
   csvCell,
-  csvRow,
   locationFeature,
   sha256Text,
 } from "../src/lib/checkpointExport";
@@ -103,7 +102,7 @@ describe("checkpointExport module", () => {
       type: "Point",
       coordinates: [7.5678, 45.1234],
     });
-    expect((feature?.properties as Record<string, unknown>).accuracy_m).toBe(5);
+    expect(feature?.properties.accuracy_m).toBe(5);
   });
 
   it("builds a canonical FAIR checkpoint archive matching docs/export-format.md", async () => {
@@ -229,6 +228,7 @@ describe("checkpointExport module", () => {
         const el = originalCreateElement(tagName);
         if (tagName === "a") {
           el.click = () => {
+            // SAFETY: created anchor element is HTMLAnchorElement.
             downloadedName = (el as HTMLAnchorElement).download;
           };
         }

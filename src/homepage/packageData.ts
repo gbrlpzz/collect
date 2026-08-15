@@ -1,3 +1,4 @@
+import { isRecord, type JsonValue } from "../types";
 import demoSchema from "../../docs/demo-dataset/schema-v1.json";
 import submissionsRaw from "../../docs/demo-dataset/submissions.jsonl?raw";
 import datasetReadmeRaw from "../../docs/demo-dataset/README.md?raw";
@@ -16,7 +17,7 @@ interface DemoRow {
   schema_id: string;
   contributor_id: string;
   device_id: string;
-  payload: Record<string, unknown>;
+  payload: Record<string, JsonValue>;
   client_created_at: string;
   client_timezone: string;
   server_received_at: string;
@@ -54,14 +55,14 @@ interface DemoSchema {
   }>;
 }
 
+// SAFETY: demo submissions JSONL lines are parsed into typed DemoRow objects.
 const rows: DemoRow[] = submissionsRaw
   .split("\n")
   .filter((line) => line.trim().length > 0)
   .map((line) => JSON.parse(line) as DemoRow);
 
-const schema = demoSchema as unknown as DemoSchema;
-
-const iso = (value: string) => new Date(value).toISOString().slice(0, 10);
+// SAFETY: demo dataset schema JSON matches the DemoSchema interface.
+const schema = demoSchema as DemoSchema;
 const bytes = (n: number) =>
   n >= 1024 * 1024
     ? (n / (1024 * 1024)).toFixed(1) + " MB"
@@ -143,27 +144,30 @@ const mediaCsv = csv(
   ]),
 );
 
+interface LocationPayload {
+  [key: string]: JsonValue;
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+}
+
+function isLocationPayload(loc: JsonValue | undefined): loc is LocationPayload {
+  if (!isRecord(loc)) return false;
+  if (!("latitude" in loc) || !("longitude" in loc)) return false;
+  const lat = Number(loc.latitude);
+  const lng = Number(loc.longitude);
+  return Number.isFinite(lat) && Number.isFinite(lng);
+}
+
 const geojson =
   JSON.stringify(
     {
       type: "FeatureCollection",
       features: rows
-        .filter((row) => {
-          const location = row.payload.location as
-            | { latitude?: number; longitude?: number }
-            | undefined;
-          return (
-            location &&
-            typeof location.latitude === "number" &&
-            typeof location.longitude === "number"
-          );
-        })
+        .filter((row) => isLocationPayload(row.payload.location))
         .map((row) => {
-          const location = row.payload.location as {
-            latitude: number;
-            longitude: number;
-            accuracy: number;
-          };
+          // SAFETY: row location is verified to match LocationPayload by filter above.
+          const location = row.payload.location as LocationPayload;
           const { latitude, longitude } = location;
           const { payload, ...rest } = row;
           return {

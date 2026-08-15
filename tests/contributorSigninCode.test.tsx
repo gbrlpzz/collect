@@ -1,29 +1,18 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ContributorsPanel } from "../src/components/AdminDashboard";
 import type { ContributorReadiness } from "../src/lib/adminBackend";
 
-const backendMocks = vi.hoisted(() => ({
+import * as adminBackend from "../src/lib/adminBackend";
+
+const backendMocks = {
   mintContributorSigninCode: vi.fn().mockResolvedValue({
     code: "AB2D9KQX",
     expiresInSeconds: 1200,
     emailed: true,
   }),
-}));
-
-vi.mock("../src/lib/adminBackend", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("../src/lib/adminBackend")>();
-  return {
-    ...actual,
-    mintContributorSigninCode: backendMocks.mintContributorSigninCode,
-  };
-});
-
-vi.mock("../src/lib/supabaseClient", () => ({
-  isSupabaseConfigured: false,
-}));
+};
 
 const memberRow: ContributorReadiness = {
   id: "u1",
@@ -49,6 +38,11 @@ const inviteRow: ContributorReadiness = {
 };
 
 describe("contributor sign-in codes (admin side)", () => {
+  beforeEach(() => {
+    vi.spyOn(adminBackend, "mintContributorSigninCode").mockImplementation(
+      backendMocks.mintContributorSigninCode,
+    );
+  });
   it("issues a code from the roster menu and shows it for sharing", async () => {
     render(
       <ContributorsPanel

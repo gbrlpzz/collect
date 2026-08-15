@@ -15,6 +15,15 @@ import { useScrollytelling } from "./useScrollytelling";
 
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 
+// SAFETY: custom CSS variables are valid CSSProperties in React.
+function cssVar(
+  name: `--${string}`,
+  value: string | number,
+): React.CSSProperties {
+  // SAFETY: cast to React.CSSProperties for custom property name.
+  return { [name]: value } as React.CSSProperties;
+}
+
 const ADMIN_SCENES = [
   {
     tab: "setup",
@@ -35,8 +44,6 @@ const ADMIN_SCENES = [
     body: "Review received observations, monitor contributor attention, and export self-contained research archives once all devices report complete.",
   },
 ] as const;
-
-type AdminSceneTab = (typeof ADMIN_SCENES)[number]["tab"];
 
 function TopBar({ activeSection }: { activeSection: string }) {
   return (
@@ -124,8 +131,10 @@ type HeroMotion = (typeof HERO_MOTIONS)[number];
 const DEFAULT_HERO_MOTION: HeroMotion = "focus";
 
 function requestedHeroMotion(): HeroMotion {
-  if (typeof window === "undefined") return DEFAULT_HERO_MOTION;
-  const requested = new URLSearchParams(window.location.search).get("motion");
+  if (!globalThis.window) return DEFAULT_HERO_MOTION;
+  const requested = new URLSearchParams(globalThis.window.location.search).get(
+    "motion",
+  );
   const match = HERO_MOTIONS.find((motion) => motion === requested);
   if (match) return match;
   // Disable hero animation on mobile (≤680px, matching CSS breakpoint)
@@ -334,10 +343,11 @@ export function HomepageApp() {
 
   const captureEmail = (email: string) => {
     setDraftEmail(email);
-    const reduceMotion =
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceMotion = Boolean(
+      globalThis.window?.matchMedia &&
+        globalThis.window.matchMedia("(prefers-reduced-motion: reduce)")
+          .matches,
+    );
     document.getElementById("preview")?.scrollIntoView({
       behavior: reduceMotion ? "auto" : "smooth",
       block: "start",
@@ -377,7 +387,7 @@ export function HomepageApp() {
           <div
             className="hp-scrolly"
             ref={collection.ref}
-            style={{ "--hp-steps": CONTRIB_TABS.length } as React.CSSProperties}
+            style={cssVar("--hp-steps", CONTRIB_TABS.length)}
           >
             <div className="hp-scrolly-panel">
               <div className="hp-section-inner">
@@ -406,7 +416,7 @@ export function HomepageApp() {
           <div
             className="hp-scrolly"
             ref={sync.ref}
-            style={{ "--hp-steps": 3 } as React.CSSProperties}
+            style={cssVar("--hp-steps", 3)}
           >
             <div className="hp-scrolly-panel">
               <div className="hp-section-inner">
@@ -425,7 +435,7 @@ export function HomepageApp() {
           <div
             className="hp-scrolly"
             ref={admin.ref}
-            style={{ "--hp-steps": ADMIN_SCENES.length } as React.CSSProperties}
+            style={cssVar("--hp-steps", ADMIN_SCENES.length)}
           >
             <div className="hp-scrolly-panel">
               <div className="hp-section-inner">
@@ -623,10 +633,7 @@ export function HomepageApp() {
                 </p>
 
                 {/* FAIR Compliance Principles from docs/dataset-standards.md */}
-                <div
-                  className="hp-fact-grid"
-                  style={{ "--fact-cols": 3 } as React.CSSProperties}
-                >
+                <div className="hp-fact-grid" style={cssVar("--fact-cols", 3)}>
                   <div className="hp-fact-card">
                     <div className="hp-fact-header">
                       <Icon name="archive" size={16} />

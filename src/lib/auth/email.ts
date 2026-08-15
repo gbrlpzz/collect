@@ -5,23 +5,24 @@ import {
   isLocalOrigin,
   localBackendKey,
 } from "./config";
+import { rememberAuthRole } from "./providers";
 
 const pendingAuthEmailKey = `${localBackendKey}:pending-auth-email`;
 
 /** The address last typed on the sign-in screen, for a friendlier retry. */
 export function pendingAuthEmail(): string {
-  if (typeof window === "undefined") return "";
+  if (!globalThis.window) return "";
   try {
-    return window.sessionStorage.getItem(pendingAuthEmailKey) ?? "";
+    return globalThis.window.sessionStorage.getItem(pendingAuthEmailKey) ?? "";
   } catch {
     return "";
   }
 }
 
 export function rememberAuthEmail(email: string): void {
-  if (typeof window === "undefined") return;
+  if (!globalThis.window) return;
   try {
-    window.sessionStorage.setItem(pendingAuthEmailKey, email);
+    globalThis.window.sessionStorage.setItem(pendingAuthEmailKey, email);
   } catch {
     // Session storage is a convenience only; it must never block sign-in.
   }
@@ -51,7 +52,12 @@ export async function setPassword(password: string): Promise<void> {
   if (error) throw error;
 }
 
-import { rememberAuthRole } from "./providers";
+function parseRoleParam(
+  roleParam: string | null,
+): "admin" | "contributor" | null {
+  if (roleParam === "admin" || roleParam === "contributor") return roleParam;
+  return null;
+}
 
 /**
  * Email sign-in link. This is a backup path: it never creates an account, so
@@ -64,11 +70,10 @@ export async function sendMagicLink(
 ): Promise<void> {
   const targetRole =
     role ??
-    (typeof window !== "undefined"
-      ? (new URLSearchParams(window.location.search).get("role") as
-          | "admin"
-          | "contributor"
-          | null)
+    (globalThis.window
+      ? parseRoleParam(
+          new URLSearchParams(globalThis.window.location.search).get("role"),
+        )
       : null);
   if (targetRole) {
     rememberAuthRole(targetRole);

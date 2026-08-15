@@ -76,7 +76,6 @@ export default function App() {
     consentState,
     consentVersion,
     requirePasswordSetup,
-    selectedObservations,
     hasDraft,
     confirmation,
     actions: {

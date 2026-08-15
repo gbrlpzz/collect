@@ -5,7 +5,7 @@ import type { FieldDefinition } from "../types";
  * first while the contributor's attention is fresh; the key identifier is
  * always first, before everything else.
  */
-const EFFORT_RANK: Record<string, number> = {
+const EFFORT_RANK = {
   photo: 1,
   audio: 1,
   location: 2,
@@ -18,7 +18,7 @@ const EFFORT_RANK: Record<string, number> = {
   date: 8,
   number: 9,
   short_text: 10,
-};
+} as const satisfies Record<string, number>;
 
 const REFERENCE_KEY_PATTERN = /(^|_)(ref|reference|code|site_code|id)(_|$)/i;
 
@@ -53,9 +53,11 @@ export function orderFieldsForCollection(
   const rest = dataFields
     .filter((field) => field !== lead)
     .sort((a, b) => {
-      const rankA = EFFORT_RANK[a.type] ?? 99;
-      const rankB = EFFORT_RANK[b.type] ?? 99;
-      return rankA - rankB;
+      type EffortKey = keyof typeof EFFORT_RANK;
+      const isEffortKey = (t: string): t is EffortKey => t in EFFORT_RANK;
+      const rank = (t: string): number =>
+        isEffortKey(t) ? EFFORT_RANK[t] : 99;
+      return rank(a.type) - rank(b.type);
     });
 
   const ordered = lead ? [lead, ...rest] : rest;

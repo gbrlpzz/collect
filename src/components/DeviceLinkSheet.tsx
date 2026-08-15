@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { requestDeviceLinkCode } from "../lib/supabaseClient";
-import { Icon } from "./Icon";
 import { Button, IconButton, ModalSurface } from "./ui";
 
 interface DeviceLinkSheetProps {

@@ -4,10 +4,10 @@ import { supabase } from "./client";
 let pendingInviteCallback = false;
 
 function callbackParams(): URLSearchParams[] {
-  if (typeof window === "undefined") return [];
+  if (!globalThis.window) return [];
   return [
-    new URLSearchParams(window.location.search),
-    new URLSearchParams(window.location.hash.replace(/^#/, "")),
+    new URLSearchParams(globalThis.window.location.search),
+    new URLSearchParams(globalThis.window.location.hash.replace(/^#/, "")),
   ];
 }
 
@@ -21,22 +21,31 @@ function readCallbackValue(...keys: string[]): string {
   return "";
 }
 
+const supportedOtpTypes = [
+  "email",
+  "invite",
+  "magiclink",
+  "recovery",
+  "email_change",
+  "signup",
+] as const;
+
+function isEmailOtpType(value: string | null): value is EmailOtpType {
+  // SAFETY: supportedOtpTypes matches the Supabase EmailOtpType union.
+  return (
+    value !== null &&
+    supportedOtpTypes.includes(value as (typeof supportedOtpTypes)[number])
+  );
+}
+
 function tokenHashParams(): { tokenHash: string; type: EmailOtpType } | null {
-  if (typeof window === "undefined") return null;
-  const params = new URLSearchParams(window.location.search);
+  if (!globalThis.window) return null;
+  const params = new URLSearchParams(globalThis.window.location.search);
   const tokenHash = params.get("token_hash");
   if (!tokenHash) return null;
   const requestedType = params.get("type");
-  const supportedTypes: EmailOtpType[] = [
-    "email",
-    "invite",
-    "magiclink",
-    "recovery",
-    "email_change",
-    "signup",
-  ];
-  const type = supportedTypes.includes(requestedType as EmailOtpType)
-    ? (requestedType as EmailOtpType)
+  const type: EmailOtpType = isEmailOtpType(requestedType)
+    ? requestedType
     : "email";
   return { tokenHash, type };
 }
@@ -84,8 +93,8 @@ export function authCallbackError(): string | null {
  * in the client session, never in a URL that stays visible or gets copied.
  */
 export function clearAuthCallbackUrl(): void {
-  if (typeof window === "undefined" || !window.history?.replaceState) return;
-  const url = new URL(window.location.href);
+  if (!globalThis.window || !globalThis.window.history?.replaceState) return;
+  const url = new URL(globalThis.window.location.href);
   const callbackKeys = new Set([
     "code",
     "token_hash",
@@ -99,8 +108,8 @@ export function clearAuthCallbackUrl(): void {
   ]);
   for (const key of callbackKeys) url.searchParams.delete(key);
   url.hash = "";
-  window.history.replaceState(
-    window.history.state,
+  globalThis.window.history.replaceState(
+    globalThis.window.history.state,
     document.title,
     `${url.pathname}${url.search}`,
   );

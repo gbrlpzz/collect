@@ -58,6 +58,7 @@ describe("exportRecoveryPackage", () => {
         const el = originalCreateElement(tagName);
         if (tagName === "a") {
           el.click = () => {
+            // SAFETY: created anchor element is HTMLAnchorElement.
             capturedFilename = (el as HTMLAnchorElement).download;
           };
         }
@@ -182,9 +183,9 @@ describe("exportRecoveryPackage", () => {
   });
 
   it("handles corrupted or unreadable blobs gracefully without aborting export", async () => {
-    const corruptBlob = {
+    const corruptBlob: Blob = Object.assign(new Blob(), {
       arrayBuffer: () => Promise.reject(new Error("Corrupt disk sector")),
-    } as unknown as Blob;
+    });
 
     const mockObservations: Observation[] = [
       {

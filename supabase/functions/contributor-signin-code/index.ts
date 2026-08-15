@@ -1,3 +1,4 @@
+import { z } from "npm:zod@4.4.3";
 import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import {
   errorMessage,
@@ -17,14 +18,6 @@ const MAX_RECENT_PER_USER = 3;
  * Admin-minted, email-delivered contributor sign-in codes. The code itself is
  * the contributor's login credential: single-use, time-boxed, hashed at rest,
  * and exchanged through the same bridge as device-link codes.
- *
- * POST { action: "create", project_id, email }  (project administrator)
- *   Mints a code for an existing project contributor, emails it, and returns
- *   it so the administrator can also share it in person.
- * POST { action: "request", email }             (any visitor)
- *   Self-service: mints and emails a fresh code when the address belongs to an
- *   existing contributor. Always answers with the same accepted response so
- *   the login screen never reveals which addresses have accounts.
  */
 function randomCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(8));
@@ -34,7 +27,12 @@ function randomCode(): string {
   ).join("");
 }
 
-function codeEmail(code: string): { subject: string; text: string } {
+export interface CodeEmailContent {
+  subject: string;
+  text: string;
+}
+
+function codeEmail(code: string): CodeEmailContent {
   return {
     subject: "Your collect sign-in code",
     text: [
@@ -48,6 +46,12 @@ function codeEmail(code: string): { subject: string; text: string } {
   };
 }
 
+const codeRequestSchema = z.object({
+  action: z.string(),
+  project_id: z.string().optional(),
+  email: z.string().optional(),
+});
+
 serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
@@ -57,13 +61,17 @@ serve(async (request) => {
     );
   }
   try {
-    const body = (await request.json()) as Record<string, unknown>;
-    const action = String(body.action ?? "");
+    const rawJson = await request.json().catch(() => ({}));
+    const parsed = codeRequestSchema.safeParse(rawJson);
+    if (!parsed.success) {
+      return json({ error: "Invalid request payload" }, { status: 400 });
+    }
+    const { action } = parsed.data;
 
     if (action === "create") {
       const { user, service } = await requireUser(request);
-      const projectId = String(body.project_id ?? "");
-      const email = String(body.email ?? "").trim().toLowerCase();
+      const projectId = parsed.data.project_id ?? "";
+      const email = (parsed.data.email ?? "").trim().toLowerCase();
       if (!projectId || !email.includes("@")) {
         return json(
           { error: "Project and contributor email are required" },
@@ -85,7 +93,10 @@ serve(async (request) => {
         "resolve_user_id_by_email",
         { p_email: email },
       );
-      if (typeof contributorId !== "string") {
+      const resolvedContributorId = contributorId
+        ? String(contributorId)
+        : null;
+      if (!resolvedContributorId) {
         return json(
           { error: "This person has no account yet; invite them first" },
           { status: 404 },
@@ -95,7 +106,7 @@ serve(async (request) => {
         .from("project_members")
         .select("role")
         .eq("project_id", projectId)
-        .eq("user_id", contributorId)
+        .eq("user_id", resolvedContributorId)
         .maybeSingle();
       if (!membership) {
         return json(
@@ -106,7 +117,7 @@ serve(async (request) => {
 
       const issued = await issueCode(
         service,
-        contributorId,
+        resolvedContributorId,
         email,
         user.id,
         projectId,
@@ -125,7 +136,7 @@ serve(async (request) => {
 
     if (action === "request") {
       const service = serviceClient();
-      const email = String(body.email ?? "").trim().toLowerCase();
+      const email = (parsed.data.email ?? "").trim().toLowerCase();
       if (!email.includes("@")) {
         return json({ accepted: true });
       }
@@ -141,7 +152,7 @@ serve(async (request) => {
       const { data: resolved } = await service.rpc("resolve_user_id_by_email", {
         p_email: email,
       });
-      let userId = typeof resolved === "string" ? resolved : null;
+      let userId = resolved ? String(resolved) : null;
       const { data: invite } = await service
         .from("project_invites")
         .select("id")
@@ -192,9 +203,6 @@ async function issueCode(
   organizationId: string | null,
   throttle = true,
 ): Promise<{ code: string; emailed: boolean }> {
-  // The mint throttle protects the anonymous self-service path from abuse.
-  // Administrator minting is authenticated and audited, so onboarding a
-  // whole team is never blocked by it.
   if (throttle) {
     const recent = await service.rpc("count_recent_session_link_codes", {
       p_user_id: userId,
@@ -245,9 +253,7 @@ async function issueCode(
       metadata: { email, user_id: userId },
     });
   } catch {
-    // The audit trail is best-effort. A code is already stored (and possibly
-    // emailed) at this point; a transient audit failure must never turn a
-    // successful mint into an error for the caller.
+    // The audit trail is best-effort.
   }
   return { code, emailed };
 }

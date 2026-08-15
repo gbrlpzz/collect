@@ -34,7 +34,12 @@ export async function projectAccess(
   service: SupabaseClient,
   projectId: string,
   userId: string,
-): Promise<{ project: Record<string, unknown>; admin: boolean } | null> {
+): Promise<
+  {
+    project: { id: string; organization_id: string; status: string };
+    admin: boolean;
+  } | null
+> {
   const { data: project, error: projectError } = await service
     .from("projects")
     .select("id,organization_id,status")
@@ -101,10 +106,14 @@ export async function adminAllowPatterns(
       .filter(Boolean);
   }
   const { data } = await service.rpc("list_allowed_admin_patterns");
-  const rows: unknown[] = Array.isArray(data) ? data : [];
+  interface PatternRow {
+    pattern?: string;
+  }
+  // SAFETY: RPC list_allowed_admin_patterns returns PatternRow[] array.
+  const rows = (Array.isArray(data) ? data : []) as PatternRow[];
   return rows
-    .map((row: unknown) => String((row as { pattern?: unknown }).pattern ?? ""))
-    .filter((pattern: string) => pattern.length > 0);
+    .map((row) => String(row.pattern ?? ""))
+    .filter((pattern) => pattern.length > 0);
 }
 
 /** True when the secret holds the allow-list, so the table cannot be edited. */
@@ -129,7 +138,9 @@ export async function isEmailExplicitlyAllowed(
   );
 }
 
-export function errorMessage(error: unknown): string {
+export function errorMessage(
+  error: Error | Response | null | undefined,
+): string {
   // Fixed, non-sensitive strings only: raw Error.message can leak internal
   // details to clients. The operation itself is reported; specifics are never.
   if (error instanceof Response) return "Request could not be completed";

@@ -1,8 +1,14 @@
-import type {
-  AppState,
-  MediaAsset,
-  Observation,
-  SubmissionState,
+import { z } from "zod";
+import {
+  isRecord,
+  type AppState,
+  type EnvironmentContext,
+  type FormDraft,
+  type FormValue,
+  type MediaAsset,
+  type Observation,
+  type SubmissionState,
+  type SubmissionValues,
 } from "../types";
 import {
   ALL_STORES,
@@ -31,10 +37,10 @@ export interface DurableSubmission {
   projectId: string;
   schemaVersionId: string;
   schemaVersion?: number;
-  payload: Record<string, unknown>;
+  payload: SubmissionValues;
   /** Everything recorded automatically with the observation (device, screen,
    * connection, battery, timezone); never shown in the collection UI. */
-  environment?: Record<string, unknown>;
+  environment?: EnvironmentContext;
   attentionResponse?: { checkKey: string; selectedValue: string } | null;
   payloadHash: string | null;
   clientCreatedAt: string;
@@ -107,6 +113,7 @@ export async function deleteDraftMedia(ids: string[]): Promise<void> {
   for (const id of ids) {
     const request = store.get(id);
     request.onsuccess = () => {
+      // SAFETY: IndexedDB returns the DurableMedia record or undefined.
       const row = request.result as DurableMedia | undefined;
       // Only delete rows that are still draft-scoped (never submitted).
       if (row && !row.submissionId) store.delete(id);
@@ -115,15 +122,13 @@ export async function deleteDraftMedia(ids: string[]): Promise<void> {
   await waitForTransaction(transaction);
 }
 
-function stripBlobsFromMedia(value: unknown): unknown {
+function isMediaAsset(item: FormValue): item is MediaAsset {
+  return isRecord(item) && "id" in item && "name" in item;
+}
+
+function stripBlobsFromMedia(value: FormValue): FormValue {
   if (!Array.isArray(value)) return value;
-  const assets = value.filter(
-    (item): item is MediaAsset =>
-      typeof item === "object" &&
-      item !== null &&
-      "id" in item &&
-      "name" in item,
-  );
+  const assets = value.filter(isMediaAsset);
   if (!assets.length) return value;
   return assets.map(({ blob: _blob, ...metadata }) => ({
     ...metadata,
@@ -167,23 +172,20 @@ export async function loadAppState(): Promise<Partial<AppState> | null> {
     savedRequest,
     submissionsRequest,
   ]);
-  const submissions = submissionsResult as Observation[];
+  // SAFETY: IndexedDB returns the stored Observation[] array.
+  const submissions = (submissionsResult ?? []) as Observation[];
   const mediaRequest = transaction.objectStore(MEDIA_STORE).getAll();
-  const mediaRows = (await createRequest(mediaRequest)) as DurableMedia[];
+  // SAFETY: IndexedDB returns the stored DurableMedia[] array.
+  const mediaRows = ((await createRequest(mediaRequest)) ??
+    []) as DurableMedia[];
   await transactionComplete;
   if (!saved && submissions.length === 0) return null;
   // Media blobs are stored once in MEDIA_STORE; reattach them to the
   // metadata-only observation rows so uploads work after a reload.
   const mediaById = new Map(mediaRows.map((media) => [media.id, media]));
-  const hydrateAssets = (value: unknown): unknown => {
+  const hydrateAssets = (value: FormValue): FormValue => {
     if (!Array.isArray(value)) return value;
-    const assets = value.filter(
-      (item): item is MediaAsset =>
-        typeof item === "object" &&
-        item !== null &&
-        "id" in item &&
-        "name" in item,
-    );
+    const assets = value.filter(isMediaAsset);
     if (!assets.length) return value;
     let changed = false;
     const media = assets.map((asset) => {
@@ -209,6 +211,7 @@ export async function loadAppState(): Promise<Partial<AppState> | null> {
     });
     return changed ? { ...observation, media } : observation;
   });
+  // SAFETY: IndexedDB returns the serialized Partial<AppState> object.
   const savedState = saved as Partial<AppState> | null;
   const draft = savedState?.draft
     ? Object.fromEntries(
@@ -218,11 +221,14 @@ export async function loadAppState(): Promise<Partial<AppState> | null> {
         ]),
       )
     : savedState?.draft;
-  return {
-    ...savedState,
-    ...(draft !== savedState?.draft ? { draft } : {}),
-    ...(hydrated.length ? { observations: hydrated } : {}),
-  };
+  const resultState: Partial<AppState> = { ...savedState };
+  if (draft !== undefined && draft !== savedState?.draft) {
+    resultState.draft = draft;
+  }
+  if (hydrated.length > 0) {
+    resultState.observations = hydrated;
+  }
+  return resultState;
 }
 
 export interface StoredRecoveryData {
@@ -256,9 +262,12 @@ export async function readStoredRecoveryData(): Promise<StoredRecoveryData> {
     ]);
   await transactionComplete;
   return {
-    submissions: submissions as Observation[],
-    media: media as DurableMedia[],
-    outbox: outbox as OutboxOperation[],
+    // SAFETY: IndexedDB returns the stored Observation[] records.
+    submissions: (submissions ?? []) as Observation[],
+    // SAFETY: IndexedDB returns the stored DurableMedia[] records.
+    media: (media ?? []) as DurableMedia[],
+    // SAFETY: IndexedDB returns the stored OutboxOperation[] records.
+    outbox: (outbox ?? []) as OutboxOperation[],
     drafts,
     projects,
     appState,
@@ -307,7 +316,8 @@ export async function getStoredBackendKey(): Promise<string | null> {
       transaction.objectStore(SETTINGS_STORE).get("backend"),
     );
     const [result] = await Promise.all([resultRequest, transactionComplete]);
-    return typeof result === "string" ? result : null;
+    const parsed = z.string().safeParse(result);
+    return parsed.success ? parsed.data : null;
   } catch {
     return null;
   }
@@ -386,7 +396,7 @@ export async function saveAppState(
   state.projects?.forEach((project) =>
     transaction.objectStore(PROJECTS_STORE).put(project, project.id),
   );
-  const draftWithoutBlobs: Record<string, unknown> = Object.fromEntries(
+  const draftWithoutBlobs: FormDraft = Object.fromEntries(
     Object.entries(state.draft).map(([key, value]) => [
       key,
       stripBlobsFromMedia(value),
@@ -413,6 +423,7 @@ export async function saveAppState(
     // pending status after the receipt transaction already cleared the outbox.
     const existingRequest = store.get(observation.id);
     existingRequest.onsuccess = () => {
+      // SAFETY: IndexedDB returns the stored Observation record or undefined.
       const existing = existingRequest.result as Observation | undefined;
       if (existing?.status === "SYNCED" && withoutBlobs.status !== "SYNCED") {
         store.put(
@@ -530,12 +541,14 @@ export async function markLocalSubmissionsSynced(
   ids.forEach((id) => {
     const request = submissions.get(id);
     request.onsuccess = () => {
+      // SAFETY: IndexedDB returns the stored Observation record or undefined.
       const observation = request.result as Observation | undefined;
       if (!observation) return;
       submissions.put({ ...observation, status: "SYNCED" }, id);
       observation.media?.forEach((asset) => {
         const mediaRequest = transaction.objectStore(MEDIA_STORE).get(asset.id);
         mediaRequest.onsuccess = () => {
+          // SAFETY: IndexedDB returns the stored DurableMedia record or undefined.
           const media = mediaRequest.result as DurableMedia | undefined;
           if (media)
             transaction
@@ -572,6 +585,7 @@ export async function setLocalSubmissionStatus(
   const store = transaction.objectStore(SUBMISSIONS_STORE);
   const request = store.get(id);
   request.onsuccess = () => {
+    // SAFETY: IndexedDB returns the stored Observation record or undefined.
     const observation = request.result as Observation | undefined;
     if (observation) store.put({ ...observation, status }, id);
   };
@@ -589,6 +603,7 @@ export async function markOutboxOperation(
   const store = transaction.objectStore(OUTBOX_STORE);
   const request = store.get(operationId);
   request.onsuccess = () => {
+    // SAFETY: IndexedDB returns the stored OutboxOperation record or undefined.
     const operation = request.result as OutboxOperation | undefined;
     if (operation) store.put({ ...operation, state }, operationId);
   };
@@ -642,6 +657,7 @@ export async function recordOutboxFailure(
       });
   };
   submissionRequest.onsuccess = () => {
+    // SAFETY: IndexedDB returns the stored Observation record or undefined.
     observation = submissionRequest.result as Observation | undefined;
     if (observation)
       submissions.put(
@@ -655,7 +671,8 @@ export async function recordOutboxFailure(
   };
   const outboxRequest = outbox.getAll();
   outboxRequest.onsuccess = () => {
-    operations = outboxRequest.result as OutboxOperation[];
+    // SAFETY: IndexedDB returns the stored OutboxOperation[] records.
+    operations = (outboxRequest.result ?? []) as OutboxOperation[];
     applyFailure();
   };
   await transactionComplete;
@@ -706,9 +723,10 @@ export async function getOutboxOperations(): Promise<OutboxOperation[]> {
   const database = await openDatabase();
   const transaction = database.transaction(OUTBOX_STORE, "readonly");
   const transactionComplete = waitForTransaction(transaction);
-  const rows = (await createRequest(
+  // SAFETY: IndexedDB returns the stored OutboxOperation[] records.
+  const rows = ((await createRequest(
     transaction.objectStore(OUTBOX_STORE).getAll(),
-  )) as OutboxOperation[];
+  )) ?? []) as OutboxOperation[];
   await transactionComplete;
   return rows;
 }
@@ -720,7 +738,8 @@ export async function getOrCreateDeviceId(): Promise<string> {
   const existing = await createRequest(
     readTransaction.objectStore(DEVICE_STATE_STORE).get("device_id"),
   );
-  if (typeof existing === "string") return existing;
+  const parsedExisting = z.string().safeParse(existing);
+  if (parsedExisting.success) return parsedExisting.data;
   const deviceId = crypto.randomUUID();
   const writeTransaction = database.transaction(
     DEVICE_STATE_STORE,
@@ -770,7 +789,8 @@ export async function migrateLegacyDatabase(scope: string): Promise<void> {
         .get(LEGACY_IMPORTED_TO_KEY),
     );
     const importedTo = await settingsRequest;
-    if (typeof importedTo === "string" && importedTo !== scope) return;
+    const parsedImported = z.string().safeParse(importedTo);
+    if (parsedImported.success && parsedImported.data !== scope) return;
 
     // Finish every legacy read before opening the scoped write transaction.
     // IndexedDB may auto-commit a write transaction whenever the event loop
@@ -820,6 +840,7 @@ export async function acquireSyncLease(
   const store = transaction.objectStore(DEVICE_STATE_STORE);
   const request = store.get("sync_lease");
   request.onsuccess = () => {
+    // SAFETY: IndexedDB returns the stored SyncLease or undefined.
     const current = request.result as SyncLease | undefined;
     if (
       !current ||
@@ -845,6 +866,7 @@ export async function releaseSyncLease(owner: string): Promise<void> {
   const store = transaction.objectStore(DEVICE_STATE_STORE);
   const request = store.get("sync_lease");
   request.onsuccess = () => {
+    // SAFETY: IndexedDB returns the stored SyncLease or undefined.
     const current = request.result as SyncLease | undefined;
     if (current?.owner === owner) store.delete("sync_lease");
   };

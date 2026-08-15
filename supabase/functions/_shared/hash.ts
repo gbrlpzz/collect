@@ -1,8 +1,16 @@
-function sortValue(value: unknown): unknown {
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue =
+  | JsonPrimitive
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
+function sortValue(value: JsonValue): JsonValue {
   if (Array.isArray(value)) return value.map(sortValue);
-  if (value && typeof value === "object") {
+  if (value && Object(value) === value) {
+    // SAFETY: value is confirmed to be an object with string keys.
+    const dict = value as Record<string, JsonValue>;
     return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
+      Object.entries(dict)
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([key, entry]) => [key, sortValue(entry)]),
     );
@@ -10,7 +18,7 @@ function sortValue(value: unknown): unknown {
   return value;
 }
 
-export function canonicalJson(value: unknown): string {
+export function canonicalJson(value: JsonValue): string {
   return JSON.stringify(sortValue(value));
 }
 

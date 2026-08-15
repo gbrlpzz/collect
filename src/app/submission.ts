@@ -1,8 +1,14 @@
-import type { MediaAsset, Observation, Project } from "../types";
+import type {
+  EnvironmentContext,
+  LocationValue,
+  MediaAsset,
+  Observation,
+  Project,
+  SubmissionValues,
+} from "../types";
 import { collectEnvironment } from "../lib/deviceInfo";
 import { extractAttentionResponse } from "../lib/attention";
 import { ensureMediaHashes } from "../lib/mediaIntegrity";
-import type { EnvironmentInfo } from "../lib/deviceInfo";
 import {
   commitLocalSubmission,
   getOrCreateDeviceId,
@@ -13,7 +19,7 @@ import {
 
 interface CommitLocalObservationInput {
   project: Project;
-  values: Record<string, unknown>;
+  values: SubmissionValues;
   mediaAssets: MediaAsset[];
   appVersion: string;
 }
@@ -47,7 +53,7 @@ export async function commitLocalObservation({
   // research data. Filtering here also guarantees the reserved attention key
   // (already stripped above) can never re-enter the payload.
   const declaredKeys = new Set(project.fields.map((field) => field.key));
-  let submittedValues = Object.fromEntries(
+  let submittedValues: SubmissionValues = Object.fromEntries(
     Object.entries(cleanedValues).filter(([key]) => declaredKeys.has(key)),
   );
 
@@ -62,9 +68,10 @@ export async function commitLocalObservation({
   );
   const hasFreshLocation = locationFields.every((field) => {
     const value = cleanedValues[field.key];
-    if (!value || typeof value !== "object") return false;
+    if (!value || Object(value) !== value) return false;
+    // SAFETY: location value contains capturedAt string.
     const capturedAt = Date.parse(
-      String((value as { capturedAt?: unknown }).capturedAt ?? ""),
+      String((value as { capturedAt?: string }).capturedAt ?? ""),
     );
     return Number.isFinite(capturedAt) && Date.now() - capturedAt < 30_000;
   });
@@ -73,25 +80,23 @@ export async function commitLocalObservation({
     !hasFreshLocation &&
     "geolocation" in navigator
   ) {
-    const freshLocation = await new Promise<Record<string, unknown> | null>(
-      (resolve) => {
-        navigator.geolocation.getCurrentPosition(
-          (position) =>
-            resolve({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              accuracy: position.coords.accuracy,
-              capturedAt: new Date().toISOString(),
-              altitude: position.coords.altitude,
-              altitudeAccuracy: position.coords.altitudeAccuracy,
-              heading: position.coords.heading,
-              autoCaptured: true,
-            }),
-          () => resolve(null),
-          { enableHighAccuracy: true, timeout: 5000 },
-        );
-      },
-    );
+    const freshLocation = await new Promise<LocationValue | null>((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) =>
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            capturedAt: new Date().toISOString(),
+            altitude: position.coords.altitude,
+            altitudeAccuracy: position.coords.altitudeAccuracy,
+            heading: position.coords.heading,
+            provider: "gps",
+          }),
+        () => resolve(null),
+        { enableHighAccuracy: true, timeout: 5000 },
+      );
+    });
     if (freshLocation) {
       submittedValues = {
         ...submittedValues,
@@ -102,7 +107,9 @@ export async function commitLocalObservation({
     }
   }
 
-  const environment = await collectEnvironment();
+  const env = await collectEnvironment();
+  // SAFETY: EnvironmentInfo is serializable into EnvironmentContext.
+  const environment = { ...env } as EnvironmentContext;
   const observation: Observation = {
     id,
     projectId: project.id,
@@ -113,7 +120,7 @@ export async function commitLocalObservation({
     deviceId,
     values: submittedValues,
     media: durableMediaAssets,
-    environment: environment as EnvironmentInfo & Record<string, unknown>,
+    environment,
     attentionResponse,
   };
   const media = mediaFromAssets(durableMediaAssets, id, "field-site-photos");
@@ -122,7 +129,7 @@ export async function commitLocalObservation({
     projectId: project.id,
     schemaVersionId: `${project.id}-v${project.schemaVersion}`,
     payload: submittedValues,
-    environment: environment as EnvironmentInfo & Record<string, unknown>,
+    environment,
     attentionResponse,
     payloadHash: null,
     clientCreatedAt,

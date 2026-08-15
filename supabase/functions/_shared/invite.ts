@@ -7,12 +7,17 @@
  * against their email address. Nothing here uses the authentication
  * provider's mailer, so invitations never compete with its quota.
  */
+export interface InviteEmailMessage {
+  subject: string;
+  text: string;
+}
+
 export function projectInviteEmail(input: {
   email: string;
   appUrl: string;
   projectName: string;
   organizationName?: string | null;
-}): { subject: string; text: string } {
+}): InviteEmailMessage {
   const organization = input.organizationName?.trim();
   return {
     subject: `You are invited to collect: ${input.projectName}`,
@@ -36,7 +41,7 @@ export function adminInviteEmail(input: {
   email: string;
   appUrl: string;
   organizationName?: string | null;
-}): { subject: string; text: string } {
+}): InviteEmailMessage {
   const organization = input.organizationName?.trim() || "a collect workspace";
   return {
     subject: "You are invited to administer collect",

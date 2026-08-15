@@ -1,5 +1,11 @@
+import { z } from "npm:zod@4.4.3";
 import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
+
+const removeContributorSchema = z.object({
+  project_id: z.string().min(1),
+  email: z.string().email(),
+});
 
 serve(async (request) => {
   if (request.method === "OPTIONS") return options();
@@ -11,15 +17,17 @@ serve(async (request) => {
   }
   try {
     const { user, service } = await requireUser(request);
-    const body = (await request.json()) as Record<string, unknown>;
-    const projectId = String(body.project_id ?? "");
-    const email = String(body.email ?? "").trim().toLowerCase();
-    if (!projectId || !email || !email.includes("@")) {
+    const rawJson = await request.json().catch(() => ({}));
+    const parsed = removeContributorSchema.safeParse(rawJson);
+    if (!parsed.success) {
       return json(
         { error: "Project and contributor email are required" },
         { status: 400 },
       );
     }
+    const projectId = parsed.data.project_id;
+    const email = parsed.data.email.trim().toLowerCase();
+
     const access = await projectAccess(service, projectId, user.id);
     if (!access?.admin) {
       return json(
@@ -28,14 +36,11 @@ serve(async (request) => {
       );
     }
 
-    // Resolve the contributor account via the security-definer RPC (the
-    // auth schema is not exposed to PostgREST, so from("auth.users") would
-    // silently return nothing and the removal would no-op).
     const { data: contributorId } = await service.rpc(
       "resolve_user_id_by_email",
       { p_email: email },
     );
-    const resolvedId = typeof contributorId === "string" ? contributorId : null;
+    const resolvedId = contributorId ? String(contributorId) : null;
 
     // Never remove administrators through this path.
     if (resolvedId) {
@@ -76,9 +81,6 @@ serve(async (request) => {
       .eq("status", "pending");
 
     if (resolvedId) {
-      // Drop the membership and this project's device-readiness rows.
-      // Submissions, media, attention responses, and the contributor profile
-      // are research records and stay in the project dataset untouched.
       await service
         .from("project_members")
         .delete()

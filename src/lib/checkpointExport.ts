@@ -1,11 +1,19 @@
+import { z } from "zod";
 import { strToU8, zip, zipSync } from "fflate";
-import type { Observation, Project } from "../types";
+import {
+  isRecord,
+  type FormValue,
+  type JsonValue,
+  type LocationValue,
+  type Observation,
+  type Project,
+} from "../types";
 import type { ContributorReadiness } from "./adminBackend";
 import { downloadZip } from "./download";
 import { APP_VERSION } from "./appMeta";
 import { readStoredRecoveryData } from "./localStore";
 
-const MIME_EXTENSIONS: Record<string, string> = {
+const MIME_EXTENSIONS = {
   "image/jpeg": ".jpg",
   "image/png": ".png",
   "image/webp": ".webp",
@@ -18,24 +26,25 @@ const MIME_EXTENSIONS: Record<string, string> = {
   "video/mp4": ".mp4",
   "video/quicktime": ".mov",
   "application/octet-stream": ".bin",
-};
+} as const satisfies Record<string, string>;
 
 /**
  * Escapes a cell for RFC-4180 CSV and neutralizes formula injection.
  */
-export function csvCell(value: unknown): string {
+export function csvCell(value: JsonValue | FormValue): string {
   if (value === null || value === undefined) return '""';
-  const rawText = typeof value === "string" ? value : JSON.stringify(value);
+  const parsedStr = z.string().safeParse(value);
+  const rawText = parsedStr.success ? parsedStr.data : JSON.stringify(value);
   const text = /^[=+\-@\t\r]/.test(rawText) ? `'${rawText}` : rawText;
   return `"${text.replaceAll('"', '""')}"`;
 }
 
-export function csvRow(values: unknown[]): string {
+export function csvRow(values: (JsonValue | FormValue)[]): string {
   return values.map(csvCell).join(",");
 }
 
 export async function sha256Text(text: string): Promise<string> {
-  if (typeof crypto === "undefined" || !crypto.subtle) {
+  if (!globalThis.crypto?.subtle) {
     return "unsupported-crypto-environment";
   }
   const bytes = new TextEncoder().encode(text);
@@ -57,31 +66,52 @@ export function mediaExportName(media: {
     "_",
   );
   const mime = media.mimeType ?? media.mime_type ?? "";
+  type MimeKey = keyof typeof MIME_EXTENSIONS;
+  const isMimeKey = (m: string): m is MimeKey => m in MIME_EXTENSIONS;
   const extension = original.includes(".")
     ? original.slice(original.lastIndexOf("."))
-    : (MIME_EXTENSIONS[mime] ?? ".bin");
+    : isMimeKey(mime)
+      ? MIME_EXTENSIONS[mime]
+      : ".bin";
   return `${media.id}${extension}`;
+}
+
+export interface GeoJsonFeature {
+  type: "Feature";
+  geometry: { type: "Point"; coordinates: [number, number] };
+  properties: {
+    submission_id: string;
+    project_id?: string;
+    schema_id?: number;
+    captured_at: string;
+    accuracy_m: number | null;
+    payload: Record<string, FormValue>;
+  };
+}
+
+function isLocationValue(val: FormValue): val is LocationValue {
+  return isRecord(val) && "latitude" in val && "longitude" in val;
 }
 
 export function locationFeature(
   submission: Observation,
-): Record<string, unknown> | null {
+): GeoJsonFeature | null {
   const values = submission.values ?? {};
-  let loc = values.location as Record<string, unknown> | null;
+  const rawLoc = values.location;
+  let loc: LocationValue | null = isLocationValue(rawLoc) ? rawLoc : null;
 
   if (
     !loc ||
-    !Number.isFinite(Number(loc.latitude)) ||
-    !Number.isFinite(Number(loc.longitude))
+    !Number.isFinite(loc.latitude) ||
+    !Number.isFinite(loc.longitude)
   ) {
     for (const val of Object.values(values)) {
       if (
-        val &&
-        typeof val === "object" &&
-        Number.isFinite(Number((val as Record<string, unknown>).latitude)) &&
-        Number.isFinite(Number((val as Record<string, unknown>).longitude))
+        isLocationValue(val) &&
+        Number.isFinite(val.latitude) &&
+        Number.isFinite(val.longitude)
       ) {
-        loc = val as Record<string, unknown>;
+        loc = val;
         break;
       }
     }
@@ -131,10 +161,9 @@ export async function buildClientCheckpointArchive({
     ? durableSubmissions
     : observations;
 
-  const checkpointId =
-    typeof crypto !== "undefined" && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `cp-${Date.now()}`;
+  const checkpointId = globalThis.crypto?.randomUUID
+    ? globalThis.crypto.randomUUID()
+    : `cp-${Date.now()}`;
   const cutoff = new Date().toISOString();
   const safeSlug =
     (project.name || "project")
@@ -199,6 +228,7 @@ export async function buildClientCheckpointArchive({
         payload: obs.values,
         client_created_at: obs.createdAt,
         client_timezone:
+          // SAFETY: timezone is captured as a string in environment metadata.
           (obs.environment?.timezone as string | undefined) ||
           Intl.DateTimeFormat().resolvedOptions().timeZone,
         server_received_at: obs.status === "SYNCED" ? cutoff : null,
@@ -248,7 +278,7 @@ export async function buildClientCheckpointArchive({
         obs.status === "SYNCED" ? cutoff : "",
         obs.status,
         false,
-        obs.values,
+        JSON.stringify(obs.values),
       ]),
     ),
   ].join("\n");
@@ -340,7 +370,7 @@ export async function buildClientCheckpointArchive({
   // GeoJSON
   const features = submissions
     .map(locationFeature)
-    .filter((feat): feat is Record<string, unknown> => Boolean(feat));
+    .filter((feat): feat is GeoJsonFeature => Boolean(feat));
   const geojson = JSON.stringify(
     { type: "FeatureCollection", features },
     null,
@@ -396,7 +426,7 @@ export async function buildClientCheckpointArchive({
     required: Boolean(field.required),
     description: field.description ?? null,
     semantic_uri: field.semantic_uri ?? null,
-    unit: (field.config as Record<string, unknown> | undefined)?.unit ?? null,
+    unit: field.config?.unit ?? null,
     options: field.options ?? null,
   }));
 
@@ -467,7 +497,8 @@ export async function buildClientCheckpointArchive({
     note: "A checkpoint contains only complete submissions received by the server at the cutoff timestamp. Offline devices may hold additional unseen data.",
   };
 
-  const entries: Record<string, Uint8Array> = {
+  const entries = {
+    ...mediaEntries,
     "manifest.json": strToU8(JSON.stringify(manifest, null, 2)),
     [`schema/schema-v${project.schemaVersion}.json`]: strToU8(
       JSON.stringify(
@@ -494,7 +525,7 @@ export async function buildClientCheckpointArchive({
     ),
     "dataset/README.md": strToU8(datasetReadme),
     ...mediaEntries,
-  };
+  } satisfies Record<string, Uint8Array>;
 
   let archive: Uint8Array;
   try {

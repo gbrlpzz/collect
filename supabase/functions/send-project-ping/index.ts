@@ -1,7 +1,13 @@
+import { z } from "npm:zod@4.4.3";
 import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
 import { appEntryUrl } from "../_shared/config.ts";
 import { sendEmail } from "../_shared/mail.ts";
+
+const pingSchema = z.object({
+  project_id: z.string().min(1),
+  contributor_id: z.string().min(1),
+});
 
 serve(async (request) => {
   if (request.method === "OPTIONS") return options();
@@ -16,10 +22,9 @@ serve(async (request) => {
   }
   try {
     const { user, service } = await requireUser(request);
-    const body = (await request.json()) as Record<string, unknown>;
-    const projectId = String(body.project_id ?? "");
-    const contributorId = String(body.contributor_id ?? "");
-    if (!projectId || !contributorId) {
+    const rawJson = await request.json().catch(() => ({}));
+    const parsed = pingSchema.safeParse(rawJson);
+    if (!parsed.success) {
       return json(
         { error: "Project and contributor are required" },
         {
@@ -27,6 +32,9 @@ serve(async (request) => {
         },
       );
     }
+    const projectId = parsed.data.project_id;
+    const contributorId = parsed.data.contributor_id;
+
     const access = await projectAccess(service, projectId, user.id);
     if (!access?.admin) {
       return json(

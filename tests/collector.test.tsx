@@ -11,10 +11,15 @@ import {
 import { Collector } from "../src/components/Collector";
 import { FieldRenderer } from "../src/components/FieldRenderer";
 import { SyncSheet } from "../src/components/SyncSheet";
-import { ClearButton, ConfirmationDialog } from "../src/components/ui";
+import { ConfirmationDialog } from "../src/components/ui";
 import { ATTENTION_FIELD_KEY } from "../src/data/attentionChecks";
 import { useVisualViewport } from "../src/lib/useVisualViewport";
-import type { FieldDefinition, Project } from "../src/types";
+import type {
+  FieldDefinition,
+  FormDraft,
+  Project,
+  SubmissionValues,
+} from "../src/types";
 
 const fields: FieldDefinition[] = [
   {
@@ -294,6 +299,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
     );
     fireEvent.click(continueButton());
     expect(screen.getByText("Site photos")).toBeTruthy();
+    // SAFETY: querySelector returns HTMLInputElement for file input.
     const input = document.querySelector(
       'input[type="file"]',
     ) as HTMLInputElement;
@@ -330,6 +336,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
     );
     fireEvent.click(continueButton());
     fireEvent.click(continueButton());
+    // SAFETY: querySelector returns HTMLInputElement for file input.
     const input = document.querySelector(
       'input[type="file"]',
     ) as HTMLInputElement;
@@ -355,8 +362,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
       people_count: { value: 3, unit: null },
     };
     function StatefulHarness() {
-      const [draft, setDraft] =
-        React.useState<Record<string, unknown>>(initialDraft);
+      const [draft, setDraft] = React.useState<FormDraft>(initialDraft);
       return (
         <Collector
           project={project}
@@ -375,6 +381,7 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
     try {
       // site_code → site_photos → attention check → field notes → people present
       fireEvent.click(continueButton());
+      // SAFETY: querySelector returns HTMLInputElement for file input.
       const input = document.querySelector(
         'input[type="file"]',
       ) as HTMLInputElement;
@@ -403,11 +410,9 @@ describe("Collector guided flow (§10 client-side enforcement)", () => {
         screen.getByRole("button", { name: /save observation/i }),
       );
       expect(onSubmitted).toHaveBeenCalledTimes(1);
-      const submittedValues = onSubmitted.mock.calls[0][0] as Record<
-        string,
-        unknown
-      >;
-      expect(typeof submittedValues[ATTENTION_FIELD_KEY]).toBe("string");
+      // SAFETY: onSubmitted receives the SubmissionValues record as first argument.
+      const submittedValues = onSubmitted.mock.calls[0][0] as SubmissionValues;
+      expect(submittedValues[ATTENTION_FIELD_KEY]).toEqual(expect.any(String));
       expect(String(submittedValues[ATTENTION_FIELD_KEY])).toMatch(
         /^[^:]+:.+$/,
       );
@@ -517,11 +522,12 @@ describe("FieldRenderer single choice with Other (§10)", () => {
     }
     render(<Harness />);
     fireEvent.click(screen.getByRole("button", { name: /^other$/i }));
+    // SAFETY: getByPlaceholderText returns HTMLInputElement for other description.
     const input = screen.getByPlaceholderText(
       /describe the other/i,
     ) as HTMLInputElement;
     fireEvent.change(input, { target: { value: "School" } });
-    expect((input as HTMLInputElement).value).toBe("School");
+    expect(input.value).toBe("School");
   });
 });
 
@@ -545,6 +551,7 @@ describe("native input primitives (§HIG)", () => {
         attentionCheck={false}
       />,
     );
+    // SAFETY: getByRole returns HTMLInputElement for textbox.
     const input = screen.getByRole("textbox", {
       name: /site code/i,
     }) as HTMLInputElement;

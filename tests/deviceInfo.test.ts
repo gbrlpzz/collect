@@ -44,8 +44,8 @@ describe("device provenance", () => {
     const env = await collectEnvironment();
     expect(env.capturedAt).toMatch(/\d{4}-\d{2}-\d{2}/);
     expect(env.timezone).toBeTruthy();
-    expect(typeof env.deviceModel).toBe("string");
-    expect(typeof env.online).toBe("boolean");
+    expect(env.deviceModel).toEqual(expect.any(String));
+    expect(env.online).toEqual(expect.any(Boolean));
     expect(env.screen).toBeTruthy();
   });
 });

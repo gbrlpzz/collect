@@ -2,11 +2,11 @@ import { z } from "zod";
 import type { FieldDefinition, Project } from "../types";
 import { supabase } from "./supabaseClient";
 
-export const defaultOrganizationName =
-  (
-    (import.meta.env.VITE_ORGANIZATION_NAME as string | undefined) ??
-    "Field organization"
-  ).trim() || "Field organization";
+// SAFETY: Vite injects build-time environment variables as strings or undefined.
+const envOrgName = (
+  import.meta.env.VITE_ORGANIZATION_NAME as string | undefined
+)?.trim();
+export const defaultOrganizationName = envOrgName || "Field organization";
 
 export interface NewProjectInput {
   organizationName: string;
@@ -44,7 +44,7 @@ function requireClient() {
 }
 
 async function readableFunctionError(
-  error: unknown,
+  error: Error | { context?: Response } | null | undefined,
   fallback: string,
 ): Promise<Error> {
   const message = await readFunctionErrorBody(error);
@@ -91,6 +91,7 @@ interface ProjectOverviewRow {
 }
 
 function projectFromOverview(row: ProjectOverviewRow): Project {
+  // SAFETY: schema_json.fields is the published FieldDefinition[] array.
   const fields = Array.isArray(row.schema_json?.fields)
     ? (row.schema_json.fields as FieldDefinition[])
     : [];
@@ -126,6 +127,7 @@ export async function loadAssignedProjects(): Promise<Project[] | null> {
     .select("*")
     .order("created_at", { ascending: false });
   if (error) return null;
+  // SAFETY: Supabase query returns ProjectOverviewRow[] matching the projects view.
   return ((projects ?? []) as ProjectOverviewRow[]).map(projectFromOverview);
 }
 
@@ -168,8 +170,12 @@ export async function loadUserOrganizationName(): Promise<string | null> {
     .limit(1)
     .maybeSingle();
   if (membership?.organizations) {
-    const org = membership.organizations as unknown as { name?: string };
-    if (org.name) return org.name;
+    // SAFETY: Supabase join returns joined organizations object or null.
+    const org = membership.organizations as
+      | { name?: string }
+      | null
+      | undefined;
+    if (org?.name) return org.name;
   }
   return null;
 }
@@ -188,6 +194,7 @@ export async function createRemoteProject(
     .eq("role", "admin")
     .limit(1)
     .maybeSingle();
+  // SAFETY: organization_id is a UUID string or undefined from memberships table.
   let organizationId = membership?.organization_id as string | undefined;
   let organizationName = defaultOrganizationName;
   if (!organizationId) {
@@ -533,12 +540,12 @@ export function buildReadinessRows(
       0,
     );
     const lastSeen = devices.length
-      ? devices.reduce(
+      ? devices.reduce<string | null>(
           (latest, device) =>
             device.last_seen_at && (!latest || device.last_seen_at > latest)
               ? device.last_seen_at
               : latest,
-          null as string | null,
+          null,
         )
       : null;
     // Readiness is automatic: every known device must have reported a clean
@@ -633,6 +640,7 @@ export async function loadProjectReadiness(
         )
         .in("user_id", memberIds)
     : { data: [] };
+  // SAFETY: Supabase queries return database rows matching ReadinessRowInputs.
   return buildReadinessRows({
     members: (members ?? []) as ReadinessRowInputs["members"],
     invites: (invites ?? []) as ReadinessRowInputs["invites"],

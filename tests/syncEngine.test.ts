@@ -4,7 +4,6 @@ import type { Observation } from "../src/types";
 import {
   acquireSyncLease,
   commitLocalSubmission,
-  estimateLocalStorage,
   getOrCreateDeviceId,
   getOutboxOperations,
   loadAppState,
@@ -14,7 +13,6 @@ import {
   readStoredRecoveryData,
   recordOutboxFailure,
   releaseSyncLease,
-  saveAppState,
   setLocalScope,
   setLocalSubmissionStatus,
   type DurableMedia,
@@ -32,11 +30,13 @@ import {
 // receipts survive and resume from the durable phase.
 // ---------------------------------------------------------------------------
 
-function makeSubmission(id = crypto.randomUUID()): {
+interface TestSubmissionBundle {
   submission: DurableSubmission;
   media: DurableMedia[];
   observation: Observation;
-} {
+}
+
+function makeSubmission(id = crypto.randomUUID()): TestSubmissionBundle {
   const clientCreatedAt = new Date().toISOString();
   const submission: DurableSubmission = {
     id,
@@ -233,6 +233,7 @@ describe("local ledger survival (§54 lifecycle)", () => {
     const state = await loadAppState();
     const restored = state!.observations[0];
     expect(restored.media).toHaveLength(1);
+    // SAFETY: media array contains blob attachment.
     const restoredBlob = restored.media![0].blob as Blob | undefined;
     expect(restoredBlob).toBeDefined();
     expect(new Uint8Array(await restoredBlob!.arrayBuffer())).toEqual(
