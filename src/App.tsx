@@ -307,6 +307,7 @@ export default function App() {
               onSelectProject={(project) =>
                 selectProject(project, "admin-project")
               }
+              onToast={showToast}
             />
           )}
 

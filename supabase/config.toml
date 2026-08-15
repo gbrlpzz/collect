@@ -37,7 +37,10 @@ verify_jwt = false
 [auth]
 enabled = true
 site_url = "https://collect-tawny.vercel.app"
-additional_redirect_urls = ["https://collect-tawny.vercel.app"]
+additional_redirect_urls = [
+  "https://collect.gbrlpzz.com/**",
+  "https://collect-tawny.vercel.app/**",
+]
 # Anyone may create a contributor account. An account on its own shows
 # nothing: projects appear only where a membership exists, and administrator
 # rights are granted only to allow-listed addresses. Sign-up must stay open
@@ -55,7 +58,7 @@ enable_signup = true
 # `npm run provision -- --auth-only`. The sign-in screen reads
 # /auth/v1/settings, so a provider appears as soon as the server accepts it.
 [auth.external.google]
-enabled = false
+enabled = true
 client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
 skip_nonce_check = false

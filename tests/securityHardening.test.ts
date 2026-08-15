@@ -89,4 +89,75 @@ describe("Security hardening", () => {
       expect(content).not.toContain("and attempts < 10");
     });
   });
+
+  describe("Authentication model", () => {
+    const read = (relative: string) =>
+      readFileSync(resolve(__dirname, relative), "utf-8");
+
+    it("grants administrator rights only from an explicit allow-list", () => {
+      const shared = read("../supabase/functions/_shared/auth.ts");
+      // The permissive default (no patterns configured => everyone allowed)
+      // must never reach the grant path: open contributor sign-up would
+      // otherwise hand the workspace to the next stranger who signs in.
+      expect(shared).toContain(
+        "export async function isEmailExplicitlyAllowed",
+      );
+      const strict = shared.slice(shared.indexOf("isEmailExplicitlyAllowed"));
+      expect(strict).toContain("if (!patterns.length) return false;");
+
+      const claim = read("../supabase/functions/claim-invites/index.ts");
+      expect(claim).toContain("isEmailExplicitlyAllowed");
+      // Only a verified address may claim rights.
+      expect(claim).toContain("if (!user.email_confirmed_at) return false;");
+    });
+
+    it("keeps the first workspace behind the allow-list", () => {
+      const bootstrap = read(
+        "../supabase/functions/bootstrap-workspace/index.ts",
+      );
+      expect(bootstrap).toContain("isEmailAllowed");
+      expect(bootstrap).toContain("administrator allow-list");
+    });
+
+    it("never spends the authentication provider's mail allowance on invitations", () => {
+      for (const relative of [
+        "../supabase/functions/send-project-invite/index.ts",
+        "../supabase/functions/send-admin-invite/index.ts",
+      ]) {
+        const source = read(relative);
+        expect(source).not.toContain("inviteUserByEmail");
+        expect(source).not.toContain("auth/v1/resend");
+        // Invitations leave through the project's own mail provider.
+        expect(source).toContain("sendEmail(");
+      }
+    });
+
+    it("never creates an account from the email link path", () => {
+      const email = read("../src/lib/auth/email.ts");
+      expect(email).toContain("shouldCreateUser: false");
+    });
+
+    it("creates an account for an invited address only", () => {
+      const code = read(
+        "../supabase/functions/contributor-signin-code/index.ts",
+      );
+      const request = code.slice(code.indexOf('if (action === "request")'));
+      expect(request).toContain("auth.admin.createUser");
+      // The creation is guarded by a pending invitation for that address.
+      expect(request).toContain("if (!userId && invite)");
+      expect(request).toContain('.eq("status", "pending")');
+    });
+
+    it("lets only the service role edit the administrator allow-list", () => {
+      const migration = read(
+        "../supabase/migrations/20260815114933_admin_allow_list_grants.sql",
+      );
+      expect(migration).toContain(
+        "revoke all on function public.add_allowed_admin_pattern(text, text)\n  from public, anon, authenticated;",
+      );
+      expect(migration).toContain(
+        "grant execute on function public.add_allowed_admin_pattern(text, text)\n  to service_role;",
+      );
+    });
+  });
 });

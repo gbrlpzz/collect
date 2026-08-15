@@ -20,6 +20,7 @@ import {
   createSchemaDraft,
   mintContributorSigninCode,
   publishSchemaDraft,
+  inviteAdministrator,
   removeProjectContributor,
   sendProjectInvite,
   sendProjectPing,
@@ -59,6 +60,7 @@ interface AdminDashboardProps {
   projects?: Project[];
   onNavigate: (view: View) => void;
   onSelectProject: (project: Project) => void;
+  onToast?: (message: string) => void;
 }
 
 export function AdminDashboard({
@@ -66,11 +68,33 @@ export function AdminDashboard({
   projects = [],
   onNavigate,
   onSelectProject,
+  onToast,
 }: AdminDashboardProps) {
   const projectList = projects.filter(
     (candidate) => candidate.id !== "empty-project",
   );
   const hasProject = projectList.length > 0 || project.id !== "empty-project";
+  // Administrator rights follow the allow-list: adding an address is the
+  // grant. The rights themselves land when that person signs in, with any
+  // method they prefer.
+  const [administratorPromptOpen, setAdministratorPromptOpen] = useState(false);
+  const [addingAdministrator, setAddingAdministrator] = useState(false);
+  const addAdministrator = async (email: string) => {
+    setAdministratorPromptOpen(false);
+    setAddingAdministrator(true);
+    try {
+      await inviteAdministrator(email);
+      onToast?.(`${email} can now administer this workspace`);
+    } catch (error) {
+      onToast?.(
+        error instanceof Error && error.message
+          ? error.message
+          : "The administrator could not be added",
+      );
+    } finally {
+      setAddingAdministrator(false);
+    }
+  };
   return (
     <main className="page page-admin">
       <div className="page-heading admin-heading">
@@ -124,6 +148,39 @@ export function AdminDashboard({
           </div>
         )}
       </section>
+
+      {isSupabaseConfigured && (
+        <section className="admin-section">
+          <div className="section-heading-row admin-access-row">
+            <h2>Workspace access</h2>
+            <Button
+              variant="secondary"
+              icon="plus"
+              onClick={() => setAdministratorPromptOpen(true)}
+              disabled={addingAdministrator}
+              busy={addingAdministrator}
+            >
+              Add administrator
+            </Button>
+          </div>
+          <p className="admin-section-note">
+            Administrator rights follow the allow-list. Adding an address allows
+            it and sends an invitation; the rights are granted when that person
+            signs in, with any method. Everyone else can sign in as a
+            contributor and sees only the projects they are assigned to.
+          </p>
+        </section>
+      )}
+
+      {administratorPromptOpen && (
+        <EmailPrompt
+          title="Add administrator"
+          message="This address is added to the administrator allow-list and receives an invitation."
+          confirmLabel="Add administrator"
+          onSubmit={(email) => void addAdministrator(email)}
+          onCancel={() => setAdministratorPromptOpen(false)}
+        />
+      )}
     </main>
   );
 }
