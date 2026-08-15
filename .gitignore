@@ -10,3 +10,4 @@ agent-browser-state/
 supabase/.temp/
 supabase/.branches/
 .deploy/
+.zcode/
