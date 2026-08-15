@@ -1,7 +1,7 @@
 // collect service worker: precached app shell + runtime cache-first assets.
 // The hashed asset list is emitted by the Vite build (precache-manifest.json)
 // so an installed app loads offline from the first launch.
-const CACHE = "collect-shell-v7";
+const CACHE = "collect-shell-v8";
 const CORE = [
   "/index.html",
   "/manifest.webmanifest",
@@ -46,16 +46,22 @@ self.addEventListener("install", (event) => {
 
 // Background Sync: when the browser wakes the worker for a pending sync,
 // nudge every open collect window; the app decides whether work is due.
+// Background Sync fires precisely when the app is closed, so "no window
+// answered" means nothing happened — reject instead of resolving, or the
+// browser marks the tag delivered and stops retrying.
 self.addEventListener("sync", (event) => {
   if (event.tag !== "collect-sync") return;
   event.waitUntil(
     self.clients
       .matchAll({ includeUncontrolled: true })
-      .then((clients) =>
+      .then((clients) => {
+        if (!clients.length) {
+          throw new Error("no collect window is open to run the sync");
+        }
         clients.forEach((client) =>
           client.postMessage({ type: "collect-sync" }),
-        ),
-      ),
+        );
+      }),
   );
 });
 
@@ -103,24 +109,37 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Content-hashed assets are immutable once built, so cache-first is safe
+  // for them. Everything else (manifests, icons, documents) has no hash in
+  // its name and is served stale-while-revalidate, so updates land without a
+  // manual cache-name bump.
+  const isImmutableAsset = requestUrl.pathname.startsWith("/assets/");
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
-        .then((response) => {
-          if (response.ok) {
-            const copy = response.clone();
-            void caches
-              .open(CACHE)
-              .then((cache) => cache.put(event.request, copy));
-          }
-          return response;
-        })
-        .catch(() => {
-          // Assets are never answered with the HTML shell; only navigations
-          // fall back to the cached index.
-          return Response.error();
-        });
+      const fetchAndCache = () =>
+        fetch(event.request)
+          .then((response) => {
+            if (response.ok) {
+              const copy = response.clone();
+              void caches
+                .open(CACHE)
+                .then((cache) => cache.put(event.request, copy));
+            }
+            return response;
+          })
+          .catch(() => {
+            if (cached) return cached;
+            // Assets are never answered with the HTML shell; only navigations
+            // fall back to the cached index.
+            return Response.error();
+          });
+      if (cached && isImmutableAsset) return cached;
+      if (cached) {
+        void fetchAndCache().catch(() => undefined);
+        return cached;
+      }
+      return fetchAndCache();
     }),
   );
 });

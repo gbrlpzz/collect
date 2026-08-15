@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { JsonValue, MediaAsset, Observation, Project } from "../types";
 import { markOutboxOperation, setLocalSubmissionStatus } from "./localStore";
 import { invokeFunction } from "./functionError";
+import { ActionRequiredError } from "./syncErrors";
 import { buildMediaObjectPath } from "./syncProtocol";
 import { collectDeviceInfo } from "./deviceInfo";
 import { supabase } from "./supabaseClient";
@@ -126,7 +127,10 @@ export async function uploadRemoteMedia({
     z.object({ confirmed: z.boolean() }),
   );
   if (existing.confirmed) return;
-  if (!asset.blob) throw new Error(`Media ${asset.id} has no local blob`);
+  // Without the blob and without a server copy, nothing can ever upload:
+  // surface it for recovery instead of retrying forever.
+  if (!asset.blob)
+    throw new ActionRequiredError(`Media ${asset.id} has no local blob`);
   const { data: sessionData } = await client.auth.getSession();
   const accessToken = sessionData.session?.access_token;
   if (!accessToken)
@@ -207,7 +211,7 @@ export async function uploadRemoteMedia({
     z.object({ confirmed: z.boolean() }),
   );
   if (!confirmation.confirmed)
-    throw new Error(
+    throw new ActionRequiredError(
       `Media ${asset.id} was uploaded but not acknowledged by the server`,
     );
 }
