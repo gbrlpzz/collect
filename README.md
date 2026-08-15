@@ -13,6 +13,8 @@ React and TypeScript. It stores data locally in IndexedDB and uses a Supabase
 backend (PostgreSQL, storage, and Edge Functions). The project is licensed
 under Apache-2.0.
 
+[Live Demo](https://collect.gbrlpzz.com/) · [Documentation](docs/README.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Code of Conduct](CODE_OF_CONDUCT.md) · [Citation](#citation) · [License](LICENSE)
+
 ## Why it exists
 
 Field surveys must keep working without connectivity, and the data they
@@ -210,9 +212,27 @@ Start with the [documentation index](docs/README.md). Core guides:
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and `AGENTS.md` before making changes.
-Changes to persistence, synchronization, authorization, schema versioning, or
-exports must include failure-oriented tests and pass `npm run check`.
+Read [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md),
+and `AGENTS.md` before making changes. For vulnerability reporting, see
+[SECURITY.md](SECURITY.md). Changes to persistence, synchronization,
+authorization, schema versioning, or exports must include failure-oriented tests
+and pass `npm run check`.
+
+## Citation
+
+If you use `collect` in research, fieldwork, or scientific publications, please
+cite the software using the metadata in [CITATION.cff](CITATION.cff):
+
+```bibtex
+@software{Pizzi_Collect_2026,
+  author = {Pizzi, Gabriele},
+  title = {{Collect: Offline-first field data collection for trustworthy research evidence}},
+  url = {https://collect.gbrlpzz.com/},
+  version = {0.1.2},
+  year = {2026},
+  license = {Apache-2.0}
+}
+```
 
 ## License
 

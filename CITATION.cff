@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+title: "Collect"
+type: software
+authors:
+  - family-names: Pizzi
+    given-names: Gabriele
+repository-code: "https://github.com/gbrlpzz/collect"
+url: "https://collect.gbrlpzz.com/"
+license: Apache-2.0
+version: 0.1.2
+date-released: "2026-08-15"
+abstract: "Offline-first field data collection web application for trustworthy research evidence."
+keywords:
+  - "field-data"
+  - "data-collection"
+  - "offline-first"
+  - "pwa"
+  - "research-software"
+  - "open-science"
+  - "fair-data"
+  - "geospatial"

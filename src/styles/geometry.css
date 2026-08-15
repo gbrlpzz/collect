@@ -2149,6 +2149,19 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 .profile-about-content a:not(.profile-feedback) {
   color: var(--text);
 }
+.profile-about-legal {
+  color: var(--tertiary);
+  font-size: 0.6875rem;
+}
+.profile-about-legal a {
+  color: var(--tertiary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+.profile-about-legal a:hover {
+  color: var(--secondary);
+}
 .profile-feedback {
   justify-content: center;
   color: var(--text);
