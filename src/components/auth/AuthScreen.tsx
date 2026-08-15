@@ -152,8 +152,12 @@ export function AuthScreen({
             : chosen
               ? chosen.lede
               : providers.length
-                ? "Sign in to reach the projects you contribute to."
-                : "Choose how to sign in."}
+                ? role === "admin"
+                  ? "Sign in to run projects, schemas, and contributor access."
+                  : "Sign in to reach the projects you contribute to."
+                : role === "admin"
+                  ? "Choose how to sign in to the administrator workspace."
+                  : "Choose how to sign in."}
         </p>
 
         {configured && (

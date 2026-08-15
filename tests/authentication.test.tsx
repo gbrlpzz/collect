@@ -87,6 +87,22 @@ describe("provider sign-in", () => {
     ).toBeNull();
   });
 
+  it("names what each surface is for", async () => {
+    const contributor = render(<AuthScreen configured role="contributor" />);
+    expect(
+      await screen.findByText(/reach the projects you contribute to/i),
+    ).toBeTruthy();
+    contributor.unmount();
+
+    render(<AuthScreen configured role="admin" />);
+    expect(
+      await screen.findByText(/run projects, schemas, and contributor access/i),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText(/reach the projects you contribute to/i),
+    ).toBeNull();
+  });
+
   it("lists every backup method as one named row", async () => {
     render(<AuthScreen configured role="contributor" />);
     await screen.findByRole("button", { name: "Continue with Apple" });
