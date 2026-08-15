@@ -12,6 +12,7 @@ import {
   InfoDisclosure,
   ModalSurface,
 } from "./ui";
+import { AppCredit } from "./AppCredit";
 import { ContributorProfileSheet } from "./ContributorProfileSheet";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
 import { formatExactTime, formatRelativeTime } from "../lib/formatTime";
@@ -183,6 +184,7 @@ export function AdminDashboard({
           onCancel={() => setAdministratorPromptOpen(false)}
         />
       )}
+      <AppCredit />
     </main>
   );
 }
@@ -388,6 +390,7 @@ export function AdminProject({
           />
         </div>
       )}
+      <AppCredit />
     </main>
   );
 }

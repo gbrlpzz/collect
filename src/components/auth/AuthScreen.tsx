@@ -5,6 +5,7 @@ import {
   enabledAuthProviders,
   type AuthProvider,
 } from "../../lib/supabaseClient";
+import { AppCredit } from "../AppCredit";
 import { CollectBrand } from "../CollectBrand";
 import { Icon, type IconName } from "../Icon";
 import { isAppleMobileBrowser, isStandaloneApp } from "../../lib/platform";
@@ -111,17 +112,26 @@ export function AuthScreen({
 
   if (requirePasswordSetup) {
     return (
-      <main className={`auth-page auth-page-${role}`}>
+      <main
+        className={`auth-page auth-page-${role}`}
+        data-role={role}
+        data-surface={role}
+      >
         <div className="auth-mark">
           <CollectBrand />
         </div>
         <PasswordSetup onDone={onPasswordSet} />
+        <AppCredit />
       </main>
     );
   }
 
   return (
-    <main className={`auth-page auth-page-${role}`}>
+    <main
+      className={`auth-page auth-page-${role}`}
+      data-role={role}
+      data-surface={role}
+    >
       <div className="auth-mark">
         <CollectBrand />
       </div>
@@ -269,6 +279,7 @@ export function AuthScreen({
           </details>
         )}
       </section>
+      <AppCredit />
     </main>
   );
 }

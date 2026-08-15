@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AppCredit } from "./AppCredit";
 import { CollectBrand } from "./CollectBrand";
 import { Icon } from "./Icon";
 import { Button, InfoDisclosure } from "./ui";
@@ -128,6 +129,7 @@ export function ConsentScreen({
           Decline and sign out
         </button>
       </section>
+      <AppCredit />
     </main>
   );
 }

@@ -87,6 +87,20 @@ serve(async (request) => {
       ? resolvedUserId
       : null;
 
+    // Record the organization invitation so the invited administrator is
+    // joined to this specific organization when they sign in.
+    await service.from("organization_invites").upsert(
+      {
+        organization_id: membership.organization_id,
+        email,
+        invited_by: user.id,
+        invited_user_id: invitedUserId,
+        status: invitedUserId ? "accepted" : "pending",
+        accepted_at: invitedUserId ? new Date().toISOString() : null,
+      },
+      { onConflict: "organization_id,email" },
+    );
+
     if (invitedUserId) {
       const { error: memberError } = await service
         .from("organization_members")
