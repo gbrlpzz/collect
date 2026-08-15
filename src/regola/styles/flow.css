@@ -1,0 +1,164 @@
+/* Vendored snapshot from @gbrlpzz/regola (private, proprietary upstream).
+   Licensed under Apache-2.0 as part of collect.
+   Source: https://github.com/gbrlpzz/regola  .  Refreshed by `regola-sync`. */
+
+/* =========================================================================
+   regola 1-Step-Per-Screen Guided Flow Geometry
+   ========================================================================= */
+
+.flow-container {
+  position: fixed;
+  z-index: 30;
+  top: var(--visual-viewport-top, 0);
+  right: 0;
+  left: 0;
+  width: 100%;
+  height: var(--visual-viewport-height, 100dvh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--canvas);
+}
+
+.flow-topbar {
+  flex: 0 0 auto;
+  height: calc(var(--topbar-height) + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+  padding-right: max(var(--page-gutter), env(safe-area-inset-right));
+  padding-left: max(var(--page-gutter), env(safe-area-inset-left));
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--glass);
+  border-bottom: 1px solid var(--separator-light);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+}
+
+.flow-progress-bar {
+  flex: 0 0 auto;
+  width: min(var(--flow-content-max), calc(100% - 32px));
+  height: 3px;
+  margin: var(--space-2) auto 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--grouped-strong);
+}
+
+.flow-progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.22s ease;
+}
+
+.flow-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.flow-step {
+  width: min(100%, var(--flow-max));
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(28px, 6vh, 48px) var(--space-5) var(--space-7);
+  animation: pwa-step-in 0.18s ease;
+}
+
+@keyframes pwa-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.flow-step-kicker {
+  display: block;
+  margin-bottom: var(--space-2);
+  color: var(--secondary);
+  font-size: var(--type-footnote);
+  font-weight: 650;
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.flow-step-title {
+  font-size: clamp(1.75rem, 6vw, 2.125rem);
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: var(--tracking-title);
+}
+
+.flow-step-description {
+  margin-top: var(--space-2);
+  color: var(--secondary);
+  font-size: var(--type-body);
+  line-height: 1.5;
+}
+
+.flow-step-control {
+  margin-top: var(--space-6);
+}
+
+.flow-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-3) max(var(--page-gutter), env(safe-area-inset-right), calc((100vw - var(--flow-max)) / 2))
+    calc(var(--space-3) + env(safe-area-inset-bottom))
+    max(var(--page-gutter), env(safe-area-inset-left), calc((100vw - var(--flow-max)) / 2));
+  border-top: 1px solid var(--separator-light);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+}
+
+.flow-actions .flow-back {
+  min-width: 96px;
+  min-height: 50px;
+  border-radius: var(--control-radius);
+}
+
+.flow-actions .flow-continue {
+  flex: 1 1 auto;
+  min-height: var(--primary-action-height);
+  border-radius: var(--control-radius);
+}
+
+/* Mobile floating actions dock */
+@media (max-width: 680px) {
+  .flow-actions {
+    width: calc(100% - 24px);
+    margin: 0 12px max(8px, env(safe-area-inset-bottom));
+    padding: 6px;
+    border: 1px solid var(--separator-light);
+    border-radius: 999px;
+    box-shadow: var(--floating-shadow);
+  }
+  .flow-actions .flow-back {
+    min-width: 88px;
+    background: var(--grouped);
+  }
+}
+
+/* Software keyboard awareness */
+html[data-keyboard-open="true"] .flow-actions {
+  padding-bottom: var(--space-2);
+}
+
+html[data-keyboard-open="true"] .flow-actions .flow-back {
+  display: none;
+}

@@ -1,0 +1,10 @@
+/* Vendored snapshot from @gbrlpzz/regola (private, proprietary upstream).
+   Licensed under Apache-2.0 as part of collect.
+   Source: https://github.com/gbrlpzz/regola  .  Refreshed by `regola-sync`. */
+
+@layer reset, tokens, components, flow;
+
+@import "./reset.css" layer(reset);
+@import "./tokens.css" layer(tokens);
+@import "./components.css" layer(components);
+@import "./flow.css" layer(flow);

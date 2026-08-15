@@ -10,16 +10,19 @@
     "build": "npm run typecheck && vite build",
     "preview": "vite preview",
     "format": "npm run format:web && npm run format:edge",
-    "format:web": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" \"scripts/**/*.mjs\" \".github/**/*.yml\" vite.config.ts \"*.html\" \"docs/**/*.{md,html}\" \"*.md\" package.json",
+    "format:web": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" \"scripts/**/*.mjs\" \".github/**/*.yml\" vite.config.ts \"*.html\" \"docs/**/*.{md,html}\" \"*.md\" package.json .oxlintrc.json",
     "format:edge": "deno fmt supabase/functions",
     "format:check": "npm run format:web:check && npm run format:edge:check",
-    "format:web:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" \"scripts/**/*.mjs\" \".github/**/*.yml\" vite.config.ts \"*.html\" \"docs/**/*.{md,html}\" \"*.md\" package.json",
+    "format:web:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" \"scripts/**/*.mjs\" \".github/**/*.yml\" vite.config.ts \"*.html\" \"docs/**/*.{md,html}\" \"*.md\" package.json .oxlintrc.json",
     "format:edge:check": "deno fmt --check supabase/functions",
     "docs:check": "node scripts/check-doc-links.mjs",
     "test": "vitest run",
     "test:a11y": "vitest run tests/accessibility.test.tsx",
-    "check": "npm run format:check && npm run docs:check && npm test && npm run build",
-    "provision": "node scripts/provision.mjs"
+    "check": "npm run format:check && npm run docs:check && npm run lint && npm run check:regola && npm test && npm run build",
+    "provision": "node scripts/provision.mjs",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "check:regola": "node scripts/check-regola-headers.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.2",
@@ -31,6 +34,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@oxlint/plugins": "^1.78.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.3",
@@ -41,6 +45,7 @@
     "axe-core": "^4.13.0",
     "fake-indexeddb": "6.2.5",
     "jsdom": "^30.0.1",
+    "oxlint": "^1.78.0",
     "prettier": "3.6.2",
     "typescript": "7.0.2",
     "vite": "8.2.1",

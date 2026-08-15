@@ -1,0 +1,108 @@
+/* Vendored snapshot from @gbrlpzz/regola (private, proprietary upstream).
+   Licensed under Apache-2.0 as part of collect.
+   Source: https://github.com/gbrlpzz/regola  .  Refreshed by `regola-sync`. */
+
+/* =========================================================================
+   regola Mobile-First PWA Reset
+   ========================================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--canvas);
+  color: var(--text);
+  font-family: var(--font-system);
+  /* Installed PWA: prevent rubber-band bounce when there is no overflowing content */
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100dvh;
+  overflow-x: hidden;
+  font-size: var(--type-body);
+  line-height: 1.45;
+}
+
+/* Fast tap response without 300ms double-tap delay */
+button,
+a,
+input,
+textarea,
+select,
+label {
+  touch-action: manipulation;
+}
+
+/* Native buttons use opacity change rather than shrinking/stretching geometry */
+button {
+  -webkit-user-select: none;
+  user-select: none;
+  font-family: inherit;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(2.125rem, 5vw, 2.75rem);
+  line-height: 1.06;
+  letter-spacing: var(--tracking-title);
+}
+
+h2 {
+  font-size: var(--type-title-2);
+  line-height: 1.18;
+  letter-spacing: -0.018em;
+}
+
+h3 {
+  font-size: var(--type-body);
+  line-height: 1.24;
+  letter-spacing: -0.012em;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

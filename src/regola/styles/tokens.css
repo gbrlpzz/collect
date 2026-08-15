@@ -1,0 +1,149 @@
+/* Vendored snapshot from @gbrlpzz/regola (private, proprietary upstream).
+   Licensed under Apache-2.0 as part of collect.
+   Source: https://github.com/gbrlpzz/regola  .  Refreshed by `regola-sync`. */
+
+/* =========================================================================
+   regola Token Definitions
+   Apple HIG Baseline Monochrome Palette & Continuous Spacing System
+   ========================================================================= */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces & Neutral Palette (Light / Contributor default) */
+  --canvas: #f5f5f7;
+  --paper: #ffffff;
+  --text: #1d1d1f;
+  --secondary: #636366;
+  --tertiary: #707075;
+  --separator: rgba(60, 60, 67, 0.29);
+  --separator-light: rgba(60, 60, 67, 0.18);
+  --grouped: rgba(118, 118, 128, 0.12);
+  --grouped-strong: #e5e5ea;
+  --brand: #000000;
+  --focus: #1d1d1f;
+  --focus-ring: rgba(0, 0, 0, 0.16);
+  --error: #d70015;
+  --destructive: #d70015;
+  --glass: rgba(245, 245, 247, 0.86);
+  --chrome: rgba(245, 245, 247, 0.92);
+  --accent: #000000;
+  --accent-hover: #1c1c1e;
+  --accent-text: #ffffff;
+  --selection-bg: rgba(0, 0, 0, 0.9);
+  --floating-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+
+  /* Spacing Scale (4-point grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+
+  /* Layout and Viewport Gutters */
+  --page-gutter: 16px;
+  --page-gutter-wide: 24px;
+  --flow-max: 560px;
+  --flow-content-max: 520px;
+  --content-max: 720px;
+  --admin-content-max: 960px;
+  --wizard-max: 760px;
+  --dialog-max: 420px;
+  --sheet-max: 560px;
+
+  /* Heights and Hit Targets (Apple HIG >= 44pt) */
+  --control-height: 44px;
+  --primary-action-height: 52px;
+  --row-height: 68px;
+  --topbar-height: 52px;
+
+  /* Radii */
+  --control-radius: 999px;
+  --radius-xs: 6px;
+  --radius-small: 12px;
+  --radius-medium: 16px;
+  --group-radius: 20px;
+  --radius-large: 20px;
+  --sheet-radius: 22px;
+
+  /* Typography Scale */
+  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  --type-caption-2: 0.6875rem;
+  --type-caption: 0.75rem;
+  --type-footnote: 0.8125rem;
+  --type-subheadline: 0.9375rem;
+  --type-body: 1.0625rem;
+  --type-title-3: 1.25rem;
+  --type-title-2: 1.375rem;
+  --type-title-1: 1.75rem;
+  --tracking-title: -0.022em;
+  --tracking-wordmark: -0.045em;
+  --tracking-kicker: 0.03em;
+}
+
+/* Dark Mode / Inverted Surface (e.g. Admin / Backstage / Night) */
+:root[data-theme="dark"],
+:root[data-surface="admin"],
+[data-theme="dark"],
+[data-surface="admin"] {
+  color-scheme: dark;
+  --canvas: #000000;
+  --paper: #1c1c1e;
+  --text: #f5f5f7;
+  --secondary: #aeaeb2;
+  --tertiary: #8e8e93;
+  --separator: rgba(235, 235, 245, 0.28);
+  --separator-light: rgba(235, 235, 245, 0.16);
+  --grouped: rgba(118, 118, 128, 0.28);
+  --grouped-strong: rgba(118, 118, 128, 0.46);
+  --brand: #ffffff;
+  --focus: #ffffff;
+  --focus-ring: rgba(255, 255, 255, 0.28);
+  --error: #ff6961;
+  --destructive: #ff453a;
+  --glass: rgba(28, 28, 30, 0.86);
+  --chrome: rgba(28, 28, 30, 0.92);
+  --accent: #ffffff;
+  --accent-hover: #f2f2f7;
+  --accent-text: #000000;
+  --selection-bg: rgba(255, 255, 255, 0.9);
+  --floating-shadow: 0 8px 30px rgba(0, 0, 0, 0.42);
+}
+
+/* High Contrast Adaptations */
+@media (prefers-contrast: more) {
+  :root:not([data-theme="dark"]):not([data-surface="admin"]) {
+    --text: #000000;
+    --secondary: #303038;
+    --tertiary: #50505a;
+    --separator: rgba(0, 0, 0, 0.52);
+    --separator-light: rgba(0, 0, 0, 0.34);
+    --grouped: rgba(118, 118, 128, 0.2);
+    --focus-ring: rgba(0, 0, 0, 0.38);
+  }
+  :root[data-theme="dark"],
+  :root[data-surface="admin"],
+  [data-theme="dark"],
+  [data-surface="admin"] {
+    --text: #ffffff;
+    --secondary: #f2f2f7;
+    --tertiary: #d1d1d6;
+    --separator: rgba(255, 255, 255, 0.68);
+    --separator-light: rgba(255, 255, 255, 0.42);
+    --grouped: rgba(118, 118, 128, 0.34);
+    --focus-ring: rgba(255, 255, 255, 0.42);
+  }
+}
+
+/* Reduced Transparency Adaptations */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass: var(--paper);
+    --chrome: var(--paper);
+  }
+}
