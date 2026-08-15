@@ -1315,6 +1315,11 @@ function ExportPanel({
           A checkpoint includes data received by the server. Offline devices may
           still hold unseen work.
         </p>
+        <p>
+          For large datasets with photos or audio, logging in from a desktop
+          browser to download is recommended to save mobile bandwidth and device
+          storage.
+        </p>
       </InfoDisclosure>
     </section>
   );

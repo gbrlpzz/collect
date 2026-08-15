@@ -15,6 +15,19 @@ export function isStandaloneApp(): boolean {
   );
 }
 
+export function isMobileDevice(): boolean {
+  if (typeof window === "undefined" || typeof navigator === "undefined")
+    return false;
+  if (isAppleMobileBrowser()) return true;
+  const userAgent = navigator.userAgent || "";
+  if (/Android|webOS|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(userAgent))
+    return true;
+  return (
+    window.matchMedia?.("(max-width: 768px) and (pointer: coarse)").matches ??
+    false
+  );
+}
+
 export function canOfferIosInstall(): boolean {
   return isAppleMobileBrowser() && !isStandaloneApp();
 }

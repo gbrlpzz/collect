@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { downloadBlob, downloadZip, downloadUrl } from "../src/lib/download";
+import { isMobileDevice, isAppleMobileBrowser } from "../src/lib/platform";
 
 describe("download module", () => {
   let createdLinks: HTMLAnchorElement[] = [];
@@ -101,5 +102,31 @@ describe("download module", () => {
     expect(createdLinks.length).toBe(1);
     const link = createdLinks[0];
     expect(link.download).toBe(".._.._evil_filename_.zip");
+  });
+
+  it("isMobileDevice accurately detects mobile user agents and touch viewports", () => {
+    const originalUserAgent = navigator.userAgent;
+
+    // Test iOS user agent
+    Object.defineProperty(navigator, "userAgent", {
+      value: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+      configurable: true,
+    });
+    expect(isAppleMobileBrowser()).toBe(true);
+    expect(isMobileDevice()).toBe(true);
+
+    // Test Android user agent
+    Object.defineProperty(navigator, "userAgent", {
+      value: "Mozilla/5.0 (Linux; Android 14; Pixel 8)",
+      configurable: true,
+    });
+    expect(isAppleMobileBrowser()).toBe(false);
+    expect(isMobileDevice()).toBe(true);
+
+    // Restore userAgent
+    Object.defineProperty(navigator, "userAgent", {
+      value: originalUserAgent,
+      configurable: true,
+    });
   });
 });

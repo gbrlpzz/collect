@@ -50,6 +50,7 @@ import {
 } from "../lib/adminBackend";
 import { downloadUrl } from "../lib/download";
 import { exportClientCheckpoint } from "../lib/checkpointExport";
+import { isMobileDevice } from "../lib/platform";
 import { syncNow as runSync } from "./syncController";
 import { exportRecoveryPackage as downloadRecoveryPackage } from "./recovery";
 import { requestStoragePersistence } from "./storage";
@@ -671,12 +672,40 @@ export function useAppController() {
     syncNow,
   });
 
-  const exportRecoveryPackage = () =>
-    downloadRecoveryPackage({
+  const exportRecoveryPackage = async () => {
+    const isMobile = isMobileDevice();
+    const totalMediaBytes = (state.observations ?? []).reduce(
+      (acc, obs) =>
+        acc +
+        (obs.media ?? []).reduce((mAcc, m) => mAcc + (m.byteSize || 0), 0),
+      0,
+    );
+    const mediaCount = (state.observations ?? []).reduce(
+      (acc, obs) => acc + (obs.media?.length ?? 0),
+      0,
+    );
+    const isLarge =
+      totalMediaBytes > 15_000_000 ||
+      mediaCount >= 10 ||
+      (state.observations?.length ?? 0) >= 50;
+
+    if (isMobile && isLarge) {
+      const confirmed = await requestConfirmation({
+        title: "Large recovery package",
+        message:
+          "This recovery package contains a large volume of data. For faster downloads and easier archival, logging in from a desktop browser is recommended. Do you want to download on this device anyway?",
+        confirmLabel: "Download anyway",
+        cancelLabel: "Cancel",
+      });
+      if (!confirmed) return;
+    }
+
+    return downloadRecoveryPackage({
       project: state.project,
       observations: state.observations,
       onComplete: () => showToast("Recovery package downloaded"),
     }).catch(() => showToast("The recovery package could not be created"));
+  };
 
   const publishProject = async (
     input: Parameters<typeof createRemoteProject>[0],
@@ -701,6 +730,22 @@ export function useAppController() {
   };
 
   const exportCheckpoint = async () => {
+    const isMobile = isMobileDevice();
+    const isLarge =
+      (state.project.completeSubmissions ?? 0) >= 10 ||
+      (state.observations?.length ?? 0) >= 10;
+
+    if (isMobile && isLarge) {
+      const confirmed = await requestConfirmation({
+        title: "Large checkpoint archive",
+        message:
+          "This checkpoint contains a large dataset and media files. For faster downloads and easier archival, logging in from a desktop browser is recommended. Do you want to download on this device anyway?",
+        confirmLabel: "Download anyway",
+        cancelLabel: "Cancel",
+      });
+      if (!confirmed) return;
+    }
+
     try {
       if (isSupabaseConfigured && session) {
         const result = await createCheckpoint(state.project.id);

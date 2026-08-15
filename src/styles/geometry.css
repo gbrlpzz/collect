@@ -1922,7 +1922,7 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 }
 .info-disclosure-content {
   max-width: 36rem;
-  padding: 0 calc(15px + var(--space-2)) var(--space-3);
+  padding: 0 0 var(--space-3);
   color: var(--secondary);
   font-size: 0.8125rem;
   line-height: 1.5;

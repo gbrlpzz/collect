@@ -6,6 +6,7 @@ import { AdminProject } from "../src/components/AdminDashboard";
 import { SyncSheet } from "../src/components/SyncSheet";
 import { ProfileSheet } from "../src/components/ProfileSheet";
 import { TopBar } from "../src/components/TopBar";
+import { ConfirmationDialog } from "../src/components/ui";
 import { PackageBrowser } from "../src/homepage/PackageBrowser";
 import type { Project } from "../src/types";
 
@@ -186,5 +187,37 @@ describe("Export UI integration", () => {
 
     fireEvent.click(zipBtn);
     expect(downloadedName).toBe("valpuesta_checkpoint-2026-08-04.zip");
+  });
+
+  it("displays skippable large export warning dialog recommending desktop download", () => {
+    const onConfirm = vi.fn();
+    const onCancel = vi.fn();
+    render(
+      <ConfirmationDialog
+        title="Large checkpoint archive"
+        message="This checkpoint contains a large dataset and media files. For faster downloads and easier archival, logging in from a desktop browser is recommended. Do you want to download on this device anyway?"
+        confirmLabel="Download anyway"
+        cancelLabel="Cancel"
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />,
+    );
+
+    expect(screen.getByText(/large checkpoint archive/i)).toBeDefined();
+    expect(screen.getByText(/desktop browser is recommended/i)).toBeDefined();
+
+    const downloadAnywayBtn = screen.getByRole("button", {
+      name: /download anyway/i,
+    });
+    const cancelBtn = screen.getByRole("button", {
+      name: /cancel/i,
+    });
+    expect(downloadAnywayBtn).toBeDefined();
+    expect(cancelBtn).toBeDefined();
+
+    // Confirm is skippable (allows continuing download)
+    fireEvent.click(downloadAnywayBtn);
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onCancel).not.toHaveBeenCalled();
   });
 });
