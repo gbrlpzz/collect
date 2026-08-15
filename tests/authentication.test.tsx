@@ -73,7 +73,25 @@ describe("provider sign-in", () => {
     );
 
     await waitFor(() =>
-      expect(authMocks.signInWithProvider).toHaveBeenCalledWith("google"),
+      expect(authMocks.signInWithProvider).toHaveBeenCalledWith(
+        "google",
+        "contributor",
+      ),
+    );
+  });
+
+  it("passes the admin surface to provider sign-in from the admin screen", async () => {
+    render(<AuthScreen configured role="admin" />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Continue with Google" }),
+    );
+
+    await waitFor(() =>
+      expect(authMocks.signInWithProvider).toHaveBeenCalledWith(
+        "google",
+        "admin",
+      ),
     );
   });
 

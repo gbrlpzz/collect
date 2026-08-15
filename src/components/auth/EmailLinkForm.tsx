@@ -14,8 +14,10 @@ import { signInErrorMessage } from "./authMessages";
  * have an account can always get in without a provider.
  */
 export function EmailLinkForm({
+  surface = "contributor",
   showLocalRedirectHint,
 }: {
+  surface?: "admin" | "contributor";
   showLocalRedirectHint: boolean;
 }) {
   const emailInputId = useId();
@@ -31,7 +33,7 @@ export function EmailLinkForm({
     setError(null);
     rememberAuthEmail(address);
     try {
-      await sendMagicLink(address);
+      await sendMagicLink(address, surface);
       setSent(true);
     } catch (caught) {
       setError(signInErrorMessage(caught, "link"));

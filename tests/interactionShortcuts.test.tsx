@@ -132,7 +132,10 @@ describe("low-friction primary actions", () => {
     fireEvent.submit(emailInput.closest("form")!);
 
     await waitFor(() =>
-      expect(authMocks.sendMagicLink).toHaveBeenCalledWith("field@example.com"),
+      expect(authMocks.sendMagicLink).toHaveBeenCalledWith(
+        "field@example.com",
+        "admin",
+      ),
     );
     expect(screen.getByText(/open the newest link sent to/i)).toBeTruthy();
   });

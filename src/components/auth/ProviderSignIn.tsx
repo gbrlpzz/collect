@@ -34,7 +34,7 @@ export function ProviderSignIn({
     setError(null);
     try {
       // The browser leaves for the provider; this view unmounts on return.
-      await signInWithProvider(provider);
+      await signInWithProvider(provider, surface);
     } catch (caught) {
       const message = signInErrorMessage(caught, "provider");
       setError(message);

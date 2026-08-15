@@ -107,6 +107,34 @@ export function knownAuthProviders(): AuthProvider[] {
   return configuredProviders() ?? readCachedProviders() ?? [];
 }
 
+const pendingAuthRoleKey = `${localBackendKey}:pending-auth-role`;
+
+export function rememberAuthRole(role: "admin" | "contributor" | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (role) {
+      window.sessionStorage.setItem(pendingAuthRoleKey, role);
+    } else {
+      window.sessionStorage.removeItem(pendingAuthRoleKey);
+    }
+  } catch {
+    // Session storage is a convenience only; it must never block sign-in.
+  }
+}
+
+export function consumePendingAuthRole(): "admin" | "contributor" | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const role = window.sessionStorage.getItem(pendingAuthRoleKey);
+    if (role) {
+      window.sessionStorage.removeItem(pendingAuthRoleKey);
+    }
+    return role === "admin" || role === "contributor" ? role : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Start a provider sign-in. The browser leaves for the provider and returns to
  * the app entry URL with an authorization code, which the client exchanges for
@@ -114,12 +142,24 @@ export function knownAuthProviders(): AuthProvider[] {
  */
 export async function signInWithProvider(
   provider: AuthProvider,
+  role?: "admin" | "contributor",
 ): Promise<void> {
+  const targetRole =
+    role ??
+    (typeof window !== "undefined"
+      ? (new URLSearchParams(window.location.search).get("role") as
+          | "admin"
+          | "contributor"
+          | null)
+      : null);
+  if (targetRole) {
+    rememberAuthRole(targetRole);
+  }
   const client = requireAuthClient();
   const { error } = await client.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: authReturnUrl(),
+      redirectTo: authReturnUrl(targetRole),
       // Let people pick the account instead of silently reusing the last one;
       // shared field devices are common.
       queryParams:

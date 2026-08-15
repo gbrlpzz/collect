@@ -172,6 +172,7 @@ export function AuthScreen({
               <>
                 {chosen.id === "link" && (
                   <EmailLinkForm
+                    surface={role}
                     showLocalRedirectHint={showLocalRedirectHint}
                   />
                 )}
