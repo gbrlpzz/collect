@@ -11,12 +11,14 @@ import {
   getOrCreateDeviceId,
   getOutboxOperations,
   getPendingOutboxCountsByProject,
-  hasLocalReceipt,
   markLocalSubmissionsSynced,
   recordOutboxFailure,
   releaseSyncLease,
 } from "../lib/localStore";
-import { reportDeviceStatus, syncRemoteObservation } from "../lib/remoteBackend";
+import {
+  reportDeviceStatus,
+  syncRemoteObservation,
+} from "../lib/remoteBackend";
 
 interface SyncControllerArgs {
   state: AppState;
@@ -199,17 +201,21 @@ export function syncNow({
               throw new ActionRequiredError(
                 "Server receipt does not match the submission identifier",
               );
-            const alreadyCounted = configured
-              ? await hasLocalReceipt(observation.id)
-              : false;
-            syncedIds.add(observation.id);
             const receiptAt = receipt?.received_at ?? new Date().toISOString();
-            await markLocalSubmissionsSynced([observation.id], {
-              receivedAt: receiptAt,
-              finalizedAt: receipt?.finalized_at ?? null,
-              serverStatus: receipt?.status ?? "COMPLETE",
-              demo: !configured,
-            });
+            syncedIds.add(observation.id);
+            // The receipt write itself decides (atomically, in-transaction)
+            // whether this submission is counted for the first time, so two
+            // tabs racing the same submission cannot both count it.
+            const { countedIds } = await markLocalSubmissionsSynced(
+              [observation.id],
+              {
+                receivedAt: receiptAt,
+                finalizedAt: receipt?.finalized_at ?? null,
+                serverStatus: receipt?.status ?? "COMPLETE",
+                demo: !configured,
+              },
+            );
+            const alreadyCounted = !countedIds.includes(observation.id);
             setState((current) => {
               const nextProjects = (current.projects ?? []).map((candidate) =>
                 candidate.id === project.id

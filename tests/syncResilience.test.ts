@@ -13,6 +13,7 @@ import {
   migrateLegacyDatabase,
   readStoredRecoveryData,
   recordOutboxFailure,
+  saveAppState,
   setLocalScope,
   type DurableMedia,
   type DurableSubmission,
@@ -214,12 +215,14 @@ describe("sync resilience hardening", () => {
     // One failed attempt pushes nextAttemptAt into the future.
     await recordOutboxFailure(submission.id, "connection reset");
 
-    const remoteSync = vi.fn(async (): Promise<RemoteReceipt> => ({
-      submission_id: submission.id,
-      status: "COMPLETE",
-      finalized_at: "2026-08-14T00:00:01Z",
-      received_at: "2026-08-14T00:00:00Z",
-    }));
+    const remoteSync = vi.fn(
+      async (): Promise<RemoteReceipt> => ({
+        submission_id: submission.id,
+        status: "COMPLETE",
+        finalized_at: "2026-08-14T00:00:01Z",
+        received_at: "2026-08-14T00:00:00Z",
+      }),
+    );
     const args = () => ({
       state: appStateWith(observation),
       // SAFETY: syncNow only checks the session for truthiness; no session
@@ -244,6 +247,51 @@ describe("sync resilience hardening", () => {
     const manual = await syncNow({ ...args(), silent: false });
     expect(manual).toBe(true);
     expect(remoteSync).toHaveBeenCalledTimes(1);
+  });
+
+  it("counts a submission exactly once, decided inside the receipt transaction", async () => {
+    const { submission, media, observation } = makeSubmission();
+    await commitLocalSubmission({ submission, media, observation });
+
+    const first = await markLocalSubmissionsSynced([submission.id], {
+      receivedAt: "2026-08-15T00:00:00Z",
+      serverStatus: "COMPLETE",
+    });
+    const second = await markLocalSubmissionsSynced([submission.id], {
+      receivedAt: "2026-08-15T00:01:00Z",
+      serverStatus: "COMPLETE",
+    });
+
+    expect(first.countedIds).toEqual([submission.id]);
+    expect(second.countedIds).toEqual([]);
+  });
+
+  it("autosave skips unchanged observation rows and never reverts SYNCED", async () => {
+    const { submission, observation } = makeSubmission();
+    const base = appStateWith(observation);
+    await saveAppState(base);
+
+    await markLocalSubmissionsSynced([submission.id], {
+      receivedAt: "2026-08-15T00:00:00Z",
+      serverStatus: "COMPLETE",
+    });
+
+    // Unchanged in-memory copy: the row is skipped entirely, so the durable
+    // SYNCED status survives a stale autosave.
+    await saveAppState(base);
+    let rows = (await readStoredRecoveryData()).submissions;
+    expect(rows[0].status).toBe("SYNCED");
+
+    // A changed copy goes through the protected write path: values update,
+    // status still stays SYNCED.
+    const changed = appStateWith({
+      ...observation,
+      values: { site_code: "VA-002" },
+    });
+    await saveAppState(changed);
+    rows = (await readStoredRecoveryData()).submissions;
+    expect(rows[0].status).toBe("SYNCED");
+    expect(rows[0].values.site_code).toBe("VA-002");
   });
 
   it("the legacy import is claimed by one scope before any copy", async () => {

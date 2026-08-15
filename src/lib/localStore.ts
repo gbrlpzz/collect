@@ -16,6 +16,7 @@ import {
   createRequest,
   DEVICE_STATE_STORE,
   DRAFTS_STORE,
+  localDatabaseName,
   MEDIA_STORE,
   openDatabase,
   openDatabaseByName,
@@ -406,6 +407,12 @@ export async function saveAppState(
   // Media blobs live only in MEDIA_STORE (committed once at submit). The
   // app-state and submissions mirrors persist metadata only, so a debounced
   // autosave never re-serializes large media into quota repeatedly.
+  // A debounced autosave fires per keystroke-pause; rewriting every
+  // observation row each time is O(history) write traffic (and lets one
+  // tab's stale copy clobber rows it did not touch). Rows whose serialized
+  // form matches the last successful save are skipped entirely.
+  const savedRows = savedObservationCacheFor(localDatabaseName());
+  const serializedById = new Map<string, string>();
   state.observations.forEach((observation) => {
     const withoutBlobs: Observation = observation.media?.some(
       (asset) => asset.blob !== undefined,
@@ -418,6 +425,9 @@ export async function saveAppState(
           })),
         }
       : observation;
+    const serialized = JSON.stringify(withoutBlobs);
+    serializedById.set(observation.id, serialized);
+    if (savedRows.get(observation.id) === serialized) return;
     const store = transaction.objectStore(SUBMISSIONS_STORE);
     // A stale autosave must never downgrade a durable SYNCED row back to a
     // pending status after the receipt transaction already cleared the outbox.
@@ -435,7 +445,29 @@ export async function saveAppState(
       store.put(withoutBlobs, observation.id);
     };
   });
-  await transactionComplete;
+  try {
+    await transactionComplete;
+  } catch (error) {
+    // The cache must only ever describe committed rows; a failed transaction
+    // forgets everything so the next save rewrites unconditionally.
+    savedRows.clear();
+    throw error;
+  }
+  serializedById.forEach((serialized, id) => savedRows.set(id, serialized));
+}
+
+/** Rows this page last wrote, per account database, so autosaves can skip
+ * unchanged observations. Keyed by database name because accounts never
+ * share local state. */
+const lastSavedObservationRows = new Map<string, string>();
+let lastSavedObservationDatabase: string | null = null;
+
+function savedObservationCacheFor(database: string): Map<string, string> {
+  if (lastSavedObservationDatabase !== database) {
+    lastSavedObservationDatabase = database;
+    lastSavedObservationRows.clear();
+  }
+  return lastSavedObservationRows;
 }
 
 /**
@@ -519,6 +551,13 @@ export interface LocalReceipt {
   demo?: boolean;
 }
 
+export interface MarkedSyncResult {
+  /** Submissions whose receipt was written by THIS call (first ever). The
+   * decision is made inside the receipt transaction, so two tabs racing the
+   * same submission can never both count it. */
+  countedIds: string[];
+}
+
 /**
  * This is the only function that may remove field-data operations from the
  * outbox. It is called only after a complete server receipt (or the explicit
@@ -527,8 +566,9 @@ export interface LocalReceipt {
 export async function markLocalSubmissionsSynced(
   ids: string[],
   receiptOverrides: Partial<LocalReceipt> = {},
-): Promise<void> {
-  if (!("indexedDB" in window) || !ids.length) return;
+): Promise<MarkedSyncResult> {
+  const countedIds: string[] = [];
+  if (!("indexedDB" in window) || !ids.length) return { countedIds };
   const database = await openDatabase();
   const transaction = database.transaction(
     [SUBMISSIONS_STORE, MEDIA_STORE, OUTBOX_STORE, RECEIPTS_STORE],
@@ -552,6 +592,23 @@ export async function markLocalSubmissionsSynced(
       const observation = request.result as Observation | undefined;
       if (!observation) return;
       submissions.put({ ...observation, status: "SYNCED" }, id);
+      // The first write of a receipt is the one and only time this
+      // submission may be counted as newly complete; doing this read in the
+      // same transaction makes the decision atomic across tabs.
+      const receiptRequest = receipts.get(id);
+      receiptRequest.onsuccess = () => {
+        if (receiptRequest.result === undefined) countedIds.push(id);
+        receipts.put(
+          {
+            submissionId: id,
+            receivedAt: receiptOverrides.receivedAt ?? new Date().toISOString(),
+            finalizedAt: receiptOverrides.finalizedAt ?? null,
+            serverStatus: receiptOverrides.serverStatus ?? "COMPLETE",
+            demo: receiptOverrides.demo ?? false,
+          },
+          id,
+        );
+      };
       observation.media?.forEach((asset) => {
         outbox.delete(`media:${asset.id}`);
         if (pruneMediaBlobs) {
@@ -568,21 +625,12 @@ export async function markLocalSubmissionsSynced(
               .put({ ...media, uploadState: "SYNCED" }, asset.id);
         };
       });
-      receipts.put(
-        {
-          submissionId: id,
-          receivedAt: receiptOverrides.receivedAt ?? new Date().toISOString(),
-          finalizedAt: receiptOverrides.finalizedAt ?? null,
-          serverStatus: receiptOverrides.serverStatus ?? "COMPLETE",
-          demo: receiptOverrides.demo ?? false,
-        },
-        id,
-      );
     };
     outbox.delete(`submission:${id}`);
     outbox.delete(`finalize:${id}`);
   });
   await transactionComplete;
+  return { countedIds };
 }
 
 export async function setLocalSubmissionStatus(
