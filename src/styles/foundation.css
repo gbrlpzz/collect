@@ -2012,6 +2012,34 @@ p {
   color: var(--secondary);
 }
 
+/* Installed-app guidance. iOS keeps an installed app and the browser in
+   separate storage containers, so a provider sign-in can land in the wrong
+   one. That is a real, actionable situation for the person holding the
+   phone — it gets a visible callout with its remedy attached, not a
+   collapsed note. */
+.auth-callout {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0 4px;
+  padding: 16px;
+  border: 1px solid var(--separator-light);
+  border-radius: 14px;
+  background: var(--grouped);
+}
+.auth-callout p {
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.auth-callout-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text) !important;
+  font-size: 0.875rem !important;
+  font-weight: 650;
+}
+
 .auth-install-help,
 .auth-alternatives {
   margin-top: 22px;

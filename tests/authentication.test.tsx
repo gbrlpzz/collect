@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { AuthScreen } from "../src/components/auth/AuthScreen";
 
 const authMocks = vi.hoisted(() => ({
@@ -150,5 +156,34 @@ describe("provider sign-in", () => {
     await screen.findByRole("button", { name: "Continue with Apple" });
 
     expect(screen.queryByLabelText("New password")).toBeNull();
+  });
+
+  it("tells an installed app how to finish sign-in, with the remedy attached", async () => {
+    const standaloneNavigator = navigator as Navigator & {
+      standalone?: boolean;
+    };
+    const previous = standaloneNavigator.standalone;
+    Object.defineProperty(navigator, "standalone", {
+      configurable: true,
+      value: true,
+    });
+    try {
+      render(<AuthScreen configured role="contributor" />);
+      await screen.findByRole("button", { name: "Continue with Apple" });
+
+      // Visible, not collapsed: this is a real situation the person can act
+      // on, and the action sits inside the message.
+      expect(screen.getByText(/this is the installed app/i)).toBeTruthy();
+      const callout = document.querySelector(".auth-callout") as HTMLElement;
+      fireEvent.click(
+        within(callout).getByRole("button", { name: "Sign in with a code" }),
+      );
+      expect(screen.getByLabelText(/8-character code/i)).toBeTruthy();
+    } finally {
+      Object.defineProperty(navigator, "standalone", {
+        configurable: true,
+        value: previous,
+      });
+    }
   });
 });

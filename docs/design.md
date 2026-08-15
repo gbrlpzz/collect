@@ -128,9 +128,14 @@ symbol, the method name, and a chevron, following the
 rule that a row which opens a view carries a disclosure indicator. A row
 names its method and explains nothing; the explanation appears when that
 method opens. Choosing a row opens it alone, with **All sign-in options** to
-step back, so no screen presents two ways in at once. Advice that only some
-people need — what to do when a provider does not return to an installed app
-— stays collapsed until it is asked for.
+step back, so no screen presents two ways in at once.
+
+Explanation follows the same rule as everywhere else: rows explain nothing
+until opened. The one exception is the installed app on iOS, where a provider
+opens in the browser and the two containers keep separate sessions. That is a
+situation the person can act on, so it appears as a visible callout with its
+remedy — **Sign in with a code** — inside the message, not as a collapsed
+note.
 
 ---
 

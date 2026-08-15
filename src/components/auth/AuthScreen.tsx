@@ -183,19 +183,26 @@ export function AuthScreen({
                 />
 
                 {providers.length > 0 && standalone && (
-                  <details className="auth-install-help">
-                    <summary>
-                      <Icon name="info" size={16} /> If the provider does not
-                      return to this app
-                    </summary>
-                    <div className="auth-install-content">
-                      <p>
-                        The provider opens in the browser. Sign in there, then
-                        use <strong>Sign in with a code</strong> here with a
-                        code from the signed-in browser.
-                      </p>
-                    </div>
-                  </details>
+                  <aside className="auth-callout" aria-label="Installed app">
+                    <p className="auth-callout-title">
+                      <Icon name="info" size={17} /> This is the installed app
+                    </p>
+                    <p>
+                      A provider opens in the browser, and iOS keeps the two
+                      apart. If sign-in does not come back here, finish it in
+                      the browser and bring the session over with a code.
+                    </p>
+                    <button
+                      type="button"
+                      className="button button-secondary button-full"
+                      onClick={() => {
+                        setMethod("code");
+                        setCallbackIssue(null);
+                      }}
+                    >
+                      Sign in with a code
+                    </button>
+                  </aside>
                 )}
 
                 {providersChecked && (
