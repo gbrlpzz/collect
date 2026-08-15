@@ -52,10 +52,11 @@ interface LocationCoords {
   latitude: number;
   longitude: number;
   accuracy: number;
+  [key: string]: number;
 }
 
-function isLocationCoords(val: JsonValue | undefined): val is LocationCoords {
-  if (!val || Array.isArray(val) || Object(val) !== val) return false;
+function isLocationCoords(val: unknown): val is LocationCoords {
+  if (!val || typeof val !== "object" || Array.isArray(val)) return false;
   if (!("latitude" in val) || !("longitude" in val) || !("accuracy" in val)) {
     return false;
   }
@@ -97,7 +98,7 @@ function validateFields(
       }
     } else if (field.type === "number") {
       // SAFETY: number value may be wrapped in an object with a value property.
-      const rawNumber = value && Object(value) === value && "value" in value
+      const rawNumber = value && typeof value === "object" && "value" in value
         ? (value as { value?: JsonValue }).value
         : value;
       const numberValue = Number(rawNumber);
@@ -115,7 +116,7 @@ function validateFields(
       }
     } else if (field.type === "single_choice" || field.type === "tri_state") {
       // SAFETY: single_choice may carry an optional free-text other as { value, otherText }.
-      const rawSingle = value && Object(value) === value && "value" in value
+      const rawSingle = value && typeof value === "object" && "value" in value
         ? (value as { value?: JsonValue }).value
         : value;
       const singleValue = rawSingle !== null && rawSingle !== undefined &&
@@ -157,7 +158,7 @@ function validateFields(
       if (
         !value ||
         Array.isArray(value) ||
-        Object(value) !== value ||
+        typeof value !== "object" ||
         !("localDatetime" in value) ||
         !String(value.localDatetime ?? "").trim()
       ) {

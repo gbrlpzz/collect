@@ -139,7 +139,7 @@ export async function isEmailExplicitlyAllowed(
 }
 
 export function errorMessage(
-  error: Error | Response | null | undefined,
+  error: Error | Response | unknown | null | undefined,
 ): string {
   // Fixed, non-sensitive strings only: raw Error.message can leak internal
   // details to clients. The operation itself is reported; specifics are never.

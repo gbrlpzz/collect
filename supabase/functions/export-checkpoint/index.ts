@@ -58,6 +58,7 @@ interface LocationCoords {
   latitude: number;
   longitude: number;
   accuracy?: number | null;
+  [key: string]: number | null | undefined;
 }
 
 interface GeoJsonExportFeature {
@@ -96,8 +97,8 @@ interface ExportSubmissionRow {
   corrects_submission_id?: string | null;
 }
 
-function isLocationCoords(val: JsonValue | undefined): val is LocationCoords {
-  if (!val || Array.isArray(val) || Object(val) !== val) return false;
+function isLocationCoords(val: unknown): val is LocationCoords {
+  if (!val || typeof val !== "object" || Array.isArray(val)) return false;
   if (!("latitude" in val) || !("longitude" in val)) return false;
   const lat = Number(val.latitude);
   const lng = Number(val.longitude);
