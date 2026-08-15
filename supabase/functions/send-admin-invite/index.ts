@@ -12,6 +12,9 @@ import { sendEmail } from "../_shared/mail.ts";
 
 const adminInviteSchema = z.object({
   email: z.string().email().max(320),
+  // Optional target workspace; the inviter must administer exactly this one.
+  // When omitted, the inviter's first admin membership is used.
+  organization_id: z.string().uuid().optional(),
 });
 
 serve(async (request) => {
@@ -40,14 +43,22 @@ serve(async (request) => {
     }
     const email = parsed.data.email.trim().toLowerCase();
 
-    // The inviter must already administer the workspace.
-    const { data: membership } = await service
+    // The inviter must already administer the workspace they are inviting
+    // into — either the named organization or, when none is named, their
+    // first admin membership. The membership row scoping this check is the
+    // same one the invite is created for, so an admin of one organization
+    // can never mint administrators into another.
+    const membershipQuery = service
       .from("organization_members")
       .select("organization_id,role")
       .eq("user_id", user.id)
       .eq("role", "admin")
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+    const { data: membership } = parsed.data.organization_id
+      ? await membershipQuery
+        .eq("organization_id", parsed.data.organization_id)
+        .maybeSingle()
+      : await membershipQuery.maybeSingle();
     if (!membership) {
       return json(
         { error: "Administrator access is required" },

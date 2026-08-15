@@ -57,8 +57,10 @@ function mediaExportName(media: MediaItem): string {
 interface LocationCoords {
   latitude: number;
   longitude: number;
-  accuracy?: number | null;
-  [key: string]: number | null | undefined;
+  // Presence is never verified by the guard; absent accuracy reads as
+  // undefined and every consumer applies `?? null`.
+  accuracy: number | null;
+  [key: string]: number | null;
 }
 
 interface GeoJsonExportFeature {
@@ -97,7 +99,9 @@ interface ExportSubmissionRow {
   corrects_submission_id?: string | null;
 }
 
-function isLocationCoords(val: unknown): val is LocationCoords {
+function isLocationCoords(
+  val: JsonValue | undefined,
+): val is LocationCoords {
   if (!val || typeof val !== "object" || Array.isArray(val)) return false;
   if (!("latitude" in val) || !("longitude" in val)) return false;
   const lat = Number(val.latitude);
@@ -596,6 +600,32 @@ async function buildExport(
     note:
       "A checkpoint contains only complete submissions received by the server at the cutoff timestamp. Offline devices may hold additional unseen data.",
   };
+
+  // zipSync packs every object into memory before the upload; without a
+  // bound, a large project turns an export into a guaranteed function OOM.
+  // Fail with an explicit, actionable error instead of a mid-deploy crash.
+  const DEFAULT_ARCHIVE_BYTE_LIMIT = 512 * 1024 * 1024;
+  const configuredLimit = Number(
+    Deno.env.get("EXPORT_MAX_ARCHIVE_BYTES") ?? "",
+  );
+  const archiveByteLimit =
+    Number.isFinite(configuredLimit) && configuredLimit > 0
+      ? configuredLimit
+      : DEFAULT_ARCHIVE_BYTE_LIMIT;
+  const plannedMediaBytes = media.reduce(
+    (total, item) => total + (item.object_path ? item.byte_size : 0),
+    0,
+  );
+  if (plannedMediaBytes > archiveByteLimit) {
+    return json(
+      {
+        error: `This project's media (${
+          Math.round(plannedMediaBytes / 1048576)
+        } MB) exceeds the checkpoint size limit. Split the project or raise EXPORT_MAX_ARCHIVE_BYTES.`,
+      },
+      { status: 413 },
+    );
+  }
 
   const entries = {
     "manifest.json": strToU8(JSON.stringify(manifest, null, 2)),
