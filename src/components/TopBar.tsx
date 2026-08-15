@@ -10,6 +10,7 @@ interface TopBarProps {
   view: View;
   onNavigate: (view: View) => void;
   userEmail?: string | null;
+  organizationName?: string | null;
   isPreview?: boolean;
   observations?: Observation[];
   lastSyncAt?: string | null;
@@ -25,6 +26,7 @@ export function TopBar({
   view,
   onNavigate,
   userEmail,
+  organizationName,
   isPreview = false,
   observations = [],
   lastSyncAt = null,
@@ -83,6 +85,7 @@ export function TopBar({
         <ProfileSheet
           userEmail={userEmail}
           profile={profile}
+          organizationName={organizationName}
           observations={observations}
           lastSyncAt={lastSyncAt}
           isAdmin={isAdmin}

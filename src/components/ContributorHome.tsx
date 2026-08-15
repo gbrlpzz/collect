@@ -79,9 +79,12 @@ export function ContributorHome({
   ).length;
   const syncedCount = project?.completeSubmissions ?? 0;
 
+  const organizationName = project?.organization;
+
   return (
     <main className="page page-contributor">
       <div className="page-heading page-heading-home">
+        {organizationName && <Eyebrow>{organizationName}</Eyebrow>}
         <h1>Fieldwork</h1>
       </div>
 

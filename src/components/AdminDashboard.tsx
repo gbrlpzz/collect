@@ -96,10 +96,15 @@ export function AdminDashboard({
       setAddingAdministrator(false);
     }
   };
+  const organizationName = project.organization || projects[0]?.organization;
+
   return (
     <main className="page page-admin">
       <div className="page-heading admin-heading">
-        <h1>Projects</h1>
+        <div className="page-heading-copy">
+          {organizationName && <Eyebrow>{organizationName}</Eyebrow>}
+          <h1>Projects</h1>
+        </div>
         <div className="primary-action-dock">
           <Button
             variant="primary"

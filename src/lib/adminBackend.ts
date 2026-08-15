@@ -156,6 +156,24 @@ export async function loadUserAdminAccess(): Promise<boolean> {
   return Boolean(orgAdmin) || Boolean(projectAdmin);
 }
 
+export async function loadUserOrganizationName(): Promise<string | null> {
+  const client = requireClient();
+  const { data: userData, error: userError } = await client.auth.getUser();
+  if (userError || !userData.user) return null;
+  const { data: membership } = await client
+    .from("organization_members")
+    .select("organization_id, organizations(name)")
+    .eq("user_id", userData.user.id)
+    .eq("role", "admin")
+    .limit(1)
+    .maybeSingle();
+  if (membership?.organizations) {
+    const org = membership.organizations as unknown as { name?: string };
+    if (org.name) return org.name;
+  }
+  return null;
+}
+
 export async function createRemoteProject(
   input: NewProjectInput,
 ): Promise<Project> {

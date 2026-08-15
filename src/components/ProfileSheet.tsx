@@ -14,7 +14,8 @@ import { APP_VERSION, FEEDBACK_URL } from "../lib/appMeta";
 interface ProfileSheetProps {
   userEmail?: string | null;
   profile: ContributorProfile | null;
-  observations: Observation[];
+  organizationName?: string | null;
+  observations?: Observation[];
   lastSyncAt: string | null;
   isAdmin: boolean;
   isPreview: boolean;
@@ -27,6 +28,7 @@ interface ProfileSheetProps {
 export function ProfileSheet({
   userEmail,
   profile,
+  organizationName,
   observations = [],
   lastSyncAt,
   isAdmin,
@@ -36,6 +38,7 @@ export function ProfileSheet({
   onRecoveryExport,
   onSignOut,
 }: ProfileSheetProps) {
+  const profileOrganization = organizationName?.trim();
   const pendingCount = (observations ?? []).filter(
     (observation) => observation.status !== "SYNCED",
   ).length;
@@ -64,6 +67,9 @@ export function ProfileSheet({
           ? "Preview session"
           : (userEmail ?? "Account email unavailable")}
       </p>
+      {profileOrganization && (
+        <p className="profile-organization">{profileOrganization}</p>
+      )}
 
       {!isAdmin && (
         <>

@@ -45,6 +45,7 @@ import {
   defaultOrganizationName,
   loadAssignedProjects,
   loadUserAdminAccess,
+  loadUserOrganizationName,
   updateProjectStatus,
 } from "../lib/adminBackend";
 import { downloadUrl } from "../lib/download";
@@ -294,7 +295,7 @@ export function useAppController() {
       }
       if (!active) return;
       setAdminAccess(hasAdminAccess ? "allowed" : "denied");
-      if (remoteProjects.length)
+      if (remoteProjects.length) {
         setState((current) => ({
           ...current,
           projects: remoteProjects,
@@ -303,17 +304,27 @@ export function useAppController() {
               (candidate) => candidate.id === current.project.id,
             ) ?? remoteProjects[0],
         }));
-      else
+      } else {
+        const userOrg = hasAdminAccess
+          ? await loadUserOrganizationName().catch(() => null)
+          : null;
         setState((current) => ({
           ...current,
           projects: [],
           // Confirmed empty assignment: hide the cached project so a
           // revoked contributor cannot keep collecting offline into
-          // ACTION_REQUIRED records.
-          project: emptyProject,
+          // ACTION_REQUIRED records. Keep the organization name for clarity.
+          project: {
+            ...emptyProject,
+            organization:
+              userOrg ??
+              current.project.organization ??
+              defaultOrganizationName,
+          },
           mode: current.mode,
           view: current.mode === "admin" ? "admin" : "home",
         }));
+      }
     };
     // Invites are claimed before the project list loads: an already-registered
     // contributor receives membership only through claim-invites, and the list

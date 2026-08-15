@@ -248,6 +248,9 @@ export default function App() {
         view={state.view}
         onNavigate={navigate}
         userEmail={session?.user.email}
+        organizationName={
+          state.project?.organization || state.projects?.[0]?.organization
+        }
         isPreview={!configured}
         observations={state.observations}
         lastSyncAt={state.lastSyncAt}
