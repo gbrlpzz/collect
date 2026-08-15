@@ -366,6 +366,9 @@ export default function App() {
           </button>
         </div>
       )}
+      <footer className="app-footer" role="contentinfo">
+        <p>collect. by gbrlpzz</p>
+      </footer>
       <Analytics />
     </div>
   );
