@@ -124,53 +124,80 @@ The Google button uses the unmodified four-colour mark.
 
 ## Setting it up
 
-1. **Google.** Create an OAuth client (type: web) in Google Cloud. Add the
-   authorized redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`
-   and the app origin as an authorized JavaScript origin. Keep the client ID
-   and secret.
-2. **Apple.** In the Apple Developer account, create an App ID with Sign in
-   with Apple, a Services ID (this is the client ID), a private key (`.p8`)
-   for Sign in with Apple, and note the Team ID and Key ID. Register the
-   return URL `https://<project-ref>.supabase.co/auth/v1/callback` and the
-   app domain. Apple does not accept `localhost`.
+**Google (enabled on this deployment).** Create an OAuth client of type _Web
+application_ in Google Cloud, then add exactly one authorized redirect URI:
 
-   Apple issues no static secret. Build the client secret from the key:
+```
+https://<project-ref>.supabase.co/auth/v1/callback
+```
 
-   ```bash
-   node scripts/apple-client-secret.mjs \
-     --team-id ABCDE12345 --key-id FGHIJ67890 \
-     --services-id org.example.collect.web \
-     --key ./AuthKey_FGHIJ67890.p8
-   ```
+That is the only value the flow uses. The browser goes app → Supabase →
+Google → back to that callback → back to the app, so Google never sees the
+app's own address. Authorized JavaScript origins are unused here; adding the
+served origins is harmless.
 
-   The value is valid for at most six months. Run the script again before it
-   expires and apply the new value.
+**Apple (prepared, off until its credentials exist).** In the Apple Developer
+account create an App ID with Sign in with Apple, a Services ID (this is the
+client ID), and a private key (`.p8`); note the Team ID and Key ID. Register
+the domain `<project-ref>.supabase.co` and the same return URL. Apple does not
+accept `localhost`.
 
-3. **Apply the configuration.**
+Apple issues no static secret. Build it from the key:
 
-   ```bash
-   export SUPABASE_ACCESS_TOKEN=...      # Supabase Management API token
-   export SUPABASE_PROJECT_REF=...
-   export APP_URL=https://collect-tawny.vercel.app
-   export BOOTSTRAP_ADMIN_EMAIL=you@example.org
-   export SUPABASE_AUTH_GOOGLE_CLIENT_ID=... SUPABASE_AUTH_GOOGLE_SECRET=...
-   export SUPABASE_AUTH_APPLE_CLIENT_ID=... SUPABASE_AUTH_APPLE_SECRET=...
-   npm run provision -- --auth-only
-   ```
+```bash
+node scripts/apple-client-secret.mjs \
+  --team-id ABCDE12345 --key-id FGHIJ67890 \
+  --services-id org.example.collect.web \
+  --key ./AuthKey_FGHIJ67890.p8
+```
 
-   `--auth-only` changes the authentication configuration and nothing else.
-   A provider is enabled only when both of its values are present, so
-   re-running the script never disables one by accident.
+The value is valid for at most six months; renewing it is a recurring task,
+not a one-time step.
 
-4. **Optional: move the remaining auth emails to Resend.** Set `SMTP_HOST`,
-   `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_SENDER_EMAIL` before
-   running the script. Sign-in links and confirmations then leave through the
-   project's own mail provider instead of the shared built-in mailer.
+**Applying the configuration.** Two equivalent paths:
 
-The Apple client secret is an ES256 JWT built from the Team ID, Key ID,
-Services ID, and the `.p8` key, which is what
-`scripts/apple-client-secret.mjs` produces. It expires; renewing it is a
-recurring operational task, not a one-time setup step.
+```bash
+# With the Supabase CLI logged in and the project linked
+export SUPABASE_AUTH_GOOGLE_CLIENT_ID=... SUPABASE_AUTH_GOOGLE_SECRET=...
+node scripts/push-auth-config.mjs
+```
+
+```bash
+# With a Management API token instead
+export SUPABASE_ACCESS_TOKEN=... SUPABASE_PROJECT_REF=...
+export APP_URL=https://collect.gbrlpzz.com BOOTSTRAP_ADMIN_EMAIL=you@example.org
+export SUPABASE_AUTH_GOOGLE_CLIENT_ID=... SUPABASE_AUTH_GOOGLE_SECRET=...
+npm run provision -- --auth-only
+```
+
+`scripts/push-auth-config.mjs` publishes `supabase/config.toml` and refuses to
+push a provider that is enabled without its credentials, because the CLI would
+otherwise publish the literal placeholder. On a plan that rejects custom email
+templates it retries without them. `--auth-only` changes the authentication
+configuration and nothing else; a provider is enabled only when both of its
+values are present, so re-running never disables one by accident.
+
+**Optional: move the remaining auth emails to Resend.** Set `SMTP_HOST`,
+`SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_SENDER_EMAIL` before running
+the provisioning script. Sign-in links and confirmations then leave through
+the project's own mail provider instead of the shared built-in mailer.
+
+---
+
+## Several addresses, one deployment
+
+The app answers on a canonical domain and on the platform address that still
+hosts installed apps. Sign-in respects that:
+
+- A sign-in returns to the origin the person is actually using. A session
+  belongs to the origin that started it, so returning someone to the other
+  address would leave them signed out where they were working.
+- Both origins are on the Supabase redirect allow-list, with a path wildcard
+  so the return reaches `/app`.
+- Edge Functions echo the caller's origin when it is `APP_URL` or one of
+  `APP_ALT_ORIGINS`; everything else is refused.
+- Emails sent by the server (invitations, sign-in codes) always link to
+  `APP_URL`, the canonical address.
 
 ---
 

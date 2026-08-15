@@ -1,4 +1,4 @@
-import { corsHeaders, json, options } from "../_shared/cors.ts";
+import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage, requireUser, serviceClient } from "../_shared/auth.ts";
 import { appEntryUrl } from "../_shared/config.ts";
 import { bumpIpRateLimit } from "../_shared/rateLimit.ts";
@@ -22,7 +22,7 @@ function randomCode(): string {
  *                                      with supabase.auth.verifyOtp and the
  *                                      session lands in the current container.
  */
-Deno.serve(async (request) => {
+serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
     return json(

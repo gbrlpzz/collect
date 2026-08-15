@@ -1,4 +1,4 @@
-import { corsHeaders, json, options } from "../_shared/cors.ts";
+import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage, isEmailAllowed, requireUser } from "../_shared/auth.ts";
 
 function configuredBootstrapEmail(): string | null {
@@ -6,7 +6,7 @@ function configuredBootstrapEmail(): string | null {
   return value || null;
 }
 
-Deno.serve(async (request) => {
+serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
     return json(

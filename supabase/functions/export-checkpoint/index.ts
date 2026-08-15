@@ -1,6 +1,6 @@
 import { strToU8, zipSync } from "npm:fflate@0.8.3";
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2.112.2";
-import { corsHeaders, json, options } from "../_shared/cors.ts";
+import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
 import { csvCell, csvRow } from "../_shared/csv.ts";
 import { canonicalJson, sha256 } from "../_shared/hash.ts";
@@ -553,7 +553,7 @@ async function buildExport(
   });
 }
 
-Deno.serve(async (request) => {
+serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
     return json(

@@ -194,10 +194,18 @@ Production settings are codified in `supabase/config.toml` (auth section +
 `supabase/templates/*.html`); apply them with `supabase config push` once the
 project is linked. The production project currently has these applied:
 
-- **Site URL**: `https://collect-tawny.vercel.app` (single deployment:
-  homepage at `/`, app at `/app`).
-- **Redirect allow-list**: `https://collect-tawny.vercel.app`,
-  `https://collect-tawny.vercel.app/app` (magic links return to the app path).
+- **Site URL**: `https://collect.gbrlpzz.com` (single deployment: homepage at
+  `/`, app at `/app`).
+- **Redirect allow-list**: `https://collect.gbrlpzz.com/**` and
+  `https://collect-tawny.vercel.app/**`. The deployment answers on both
+  addresses, and a sign-in returns to the one the person is actually using —
+  a session belongs to the origin that started it.
+- **Function origins**: `APP_URL` is the canonical origin; `APP_ALT_ORIGINS`
+  lists any other origin that must keep working (comma separated). Functions
+  echo the caller's origin when it is on that list, so an app installed from
+  the older address keeps syncing.
+- **Identity providers**: Google is enabled. Apple is prepared but off until
+  its credentials exist.
 - **Open contributor sign-up**: `disable_signup = false`. A first Google or
   Apple sign-in is a sign-up, so this must stay open. An account on its own
   shows nothing: projects need a membership, and administrator rights need

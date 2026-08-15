@@ -1,7 +1,7 @@
-import { corsHeaders, json, options } from "../_shared/cors.ts";
+import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
 
-Deno.serve(async (request) => {
+serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
     return json(

@@ -1,4 +1,4 @@
-import { corsHeaders, json, options } from "../_shared/cors.ts";
+import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage } from "../_shared/auth.ts";
 import { sendEmail } from "../_shared/mail.ts";
 
@@ -14,7 +14,7 @@ import { sendEmail } from "../_shared/mail.ts";
 // PREVIEW_REQUEST_NOTIFY_TO rather than hardcoded: a self-hosted fork must
 // configure its own inbox instead of silently emailing this project's
 // maintainer.
-Deno.serve(async (request) => {
+serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
     return json(

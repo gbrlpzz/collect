@@ -1,4 +1,4 @@
-import { corsHeaders, json, options } from "../_shared/cors.ts";
+import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";
 
 function nonNegativeInteger(value: unknown): number {
@@ -6,7 +6,7 @@ function nonNegativeInteger(value: unknown): number {
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : 0;
 }
 
-Deno.serve(async (request) => {
+serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
     return json(

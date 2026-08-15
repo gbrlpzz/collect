@@ -45,18 +45,25 @@ export function isLocalOrigin(origin: string): boolean {
 }
 
 /**
- * Keep sign-in returns on the deployed app, never on localhost from a
- * production build. A configured local origin is ignored when the page itself
- * is served from a real host.
+ * Where a sign-in returns.
+ *
+ * People are returned to the origin they are actually using. A deployment can
+ * answer on more than one address — a canonical domain plus the platform
+ * address that still hosts installed apps — and a session belongs to the
+ * origin that started it: sending someone to the other address would sign
+ * them in somewhere they were not.
+ *
+ * The configured application URL is the fallback for local development, where
+ * a returned link could never be opened on a phone.
  */
 export function authRedirectOrigin(): string {
   const currentOrigin =
     typeof window === "undefined" ? "" : window.location.origin;
+  if (currentOrigin && !isLocalOrigin(currentOrigin)) return currentOrigin;
   if (!configuredAppUrl) return currentOrigin;
   try {
     const configuredOrigin = new URL(configuredAppUrl).origin;
-    if (isLocalOrigin(configuredOrigin) && !isLocalOrigin(currentOrigin))
-      return currentOrigin;
+    if (isLocalOrigin(configuredOrigin)) return currentOrigin;
     return configuredOrigin;
   } catch {
     return currentOrigin;

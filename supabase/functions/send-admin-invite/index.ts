@@ -1,4 +1,4 @@
-import { corsHeaders, json, options } from "../_shared/cors.ts";
+import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import {
   allowListIsEnvironmentManaged,
   errorMessage,
@@ -9,7 +9,7 @@ import { appEntryUrl } from "../_shared/config.ts";
 import { adminInviteEmail } from "../_shared/invite.ts";
 import { sendEmail } from "../_shared/mail.ts";
 
-Deno.serve(async (request) => {
+serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
     return json(
