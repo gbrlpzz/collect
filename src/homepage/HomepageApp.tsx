@@ -105,9 +105,35 @@ function TopBar({ activeSection }: { activeSection: string }) {
   );
 }
 
+/**
+ * Headline motion treatments under review. The landing page reads
+ * `?motion=` so the treatments can be compared on a real device before one
+ * is chosen; anything unrecognized falls back to the default. See the
+ * headline cadence block in homepage.css.
+ */
+const HERO_MOTIONS = [
+  "focus",
+  "read",
+  "cadence",
+  "sheen",
+  "wipe",
+  "lens",
+  "off",
+] as const;
+type HeroMotion = (typeof HERO_MOTIONS)[number];
+const DEFAULT_HERO_MOTION: HeroMotion = "focus";
+
+function requestedHeroMotion(): HeroMotion {
+  if (typeof window === "undefined") return DEFAULT_HERO_MOTION;
+  const requested = new URLSearchParams(window.location.search).get("motion");
+  const match = HERO_MOTIONS.find((motion) => motion === requested);
+  return match ?? DEFAULT_HERO_MOTION;
+}
+
 function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [heroMotion] = useState<HeroMotion>(requestedHeroMotion);
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -120,7 +146,12 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
   };
 
   return (
-    <section className="hp-hero" id="top" aria-labelledby="hero-title">
+    <section
+      className="hp-hero"
+      id="top"
+      aria-labelledby="hero-title"
+      data-hero-motion={heroMotion}
+    >
       <div className="hp-hero-bg" aria-hidden="true">
         <img
           src="/hero-alps.webp"
@@ -133,16 +164,25 @@ function Hero({ onEmailSubmit }: { onEmailSubmit: (email: string) => void }) {
 
       <div className="hp-hero-container">
         <div className="hp-hero-inner">
+          {/*
+            One sentence, delivered in four clauses. Each clause is its own
+            box so the headline can be read out in cadence (see
+            .hp-hero-clause in homepage.css); the spaces between them keep
+            the sentence intact for screen readers and for small screens,
+            where the clauses run together as flowing text.
+          */}
           <h1 id="hero-title">
-            <span className="hp-hero-wordmark">
-              collect<span className="wordmark-dot">.</span>
+            <span className="hp-hero-clause">
+              <span className="hp-hero-wordmark">
+                collect<span className="wordmark-dot">.</span>
+              </span>
+            </span>{" "}
+            <span className="hp-hero-clause">trustworthy</span>{" "}
+            <span className="hp-hero-clause">field evidence</span>{" "}
+            <span className="hp-hero-clause">
+              <span className="hp-hero-beat">offline</span>{" "}
+              <span className="hp-hero-beat">on any phone.</span>
             </span>
-            <br className="hp-hero-br" />
-            trustworthy
-            <br className="hp-hero-br" />
-            field evidence
-            <br className="hp-hero-br" />
-            offline on any phone.
           </h1>
 
           <p className="hp-hero-lede">

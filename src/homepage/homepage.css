@@ -338,12 +338,356 @@ body {
 .hp-hero-wordmark {
   letter-spacing: var(--tracking-wordmark, -0.06em);
 }
-.hp-hero-br {
+
+/* ---------- Headline cadence & motion treatments ----------
+   The headline is one sentence delivered in four clauses with intentional
+   rhythmic pacing:
+     1. "collect." — anchors first, pauses with quiet authority.
+     2. "trustworthy field evidence" — arrives as a swift, fluid couplet.
+     3. "offline" — key capability keyword focuses and holds for a beat.
+     4. "on any phone." — finishes the sentence with authoritative resolve.
+     5. Lede & CTA — gently unfold after the full headline resolves.
+
+   Treatments are selectable with ?motion= on the landing page:
+     focus    optical aperture focus: blur-to-sharp resolution with micro-elevation (default)
+     read     light beam sweeps along the words, dim ahead of it, settled behind
+     cadence  kinetic typography: each clause rises and settles with Apple HIG deceleration
+     sheen    text is fully set, an illumination wave sweeps diagonally across the statement
+     wipe     each clause is uncovered left to right with a feathered aperture mask
+     off      no headline motion (instant static rendering)
+   Clauses stay flowing text below 680px, where the sentence wraps as a
+   paragraph. */
+
+.hp-hero-clause {
   display: block;
+  --clause-delay: 0s;
+  --clause-duration: 0.48s;
+  will-change: transform, opacity;
+}
+/* Act 1: Brand anchor — deliberate focus and hold */
+.hp-hero-clause:nth-child(1) {
+  --clause-delay: 0.08s;
+  --clause-duration: 0.46s;
+}
+/* Act 2: Couplet — "trustworthy" into "field evidence" */
+.hp-hero-clause:nth-child(2) {
+  --clause-delay: 0.76s;
+  --clause-duration: 0.36s;
+}
+.hp-hero-clause:nth-child(3) {
+  --clause-delay: 1s;
+  --clause-duration: 0.38s;
+}
+/* Act 3: "offline" keyword focus & hold, followed by "on any phone." */
+.hp-hero-beat {
+  display: inline-block;
+  --clause-delay: 0s;
+  --clause-duration: 0.44s;
+  will-change: transform, opacity;
+}
+.hp-hero-clause:nth-child(4) .hp-hero-beat:first-child {
+  --clause-delay: 1.45s;
+  --clause-duration: 0.38s;
+}
+.hp-hero-clause:nth-child(4) .hp-hero-beat:last-child {
+  --clause-delay: 2.05s;
+  --clause-duration: 0.42s;
 }
 @media (max-width: 680px) {
-  .hp-hero-br {
+  .hp-hero-clause {
     display: inline;
+  }
+  .hp-hero-beat {
+    display: inline;
+  }
+}
+
+.hp-hero {
+  /* Apple HIG fluid deceleration curve: swift start, long silky settle, no overshoot */
+  --hero-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --hero-ink: var(--text);
+  /* Text the light has not reached yet: legible, clearly not the focus. */
+  --hero-ink-dim: color-mix(in srgb, var(--text) 24%, transparent);
+  /* The illumination crest. */
+  --hero-glint: color-mix(in srgb, var(--text) 48%, transparent);
+}
+
+/* The wordmark dot keeps its own brand accent through every treatment. */
+.hp-hero h1 .wordmark-dot {
+  display: inline-block;
+  color: var(--tertiary);
+  -webkit-text-fill-color: var(--tertiary);
+}
+
+/* --- Treatment: focus (Optical field focus / camera aperture — default) --- */
+.hp-hero[data-hero-motion="focus"] .hp-hero-clause:not(:nth-child(4)),
+.hp-hero[data-hero-motion="focus"] .hp-hero-beat,
+.hp-hero[data-hero-motion="lens"] .hp-hero-clause:not(:nth-child(4)),
+.hp-hero[data-hero-motion="lens"] .hp-hero-beat {
+  opacity: 0;
+  filter: blur(10px);
+  transform: translate3d(0, 8px, 0);
+  animation: hp-hero-focus var(--clause-duration) var(--hero-ease)
+    var(--clause-delay) both;
+  will-change: transform, opacity, filter;
+}
+@media (max-width: 680px) {
+  /* Flowing inline text: blur and opacity transition cleanly */
+  .hp-hero[data-hero-motion="focus"] .hp-hero-clause:not(:nth-child(4)),
+  .hp-hero[data-hero-motion="focus"] .hp-hero-beat,
+  .hp-hero[data-hero-motion="lens"] .hp-hero-clause:not(:nth-child(4)),
+  .hp-hero[data-hero-motion="lens"] .hp-hero-beat {
+    transform: none;
+    animation-name: hp-hero-focus-inline;
+  }
+}
+
+/* --- Treatment: read (Luminous beam sweep with micro-elevation) --- */
+.hp-hero[data-hero-motion="read"] .hp-hero-clause:not(:nth-child(4)),
+.hp-hero[data-hero-motion="read"] .hp-hero-beat {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(
+    90deg,
+    var(--hero-ink) 0%,
+    var(--hero-ink) 38%,
+    #000000 48%,
+    var(--hero-glint) 56%,
+    var(--hero-ink-dim) 68%,
+    var(--hero-ink-dim) 100%
+  );
+  background-size: 300% 100%;
+  background-repeat: no-repeat;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  transform: translate3d(0, 4px, 0);
+  animation: hp-hero-read-clause var(--clause-duration) var(--hero-ease)
+    var(--clause-delay) both;
+}
+@media (max-width: 680px) {
+  /* Flowing text: the light crosses the whole statement in one pass. */
+  .hp-hero[data-hero-motion="read"] .hp-hero-clause:not(:nth-child(4)),
+  .hp-hero[data-hero-motion="read"] .hp-hero-beat {
+    background-image: none;
+    animation: none;
+    color: inherit;
+    -webkit-text-fill-color: inherit;
+    transform: none;
+  }
+  .hp-hero[data-hero-motion="read"] h1 {
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    background-image: linear-gradient(
+      100deg,
+      var(--hero-ink) 0%,
+      var(--hero-ink) 40%,
+      #000000 48%,
+      var(--hero-glint) 56%,
+      var(--hero-ink-dim) 68%,
+      var(--hero-ink-dim) 100%
+    );
+    background-size: 300% 100%;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: hp-hero-pass 2.2s var(--hero-ease) 0.12s both;
+  }
+}
+
+/* --- Treatment: cadence (Kinetic typography elevation) --- */
+.hp-hero[data-hero-motion="cadence"] .hp-hero-clause:not(:nth-child(4)),
+.hp-hero[data-hero-motion="cadence"] .hp-hero-beat {
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  animation: hp-hero-rise var(--clause-duration) var(--hero-ease)
+    var(--clause-delay) both;
+}
+@media (max-width: 680px) {
+  .hp-hero[data-hero-motion="cadence"] .hp-hero-clause:not(:nth-child(4)),
+  .hp-hero[data-hero-motion="cadence"] .hp-hero-beat {
+    animation-name: hp-hero-fade;
+    transform: none;
+  }
+}
+
+/* --- Treatment: wipe (Feathered aperture uncover) --- */
+.hp-hero[data-hero-motion="wipe"] .hp-hero-clause:not(:nth-child(4)),
+.hp-hero[data-hero-motion="wipe"] .hp-hero-beat {
+  opacity: 0;
+  transform: translate3d(0, 6px, 0);
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    #000 0%,
+    #000 44%,
+    rgba(0, 0, 0, 0.6) 52%,
+    transparent 62%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    #000 0%,
+    #000 44%,
+    rgba(0, 0, 0, 0.6) 52%,
+    transparent 62%,
+    transparent 100%
+  );
+  -webkit-mask-size: 300% 100%;
+  mask-size: 300% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: hp-hero-wipe var(--clause-duration) var(--hero-ease)
+    var(--clause-delay) both;
+}
+@media (max-width: 680px) {
+  .hp-hero[data-hero-motion="wipe"] .hp-hero-clause:not(:nth-child(4)),
+  .hp-hero[data-hero-motion="wipe"] .hp-hero-beat {
+    -webkit-mask-image: none;
+    mask-image: none;
+    transform: none;
+    animation-name: hp-hero-fade;
+  }
+}
+
+/* --- Treatment: sheen (Full statement prismatic sheen) --- */
+.hp-hero[data-hero-motion="sheen"] h1 {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(
+    105deg,
+    var(--hero-ink) 0%,
+    var(--hero-ink) 38%,
+    color-mix(in srgb, var(--text) 50%, white) 48%,
+    #000000 52%,
+    var(--hero-ink) 62%,
+    var(--hero-ink) 100%
+  );
+  background-size: 260% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: hp-hero-pass 2s var(--hero-ease) 0.2s both;
+}
+
+/* Act 4: Supporting copy & capture CTA follow after the full headline lands */
+.hp-hero[data-hero-motion]:not([data-hero-motion="off"]) .hp-hero-lede {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+  animation: hp-hero-rise 0.5s var(--hero-ease) 2.5s both;
+}
+.hp-hero[data-hero-motion]:not([data-hero-motion="off"]) .hp-capture {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+  animation: hp-hero-rise 0.5s var(--hero-ease) 2.7s both;
+}
+
+/* Keyframes */
+@keyframes hp-hero-focus {
+  0% {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translate3d(0, 8px, 0);
+  }
+  50% {
+    opacity: 0.85;
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes hp-hero-focus-inline {
+  0% {
+    opacity: 0;
+    filter: blur(10px);
+  }
+  50% {
+    opacity: 0.85;
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+@keyframes hp-hero-read-clause {
+  0% {
+    background-position: 100% 0;
+    transform: translate3d(0, 4px, 0);
+  }
+  100% {
+    background-position: 0 0;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes hp-hero-pass {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+@keyframes hp-hero-wipe {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+}
+@keyframes hp-hero-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes hp-hero-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hp-hero h1,
+  .hp-hero-clause,
+  .hp-hero-beat,
+  .hp-hero-lede,
+  .hp-capture {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  .hp-hero h1,
+  .hp-hero-clause,
+  .hp-hero-beat {
+    color: var(--text);
+    -webkit-text-fill-color: currentColor;
+    background-image: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .hp-hero h1 .wordmark-dot {
+    color: var(--tertiary);
+    -webkit-text-fill-color: var(--tertiary);
   }
 }
 .hp-hero-lede {
@@ -703,49 +1047,49 @@ body {
 }
 
 /* Short screens: draw the phone smaller instead of overflowing the pinned
-   panel. Proportions are never touched — the frame keeps real 375x740 iPhone
+   panel. Proportions are never touched — the frame keeps real 375x812 iPhone
    metrics (identical app layout and container queries) and is only scaled
    visually, down to where it may touch the bottom of the panel.
    Desktop only; the stacked layout below 960px keeps full size. */
-@media (min-width: 961px) and (max-height: 830px) {
+@media (min-width: 961px) and (max-height: 920px) {
   .hp-shell {
     --hp-phone-scale: 0.95;
   }
 }
-@media (min-width: 961px) and (max-height: 760px) {
+@media (min-width: 961px) and (max-height: 860px) {
   .hp-shell {
     --hp-phone-scale: 0.88;
   }
 }
-@media (min-width: 961px) and (max-height: 700px) {
+@media (min-width: 961px) and (max-height: 790px) {
   .hp-shell {
     --hp-phone-scale: 0.8;
   }
 }
-@media (min-width: 961px) and (max-height: 640px) {
+@media (min-width: 961px) and (max-height: 720px) {
   .hp-shell {
     --hp-phone-scale: 0.72;
   }
 }
-@media (min-width: 961px) and (max-height: 580px) {
+@media (min-width: 961px) and (max-height: 640px) {
   .hp-shell {
     --hp-phone-scale: 0.64;
   }
 }
 
 /* Narrow screens: the same visual scale keeps the phone inside the column
-   without touching the app's own 375x740 layout. */
-@media (max-width: 430px) {
+   without touching the app's own 375x812 layout. */
+@media (max-width: 440px) {
   .hp-shell {
     --hp-phone-scale: 0.94;
   }
 }
-@media (max-width: 400px) {
+@media (max-width: 410px) {
   .hp-shell {
     --hp-phone-scale: 0.88;
   }
 }
-@media (max-width: 370px) {
+@media (max-width: 375px) {
   .hp-shell {
     --hp-phone-scale: 0.82;
   }
@@ -1001,24 +1345,24 @@ section[id] {
   align-items: flex-start;
   justify-content: flex-start;
   width: 100%;
-  /* The frame keeps a 375px layout box; it must not widen the grid column
-     on narrow screens (it is scaled visually to fit instead). */
+  /* The frame keeps a 393px layout box (375px screen + 9px bezel all around);
+     it must not widen the grid column on narrow screens (it is scaled visually to fit). */
   min-width: 0;
-  /* The frame keeps real 375x740 iPhone metrics so the embedded app lays out
+  /* The frame keeps real 375x812 iPhone metrics so the embedded app lays out
      exactly as it does on device (same container queries, same breakpoints);
      only its drawn size shrinks on short screens. The box is reserved at the
      scaled height so the pinned panel still fits the viewport. */
-  height: calc(740px * var(--hp-phone-scale, 1));
+  height: calc(830px * var(--hp-phone-scale, 1));
 }
 .hp-iphone {
   position: relative;
-  width: 375px;
-  height: 740px;
+  width: 393px;
+  height: 830px;
   /* Keep the real device box: flex must not shrink it, or the frame distorts.
      Only the visual scale changes on short screens. Centre it explicitly, so
-     it stays centred even when the 375px box is wider than a narrow column. */
+     it stays centred even when the 393px box is wider than a narrow column. */
   flex: 0 0 auto;
-  margin-left: calc((100% - 375px) / 2);
+  margin-left: calc((100% - 393px) / 2);
   transform: scale(var(--hp-phone-scale, 1));
   transform-origin: top center;
   border-radius: 48px;
@@ -1057,7 +1401,7 @@ section[id] {
 }
 .hp-dynamic-island {
   position: absolute;
-  top: 9px;
+  top: 10px;
   left: 50%;
   z-index: 40;
   width: 92px;
@@ -1070,12 +1414,12 @@ section[id] {
 .hp-status-bar {
   position: relative;
   z-index: 35;
-  height: 42px;
-  flex: 0 0 42px;
+  height: 44px;
+  flex: 0 0 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 24px;
   color: #000000;
   font-size: 13px;
   font-weight: 600;
@@ -1092,11 +1436,11 @@ section[id] {
 }
 .hp-home-indicator {
   position: absolute;
-  bottom: 7px;
+  bottom: 8px;
   left: 50%;
   z-index: 40;
-  width: 124px;
-  height: 4px;
+  width: 134px;
+  height: 5px;
   transform: translateX(-50%);
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.7);
@@ -1164,25 +1508,25 @@ section[id] {
   -webkit-overflow-scrolling: touch !important;
 }
 /* The floating action dock and collector action bar are position:fixed in
-   the mobile app; inside the phone they are anchored to the viewport. */
+   the mobile app; inside the phone they are anchored to the viewport with
+   the authentic iOS safe area inset (34px from bottom edge). */
 .hp-app-viewport .primary-action-dock,
 .hp-app-viewport .admin-context-actions {
   position: absolute !important;
-  left: 14px !important;
-  right: 14px !important;
-  bottom: 14px !important;
+  left: 16px !important;
+  right: 16px !important;
+  bottom: 34px !important;
+  width: auto !important;
+  margin: 0 !important;
   z-index: 25 !important;
 }
 /* The collector action bar is a floating pill dock in the mobile app
-   (width calc(100% - 24px), 12px side margins, 8px bottom). The app's own
-   mobile rule combines width+margin with left/right insets, producing a
-   right-shifted bar that overflows the phone; pin it to the dock geometry
-   the app renders on a real 375px device. */
+   (matching the 34px safe area bottom margin and 16px side insets). */
 .hp-app-viewport .flow-actions {
   position: absolute !important;
-  left: 12px !important;
-  right: 12px !important;
-  bottom: 8px !important;
+  left: 16px !important;
+  right: 16px !important;
+  bottom: 34px !important;
   width: auto !important;
   margin: 0 !important;
   z-index: 25 !important;
@@ -1519,11 +1863,11 @@ section[id] {
 }
 .hp-app-viewport .primary-action-dock,
 .hp-app-viewport .admin-context-actions {
-  position: fixed;
+  position: absolute;
   z-index: 18;
-  right: max(var(--space-3), env(safe-area-inset-right));
-  bottom: max(var(--space-2), env(safe-area-inset-bottom));
-  left: max(var(--space-3), env(safe-area-inset-left));
+  right: 16px;
+  bottom: 34px;
+  left: 16px;
   width: auto;
   padding: 6px;
   border: 1px solid var(--separator-light);
@@ -1659,8 +2003,12 @@ section[id] {
   padding-left: var(--space-4);
 }
 .hp-app-viewport .flow-actions {
-  width: calc(100% - 24px);
-  margin: 0 12px max(8px, env(safe-area-inset-bottom));
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 34px;
+  width: auto;
+  margin: 0;
   padding: 6px;
   border: 1px solid var(--separator-light);
   border-radius: 999px;
