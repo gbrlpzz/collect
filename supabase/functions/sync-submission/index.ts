@@ -48,6 +48,15 @@ function optionIsKnown(
   );
 }
 
+interface JsonObject {
+  [key: string]: JsonValue;
+}
+
+/** A JSON object value (never null or an array). */
+function isJsonObject(val: JsonValue | undefined): val is JsonObject {
+  return !!val && typeof val === "object" && !Array.isArray(val);
+}
+
 interface LocationCoords {
   latitude: number;
   longitude: number;
@@ -55,8 +64,10 @@ interface LocationCoords {
   [key: string]: number;
 }
 
-function isLocationCoords(val: unknown): val is LocationCoords {
-  if (!val || typeof val !== "object" || Array.isArray(val)) return false;
+function isLocationCoords(
+  val: JsonValue | undefined,
+): val is LocationCoords {
+  if (!isJsonObject(val)) return false;
   if (!("latitude" in val) || !("longitude" in val) || !("accuracy" in val)) {
     return false;
   }
@@ -97,9 +108,9 @@ function validateFields(
         return `${label} is too long`;
       }
     } else if (field.type === "number") {
-      // SAFETY: number value may be wrapped in an object with a value property.
-      const rawNumber = value && typeof value === "object" && "value" in value
-        ? (value as { value?: JsonValue }).value
+      // A number control may wrap the scalar as { value: ... }.
+      const rawNumber = isJsonObject(value) && "value" in value
+        ? value.value
         : value;
       const numberValue = Number(rawNumber);
       if (!Number.isFinite(numberValue)) {
@@ -115,9 +126,9 @@ function validateFields(
         return `${label} is above the maximum`;
       }
     } else if (field.type === "single_choice" || field.type === "tri_state") {
-      // SAFETY: single_choice may carry an optional free-text other as { value, otherText }.
-      const rawSingle = value && typeof value === "object" && "value" in value
-        ? (value as { value?: JsonValue }).value
+      // A single-choice control may carry its choice as { value, otherText }.
+      const rawSingle = isJsonObject(value) && "value" in value
+        ? value.value
         : value;
       const singleValue = rawSingle !== null && rawSingle !== undefined &&
           !Array.isArray(rawSingle) && Object(rawSingle) !== rawSingle
@@ -156,9 +167,7 @@ function validateFields(
       }
     } else if (field.type === "datetime") {
       if (
-        !value ||
-        Array.isArray(value) ||
-        typeof value !== "object" ||
+        !isJsonObject(value) ||
         !("localDatetime" in value) ||
         !String(value.localDatetime ?? "").trim()
       ) {

@@ -3,10 +3,14 @@ import type { Session } from "@supabase/supabase-js";
 import { isSubmissionRetryable } from "../types";
 import type { AppState, SyncProgressEntry } from "../types";
 import {
+  ActionRequiredError,
+  isActionRequiredFailure,
+} from "../lib/syncErrors";
+import {
   acquireSyncLease,
   getOrCreateDeviceId,
-  getPendingOutboxCounts,
-  hasLocalReceipt,
+  getOutboxOperations,
+  getPendingOutboxCountsByProject,
   markLocalSubmissionsSynced,
   recordOutboxFailure,
   releaseSyncLease,
@@ -30,11 +34,50 @@ interface SyncControllerArgs {
   showToast: (message: string) => void;
   /** Background (lifecycle) runs stay quiet; manual taps keep feedback. */
   silent?: boolean;
+  /** Injectable for tests; production always runs the real remote sync. */
+  remoteSync?: typeof syncRemoteObservation;
 }
 
 // Process-level single flight: a lifecycle trigger and a manual tap in the
 // same tick share one run instead of racing for the lease.
 let inFlightSync: Promise<boolean> | null = null;
+
+/**
+ * Background runs (silent) honor the outbox backoff schedule so a failing
+ * observation is not re-attempted on every tab focus; a manual tap is an
+ * explicit user instruction and retries immediately.
+ */
+async function dueForBackoff(
+  observations: AppState["observations"],
+): Promise<AppState["observations"]> {
+  try {
+    const operations = await getOutboxOperations();
+    const nextAttemptById = new Map(
+      operations
+        .filter((operation) => operation.state !== "ACKNOWLEDGED")
+        .map((operation) => {
+          const at = new Date(operation.nextAttemptAt).getTime();
+          return [operation.id, Number.isFinite(at) ? at : 0] as const;
+        }),
+    );
+    const now = Date.now();
+    return observations.filter((observation) => {
+      const operationIds = [
+        `submission:${observation.id}`,
+        `finalize:${observation.id}`,
+        ...(observation.media ?? []).map((asset) => `media:${asset.id}`),
+      ];
+      return operationIds.every((operationId) => {
+        const nextAttempt = nextAttemptById.get(operationId);
+        return nextAttempt === undefined || nextAttempt <= now;
+      });
+    });
+  } catch {
+    // The outbox is unreadable (storage busy); behave like the old path and
+    // attempt the work rather than silently dropping it.
+    return observations;
+  }
+}
 
 export function syncNow({
   state,
@@ -49,6 +92,7 @@ export function syncNow({
   setSyncProgress,
   showToast,
   silent = false,
+  remoteSync = syncRemoteObservation,
 }: SyncControllerArgs): Promise<boolean> {
   if (inFlightSync) return inFlightSync;
   const retryableCount = state.observations.filter((item) =>
@@ -85,9 +129,18 @@ export function syncNow({
     const leaseRefreshTimer = window.setInterval(() => {
       void acquireSyncLease(syncOwner).catch(() => undefined);
     }, 10_000);
-    const pending = state.observations.filter((item) =>
+    let pending = state.observations.filter((item) =>
       isSubmissionRetryable(item.status),
     );
+    if (silent && pending.length) {
+      pending = await dueForBackoff(pending);
+      if (!pending.length) {
+        window.clearInterval(leaseRefreshTimer);
+        setIsSyncing(false);
+        void releaseSyncLease(syncOwner).catch(() => undefined);
+        return false;
+      }
+    }
     const syncedIds = new Set<string>();
     let failedCount = 0;
     let completed = false;
@@ -107,7 +160,7 @@ export function syncNow({
                 (candidate) => candidate.id === observation.projectId,
               ) ?? state.project;
             const receipt = configured
-              ? await syncRemoteObservation(
+              ? await remoteSync(
                   {
                     observation,
                     project,
@@ -145,20 +198,24 @@ export function syncNow({
               receipt &&
               receipt.submission_id !== observation.id
             )
-              throw new Error(
+              throw new ActionRequiredError(
                 "Server receipt does not match the submission identifier",
               );
-            const alreadyCounted = configured
-              ? await hasLocalReceipt(observation.id)
-              : false;
-            syncedIds.add(observation.id);
             const receiptAt = receipt?.received_at ?? new Date().toISOString();
-            await markLocalSubmissionsSynced([observation.id], {
-              receivedAt: receiptAt,
-              finalizedAt: receipt?.finalized_at ?? null,
-              serverStatus: receipt?.status ?? "COMPLETE",
-              demo: !configured,
-            });
+            syncedIds.add(observation.id);
+            // The receipt write itself decides (atomically, in-transaction)
+            // whether this submission is counted for the first time, so two
+            // tabs racing the same submission cannot both count it.
+            const { countedIds } = await markLocalSubmissionsSynced(
+              [observation.id],
+              {
+                receivedAt: receiptAt,
+                finalizedAt: receipt?.finalized_at ?? null,
+                serverStatus: receipt?.status ?? "COMPLETE",
+                demo: !configured,
+              },
+            );
+            const alreadyCounted = !countedIds.includes(observation.id);
             setState((current) => {
               const nextProjects = (current.projects ?? []).map((candidate) =>
                 candidate.id === project.id
@@ -213,10 +270,7 @@ export function syncNow({
             // assignment, media integrity, conflicts) become ACTION_REQUIRED;
             // transient failures stay retryable. One failed observation never
             // blocks the rest of the queue.
-            const actionRequired =
-              /unknown schema|revoked|consent|forbidden|not authorized|permission|conflict|corrupt|assignment is not active|belongs to another|immutable|does not match the published schema|is not a published option|not configured as the first administrator|size does not match|checksum|integrity|invalid option|not active|closed/i.test(
-                message,
-              );
+            const actionRequired = isActionRequiredFailure(error);
             await recordOutboxFailure(observation.id, message, actionRequired);
             setState((current) => ({
               ...current,
@@ -238,23 +292,31 @@ export function syncNow({
             ([key, value]) =>
               key !== "observed_date" && value !== "" && value !== undefined,
           );
-          await Promise.all(
-            (state.projects ?? [state.project]).map(async (project) => {
-              const counts = await getPendingOutboxCounts(project.id);
-              return reportDeviceStatus({
-                device_id: deviceId,
-                project_id: project.id,
-                pending_submissions: counts.pendingSubmissions,
-                pending_media: counts.pendingMedia,
-                app_version: appVersion,
-                schema_versions_cached: [project.schemaVersion],
-                fieldwork_complete:
-                  counts.pendingSubmissions === 0 &&
-                  counts.pendingMedia === 0 &&
-                  !draftDirty,
-              }).catch(() => undefined);
-            }),
+          const countsByProject = await getPendingOutboxCountsByProject().catch(
+            () => null,
           );
+          if (countsByProject) {
+            await Promise.all(
+              (state.projects ?? [state.project]).map(async (project) => {
+                const counts = countsByProject.get(project.id) ?? {
+                  pendingSubmissions: 0,
+                  pendingMedia: 0,
+                };
+                return reportDeviceStatus({
+                  device_id: deviceId,
+                  project_id: project.id,
+                  pending_submissions: counts.pendingSubmissions,
+                  pending_media: counts.pendingMedia,
+                  app_version: appVersion,
+                  schema_versions_cached: [project.schemaVersion],
+                  fieldwork_complete:
+                    counts.pendingSubmissions === 0 &&
+                    counts.pendingMedia === 0 &&
+                    !draftDirty,
+                }).catch(() => undefined);
+              }),
+            );
+          }
         }
         completed = syncedIds.size > 0 && failedCount === 0;
         if (!silent) {

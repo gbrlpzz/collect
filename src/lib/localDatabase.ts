@@ -62,8 +62,15 @@ export function openDatabase(): Promise<IDBDatabase> {
   return openDatabaseByName(localDatabaseName());
 }
 
+// One connection per database name, reused for the page lifetime. Opening a
+// fresh handle per call leaked connections (each pinning DB_VERSION, which
+// eventually makes a future upgrade hang on onblocked).
+const openConnections = new Map<string, Promise<IDBDatabase>>();
+
 export function openDatabaseByName(name: string): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
+  const cached = openConnections.get(name);
+  if (cached) return cached;
+  const opening = new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(name, DB_VERSION);
     request.onupgradeneeded = () => {
       const database = request.result;
@@ -74,8 +81,15 @@ export function openDatabaseByName(name: string): Promise<IDBDatabase> {
       });
     };
     request.onsuccess = () => {
-      request.result.onversionchange = () => request.result.close();
-      resolve(request.result);
+      const database = request.result;
+      database.onversionchange = () => {
+        database.close();
+        openConnections.delete(name);
+      };
+      // An abnormal close (storage pressure, private mode) must evict the
+      // dead handle so the next call reopens instead of using it.
+      database.onclose = () => openConnections.delete(name);
+      resolve(database);
     };
     request.onerror = () =>
       reject(request.error ?? new Error("Unable to open local database"));
@@ -86,4 +100,23 @@ export function openDatabaseByName(name: string): Promise<IDBDatabase> {
         ),
       );
   });
+  openConnections.set(name, opening);
+  // A failed open must not pin the cache slot.
+  opening.catch(() => openConnections.delete(name));
+  return opening;
+}
+
+/** Close and forget every cached connection. Used by tests and sign-out. */
+export async function closeCachedDatabases(): Promise<void> {
+  const pending = [...openConnections.values()];
+  openConnections.clear();
+  await Promise.all(
+    pending.map(async (connection) => {
+      try {
+        (await connection).close();
+      } catch {
+        // Already closed or failed to open; nothing to release.
+      }
+    }),
+  );
 }

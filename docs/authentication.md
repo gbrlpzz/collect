@@ -80,7 +80,11 @@ Administrator rights follow the allow-list, never the sign-in method.
 - A deployment with an empty list grants nobody. Open contributor sign-up can
   never turn into an unexpected administrator.
 - `bootstrap-workspace` (first workspace on an empty deployment) applies the
-  same list.
+  same list. The `BOOTSTRAP_ADMIN_EMAIL` secret, when set, is an explicit
+  override: only that address may create the first workspace.
+- Rate limiting for sign-in codes and sign-in links is keyed on the IP the
+  platform gateway reports (the last `x-forwarded-for` hop), which the client
+  cannot forge by prepending entries.
 
 ---
 

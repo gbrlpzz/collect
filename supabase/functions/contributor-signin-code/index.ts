@@ -8,7 +8,7 @@ import {
 } from "../_shared/auth.ts";
 import { sha256 } from "../_shared/hash.ts";
 import { sendEmail } from "../_shared/mail.ts";
-import { bumpIpRateLimit } from "../_shared/rateLimit.ts";
+import { bumpAdminMintLimit, bumpIpRateLimit } from "../_shared/rateLimit.ts";
 
 const CODE_TTL_SECONDS = 20 * 60;
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -112,6 +112,19 @@ serve(async (request) => {
         return json(
           { error: "This person is not a contributor of the project" },
           { status: 404 },
+        );
+      }
+
+      // Admin-minted codes are bounded per administrator (60/hour) so a
+      // compromised session cannot mint credentials without limit; onboarding
+      // a whole roster still fits comfortably inside the budget.
+      if (!(await bumpAdminMintLimit(service, user.id))) {
+        return json(
+          {
+            error:
+              "Too many codes issued in the last hour. Wait before issuing more.",
+          },
+          { status: 429 },
         );
       }
 

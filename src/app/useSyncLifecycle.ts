@@ -4,7 +4,7 @@ import type { AppState } from "../types";
 import {
   getOrCreateDeviceId,
   getOutboxOperations,
-  getPendingOutboxCounts,
+  getPendingOutboxCountsByProject,
 } from "../lib/localStore";
 import { probeRemoteHealth, reportDeviceStatus } from "../lib/remoteBackend";
 
@@ -120,9 +120,16 @@ export function useSyncLifecycle({
         ([key, value]) =>
           key !== "observed_date" && value !== "" && value !== undefined,
       );
+      const countsByProject = await getPendingOutboxCountsByProject().catch(
+        () => null,
+      );
+      if (!active || !countsByProject) return;
       await Promise.all(
         state.projects!.map(async (project) => {
-          const counts = await getPendingOutboxCounts(project.id);
+          const counts = countsByProject.get(project.id) ?? {
+            pendingSubmissions: 0,
+            pendingMedia: 0,
+          };
           return reportDeviceStatus({
             device_id: deviceId,
             project_id: project.id,

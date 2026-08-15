@@ -6,7 +6,8 @@
  * canonical origin; APP_ALT_ORIGINS lists any others that must keep working,
  * comma separated. The response echoes the caller's origin when it is on that
  * list, so an installed app on the older address keeps syncing instead of
- * failing with an opaque CORS error.
+ * failing with an opaque CORS error. With no origin configured the functions
+ * fail closed: no cross-origin browser access is granted at all.
  */
 function allowedOrigins(): string[] {
   const values = [
@@ -18,21 +19,28 @@ function allowedOrigins(): string[] {
     .filter((value) => value.length > 0);
 }
 
-function allowOriginFor(request?: Request): string {
+function allowOriginFor(request?: Request): string | null {
   const allowed = allowedOrigins();
-  if (!allowed.length) return "*";
+  if (!allowed.length) return null;
   const origin = request?.headers.get("Origin")?.trim().replace(/\/+$/, "");
   if (origin && allowed.includes(origin)) return origin;
   return allowed[0];
 }
 
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": allowOriginFor(),
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
-  Vary: "Origin",
-};
+function corsHeaderRecord(origin: string | null) {
+  const headers = {
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
+    Vary: "Origin",
+  };
+  if (origin) {
+    return { ...headers, "Access-Control-Allow-Origin": origin };
+  }
+  return headers;
+}
+
+export const corsHeaders = corsHeaderRecord(allowOriginFor());
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
@@ -63,7 +71,9 @@ export function serve(
   Deno.serve(async (request) => {
     const response = await handler(request);
     const headers = new Headers(response.headers);
-    headers.set("Access-Control-Allow-Origin", allowOriginFor(request));
+    const origin = allowOriginFor(request);
+    if (origin) headers.set("Access-Control-Allow-Origin", origin);
+    else headers.delete("Access-Control-Allow-Origin");
     headers.set("Vary", "Origin");
     return new Response(response.body, {
       status: response.status,

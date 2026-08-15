@@ -23,6 +23,7 @@ import {
   outboxKey,
   hasServerReceipt,
 } from "../src/lib/syncProtocol";
+import { closeCachedDatabases } from "../src/lib/localDatabase";
 
 // ---------------------------------------------------------------------------
 // §54 critical-failure coverage at the ledger level: every scenario below
@@ -80,7 +81,15 @@ function makeSubmission(id = crypto.randomUUID()): TestSubmissionBundle {
 
 describe("local ledger survival (§54 lifecycle)", () => {
   beforeEach(async () => {
-    indexedDB.deleteDatabase("collect-local-v1");
+    // Connections are cached for the page lifetime; a reset must close them
+    // and await the delete, or the next write lands in the doomed database.
+    await closeCachedDatabases();
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.deleteDatabase("collect-local-v1");
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => reject(new Error("database delete blocked"));
+    });
   });
 
   it("kill immediately after Submit: submission, media, and all three outbox operations reload intact", async () => {

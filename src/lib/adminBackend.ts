@@ -252,13 +252,27 @@ export async function createRemoteProject(
     published_by: userData.user.id,
   });
   if (schemaError) throw new Error("Schema could not be published");
-  for (const email of input.emails) {
-    if (!email.trim()) continue;
-    const response = await client.functions.invoke("send-project-invite", {
-      body: { project_id: project.id, email: email.trim() },
-    });
-    if (response.error) throw response.error;
-  }
+  // Invitations are independent; a few run at a time instead of one serial
+  // round-trip per address, bounded so a large roster cannot stampede the
+  // mail provider.
+  const emails = input.emails
+    .map((email) => email.trim())
+    .filter((email) => email.length > 0);
+  let inviteCursor = 0;
+  const inviteWorkers = Array.from(
+    { length: Math.min(3, emails.length) },
+    async () => {
+      while (inviteCursor < emails.length) {
+        const email = emails[inviteCursor];
+        inviteCursor += 1;
+        const response = await client.functions.invoke("send-project-invite", {
+          body: { project_id: project.id, email },
+        });
+        if (response.error) throw response.error;
+      }
+    },
+  );
+  await Promise.all(inviteWorkers);
   return (
     (await loadAssignedProjects())?.find(
       (candidate) => candidate.id === project.id,

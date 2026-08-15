@@ -193,8 +193,9 @@ The local IndexedDB ledger stores drafts, submissions, media blobs, outbox entri
 - **Draft isolation**: Drafts remain outside the outbox and never upload. Discarding a draft deletes its unsubmitted media blobs.
 - **Single storage location**: Media blobs live in one durable store and are referenced by ID rather than copied across records.
 - **Write safety**: Stale draft autosaves cannot overwrite submitted media or revert a `SYNCED` record.
-- **Resilient recovery**: The recovery exporter reads stores directly and skips unreadable blobs without crashing.
-- **Safe migrations**: Schema upgrades snapshot source data before applying changes in a write transaction.
+- **Blob lifecycle**: A media blob is kept locally until its submission receives a durable server finalization receipt; the receipt transaction then prunes the blob (demo receipts keep it). Unsynced data is never pruned.
+- **Resilient recovery**: The recovery exporter reads stores directly and skips unreadable blobs without crashing. It covers unsynced data; media already finalized on the server is no longer held locally and is recovered from the server instead.
+- **Safe migrations**: Schema upgrades snapshot source data before applying changes in a write transaction; the legacy shared-database import is claimed by exactly one account before any rows are copied.
 
 ---
 

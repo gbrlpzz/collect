@@ -16,6 +16,7 @@ import {
   createRequest,
   DEVICE_STATE_STORE,
   DRAFTS_STORE,
+  localDatabaseName,
   MEDIA_STORE,
   openDatabase,
   openDatabaseByName,
@@ -406,6 +407,12 @@ export async function saveAppState(
   // Media blobs live only in MEDIA_STORE (committed once at submit). The
   // app-state and submissions mirrors persist metadata only, so a debounced
   // autosave never re-serializes large media into quota repeatedly.
+  // A debounced autosave fires per keystroke-pause; rewriting every
+  // observation row each time is O(history) write traffic (and lets one
+  // tab's stale copy clobber rows it did not touch). Rows whose serialized
+  // form matches the last successful save are skipped entirely.
+  const savedRows = savedObservationCacheFor(localDatabaseName());
+  const serializedById = new Map<string, string>();
   state.observations.forEach((observation) => {
     const withoutBlobs: Observation = observation.media?.some(
       (asset) => asset.blob !== undefined,
@@ -418,6 +425,9 @@ export async function saveAppState(
           })),
         }
       : observation;
+    const serialized = JSON.stringify(withoutBlobs);
+    serializedById.set(observation.id, serialized);
+    if (savedRows.get(observation.id) === serialized) return;
     const store = transaction.objectStore(SUBMISSIONS_STORE);
     // A stale autosave must never downgrade a durable SYNCED row back to a
     // pending status after the receipt transaction already cleared the outbox.
@@ -435,7 +445,29 @@ export async function saveAppState(
       store.put(withoutBlobs, observation.id);
     };
   });
-  await transactionComplete;
+  try {
+    await transactionComplete;
+  } catch (error) {
+    // The cache must only ever describe committed rows; a failed transaction
+    // forgets everything so the next save rewrites unconditionally.
+    savedRows.clear();
+    throw error;
+  }
+  serializedById.forEach((serialized, id) => savedRows.set(id, serialized));
+}
+
+/** Rows this page last wrote, per account database, so autosaves can skip
+ * unchanged observations. Keyed by database name because accounts never
+ * share local state. */
+const lastSavedObservationRows = new Map<string, string>();
+let lastSavedObservationDatabase: string | null = null;
+
+function savedObservationCacheFor(database: string): Map<string, string> {
+  if (lastSavedObservationDatabase !== database) {
+    lastSavedObservationDatabase = database;
+    lastSavedObservationRows.clear();
+  }
+  return lastSavedObservationRows;
 }
 
 /**
@@ -519,6 +551,13 @@ export interface LocalReceipt {
   demo?: boolean;
 }
 
+export interface MarkedSyncResult {
+  /** Submissions whose receipt was written by THIS call (first ever). The
+   * decision is made inside the receipt transaction, so two tabs racing the
+   * same submission can never both count it. */
+  countedIds: string[];
+}
+
 /**
  * This is the only function that may remove field-data operations from the
  * outbox. It is called only after a complete server receipt (or the explicit
@@ -527,8 +566,9 @@ export interface LocalReceipt {
 export async function markLocalSubmissionsSynced(
   ids: string[],
   receiptOverrides: Partial<LocalReceipt> = {},
-): Promise<void> {
-  if (!("indexedDB" in window) || !ids.length) return;
+): Promise<MarkedSyncResult> {
+  const countedIds: string[] = [];
+  if (!("indexedDB" in window) || !ids.length) return { countedIds };
   const database = await openDatabase();
   const transaction = database.transaction(
     [SUBMISSIONS_STORE, MEDIA_STORE, OUTBOX_STORE, RECEIPTS_STORE],
@@ -538,6 +578,13 @@ export async function markLocalSubmissionsSynced(
   const submissions = transaction.objectStore(SUBMISSIONS_STORE);
   const outbox = transaction.objectStore(OUTBOX_STORE);
   const receipts = transaction.objectStore(RECEIPTS_STORE);
+  // A durable server finalization receipt makes the server the copy of
+  // record, so the local blob may be pruned in the same transaction. Demo
+  // receipts have no server behind them: the local blob is the only copy and
+  // must survive.
+  const pruneMediaBlobs =
+    !receiptOverrides.demo &&
+    (receiptOverrides.serverStatus ?? "COMPLETE") === "COMPLETE";
   ids.forEach((id) => {
     const request = submissions.get(id);
     request.onsuccess = () => {
@@ -545,7 +592,29 @@ export async function markLocalSubmissionsSynced(
       const observation = request.result as Observation | undefined;
       if (!observation) return;
       submissions.put({ ...observation, status: "SYNCED" }, id);
+      // The first write of a receipt is the one and only time this
+      // submission may be counted as newly complete; doing this read in the
+      // same transaction makes the decision atomic across tabs.
+      const receiptRequest = receipts.get(id);
+      receiptRequest.onsuccess = () => {
+        if (receiptRequest.result === undefined) countedIds.push(id);
+        receipts.put(
+          {
+            submissionId: id,
+            receivedAt: receiptOverrides.receivedAt ?? new Date().toISOString(),
+            finalizedAt: receiptOverrides.finalizedAt ?? null,
+            serverStatus: receiptOverrides.serverStatus ?? "COMPLETE",
+            demo: receiptOverrides.demo ?? false,
+          },
+          id,
+        );
+      };
       observation.media?.forEach((asset) => {
+        outbox.delete(`media:${asset.id}`);
+        if (pruneMediaBlobs) {
+          transaction.objectStore(MEDIA_STORE).delete(asset.id);
+          return;
+        }
         const mediaRequest = transaction.objectStore(MEDIA_STORE).get(asset.id);
         mediaRequest.onsuccess = () => {
           // SAFETY: IndexedDB returns the stored DurableMedia record or undefined.
@@ -555,23 +624,13 @@ export async function markLocalSubmissionsSynced(
               .objectStore(MEDIA_STORE)
               .put({ ...media, uploadState: "SYNCED" }, asset.id);
         };
-        outbox.delete(`media:${asset.id}`);
       });
-      receipts.put(
-        {
-          submissionId: id,
-          receivedAt: receiptOverrides.receivedAt ?? new Date().toISOString(),
-          finalizedAt: receiptOverrides.finalizedAt ?? null,
-          serverStatus: receiptOverrides.serverStatus ?? "COMPLETE",
-          demo: receiptOverrides.demo ?? false,
-        },
-        id,
-      );
     };
     outbox.delete(`submission:${id}`);
     outbox.delete(`finalize:${id}`);
   });
   await transactionComplete;
+  return { countedIds };
 }
 
 export async function setLocalSubmissionStatus(
@@ -636,7 +695,11 @@ export async function recordOutboxFailure(
     operations
       .filter(
         (operation) =>
-          operation.entityId === id || mediaIds.has(operation.entityId),
+          (operation.entityId === id || mediaIds.has(operation.entityId)) &&
+          // An acknowledged media upload stays acknowledged: a later-phase
+          // failure (e.g. finalize) must not rewind it to pending, which
+          // would corrupt heartbeat counts until the next full success.
+          operation.state !== "ACKNOWLEDGED",
       )
       .forEach((operation) => {
         const attempts = operation.attempts + 1;
@@ -683,22 +746,54 @@ export async function recordOutboxFailure(
  * in-memory observation statuses. This is what device-status heartbeats
  * should report: media rows that were already acknowledged do not count.
  */
-export async function getPendingOutboxCounts(projectId?: string): Promise<{
+export interface PendingOutboxCounts {
   pendingSubmissions: number;
   pendingMedia: number;
-}> {
-  const operations = await getOutboxOperations();
-  const relevant = projectId
-    ? operations.filter((operation) => operation.projectId === projectId)
-    : operations;
+}
+
+function countPendingOperations(
+  operations: OutboxOperation[],
+): PendingOutboxCounts {
   const submissionIds = new Set<string>();
   let pendingMedia = 0;
-  for (const operation of relevant) {
+  for (const operation of operations) {
     if (operation.state === "ACKNOWLEDGED") continue;
     if (operation.operationType === "UPLOAD_MEDIA") pendingMedia += 1;
     else submissionIds.add(operation.entityId);
   }
   return { pendingSubmissions: submissionIds.size, pendingMedia };
+}
+
+export async function getPendingOutboxCounts(
+  projectId?: string,
+): Promise<PendingOutboxCounts> {
+  const operations = await getOutboxOperations();
+  const relevant = projectId
+    ? operations.filter((operation) => operation.projectId === projectId)
+    : operations;
+  return countPendingOperations(relevant);
+}
+
+/**
+ * One outbox read grouped per project. Heartbeats report every project at
+ * once; calling getPendingOutboxCounts in a loop would rescan the whole
+ * outbox store once per project.
+ */
+export async function getPendingOutboxCountsByProject(): Promise<
+  Map<string, PendingOutboxCounts>
+> {
+  const operations = await getOutboxOperations();
+  const byProject = new Map<string, OutboxOperation[]>();
+  for (const operation of operations) {
+    const bucket = byProject.get(operation.projectId);
+    if (bucket) bucket.push(operation);
+    else byProject.set(operation.projectId, [operation]);
+  }
+  const counts = new Map<string, PendingOutboxCounts>();
+  for (const [projectId, projectOperations] of byProject) {
+    counts.set(projectId, countPendingOperations(projectOperations));
+  }
+  return counts;
 }
 
 /** True when a durable server receipt exists for this submission. */
@@ -763,8 +858,10 @@ const LEGACY_IMPORTED_TO_KEY = "legacy-imported-to";
  * data lived in the shared "collect-local-v1" database. On first boot for an
  * account whose scoped database is empty, import the legacy rows (submissions,
  * media, outbox, drafts, projects, receipts, device state) so no cached
- * fieldwork is stranded by the upgrade. Only the first account that boots
- * after the upgrade adopts the legacy data; every other account starts clean.
+ * fieldwork is stranded by the upgrade. The legacy database is claimed by one
+ * scope in a single transaction before anything is copied, so two accounts
+ * booting concurrently can never both adopt the same shared data; every other
+ * account starts clean.
  */
 export async function migrateLegacyDatabase(scope: string): Promise<void> {
   if (!("indexedDB" in window) || scope === "default") return;
@@ -780,17 +877,34 @@ export async function migrateLegacyDatabase(scope: string): Promise<void> {
     if (scopedCount > 0) return;
 
     const legacy = await openDatabaseByName(LEGACY_DB_NAME);
-    if (!legacy) return;
 
-    const settingsRequest = createRequest(
-      legacy
-        .transaction(SETTINGS_STORE, "readonly")
-        .objectStore(SETTINGS_STORE)
-        .get(LEGACY_IMPORTED_TO_KEY),
+    // Claim atomically: read the marker and write our scope in ONE
+    // transaction, before any copying. A concurrent tab for another account
+    // either sees our committed claim and stops, or has already claimed and
+    // we stop. Writing the marker only after the copy would let both accounts
+    // import the shared rows.
+    const claimTransaction = legacy.transaction(SETTINGS_STORE, "readwrite");
+    const claimComplete = waitForTransaction(claimTransaction);
+    const claimStore = claimTransaction.objectStore(SETTINGS_STORE);
+    const claimRequest = claimStore.get(LEGACY_IMPORTED_TO_KEY);
+    const claimedByOtherScope = await new Promise<boolean>(
+      (resolve, reject) => {
+        claimRequest.onsuccess = () => {
+          const parsed = z.string().safeParse(claimRequest.result);
+          if (parsed.success && parsed.data !== scope) {
+            resolve(true);
+            return;
+          }
+          // Re-claiming our own scope is a no-op; it makes a partially
+          // interrupted earlier run resumable.
+          claimStore.put(scope, LEGACY_IMPORTED_TO_KEY);
+          resolve(false);
+        };
+        claimRequest.onerror = () => reject(claimRequest.error);
+      },
     );
-    const importedTo = await settingsRequest;
-    const parsedImported = z.string().safeParse(importedTo);
-    if (parsedImported.success && parsedImported.data !== scope) return;
+    await claimComplete;
+    if (claimedByOtherScope) return;
 
     // Finish every legacy read before opening the scoped write transaction.
     // IndexedDB may auto-commit a write transaction whenever the event loop
@@ -817,10 +931,6 @@ export async function migrateLegacyDatabase(scope: string): Promise<void> {
       values.forEach((value, index) => target.put(value, keys[index]));
     }
     await writeComplete;
-
-    const markTx = legacy.transaction(SETTINGS_STORE, "readwrite");
-    markTx.objectStore(SETTINGS_STORE).put(scope, LEGACY_IMPORTED_TO_KEY);
-    await waitForTransaction(markTx);
   } catch {
     // The upgrade is best-effort; collection must never be blocked by it.
   }

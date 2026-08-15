@@ -212,6 +212,24 @@ function precacheManifest(): Plugin {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "VITE_");
+  // A production deploy built without Supabase coordinates silently ships
+  // the demo adapter, which marks observations "synced" with no server
+  // behind them. Refuse that build on CI/hosting platforms; local demo
+  // builds without environment variables stay possible.
+  if (mode === "production" && (process.env.CI || process.env.VERCEL)) {
+    const missing: string[] = [];
+    if (!env.VITE_SUPABASE_URL) missing.push("VITE_SUPABASE_URL");
+    if (!(env.VITE_SUPABASE_PUBLISHABLE_KEY ?? env.VITE_SUPABASE_ANON_KEY)) {
+      missing.push("VITE_SUPABASE_PUBLISHABLE_KEY (or VITE_SUPABASE_ANON_KEY)");
+    }
+    if (missing.length > 0) {
+      throw new Error(
+        `Refusing production build: missing ${missing.join(", ")}. ` +
+          "An unconfigured build would ship the demo adapter and mark " +
+          'observations "synced" with no server behind them.',
+      );
+    }
+  }
   return {
     plugins: [react(), socialMetadata(env.VITE_APP_URL), precacheManifest()],
     build: {

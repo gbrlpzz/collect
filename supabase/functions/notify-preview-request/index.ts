@@ -11,6 +11,31 @@ const previewNotifySchema = z.object({
   source: z.string().nullable().optional(),
 });
 
+/** Digest both secrets, then compare the fixed-length digests without early
+ * exit, so the check's timing does not reveal how much of the secret matched. */
+async function secretsMatch(
+  provided: string,
+  expected: string,
+): Promise<boolean> {
+  const digest = async (value: string) =>
+    new Uint8Array(
+      await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(value),
+      ),
+    );
+  const [providedDigest, expectedDigest] = await Promise.all([
+    digest(provided),
+    digest(expected),
+  ]);
+  if (providedDigest.byteLength !== expectedDigest.byteLength) return false;
+  let difference = 0;
+  for (let index = 0; index < providedDigest.byteLength; index += 1) {
+    difference |= providedDigest[index] ^ expectedDigest[index];
+  }
+  return difference === 0;
+}
+
 serve(async (request) => {
   if (request.method === "OPTIONS") return options();
   if (request.method !== "POST") {
@@ -25,7 +50,10 @@ serve(async (request) => {
 
   const expectedSecret = Deno.env.get("PREVIEW_REQUEST_WEBHOOK_SECRET");
   const providedSecret = request.headers.get("x-webhook-secret");
-  if (!expectedSecret || providedSecret !== expectedSecret) {
+  if (!expectedSecret || !providedSecret) {
+    return json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!(await secretsMatch(providedSecret, expectedSecret))) {
     return json({ error: "Unauthorized" }, { status: 401 });
   }
 
