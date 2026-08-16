@@ -4,12 +4,16 @@
 }
 .device-code {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
   margin: 18px 0 10px;
 }
 .device-code span {
-  width: 44px;
+  /* Eight cells at a fixed 44px are wider than the sheet on any phone, and
+     a centred overflow clips the first and last character. The cell shrinks
+     to fit and only then wraps. */
+  width: clamp(32px, calc((100% - (7 * 8px)) / 8), 44px);
   height: 56px;
   display: grid;
   place-items: center;

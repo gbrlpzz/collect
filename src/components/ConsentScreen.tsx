@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { AppCredit } from "./AppCredit";
 import { CollectBrand } from "./CollectBrand";
-import { Icon } from "./Icon";
 import { Button, InfoDisclosure } from "./ui";
 
 interface ConsentScreenProps {
@@ -74,11 +73,11 @@ export function ConsentScreen({
             <dd>After it has first been saved safely on this device.</dd>
           </div>
         </dl>
-        <details className="consent-full-statement">
-          <summary>
-            <span>Read the full consent statement</span>
-            <Icon name="chevron-down" size={16} />
-          </summary>
+        <InfoDisclosure
+          className="consent-full-statement"
+          title="Read the full consent statement"
+          icon="file"
+        >
           <section
             className="consent-statement"
             aria-labelledby="agreement-title"
@@ -98,7 +97,7 @@ export function ConsentScreen({
               <p key={paragraph}>{paragraph}</p>
             ))}
           </section>
-        </details>
+        </InfoDisclosure>
         <InfoDisclosure
           className="consent-record-disclosure"
           title="How your agreement is recorded"

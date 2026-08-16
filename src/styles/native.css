@@ -660,11 +660,7 @@ button {
   .mobile-tabbar button:active {
     opacity: 0.68;
   }
-  .project-row,
-  .list-row {
-    padding-right: 12px;
-    padding-left: 12px;
-  }
+
   .project-row-meta span {
     max-width: 92px;
   }
@@ -812,6 +808,13 @@ h1 {
 .storage-alert button {
   width: var(--control-height);
   height: var(--control-height);
+}
+/* The labelled actions ("Sync now", "Export copy") are not icon buttons:
+   this layer wins over foundation, so the exception is restated here. */
+.storage-alert .storage-alert-action {
+  width: auto;
+  height: auto;
+  min-height: var(--control-height);
 }
 .media-remove {
   top: 0;

@@ -75,7 +75,11 @@ a {
 h1,
 h2,
 h3,
-p {
+p,
+dl,
+dd {
+  /* One reset for the user-agent defaults, including the 40px definition
+     indent that otherwise has to be neutralised in every list. */
   margin: 0;
 }
 h1,
@@ -1176,25 +1180,6 @@ p {
 }
 .sync-blocked-copy .sync-blocked-action {
   color: var(--text);
-}
-.sync-facts {
-  margin: 18px 0;
-  padding: 14px 0;
-  border-top: 1px solid var(--separator-light);
-  border-bottom: 1px solid var(--separator-light);
-}
-.sync-facts div {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--secondary);
-  font-size: 0.8125rem;
-}
-.sync-facts strong {
-  color: var(--text);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-align: right;
 }
 .recovery-button {
   width: 100%;
@@ -2323,7 +2308,10 @@ p {
   display: flex;
   flex-direction: column;
   gap: 9px;
-  padding: 14px 2px;
+  /* No side padding: these rows share the sheet gutter with every other
+     row, and 2px was enough to read as crooked. */
+  margin: 14px 0;
+  padding: 14px 0;
   border-top: 1px solid var(--separator-light);
 }
 .sync-facts > div {
@@ -2337,7 +2325,9 @@ p {
   font-size: 0.8125rem;
 }
 .sync-facts strong {
-  font-size: 0.875rem;
+  /* Same size as the label beside it: two sizes on one baseline read as a
+     misprint. */
+  font-size: 0.8125rem;
   font-weight: 600;
   text-align: right;
 }
@@ -2348,9 +2338,12 @@ p {
 }
 .sync-details summary {
   min-height: 40px;
-  display: flex;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
   align-items: center;
-  gap: 7px;
+  /* Same icon column and gap as .info-disclosure, so the two disclosure
+     labels in one sheet start on the same pixel. */
+  gap: 8px;
   color: var(--secondary);
   font-size: 0.875rem;
   font-weight: 600;
@@ -2358,7 +2351,9 @@ p {
 }
 .sync-details-list {
   margin: 6px 0 0;
-  padding: 0 0 0 18px;
+  /* Rows share the sheet gutter with .sync-facts above them; the previous
+     18px indent matched no other edge in the sheet. */
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -2423,6 +2418,11 @@ p {
 
 /* Schema builder: per-field configuration controls */
 .builder-config {
+  /* The row grid pins "Required" and the remove button to row 1, so an
+     unplaced config block lands in the 28px index track and spills out of
+     it. It is a sub-panel of the row: it starts on the control column, so
+     its fields line up with the label and type controls above them. */
+  grid-column: 2 / -1;
   display: flex;
   flex-direction: column;
   gap: 8px;

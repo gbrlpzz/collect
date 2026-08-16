@@ -227,13 +227,12 @@ export function SyncSheet({
         </Button>
       )}
 
-      <details
-        className="sync-details sync-recovery-disclosure"
-        onToggle={(event) => setTechnicalOpen(event.currentTarget.open)}
+      <InfoDisclosure
+        className="sync-recovery-disclosure"
+        title="Data recovery and device details"
+        icon="shield"
+        onToggle={setTechnicalOpen}
       >
-        <summary>
-          <Icon name="shield" size={15} /> Data recovery and device details
-        </summary>
         <div className="sync-facts">
           <div>
             <span>Device storage</span>
@@ -264,14 +263,18 @@ export function SyncSheet({
             ))}
           </ul>
         )}
-        <button className="recovery-button" onClick={onRecoveryExport}>
-          <Icon name="download" size={15} /> Export local recovery copy
+        <button
+          type="button"
+          className="recovery-button"
+          onClick={onRecoveryExport}
+        >
+          <Icon name="download" size={16} /> Export local recovery copy
         </button>
         <p className="sheet-footnote">
           Use this only to preserve locally saved records and media outside
           collect. It does not remove anything from this device.
         </p>
-      </details>
+      </InfoDisclosure>
     </ModalSurface>
   );
 }

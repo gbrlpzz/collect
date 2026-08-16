@@ -131,7 +131,7 @@ export function ProfileSheet({
                 {storagePersistence === "granted"
                   ? "Persistent"
                   : storagePersistence === "not-granted"
-                    ? "Standard (browser may evict)"
+                    ? "Browser managed"
                     : "Unknown"}
               </dd>
             </div>

@@ -282,7 +282,7 @@ export function NewProjectWizard({ onBack, onPublish }: NewProjectWizardProps) {
                           updateField(field.id, { label: event.target.value })
                         }
                       />
-                      <div>
+                      <div className="builder-primary-controls">
                         <select
                           className="builder-select"
                           value={field.type}

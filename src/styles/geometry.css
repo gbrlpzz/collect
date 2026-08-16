@@ -399,6 +399,15 @@ h3 {
 .contributor-list {
   overflow: visible;
 }
+/* An empty list is a row of its own: it keeps the row gutter instead of
+   starting against the card border. */
+.contributor-list .empty-list-state,
+.schema-list .empty-list-state,
+.project-list .empty-list-state,
+.recent-observation-list .empty-list-state {
+  padding-right: var(--space-4);
+  padding-left: var(--space-4);
+}
 .project-row-wrap + .project-row-wrap,
 .list-row + .list-row,
 .admin-project-card + .admin-project-card {
@@ -606,6 +615,17 @@ h3 {
 .panel-heading {
   gap: var(--space-6);
 }
+/* This layer resets h1/h2/h3/p margins, so the intended heading rhythm has
+   to be restated here or the subtitle sits flush against its heading. */
+.panel-heading p {
+  margin-top: var(--space-2);
+}
+.section-heading-row h2 {
+  font-size: 1rem;
+}
+.section-heading-row p {
+  margin-top: var(--space-1);
+}
 .panel-actions {
   display: flex;
   flex-wrap: wrap;
@@ -724,7 +744,7 @@ h3 {
   box-shadow: none;
 }
 .auth-card h1 {
-  margin-top: 2px;
+  margin: 2px 0 var(--space-3);
   font-size: clamp(2rem, 8vw, 2.375rem);
 }
 .auth-card > p,
@@ -781,6 +801,41 @@ h3 {
   background: var(--paper);
   color: var(--text);
   font-size: var(--type-body);
+}
+/* One inner inset for every text control, on the 4pt grid. Earlier values
+   (13px for inputs, 9px for the schema editor, 10px for its option rows)
+   put stacked controls on four different text columns. */
+.field-input,
+.builder-inline-input,
+.builder-key-input,
+.builder-select,
+.builder-config-input {
+  padding-right: var(--space-4);
+  padding-left: var(--space-4);
+}
+.builder-inline-input,
+.builder-key-input,
+.builder-select,
+.builder-config-input {
+  padding-right: var(--space-3);
+  padding-left: var(--space-3);
+}
+/* The guided flow keeps its larger, rounder control inset. */
+.flow-step .field-input {
+  padding-right: var(--space-5);
+  padding-left: var(--space-5);
+}
+.number-input-wrap .field-input {
+  padding-right: 78px;
+}
+.input-with-clear > .field-input {
+  padding-right: 52px;
+}
+.flow-step .input-with-clear > .field-input {
+  padding-right: 56px;
+}
+.flow-step .input-with-clear-textarea > .field-input {
+  padding-right: var(--space-5);
 }
 .field-textarea {
   border-radius: var(--radius-medium);
@@ -903,8 +958,10 @@ h3 {
 .flow-step .choice-button {
   min-height: 56px;
   align-items: center;
-  padding-right: 20px;
-  padding-left: 20px;
+  /* The 1px border is part of the inset: 19 + 1 puts this label on the same
+     column as the text inside .field-input on the previous step. */
+  padding-right: calc(var(--space-5) - 1px);
+  padding-left: calc(var(--space-5) - 1px);
   line-height: 1.3;
 }
 .flow-step .capture-card {
@@ -1137,19 +1194,12 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   .primary-action-dock-draft .draft-restart-action {
     min-height: var(--control-height);
   }
-  .project-row,
-  .list-row {
-    padding-right: var(--space-3);
-    padding-left: var(--space-3);
-  }
   .project-row-meta span {
     max-width: 92px;
   }
   .admin-project-card {
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    /* Same gutter as every other grouped row on this surface. */
     gap: var(--space-2);
-    padding-right: var(--space-3);
-    padding-left: var(--space-3);
   }
   .admin-project-stats {
     grid-column: 1 / -1;
@@ -1282,6 +1332,10 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
     max-height: calc(100dvh - 8px);
     padding-right: var(--page-gutter);
     padding-left: var(--page-gutter);
+    /* Edge to edge on a phone: side borders sit off screen and would only
+       push every row inside the sheet 1px off the page gutter. */
+    border-right: 0;
+    border-left: 0;
     border-radius: 22px 22px 0 0;
   }
   .confirmation-dialog {
@@ -1705,7 +1759,9 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 /* Admin hierarchy: list rows first, rare project actions in a menu, technical
    schema identifiers behind disclosure, and no decorative duplicate stats. */
 .admin-project-card {
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  /* Two children (copy, chevron). A third track kept an extra column gap
+     reserved, so the chevron stopped 8px short of every other list row. */
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 .admin-project-leading p {
   white-space: normal;
@@ -1926,6 +1982,8 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 }
 .info-disclosure-content {
   max-width: 36rem;
+  /* A full-bleed disclosure keeps its body on the container gutter: the
+     summary icon is a section marker, not a text column. */
   padding: 0 0 var(--space-3);
   color: var(--secondary);
   font-size: 0.8125rem;
@@ -1964,8 +2022,7 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 }
 .wizard-disclosure > summary::-webkit-details-marker,
 .profile-disclosure > summary::-webkit-details-marker,
-.profile-attention > summary::-webkit-details-marker,
-.consent-full-statement > summary::-webkit-details-marker {
+.profile-attention > summary::-webkit-details-marker {
   display: none;
 }
 .wizard-disclosure > summary > span,
@@ -1989,8 +2046,7 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   font-size: 0.75rem;
 }
 .wizard-disclosure[open] > summary > svg,
-.profile-disclosure[open] > summary > svg:last-child,
-.consent-full-statement[open] > summary > svg {
+.profile-disclosure[open] > summary > svg:last-child {
   transform: rotate(180deg);
 }
 .wizard-disclosure > label,
@@ -2067,6 +2123,13 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   color: var(--secondary);
   font-size: 0.75rem;
 }
+/* The administrator variant states facts ("Granted", "Not granted"), not
+   counts, so the value keeps body type instead of the 26px number style. */
+.profile-metrics-facts > div > strong {
+  font-size: var(--type-body);
+  font-weight: 600;
+  letter-spacing: normal;
+}
 .profile-attention {
   grid-column: 1 / -1;
   border-top: 1px solid var(--separator-light);
@@ -2085,7 +2148,10 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   color: var(--secondary);
 }
 .profile-attention > p {
-  margin: 0 var(--space-4) var(--space-4) calc(44px + var(--space-6));
+  /* The explanation starts where the summary label starts: row padding,
+     the 44px score ring, and the row gap. Any other value reads crooked. */
+  margin: 0 var(--space-4) var(--space-4)
+    calc(var(--space-4) + 44px + var(--space-3));
   color: var(--secondary);
   font-size: 0.8125rem;
   line-height: 1.45;
@@ -2141,13 +2207,18 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 .profile-disclosure > ol,
 .profile-disclosure > dl {
   margin: 0;
-  padding: 0 var(--space-4) var(--space-4) calc(17px + var(--space-7));
+  /* Disclosed text starts on the summary label column: summary padding,
+     the 17px icon, and the summary gap. */
+  padding: 0 var(--space-4) var(--space-4)
+    calc(var(--space-4) + 17px + var(--space-3));
   color: var(--secondary);
   font-size: 0.8125rem;
   line-height: 1.5;
 }
 .profile-disclosure > ol {
-  padding-left: calc(17px + var(--space-8));
+  /* Ordered markers hang on that same column, so the numbers line up with
+     the label instead of floating between two edges. */
+  padding-left: calc(var(--space-4) + 17px + var(--space-3) + var(--space-5));
 }
 .profile-privacy {
   border-top: 1px solid var(--separator-light);
@@ -2160,16 +2231,22 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   font-weight: 600;
 }
 .profile-privacy dd {
-  margin-top: 2px;
+  /* Reset the user-agent 40px definition indent: the description belongs on
+     the same left edge as its term. */
+  margin: 2px 0 0;
 }
 .profile-privacy .button {
-  width: calc(100% - var(--space-8));
+  /* The control spans the panel: the width must subtract both margins,
+     otherwise the right edge stops short of every neighbouring row. */
+  width: calc(100% - (2 * var(--space-4)));
   margin: 0 var(--space-4) var(--space-4);
 }
 .profile-about-content {
   display: grid;
   gap: var(--space-2);
-  padding: 0 var(--space-4) var(--space-4);
+  /* Same text column as the other disclosures. */
+  padding: 0 var(--space-4) var(--space-4)
+    calc(var(--space-4) + 17px + var(--space-3));
   color: var(--secondary);
   font-size: var(--type-footnote);
   line-height: 1.5;
@@ -2202,6 +2279,12 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   color: var(--secondary);
 }
 .profile-feedback {
+  /* Controls span the panel rather than the text column, so this one steps
+     back out of the icon indent and matches the other panel buttons.
+     `width: auto` is required: a 100% width would move the box instead of
+     widening it and leave the right edge short. */
+  width: auto;
+  margin-left: calc(-1 * (17px + var(--space-3)));
   justify-content: center;
   color: var(--text);
   text-decoration: none;
@@ -2267,20 +2350,24 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   font-size: 0.8125rem;
   line-height: 1.4;
 }
+/* Both consent disclosures are the shared full-bleed row, so they only need
+   their spacing here. */
 .consent-full-statement {
-  margin-bottom: var(--space-4);
-  border-bottom: 1px solid var(--separator-light);
+  margin-top: var(--space-4);
 }
-.consent-full-statement > summary {
-  min-height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* Quiet decline sits under the primary action and shares its width, so the
+   two decisions read as one column instead of a left-aligned afterthought. */
+.consent-decline {
+  width: 100%;
+  justify-content: center;
+  margin-top: var(--space-2);
+  color: var(--secondary);
+}
+/* The code sub-form needs the same rhythm the other sign-in methods get
+   from their labels. */
+.auth-code {
+  display: grid;
   gap: var(--space-3);
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 600;
-  list-style: none;
 }
 .consent-full-statement .consent-statement {
   max-height: 42vh;

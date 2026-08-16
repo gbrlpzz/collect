@@ -234,14 +234,21 @@ export function InfoDisclosure({
   children,
   icon = "info",
   className = "",
+  onToggle,
 }: {
   title: string;
   children: ReactNode;
   icon?: IconName;
   className?: string;
+  /** Notified when the disclosure opens or closes, for panels that only load
+   * their detail once a person asks for it. */
+  onToggle?: (open: boolean) => void;
 }) {
   return (
-    <details className={`info-disclosure ${className}`.trim()}>
+    <details
+      className={`info-disclosure ${className}`.trim()}
+      onToggle={(event) => onToggle?.(event.currentTarget.open)}
+    >
       <summary>
         <Icon name={icon} size={16} />
         <span>{title}</span>

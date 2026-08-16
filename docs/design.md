@@ -95,6 +95,27 @@ The collector presents questions one field at a time:
   - Footnote / Caption: $13\text{ pt}$ – $12\text{ pt}$
 - **Spacing scale**: Strict 4-point grid (`4, 8, 12, 16, 20, 24, 32, 40, 48px`).
 
+### Alignment contract
+
+A screen may use only a few left edges, and each one must be deliberate. Two
+edges a few pixels apart read as a defect, not as a hierarchy.
+
+- **Page gutter**: `16px` on a phone. Every page, sheet, and card uses it. A
+  border on the container is part of that inset, never added on top of it.
+- **Grouped rows**: every row family in one list uses the same gutter. An
+  empty state is a row and keeps that gutter too.
+- **Disclosures**: a card disclosure (a bordered panel with a leading icon,
+  such as the profile sheet rows) opens its text on the summary title column,
+  which is `page inset + icon width + row gap`. A full-bleed disclosure (a
+  plain row with a separator, such as the sync sheet and the consent screen)
+  opens its content on the container gutter. Full-width controls always span
+  the container, never the text column.
+- **Definition lists**: reset the user-agent `dd` indent. The description
+  starts on the same edge as its term.
+- **Text controls**: one inner inset per control family, so stacked inputs,
+  selects, and choice rows put their text on one column. A control border is
+  counted inside that inset.
+
 ---
 
 ## Sign-in screen

@@ -94,7 +94,7 @@ export function ContributorProfileSheet({
       ) : (
         <>
           <section className="profile-section" aria-label="Consent">
-            <div className="profile-metrics">
+            <div className="profile-metrics profile-metrics-facts">
               <div>
                 <span>Consent</span>
                 <strong>
@@ -118,42 +118,40 @@ export function ContributorProfileSheet({
 
           <section className="profile-section" aria-label="Devices">
             <h3>Devices</h3>
-            <div className="profile-status-list">
+            <dl className="profile-status-list">
               <div>
-                <span>Known devices</span>
-                <strong>{devices.length || "—"}</strong>
+                <dt>Known devices</dt>
+                <dd>{devices.length || "—"}</dd>
               </div>
               <div>
-                <span>Last seen</span>
-                <strong title={latestSeen ? formatExactTime(latestSeen) : ""}>
+                <dt>Last seen</dt>
+                <dd title={latestSeen ? formatExactTime(latestSeen) : ""}>
                   {latestSeen ? formatRelativeTime(latestSeen) : "—"}
-                </strong>
+                </dd>
               </div>
               <div>
-                <span>Pending work</span>
-                <strong>
-                  {devices.reduce((sum, d) => sum + d.pending, 0)}
-                </strong>
+                <dt>Pending work</dt>
+                <dd>{devices.reduce((sum, d) => sum + d.pending, 0)}</dd>
               </div>
-            </div>
+            </dl>
           </section>
 
           <section className="profile-section" aria-label="Submissions">
             <h3>Submissions</h3>
-            <div className="profile-status-list">
+            <dl className="profile-status-list">
               <div>
-                <span>Finalized</span>
-                <strong>{complete}</strong>
+                <dt>Finalized</dt>
+                <dd>{complete}</dd>
               </div>
               <div>
-                <span>Received</span>
-                <strong>{received}</strong>
+                <dt>Received</dt>
+                <dd>{received}</dd>
               </div>
               <div>
-                <span>Conflicts</span>
-                <strong>{conflict}</strong>
+                <dt>Conflicts</dt>
+                <dd>{conflict}</dd>
               </div>
-            </div>
+            </dl>
           </section>
 
           {(details?.attention.length ?? 0) > 0 && (
