@@ -88,6 +88,23 @@ describe("Security hardening", () => {
       expect(content).toContain("drop column if exists attempts");
       expect(content).not.toContain("and attempts < 10");
     });
+
+    it("automatically recomputes attention scores via database trigger", () => {
+      const content = readFileSync(
+        resolve(
+          __dirname,
+          "../supabase/migrations/20260816150000_recompute_attention_scores_trigger.sql",
+        ),
+        "utf-8",
+      );
+      expect(content).toContain(
+        "create trigger attention_responses_recompute_score",
+      );
+      expect(content).toContain(
+        "after insert or update or delete on public.attention_responses",
+      );
+      expect(content).toContain("private.recompute_attention_score");
+    });
   });
 
   describe("Authentication model", () => {

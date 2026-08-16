@@ -138,4 +138,39 @@ describe("attention verification", () => {
     expect(attentionScore(chance)).toBeCloseTo(0, 5);
     expect(attentionScore([])).toBeNull();
   });
+
+  it("wires automatic attention score computation in PostgreSQL migration trigger", () => {
+    const migration = readFileSync(
+      new URL(
+        "../supabase/migrations/20260816150000_recompute_attention_scores_trigger.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    expect(migration).toContain(
+      "create trigger attention_responses_recompute_score",
+    );
+    expect(migration).toContain(
+      "after insert or update or delete on public.attention_responses",
+    );
+    expect(migration).toContain("private.recompute_attention_score");
+    expect(migration).toContain("on_attention_response_change");
+  });
+
+  it("handles edge cases in score calculations", () => {
+    // Single correct response (p=0.25) => 1.0 (100)
+    expect(attentionScore([{ correct: true, guessProbability: 0.25 }])).toBe(1);
+    // Single incorrect response (p=0.25) => 0.0 (0)
+    expect(attentionScore([{ correct: false, guessProbability: 0.25 }])).toBe(
+      0,
+    );
+    // 3 of 4 correct (p=0.25): (3 - 1) / (4 - 1) = 2/3 ≈ 0.66667
+    const threeOfFour = [
+      { correct: true, guessProbability: 0.25 },
+      { correct: true, guessProbability: 0.25 },
+      { correct: true, guessProbability: 0.25 },
+      { correct: false, guessProbability: 0.25 },
+    ];
+    expect(attentionScore(threeOfFour)).toBeCloseTo(2 / 3, 5);
+  });
 });

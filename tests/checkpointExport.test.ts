@@ -248,4 +248,63 @@ describe("checkpointExport module", () => {
       /^forest-canopy-survey_checkpoint-\d{4}-\d{2}-\d{2}\.zip$/,
     );
   });
+
+  it("populates attention responses and computes attention_failed in client export", async () => {
+    const mockObsWithAttention: Observation[] = [
+      {
+        id: "sub-att-pass",
+        projectId: "proj-fair-dataset",
+        createdAt: "2026-08-15T11:00:00.000Z",
+        schemaVersion: 1,
+        deviceId: "device-alpha",
+        status: "SYNCED",
+        values: { plot_id: "PLOT-1" },
+        attentionResponse: { checkKey: "select_blue", selectedValue: "blue" },
+      },
+      {
+        id: "sub-att-fail",
+        projectId: "proj-fair-dataset",
+        createdAt: "2026-08-15T11:15:00.000Z",
+        schemaVersion: 1,
+        deviceId: "device-alpha",
+        status: "SYNCED",
+        values: { plot_id: "PLOT-2" },
+        attentionResponse: { checkKey: "select_blue", selectedValue: "red" },
+      },
+    ];
+
+    vi.spyOn(localStore, "readStoredRecoveryData").mockResolvedValue({
+      submissions: mockObsWithAttention,
+      media: [],
+      outbox: [],
+      drafts: undefined,
+      projects: [mockProject],
+      appState: undefined,
+      receipts: [],
+    });
+
+    const { archive } = await buildClientCheckpointArchive({
+      project: mockProject,
+      observations: mockObsWithAttention,
+    });
+
+    const unzipped = unzipSync(archive);
+    const attentionCsv = strFromU8(unzipped["data/attention.csv"]);
+    const submissionsJsonl = strFromU8(unzipped["data/submissions.jsonl"]);
+    const submissionsCsv = strFromU8(unzipped["data/submissions.csv"]);
+
+    expect(attentionCsv).toContain("select_blue");
+    expect(attentionCsv).toContain("blue");
+    expect(attentionCsv).toContain("red");
+
+    const jsonlLines = submissionsJsonl
+      .split("\n")
+      .filter((line) => line.trim().length > 0)
+      .map((line) => JSON.parse(line));
+    expect(jsonlLines[0].attention_failed).toBe(false);
+    expect(jsonlLines[1].attention_failed).toBe(true);
+
+    expect(submissionsCsv).toContain('"false"');
+    expect(submissionsCsv).toContain('"true"');
+  });
 });

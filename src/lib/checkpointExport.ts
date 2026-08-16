@@ -12,6 +12,8 @@ import type { ContributorReadiness } from "./adminBackend";
 import { downloadZip } from "./download";
 import { APP_VERSION } from "./appMeta";
 import { readStoredRecoveryData } from "./localStore";
+import { ATTENTION_CHECKS } from "../data/attentionChecks";
+import { attentionScore } from "./attention";
 
 const MIME_EXTENSIONS = {
   "image/jpeg": ".jpg",
@@ -216,6 +218,17 @@ export async function buildClientCheckpointArchive({
     }
   }
 
+  const isAttentionFailed = (
+    attentionResponse?: { checkKey: string; selectedValue: string } | null,
+  ): boolean => {
+    if (!attentionResponse) return false;
+    const check = ATTENTION_CHECKS.find(
+      (c) => c.key === attentionResponse.checkKey,
+    );
+    if (!check) return false;
+    return attentionResponse.selectedValue !== check.correctValue;
+  };
+
   // Canonical JSONL stream
   const jsonl = submissions
     .map((obs) =>
@@ -236,7 +249,7 @@ export async function buildClientCheckpointArchive({
         finalized_at: obs.status === "SYNCED" ? cutoff : null,
         app_version: APP_VERSION,
         environment: obs.environment,
-        attention_failed: false,
+        attention_failed: isAttentionFailed(obs.attentionResponse),
         media: obs.media?.map((asset) => ({
           id: asset.id,
           field_id: asset.fieldId,
@@ -277,7 +290,7 @@ export async function buildClientCheckpointArchive({
         obs.status === "SYNCED" ? cutoff : "",
         obs.status === "SYNCED" ? cutoff : "",
         obs.status,
-        false,
+        isAttentionFailed(obs.attentionResponse),
         JSON.stringify(obs.values),
       ]),
     ),
@@ -330,27 +343,69 @@ export async function buildClientCheckpointArchive({
       "pending_media",
       "fieldwork_complete",
     ]),
-    ...(readiness ?? []).map((row) =>
-      csvRow([
-        row.id,
-        row.email,
-        "contributor",
-        row.status,
-        1,
-        cutoff,
-        "",
-        100,
-        row.attentionScore ?? 100,
-        row.attentionChecksTotal ?? 0,
-        row.attentionCorrectTotal ?? 0,
-        row.lastSeen ?? cutoff,
-        row.lastSeen ?? cutoff,
-        row.lastSeen ?? cutoff,
-        row.pending,
-        0,
-        row.ready,
-      ]),
-    ),
+    ...(readiness && readiness.length > 0
+      ? readiness.map((row) =>
+          csvRow([
+            row.id,
+            row.email,
+            "contributor",
+            row.status,
+            1,
+            cutoff,
+            "",
+            100,
+            row.attentionScore ?? 100,
+            row.attentionChecksTotal ?? 0,
+            row.attentionCorrectTotal ?? 0,
+            row.lastSeen ?? cutoff,
+            row.lastSeen ?? cutoff,
+            row.lastSeen ?? cutoff,
+            row.pending,
+            0,
+            row.ready,
+          ]),
+        )
+      : (() => {
+          const attentionResponses = submissions.flatMap((obs) => {
+            if (!obs.attentionResponse) return [];
+            const check = ATTENTION_CHECKS.find(
+              (c) => c.key === obs.attentionResponse!.checkKey,
+            );
+            const correct = check
+              ? obs.attentionResponse!.selectedValue === check.correctValue
+              : false;
+            return [
+              { correct, guessProbability: check?.guessProbability ?? 0.25 },
+            ];
+          });
+          const computedScore = attentionScore(attentionResponses);
+          const totalChecks = attentionResponses.length;
+          const correctChecks = attentionResponses.filter(
+            (r) => r.correct,
+          ).length;
+          return [
+            csvRow([
+              submissions[0]?.deviceId || "local-user",
+              "local-contributor@example.com",
+              "contributor",
+              "Ready",
+              1,
+              cutoff,
+              "",
+              100,
+              computedScore !== null ? Math.round(computedScore * 100) : 100,
+              totalChecks,
+              correctChecks,
+              totalChecks > 0 ? cutoff : "",
+              cutoff,
+              cutoff,
+              cutoff,
+              0,
+              0,
+              true,
+            ]),
+          ];
+        })()),
   ].join("\n");
 
   const attentionCsv = [
@@ -365,6 +420,28 @@ export async function buildClientCheckpointArchive({
       "guess_probability",
       "created_at",
     ]),
+    ...submissions.flatMap((obs) => {
+      if (!obs.attentionResponse) return [];
+      const check = ATTENTION_CHECKS.find(
+        (c) => c.key === obs.attentionResponse!.checkKey,
+      );
+      const isCorrect = check
+        ? obs.attentionResponse!.selectedValue === check.correctValue
+        : true;
+      return [
+        csvRow([
+          obs.id,
+          obs.deviceId || "local-user",
+          obs.projectId,
+          obs.attentionResponse.checkKey,
+          obs.attentionResponse.selectedValue,
+          isCorrect,
+          isCorrect,
+          check?.guessProbability ?? 0.25,
+          obs.createdAt,
+        ]),
+      ];
+    }),
   ].join("\n");
 
   // GeoJSON
