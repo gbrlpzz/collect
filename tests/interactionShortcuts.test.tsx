@@ -418,7 +418,19 @@ describe("low-friction primary actions", () => {
     expect(screen.queryByRole("menuitem", { name: /admin/i })).toBeNull();
   });
 
-  it("offers a device sign-in code from the signed-in account menu", () => {
+  it("offers a device sign-in code from the signed-in account menu", async () => {
+    consentMocks.getMyProfile.mockResolvedValueOnce({
+      userId: "u1",
+      consentVersion: 1,
+      consentGrantedAt: "2026-08-12T00:00:00Z",
+      consentRevokedAt: null,
+      qualityScore: null,
+      attentionScore: null,
+      attentionChecksTotal: null,
+      attentionCorrectTotal: null,
+      attentionLastAt: null,
+      contributionCount: 0,
+    });
     const onLinkDevice = vi.fn();
     render(
       <TopBar
@@ -431,7 +443,9 @@ describe("low-friction primary actions", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Open profile" }));
-    expect(screen.getByText("field@example.com")).toBeTruthy();
+    await waitFor(() =>
+      expect(screen.getByText("field@example.com")).toBeTruthy(),
+    );
     fireEvent.click(
       screen.getByRole("button", { name: /sign in another device/i }),
     );

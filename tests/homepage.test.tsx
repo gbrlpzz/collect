@@ -7,6 +7,7 @@ import {
   fireEvent,
   waitFor,
   cleanup,
+  act,
 } from "@testing-library/react";
 import { FlowDemo } from "../src/homepage/FlowDemo";
 import { AttentionDemo } from "../src/homepage/AttentionDemo";
@@ -103,7 +104,9 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
         }
       }
 
-      await sleep(360);
+      await act(async () => {
+        await sleep(360);
+      });
       const primary = primaryButton();
       // Save is only clickable once the (required) last step is answered.
       if (
@@ -111,15 +114,23 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
         !primary.disabled &&
         /save observation/i.test(primary.textContent ?? "")
       ) {
-        fireEvent.click(primary);
+        await act(async () => {
+          fireEvent.click(primary);
+        });
         break;
       }
       // Multi-select and required-last steps (e.g. attention) stay put:
       // press the primary action so the walk continues to the next step.
       if (stepTitle() === title) {
         const current = primaryButton();
-        if (current && !current.disabled) fireEvent.click(current);
-        await sleep(360);
+        if (current && !current.disabled) {
+          await act(async () => {
+            fireEvent.click(current);
+          });
+        }
+        await act(async () => {
+          await sleep(360);
+        });
         if (homeReached()) break;
         const after = primaryButton();
         if (
@@ -127,7 +138,9 @@ describe("FlowDemo — real app frontend inside the iPhone mock-up", () => {
           !after.disabled &&
           /save observation/i.test(after.textContent ?? "")
         ) {
-          fireEvent.click(after);
+          await act(async () => {
+            fireEvent.click(after);
+          });
           break;
         }
       }
