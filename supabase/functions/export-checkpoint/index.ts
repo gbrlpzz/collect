@@ -1,5 +1,5 @@
 import { strToU8, zipSync } from "npm:fflate@0.8.3";
-import type { SupabaseClient } from "npm:@supabase/supabase-js@2.112.2";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.112.3";
 import { z } from "npm:zod@4.4.3";
 import { corsHeaders, json, options, serve } from "../_shared/cors.ts";
 import { errorMessage, projectAccess, requireUser } from "../_shared/auth.ts";

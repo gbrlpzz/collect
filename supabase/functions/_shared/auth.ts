@@ -2,7 +2,7 @@ import {
   createClient,
   type SupabaseClient,
   type User,
-} from "npm:@supabase/supabase-js@2.112.2";
+} from "npm:@supabase/supabase-js@2.112.3";
 
 export function serviceClient(): SupabaseClient {
   const url = Deno.env.get("SUPABASE_URL");

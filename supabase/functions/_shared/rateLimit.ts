@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "npm:@supabase/supabase-js@2.112.2";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.112.3";
 import { sha256 } from "./hash.ts";
 
 /**
