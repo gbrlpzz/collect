@@ -117,7 +117,7 @@ const TAB_NARRATION = {
 
 const reducedMotion = Boolean(
   globalThis.window?.matchMedia &&
-    globalThis.window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  globalThis.window.matchMedia("(prefers-reduced-motion: reduce)").matches,
 );
 
 function StatusBar() {

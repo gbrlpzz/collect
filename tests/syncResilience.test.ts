@@ -215,14 +215,12 @@ describe("sync resilience hardening", () => {
     // One failed attempt pushes nextAttemptAt into the future.
     await recordOutboxFailure(submission.id, "connection reset");
 
-    const remoteSync = vi.fn(
-      async (): Promise<RemoteReceipt> => ({
-        submission_id: submission.id,
-        status: "COMPLETE",
-        finalized_at: "2026-08-14T00:00:01Z",
-        received_at: "2026-08-14T00:00:00Z",
-      }),
-    );
+    const remoteSync = vi.fn(async (): Promise<RemoteReceipt> => ({
+      submission_id: submission.id,
+      status: "COMPLETE",
+      finalized_at: "2026-08-14T00:00:01Z",
+      received_at: "2026-08-14T00:00:00Z",
+    }));
     const args = () => ({
       state: appStateWith(observation),
       // SAFETY: syncNow only checks the session for truthiness; no session

@@ -1,9 +1,5 @@
 export type View =
-  | "home"
-  | "collector"
-  | "admin"
-  | "admin-project"
-  | "new-project";
+  "home" | "collector" | "admin" | "admin-project" | "new-project";
 
 export type AppMode = "contributor" | "admin";
 
@@ -119,9 +115,7 @@ export interface MediaAsset {
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue =
-  | JsonPrimitive
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+  JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
 export type FormScalar = string | number | boolean | null | undefined;
 export type FormValue =

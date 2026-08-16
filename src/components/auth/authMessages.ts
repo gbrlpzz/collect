@@ -4,12 +4,7 @@
  * services; the app must never show raw provider wording.
  */
 export type SignInStep =
-  | "provider"
-  | "link"
-  | "password"
-  | "code"
-  | "code-request"
-  | "password-setup";
+  "provider" | "link" | "password" | "code" | "code-request" | "password-setup";
 
 function detail(cause: unknown): string {
   if (cause instanceof Error) return cause.message.toLowerCase();

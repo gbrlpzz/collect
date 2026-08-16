@@ -41,7 +41,7 @@ export function useScrollytelling<T extends HTMLElement>(
     const pinned = () =>
       Boolean(
         globalThis.window?.matchMedia &&
-          window.matchMedia("(min-width: 961px)").matches,
+        window.matchMedia("(min-width: 961px)").matches,
       );
 
     const compute = () => {
@@ -76,7 +76,7 @@ export function useScrollytelling<T extends HTMLElement>(
     const travel = el.offsetHeight - window.innerHeight;
     const pinned = Boolean(
       globalThis.window?.matchMedia &&
-        window.matchMedia("(min-width: 961px)").matches,
+      window.matchMedia("(min-width: 961px)").matches,
     );
     if (!pinned || travel <= 0) {
       apply(index);
@@ -84,8 +84,7 @@ export function useScrollytelling<T extends HTMLElement>(
     }
     const reduceMotion = Boolean(
       globalThis.window?.matchMedia &&
-        globalThis.window.matchMedia("(prefers-reduced-motion: reduce)")
-          .matches,
+      globalThis.window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     );
     window.scrollTo({
       top: el.offsetTop + (travel * (index + 0.5)) / stepCount,

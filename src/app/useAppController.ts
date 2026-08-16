@@ -381,13 +381,11 @@ export function useAppController() {
 
   useEffect(() => {
     if (dbError || !hydrated || collectorPreview) return;
-    if (
-      !(
-        previewUnlocked ||
-        session ||
-        (isSupabaseConfigured && localCacheAvailable)
-      )
-    )
+    if (!(
+      previewUnlocked ||
+      session ||
+      (isSupabaseConfigured && localCacheAvailable)
+    ))
       return;
     const markReady = () => {
       const readyIds = (

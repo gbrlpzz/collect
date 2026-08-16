@@ -460,8 +460,7 @@ export function HomepageApp() {
     setDraftEmail(email);
     const reduceMotion = Boolean(
       globalThis.window?.matchMedia &&
-        globalThis.window.matchMedia("(prefers-reduced-motion: reduce)")
-          .matches,
+      globalThis.window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     );
     document.getElementById("preview")?.scrollIntoView({
       behavior: reduceMotion ? "auto" : "smooth",

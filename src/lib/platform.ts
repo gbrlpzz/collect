@@ -13,7 +13,7 @@ export function isStandaloneApp(): boolean {
   const standaloneNavigator = nav as Navigator & { standalone?: boolean };
   return Boolean(
     win.matchMedia?.("(display-mode: standalone)").matches ||
-      standaloneNavigator.standalone,
+    standaloneNavigator.standalone,
   );
 }
 

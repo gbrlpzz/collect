@@ -54,7 +54,7 @@ function tokenHashParams(): { tokenHash: string; type: EmailOtpType } | null {
 export function hasAuthCallbackError(): boolean {
   return Boolean(
     readCallbackValue("error_code", "error") ||
-      readCallbackValue("error_description", "error_reason"),
+    readCallbackValue("error_description", "error_reason"),
   );
 }
 

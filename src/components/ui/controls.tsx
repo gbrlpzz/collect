@@ -43,11 +43,10 @@ export function Button({
   );
 }
 
-interface IconButtonProps
-  extends Omit<
-    ButtonHTMLAttributes<HTMLButtonElement>,
-    "children" | "aria-label"
-  > {
+interface IconButtonProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "children" | "aria-label"
+> {
   label: string;
   icon: IconName;
 }

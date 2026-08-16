@@ -172,9 +172,7 @@ export async function loadUserOrganizationName(): Promise<string | null> {
   if (membership?.organizations) {
     // SAFETY: Supabase join returns joined organizations object or null.
     const org = membership.organizations as
-      | { name?: string }
-      | null
-      | undefined;
+      { name?: string } | null | undefined;
     if (org?.name) return org.name;
   }
   return null;
