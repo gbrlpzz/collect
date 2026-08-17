@@ -13,7 +13,13 @@ import { signInErrorMessage } from "./authMessages";
  * move its session into the installed app — on iOS the two are separate
  * storage containers, so this is the bridge between them.
  */
-export function CodeSignIn({ autoFocus = false }: { autoFocus?: boolean }) {
+export function CodeSignIn({
+  autoFocus = false,
+  message,
+}: {
+  autoFocus?: boolean;
+  message?: string | null;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -60,6 +66,15 @@ export function CodeSignIn({ autoFocus = false }: { autoFocus?: boolean }) {
 
   return (
     <div className="auth-code">
+      <p className="auth-code-guidance">
+        {message ?? (
+          <>
+            From Safari: sign in on the web, tap <strong>Profile</strong> →{" "}
+            <strong>Sign in another device</strong> to get your 8-character
+            code.
+          </>
+        )}
+      </p>
       <form
         onSubmit={(event) => {
           event.preventDefault();

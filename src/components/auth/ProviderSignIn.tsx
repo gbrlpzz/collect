@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { isStandaloneApp } from "../../lib/platform";
 import {
   authProviderLabel,
   signInWithProvider,
@@ -21,10 +22,12 @@ export function ProviderSignIn({
   providers,
   surface,
   onFailure,
+  onStandaloneStarted,
 }: {
   providers: AuthProvider[];
   surface: "admin" | "contributor";
   onFailure?: (message: string) => void;
+  onStandaloneStarted?: (provider: AuthProvider) => void;
 }) {
   const [pending, setPending] = useState<AuthProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +38,10 @@ export function ProviderSignIn({
     try {
       // The browser leaves for the provider; this view unmounts on return.
       await signInWithProvider(provider, surface);
+      if (isStandaloneApp()) {
+        setPending(null);
+        onStandaloneStarted?.(provider);
+      }
     } catch (caught) {
       const message = signInErrorMessage(caught, "provider");
       setError(message);

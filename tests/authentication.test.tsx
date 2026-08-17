@@ -230,12 +230,49 @@ describe("provider sign-in", () => {
       // Visible, not collapsed: this is a real situation the person can act
       // on, and the action sits inside the message.
       expect(screen.getByText(/this is the installed app/i)).toBeTruthy();
+      expect(screen.getByText(/sign in another device/i)).toBeTruthy();
       // SAFETY: querySelector returns auth callout HTMLElement.
       const callout = document.querySelector(".auth-callout") as HTMLElement;
       fireEvent.click(
         within(callout).getByRole("button", { name: "Sign in with a code" }),
       );
       expect(screen.getByLabelText(/8-character code/i)).toBeTruthy();
+      expect(screen.getByText(/sign in on the web/i)).toBeTruthy();
+    } finally {
+      Object.defineProperty(navigator, "standalone", {
+        configurable: true,
+        value: previous,
+      });
+    }
+  });
+
+  it("switches to the code sign-in screen when a provider is clicked in standalone mode", async () => {
+    // SAFETY: standalone is a non-standard iOS property on navigator.
+    const standaloneNavigator = navigator as Navigator & {
+      standalone?: boolean;
+    };
+    const previous = standaloneNavigator.standalone;
+    Object.defineProperty(navigator, "standalone", {
+      configurable: true,
+      value: true,
+    });
+    try {
+      render(<AuthScreen configured role="contributor" />);
+      const google = await screen.findByRole("button", {
+        name: "Continue with Google",
+      });
+      fireEvent.click(google);
+
+      await waitFor(() =>
+        expect(authMocks.signInWithProvider).toHaveBeenCalledWith(
+          "google",
+          "contributor",
+        ),
+      );
+      // Switches to the code entry screen with guidance
+      await waitFor(() => {
+        expect(screen.getByLabelText(/8-character code/i)).toBeTruthy();
+      });
     } finally {
       Object.defineProperty(navigator, "standalone", {
         configurable: true,

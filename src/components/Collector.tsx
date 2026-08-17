@@ -251,6 +251,7 @@ export function Collector({
     if (isRecord(value) && "value" in value) {
       // SAFETY: wrapped choice value contains value property.
       const nestedValue = (value as { value?: unknown }).value;
+      if (Array.isArray(nestedValue)) return nestedValue.length > 0;
       return (
         nestedValue !== undefined &&
         nestedValue !== null &&

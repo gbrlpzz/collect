@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isStandaloneApp } from "../platform";
 import { requireAuthClient } from "./client";
 import {
   authReturnUrl,
@@ -168,7 +169,8 @@ export async function signInWithProvider(
     rememberAuthRole(targetRole);
   }
   const client = requireAuthClient();
-  const { error } = await client.auth.signInWithOAuth({
+  const standalone = isStandaloneApp();
+  const { data, error } = await client.auth.signInWithOAuth({
     provider,
     options: {
       redirectTo: authReturnUrl(targetRole),
@@ -176,7 +178,13 @@ export async function signInWithProvider(
       // shared field devices are common.
       queryParams:
         provider === "google" ? { prompt: "select_account" } : undefined,
+      skipBrowserRedirect: standalone,
     },
   });
   if (error) throw error;
+  if (standalone && data?.url && globalThis.window) {
+    // In standalone iOS PWA, navigate out to system Safari so Google OAuth
+    // does not fail with 403 disallowed_useragent in the standalone webview.
+    globalThis.window.open(data.url, "_blank", "noopener,noreferrer");
+  }
 }

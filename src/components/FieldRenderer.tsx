@@ -276,22 +276,30 @@ export function FieldRenderer({
         : "";
     const isOther =
       storedValue === "other" ||
-      (otherOption !== undefined && storedValue === otherOption.id);
+      (otherOption !== undefined &&
+        (storedValue === otherOption.id || storedValue === otherOption.value));
     return (
       <div className="choice-grid" role="group" {...accessibilityProps}>
         {field.options?.map((option, index) => {
           const selected =
-            option.id === storedValue || (option.value === "other" && isOther);
+            option.id === storedValue ||
+            option.value === storedValue ||
+            (option.value === "other" && isOther) ||
+            (otherOption !== undefined &&
+              option.id === otherOption.id &&
+              isOther);
           return (
             <button
               type="button"
-              key={option.id}
+              key={option.id || option.value || String(index)}
               className={`choice-button ${selected ? "choice-selected" : ""}`}
               aria-pressed={selected}
               autoFocus={autoFocus && index === 0}
               onClick={() =>
                 onChange(
-                  option.value === "other" && otherOption
+                  (option.value === "other" ||
+                    (otherOption && option.id === otherOption.id)) &&
+                    otherOption
                     ? { value: otherOption.id, otherText: storedOtherText }
                     : option.id,
                 )
@@ -422,35 +430,186 @@ export function FieldRenderer({
   }
 
   if (field.type === "multiple_choice") {
-    const selected = Array.isArray(value) ? value.map(String) : [];
+    const otherOption = field.options?.find(
+      (option) => option.value === "other" || option.id.endsWith("-other"),
+    );
+
+    // Normalize value from any input form: array, record, JSON string, comma string
+    let rawSelected: FormValue[] = [];
+    let storedOtherText = "";
+
+    if (Array.isArray(value)) {
+      rawSelected = value;
+    } else if (isRecord(value)) {
+      if (Array.isArray(value.value)) {
+        rawSelected = value.value;
+      } else if (
+        value.value !== null &&
+        value.value !== undefined &&
+        Object(value.value) !== value.value
+      ) {
+        rawSelected = [String(value.value)];
+      } else if ("selected" in value && Array.isArray(value.selected)) {
+        // SAFETY: value.selected is checked to be an Array.
+        rawSelected = value.selected as FormValue[];
+      } else {
+        rawSelected = Object.entries(value)
+          .filter(([k, v]) => k !== "otherText" && Boolean(v))
+          .map(([k]) => k);
+      }
+      if ("otherText" in value) {
+        storedOtherText = String(value.otherText ?? "");
+      }
+    } else if (
+      value !== null &&
+      value !== undefined &&
+      Object(value) !== value
+    ) {
+      const trimmed = String(value).trim();
+      if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+        try {
+          const parsed: unknown = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            // SAFETY: parsed is checked to be an Array.
+            rawSelected = parsed as FormValue[];
+          }
+        } catch {
+          rawSelected = [trimmed];
+        }
+      } else if (trimmed.includes(",")) {
+        rawSelected = trimmed
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      } else if (trimmed.length > 0) {
+        rawSelected = [trimmed];
+      }
+    }
+
+    const selectedStrings = rawSelected
+      .map((item) => {
+        if (isRecord(item) && "value" in item) {
+          // SAFETY: item is confirmed to be a record with a value property.
+          return String((item as { value?: unknown }).value ?? "");
+        }
+        return String(item ?? "");
+      })
+      .filter(Boolean);
+
+    const isOptionSelected = (opt: { id: string; value: string }): boolean => {
+      const isOther =
+        otherOption !== undefined &&
+        (opt.id === otherOption.id || opt.value === "other");
+      return (
+        selectedStrings.includes(opt.id) ||
+        selectedStrings.includes(opt.value) ||
+        (isOther &&
+          (selectedStrings.includes("other") ||
+            (otherOption !== undefined &&
+              selectedStrings.includes(otherOption.id))))
+      );
+    };
+
+    const isOtherSelected = otherOption ? isOptionSelected(otherOption) : false;
+
+    const toggleOption = (opt: { id: string; value: string }) => {
+      const currentlySelected = isOptionSelected(opt);
+      const isOther =
+        otherOption !== undefined &&
+        (opt.id === otherOption.id || opt.value === "other");
+
+      let nextSelected: string[];
+      if (currentlySelected) {
+        nextSelected = selectedStrings.filter(
+          (item) =>
+            item !== opt.id &&
+            item !== opt.value &&
+            !(
+              isOther &&
+              (item === "other" ||
+                (otherOption !== undefined && item === otherOption.id))
+            ),
+        );
+      } else {
+        const toAdd = opt.id || opt.value;
+        nextSelected = [
+          ...selectedStrings.filter(
+            (item) => item !== opt.id && item !== opt.value,
+          ),
+          toAdd,
+        ];
+      }
+
+      const nextOtherSelected = isOther ? !currentlySelected : isOtherSelected;
+
+      if (otherOption && (nextOtherSelected || storedOtherText)) {
+        onChange({
+          value: nextSelected,
+          otherText: nextOtherSelected ? storedOtherText : "",
+        });
+        return;
+      }
+      onChange(nextSelected);
+    };
+
+    const updateOtherText = (text: string) => {
+      onChange({
+        value: selectedStrings,
+        otherText: text,
+      });
+    };
+
     return (
       <div className="choice-grid" role="group" {...accessibilityProps}>
         {field.options?.map((option, index) => {
-          const isSelected = selected.includes(option.id);
+          const isSelected = isOptionSelected(option);
           return (
             <button
               type="button"
-              key={option.id}
+              key={option.id || option.value || String(index)}
               className={`choice-button ${isSelected ? "choice-selected" : ""}`}
               aria-pressed={isSelected}
               autoFocus={autoFocus && index === 0}
-              onClick={() =>
-                onChange(
-                  isSelected
-                    ? selected.filter((item) => item !== option.id)
-                    : [...selected, option.id],
-                )
-              }
+              onClick={() => toggleOption(option)}
             >
               <span>{option.label}</span>
               {isSelected && <Icon name="check" size={18} />}
             </button>
           );
         })}
+        {otherOption && isOtherSelected && (
+          <div className="other-value-row">
+            <label className="field-help-label" htmlFor={`${field.key}-other`}>
+              Specify other
+            </label>
+            <div className="input-with-clear">
+              <input
+                id={`${field.key}-other`}
+                className="field-input"
+                type="text"
+                required={required}
+                {...accessibilityProps}
+                value={storedOtherText}
+                placeholder="Describe the other value…"
+                maxLength={200}
+                autoComplete="off"
+                autoCapitalize="sentences"
+                enterKeyHint="done"
+                autoFocus={autoFocus}
+                onChange={(event) => updateOtherText(event.target.value)}
+              />
+              {storedOtherText && (
+                <ClearButton
+                  label="Clear other value"
+                  onClick={() => updateOtherText("")}
+                />
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
-
   if (field.type === "location") {
     // SAFETY: location value is stored as LocationValue.
     const location = value as LocationValue | undefined;

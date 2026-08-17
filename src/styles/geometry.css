@@ -1163,7 +1163,9 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
   .page {
     padding-top: 28px;
     padding-right: var(--page-gutter);
-    padding-bottom: calc(58px + max(var(--space-3, 12px), env(safe-area-inset-bottom)) + 16px);
+    padding-bottom: calc(
+      58px + max(var(--space-3, 12px), env(safe-area-inset-bottom)) + 16px
+    );
     padding-left: var(--page-gutter);
   }
   .page-wizard {
@@ -1372,7 +1374,9 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
     -webkit-backdrop-filter: blur(25px) saturate(190%);
     backdrop-filter: blur(25px) saturate(190%);
     box-shadow: var(--floating-shadow);
-    transition: background-color 0.22s var(--ease-spring), transform 0.22s var(--ease-spring);
+    transition:
+      background-color 0.22s var(--ease-spring),
+      transform 0.22s var(--ease-spring);
   }
   .mobile-tabbar button {
     min-width: 0;
@@ -1391,9 +1395,10 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
     font-size: var(--type-caption-2);
     font-weight: 500;
     transform: scale(1);
-    transition: transform 0.16s var(--ease-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)),
-                background-color 0.22s var(--ease-spring, cubic-bezier(0.2, 0.8, 0.2, 1)),
-                color 0.22s var(--ease-spring, cubic-bezier(0.2, 0.8, 0.2, 1));
+    transition:
+      transform 0.16s var(--ease-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)),
+      background-color 0.22s var(--ease-spring, cubic-bezier(0.2, 0.8, 0.2, 1)),
+      color 0.22s var(--ease-spring, cubic-bezier(0.2, 0.8, 0.2, 1));
   }
   .mobile-tabbar button:active {
     transform: scale(0.92);
@@ -1406,7 +1411,9 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
     background: var(--paper);
     color: var(--text);
     font-weight: 600;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 0.5px var(--separator-light);
+    box-shadow:
+      0 1px 4px rgba(0, 0, 0, 0.08),
+      0 0 0 0.5px var(--separator-light);
   }
   .mobile-tabbar button.mobile-tab-active svg {
     animation: tab-icon-pop 0.24s var(--ease-spring-bouncy);
@@ -1414,9 +1421,15 @@ html[data-keyboard-open="true"] .page-wizard .wizard-actions .button-secondary {
 }
 
 @keyframes tab-icon-pop {
-  0% { transform: scale(0.85); }
-  60% { transform: scale(1.15); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0.85);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Keep accessibility preferences intact after the geometry cascade. */

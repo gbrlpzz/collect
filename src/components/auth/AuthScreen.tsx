@@ -195,6 +195,10 @@ export function AuthScreen({
                   providers={providers}
                   surface={role}
                   onFailure={() => setCallbackIssue(null)}
+                  onStandaloneStarted={() => {
+                    setMethod("code");
+                    setCallbackIssue(null);
+                  }}
                 />
 
                 {providers.length > 0 && standalone && (
@@ -203,10 +207,23 @@ export function AuthScreen({
                       <Icon name="info" size={17} /> This is the installed app
                     </p>
                     <p>
-                      A provider opens in the browser, and iOS keeps the two
-                      apart. If sign-in does not come back here, finish it in
-                      the browser and bring the session over with a code.
+                      On iOS, Safari and the installed app keep separate
+                      storage. To sign in with a provider or web account:
                     </p>
+                    <ol className="auth-callout-steps">
+                      <li>
+                        Sign in on the web in Safari (tap a provider above or
+                        open Safari).
+                      </li>
+                      <li>
+                        In Safari, tap <strong>Profile</strong> →{" "}
+                        <strong>Sign in another device</strong> to get an
+                        8-character code.
+                      </li>
+                      <li>
+                        Enter that 8-character code below to sign in this app.
+                      </li>
+                    </ol>
                     <button
                       type="button"
                       className="button button-secondary button-full"

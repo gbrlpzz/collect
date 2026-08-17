@@ -590,24 +590,26 @@ function FieldConfigControls({
           >
             <Icon name="plus" size={14} /> Add option
           </button>
-          {field.type === "single_choice" && !hasOther && (
-            <button
-              className="text-button"
-              type="button"
-              onClick={() =>
-                setOptions([
-                  ...options,
-                  {
-                    id: `option-${crypto.randomUUID().slice(0, 8)}-other`,
-                    value: "other",
-                    label: "Other",
-                  },
-                ])
-              }
-            >
-              <Icon name="plus" size={14} /> Add “Other”
-            </button>
-          )}
+          {(field.type === "single_choice" ||
+            field.type === "multiple_choice") &&
+            !hasOther && (
+              <button
+                className="text-button"
+                type="button"
+                onClick={() =>
+                  setOptions([
+                    ...options,
+                    {
+                      id: `option-${crypto.randomUUID().slice(0, 8)}-other`,
+                      value: "other",
+                      label: "Other",
+                    },
+                  ])
+                }
+              >
+                <Icon name="plus" size={14} /> Add “Other”
+              </button>
+            )}
         </div>
       </div>
     );

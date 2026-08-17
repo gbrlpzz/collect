@@ -2061,6 +2061,21 @@ p {
   font-size: 0.8125rem;
   line-height: 1.45;
 }
+.auth-callout-steps {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 6px;
+  padding-left: 20px;
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+.auth-callout-steps li {
+  padding-left: 2px;
+}
+.auth-callout-steps strong {
+  color: var(--text);
+}
 .auth-callout-title {
   display: flex;
   align-items: center;
@@ -2068,6 +2083,19 @@ p {
   color: var(--text) !important;
   font-size: 0.875rem !important;
   font-weight: 650;
+}
+.auth-code-guidance {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--grouped);
+  border: 1px solid var(--separator-light);
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+.auth-code-guidance strong {
+  color: var(--text);
 }
 
 .auth-install-help,
