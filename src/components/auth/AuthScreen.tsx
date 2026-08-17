@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import {
   authCallbackError,
+  authRedirectOrigin,
+  authReturnUrl,
   knownAuthProviders,
   enabledAuthProviders,
   type AuthProvider,
@@ -126,6 +128,83 @@ export function AuthScreen({
     );
   }
 
+  // On iOS standalone PWA, external provider sign-ins and separate container
+  // storage require bringing the session over with a code from Safari.
+  // Hide Google and other web-only methods in the PWA, directly focusing the
+  // screen on the code bridge with clear instructions.
+  if (standalone) {
+    return (
+      <main
+        className={`auth-page auth-page-${role}`}
+        data-role={role}
+        data-surface={role}
+      >
+        <div className="auth-mark">
+          <CollectBrand />
+        </div>
+        <section className="auth-card" aria-labelledby="auth-title">
+          <h1 id="auth-title">
+            {role === "admin" ? "Admin sign in." : "Sign in with a code."}
+          </h1>
+          <p>
+            {role === "admin"
+              ? "Sign in to run projects, schemas, and contributor access."
+              : "On iOS, this installed app and Safari keep separate storage. Get a one-time code from the web app to sign in."}
+          </p>
+
+          {configured && (
+            <>
+              {callbackIssue && (
+                <p className="auth-error" role="alert">
+                  {callbackIssue}
+                </p>
+              )}
+
+              <aside
+                className="auth-callout"
+                aria-label="Installed app instructions"
+              >
+                <p className="auth-callout-title">
+                  <Icon name="info" size={17} /> How to get your sign-in code
+                </p>
+                <ol className="auth-callout-steps">
+                  <li>
+                    Open Safari and sign in at{" "}
+                    <strong>{authRedirectOrigin() || "the web app"}</strong>.
+                  </li>
+                  <li>
+                    In Safari, tap <strong>Profile</strong> (top right) →{" "}
+                    <strong>Sign in another device</strong> to get an
+                    8-character code.
+                  </li>
+                  <li>Enter that 8-character code below.</li>
+                </ol>
+                <a
+                  href={authReturnUrl(role)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="button button-secondary button-full"
+                >
+                  <Icon name="globe" size={16} />
+                  <span>Open in Safari</span>
+                </a>
+              </aside>
+
+              <CodeSignIn autoFocus hideGuidance />
+            </>
+          )}
+
+          {!configured && onPreview && (
+            <button className="auth-preview-button" onClick={onPreview}>
+              Open interface preview <Icon name="arrow-right" size={15} />
+            </button>
+          )}
+        </section>
+        <AppCredit />
+      </main>
+    );
+  }
+
   return (
     <main
       className={`auth-page auth-page-${role}`}
@@ -195,47 +274,7 @@ export function AuthScreen({
                   providers={providers}
                   surface={role}
                   onFailure={() => setCallbackIssue(null)}
-                  onStandaloneStarted={() => {
-                    setMethod("code");
-                    setCallbackIssue(null);
-                  }}
                 />
-
-                {providers.length > 0 && standalone && (
-                  <aside className="auth-callout" aria-label="Installed app">
-                    <p className="auth-callout-title">
-                      <Icon name="info" size={17} /> This is the installed app
-                    </p>
-                    <p>
-                      On iOS, Safari and the installed app keep separate
-                      storage. To sign in with a provider or web account:
-                    </p>
-                    <ol className="auth-callout-steps">
-                      <li>
-                        Sign in on the web in Safari (tap a provider above or
-                        open Safari).
-                      </li>
-                      <li>
-                        In Safari, tap <strong>Profile</strong> →{" "}
-                        <strong>Sign in another device</strong> to get an
-                        8-character code.
-                      </li>
-                      <li>
-                        Enter that 8-character code below to sign in this app.
-                      </li>
-                    </ol>
-                    <button
-                      type="button"
-                      className="button button-secondary button-full"
-                      onClick={() => {
-                        setMethod("code");
-                        setCallbackIssue(null);
-                      }}
-                    >
-                      Sign in with a code
-                    </button>
-                  </aside>
-                )}
 
                 {providersChecked && (
                   <>

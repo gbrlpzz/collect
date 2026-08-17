@@ -247,13 +247,8 @@ describe("low-friction primary actions", () => {
     });
     try {
       render(<AuthScreen configured role="contributor" />);
-      fireEvent.click(
-        await screen.findByRole("button", { name: /sign in with a code/i }),
-      );
-      expect(screen.getByLabelText(/8-character code/i)).toBeTruthy();
-      expect(
-        screen.getByText(/from your administrator or a signed-in device/i),
-      ).toBeTruthy();
+      expect(await screen.findByLabelText(/8-character code/i)).toBeTruthy();
+      expect(screen.getByText(/how to get your sign-in code/i)).toBeTruthy();
       expect(
         screen.queryByRole("button", { name: /link this device/i }),
       ).toBeNull();

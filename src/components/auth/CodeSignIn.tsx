@@ -16,9 +16,11 @@ import { signInErrorMessage } from "./authMessages";
 export function CodeSignIn({
   autoFocus = false,
   message,
+  hideGuidance = false,
 }: {
   autoFocus?: boolean;
   message?: string | null;
+  hideGuidance?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [code, setCode] = useState("");
@@ -66,15 +68,17 @@ export function CodeSignIn({
 
   return (
     <div className="auth-code">
-      <p className="auth-code-guidance">
-        {message ?? (
-          <>
-            From Safari: sign in on the web, tap <strong>Profile</strong> →{" "}
-            <strong>Sign in another device</strong> to get your 8-character
-            code.
-          </>
-        )}
-      </p>
+      {!hideGuidance && (
+        <p className="auth-code-guidance">
+          {message ?? (
+            <>
+              From Safari: sign in on the web, tap <strong>Profile</strong> →{" "}
+              <strong>Sign in another device</strong> to get your 8-character
+              code.
+            </>
+          )}
+        </p>
+      )}
       <form
         onSubmit={(event) => {
           event.preventDefault();
