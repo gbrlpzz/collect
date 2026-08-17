@@ -7,8 +7,10 @@ import type { ReactNode } from "react";
 import { Icon } from "../icons/Icon";
 
 export interface ListRowProps {
-  title: ReactNode;
+  title?: ReactNode;
+  primary?: ReactNode;
   subtitle?: ReactNode;
+  secondary?: ReactNode;
   leading?: ReactNode;
   trailing?: ReactNode;
   meta?: ReactNode;
@@ -20,7 +22,9 @@ export interface ListRowProps {
 
 export function ListRow({
   title,
+  primary,
   subtitle,
+  secondary,
   leading,
   trailing,
   meta,
@@ -30,13 +34,15 @@ export function ListRow({
   disabled = false,
 }: ListRowProps) {
   const isClickable = Boolean(onClick);
+  const displayTitle = title ?? primary;
+  const displaySubtitle = subtitle ?? secondary;
 
   const content = (
     <>
       {leading && <div className="list-row-leading">{leading}</div>}
       <div className="list-row-copy">
-        <strong className="list-row-title">{title}</strong>
-        {subtitle && <span className="list-row-subtitle">{subtitle}</span>}
+        <strong className="list-row-title">{displayTitle}</strong>
+        {displaySubtitle && <span className="list-row-subtitle">{displaySubtitle}</span>}
       </div>
       {(meta || trailing || chevron) && (
         <div className="list-row-meta">

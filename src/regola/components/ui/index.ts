@@ -13,4 +13,6 @@ export * from "./TextInput";
 export * from "./Textarea";
 export * from "./ChoiceGrid";
 export * from "./FeedbackPrimitives";
+export * from "./NutrientProgressBar";
+export * from "./SlideToConfirm";
 export * from "./Toast";

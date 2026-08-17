@@ -7,7 +7,8 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Icon, type IconName } from "../icons/Icon";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "tertiary" | "quiet" | "destructive";
+  variant?: "primary" | "secondary" | "tertiary" | "quiet" | "destructive" | "danger";
+  size?: "sm" | "md" | "lg";
   icon?: IconName;
   iconAfter?: IconName;
   children: ReactNode;
@@ -21,6 +22,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  */
 export function Button({
   variant = "secondary",
+  size = "md",
   icon,
   iconAfter,
   children,
@@ -31,21 +33,24 @@ export function Button({
   disabled,
   ...props
 }: ButtonProps) {
+  const normalizedVariant = variant === "danger" ? "destructive" : variant;
+  const sizeClass = size === "sm" ? "button-sm" : size === "lg" ? "button-lg" : "";
+
   return (
     <button
       type={type}
       aria-busy={busy || undefined}
       disabled={disabled || busy}
-      className={`button button-${variant}${fullWidth ? " button-full" : ""}${busy ? " button-busy" : ""} ${className}`.trim()}
+      className={`button button-${normalizedVariant}${sizeClass ? " " + sizeClass : ""}${fullWidth ? " button-full" : ""}${busy ? " button-busy" : ""} ${className}`.trim()}
       {...props}
     >
       {busy ? (
         <span className="button-spinner" aria-hidden="true" />
       ) : icon ? (
-        <Icon name={icon} size={18} />
+        <Icon name={icon} size={size === "sm" ? 14 : 18} />
       ) : null}
       <span>{children}</span>
-      {!busy && iconAfter && <Icon name={iconAfter} size={18} />}
+      {!busy && iconAfter && <Icon name={iconAfter} size={size === "sm" ? 14 : 18} />}
     </button>
   );
 }

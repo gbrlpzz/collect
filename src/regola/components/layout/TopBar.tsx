@@ -8,29 +8,39 @@ import type { ReactNode } from "react";
 export interface TopBarProps {
   title?: ReactNode;
   brand?: ReactNode;
+  nav?: ReactNode;
   actions?: ReactNode;
   leading?: ReactNode;
+  variant?: "bubbles" | "standard";
   className?: string;
   maxWidth?: string;
 }
 
+/**
+ * Navigation TopBar adhering to Apple HIG.
+ * In "bubbles" mode (default), the topbar is transparent with floating frosted
+ * glass capsules for wordmark, desktop navigation, and profile/actions.
+ */
 export function TopBar({
   title,
   brand,
+  nav,
   actions,
   leading,
+  variant = "bubbles",
   className = "",
   maxWidth,
 }: TopBarProps) {
   return (
-    <header className={`topbar ${className}`.trim()}>
+    <header className={`topbar ${variant === "bubbles" ? "topbar-bubbles" : ""} ${className}`.trim()}>
       <div className="topbar-inner" style={maxWidth ? { maxWidth } : undefined}>
         <div className="topbar-leading">
           {leading}
           {brand}
         </div>
+        {nav && <div className="topbar-nav">{nav}</div>}
         {title && <div className="topbar-title">{title}</div>}
-        <div className="topbar-actions">{actions}</div>
+        {actions && <div className="topbar-actions">{actions}</div>}
       </div>
     </header>
   );

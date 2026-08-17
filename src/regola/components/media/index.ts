@@ -6,3 +6,4 @@
 export * from "./MediaTile";
 export * from "./PhotoStrip";
 export * from "./CaptureCard";
+export * from "./AudioPill";

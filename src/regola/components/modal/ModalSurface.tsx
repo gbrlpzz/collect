@@ -4,6 +4,7 @@
 // Do not edit here expecting changes to reach upstream.
 
 import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 const FOCUSABLE_SELECTOR =
   'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
@@ -81,7 +82,7 @@ export function ModalSurface({
     }
   };
 
-  return (
+  const surface = (
     <div
       className={kind === "sheet" ? "sheet-backdrop" : "dialog-backdrop"}
       role="presentation"
@@ -102,4 +103,12 @@ export function ModalSurface({
       </section>
     </div>
   );
+
+  // Portal to <body>: the overlay must escape ANY ancestor stacking context
+  // (app shell, backdrop-filter wrappers, transformed containers). Without
+  // this, a fixed z-index inside the shell can sit BELOW the app's own fixed
+  // chrome (tab dock, topbar) and become unclickable.
+  return typeof document !== "undefined"
+    ? createPortal(surface, document.body)
+    : surface;
 }

@@ -10,6 +10,7 @@
  * - Light surface (Contributor/User): calm neutral light gray canvas (#f5f5f7) with pure white paper.
  * - Dark surface (Admin/Inverted): deep black canvas (#000000) with elevated dark paper (#1c1c1e).
  * - Text states communicate meaning; color is never the sole information carrier.
+ * - Standard Apple System Fills & Materials for native depth and visual hierarchy.
  */
 
 export interface ColorPalette {
@@ -34,6 +35,16 @@ export interface ColorPalette {
   accentText: string;
   selectionBg: string;
   floatingShadow: string;
+  // Apple System Fills
+  fillPrimary: string;
+  fillSecondary: string;
+  fillTertiary: string;
+  fillQuaternary: string;
+  // Standard Apple Materials
+  materialRegular: string;
+  materialThick: string;
+  materialThin: string;
+  materialUltrathin: string;
 }
 
 export const lightColors: ColorPalette = {
@@ -58,6 +69,14 @@ export const lightColors: ColorPalette = {
   accentText: "#ffffff",
   selectionBg: "rgba(0, 0, 0, 0.9)",
   floatingShadow: "0 8px 28px rgba(0, 0, 0, 0.14)",
+  fillPrimary: "rgba(120, 120, 128, 0.20)",
+  fillSecondary: "rgba(120, 120, 128, 0.16)",
+  fillTertiary: "rgba(118, 118, 128, 0.12)",
+  fillQuaternary: "rgba(116, 116, 128, 0.08)",
+  materialRegular: "rgba(245, 245, 247, 0.82)",
+  materialThick: "rgba(255, 255, 255, 0.90)",
+  materialThin: "rgba(255, 255, 255, 0.65)",
+  materialUltrathin: "rgba(255, 255, 255, 0.45)",
 };
 
 export const darkColors: ColorPalette = {
@@ -82,6 +101,14 @@ export const darkColors: ColorPalette = {
   accentText: "#000000",
   selectionBg: "rgba(255, 255, 255, 0.9)",
   floatingShadow: "0 8px 30px rgba(0, 0, 0, 0.42)",
+  fillPrimary: "rgba(120, 120, 128, 0.36)",
+  fillSecondary: "rgba(120, 120, 128, 0.30)",
+  fillTertiary: "rgba(118, 118, 128, 0.22)",
+  fillQuaternary: "rgba(118, 118, 128, 0.14)",
+  materialRegular: "rgba(28, 28, 30, 0.82)",
+  materialThick: "rgba(37, 37, 40, 0.90)",
+  materialThin: "rgba(28, 28, 30, 0.65)",
+  materialUltrathin: "rgba(28, 28, 30, 0.45)",
 };
 
 export const highContrastLightColors: Partial<ColorPalette> = {
@@ -92,6 +119,10 @@ export const highContrastLightColors: Partial<ColorPalette> = {
   separatorLight: "rgba(0, 0, 0, 0.34)",
   grouped: "rgba(118, 118, 128, 0.20)",
   focusRing: "rgba(0, 0, 0, 0.38)",
+  fillPrimary: "rgba(120, 120, 128, 0.28)",
+  fillSecondary: "rgba(120, 120, 128, 0.22)",
+  fillTertiary: "rgba(118, 118, 128, 0.16)",
+  fillQuaternary: "rgba(116, 116, 128, 0.10)",
 };
 
 export const highContrastDarkColors: Partial<ColorPalette> = {
@@ -102,6 +133,10 @@ export const highContrastDarkColors: Partial<ColorPalette> = {
   separatorLight: "rgba(255, 255, 255, 0.42)",
   grouped: "rgba(118, 118, 128, 0.34)",
   focusRing: "rgba(255, 255, 255, 0.42)",
+  fillPrimary: "rgba(120, 120, 128, 0.44)",
+  fillSecondary: "rgba(120, 120, 128, 0.36)",
+  fillTertiary: "rgba(118, 118, 128, 0.28)",
+  fillQuaternary: "rgba(118, 118, 128, 0.18)",
 };
 
 export const scoreColors = {
