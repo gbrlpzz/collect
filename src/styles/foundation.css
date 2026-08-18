@@ -1,8 +1,15 @@
 :root {
   color-scheme: light;
   font-family:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-    "Helvetica Neue", Arial, sans-serif;
+    "Archivo",
+    "Archivo Variable",
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Text",
+    "SF Pro Display",
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -190,10 +197,20 @@ p {
   fill: currentColor;
 }
 .collect-wordmark {
+  font-family:
+    "Archivo",
+    "Archivo Variable",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.075em;
+  letter-spacing: var(--tracking-wordmark, -0.04em);
 }
 .collect-brand-compact {
   gap: 6px;
@@ -1829,7 +1846,7 @@ p {
   color: var(--text);
   font-size: 1.5625rem;
   font-weight: 700;
-  letter-spacing: -0.07em;
+  letter-spacing: var(--tracking-wordmark, -0.04em);
 }
 .auth-mark .wordmark-dot {
   color: var(--tertiary);

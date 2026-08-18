@@ -9,7 +9,7 @@
 
 export const typography = {
   fontFamily:
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    '"Archivo", "Archivo Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
   fontFamilyMono:
     'ui-monospace, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace',
   scale: {
@@ -31,7 +31,7 @@ export const typography = {
   },
   letterSpacing: {
     title: "-0.022em",
-    wordmark: "-0.045em",
+    wordmark: "-0.04em",
     kicker: "0.03em",
   },
   fontWeight: {

@@ -115,7 +115,17 @@ button {
 }
 .wordmark {
   font-size: 1.125rem;
-  letter-spacing: -0.06em;
+  letter-spacing: var(--tracking-wordmark, -0.04em);
+  font-family:
+    "Archivo",
+    "Archivo Variable",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
 }
 .account-button {
   width: var(--control-height);

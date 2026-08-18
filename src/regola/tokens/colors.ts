@@ -28,6 +28,7 @@ export interface ColorPalette {
   focusRing: string;
   error: string;
   destructive: string;
+  success: string;
   glass: string;
   chrome: string;
   accent: string;
@@ -62,6 +63,7 @@ export const lightColors: ColorPalette = {
   focusRing: "rgba(0, 0, 0, 0.16)",
   error: "#d70015",
   destructive: "#d70015",
+  success: "#34c759",
   glass: "rgba(245, 245, 247, 0.86)",
   chrome: "rgba(245, 245, 247, 0.92)",
   accent: "#000000",
@@ -93,7 +95,8 @@ export const darkColors: ColorPalette = {
   focus: "#ffffff",
   focusRing: "rgba(255, 255, 255, 0.28)",
   error: "#ff6961",
-  destructive: "#ff453a",
+  destructive: "#ff6961",
+  success: "#30d158",
   glass: "rgba(28, 28, 30, 0.86)",
   chrome: "rgba(28, 28, 30, 0.92)",
   accent: "#ffffff",

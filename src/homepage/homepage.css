@@ -180,9 +180,19 @@ body {
   flex-shrink: 0;
 }
 .hp-brand .collect-wordmark {
+  font-family:
+    "Archivo",
+    "Archivo Variable",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
   font-size: 1.125rem;
   font-weight: 700;
-  letter-spacing: -0.075em;
+  letter-spacing: var(--tracking-wordmark, -0.04em);
   line-height: 1;
 }
 .hp-brand .collect-mark {

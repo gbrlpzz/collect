@@ -4,6 +4,7 @@
 // Do not edit here expecting changes to reach upstream.
 
 import type { ChangeEvent } from "react";
+import { Icon } from "../icons/Icon";
 
 export interface StepperProps {
   value: number | undefined;
@@ -62,7 +63,7 @@ export function Stepper({
         disabled={disabled || isMin}
         aria-label={`Decrease ${label}`}
       >
-        −
+        <Icon name="minus" size={16} strokeWidth={2.2} />
       </button>
       <input
         type="number"
@@ -83,7 +84,7 @@ export function Stepper({
         disabled={disabled || isMax}
         aria-label={`Increase ${label}`}
       >
-        +
+        <Icon name="plus" size={16} strokeWidth={2.2} />
       </button>
     </div>
   );
