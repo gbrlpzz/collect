@@ -10,7 +10,12 @@ import {
 import { AppCredit } from "../AppCredit";
 import { CollectBrand } from "../CollectBrand";
 import { Icon, type IconName } from "../Icon";
-import { isAppleMobileBrowser, isStandaloneApp } from "../../lib/platform";
+import {
+  handoffToSafari,
+  isAppleMobileBrowser,
+  isStandaloneApp,
+  safariHandoffHref,
+} from "../../lib/platform";
 import { CodeSignIn } from "./CodeSignIn";
 import { EmailLinkForm } from "./EmailLinkForm";
 import { PasswordForm } from "./PasswordForm";
@@ -93,6 +98,8 @@ export function AuthScreen({
   const [callbackIssue, setCallbackIssue] = useState<string | null>(() =>
     authCallbackError(),
   );
+  const [safariHandoffNote, setSafariHandoffNote] = useState(false);
+  const [safariHandoffArmed, setSafariHandoffArmed] = useState(false);
 
   useEffect(() => {
     if (!configured) {
@@ -109,6 +116,17 @@ export function AuthScreen({
       active = false;
     };
   }, [configured]);
+
+  useEffect(() => {
+    if (!safariHandoffArmed) return;
+    const timer = globalThis.window.setTimeout(() => {
+      if (globalThis.document.visibilityState === "visible") {
+        setSafariHandoffNote(true);
+      }
+      setSafariHandoffArmed(false);
+    }, 700);
+    return () => globalThis.window.clearTimeout(timer);
+  }, [safariHandoffArmed]);
 
   const chosen = backupMethods.find((candidate) => candidate.id === method);
 
@@ -133,6 +151,8 @@ export function AuthScreen({
   // Hide Google and other web-only methods in the PWA, directly focusing the
   // screen on the code bridge with clear instructions.
   if (standalone) {
+    const webUrl = authReturnUrl(role);
+    const safariHref = safariHandoffHref(webUrl) ?? webUrl;
     return (
       <main
         className={`auth-page auth-page-${role}`}
@@ -180,14 +200,24 @@ export function AuthScreen({
                   <li>Enter that 8-character code below.</li>
                 </ol>
                 <a
-                  href={authReturnUrl(role)}
-                  target="_blank"
+                  href={safariHref}
                   rel="noopener noreferrer"
                   className="button button-secondary button-full"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    void handoffToSafari(webUrl).then(() => {
+                      setSafariHandoffArmed(true);
+                    });
+                  }}
                 >
                   <Icon name="globe" size={16} />
                   <span>Open in Safari</span>
                 </a>
+                {safariHandoffNote && (
+                  <p className="auth-callout-fallback" role="status">
+                    Address copied. If Safari did not open, paste it there.
+                  </p>
+                )}
               </aside>
 
               <CodeSignIn autoFocus hideGuidance />

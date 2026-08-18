@@ -2101,6 +2101,9 @@ p {
   font-size: 0.875rem !important;
   font-weight: 650;
 }
+.auth-callout-fallback {
+  margin: 0;
+}
 .auth-code-guidance {
   margin: 0 0 14px;
   padding: 10px 12px;

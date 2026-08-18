@@ -243,4 +243,55 @@ describe("provider sign-in", () => {
       });
     }
   });
+
+  it("hands Open in Safari off through the Safari scheme, not a same-origin tab", async () => {
+    // SAFETY: standalone is a non-standard iOS property on navigator.
+    const standaloneNavigator = navigator as Navigator & {
+      standalone?: boolean;
+    };
+    const previous = standaloneNavigator.standalone;
+    Object.defineProperty(navigator, "standalone", {
+      configurable: true,
+      value: true,
+    });
+    vi.spyOn(supabaseClient, "authReturnUrl").mockReturnValue(
+      "https://collect.example.org/app",
+    );
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const assign = vi.fn();
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      clipboard: { writeText },
+      standalone: true,
+    });
+    vi.stubGlobal("location", {
+      ...window.location,
+      assign,
+    });
+    try {
+      render(<AuthScreen configured role="contributor" />);
+
+      const link = screen.getByRole("link", { name: /open in safari/i });
+      expect(link.getAttribute("href")).toBe(
+        "x-safari-https://collect.example.org/app",
+      );
+      expect(link.getAttribute("target")).toBeNull();
+
+      fireEvent.click(link);
+      await waitFor(() => {
+        expect(writeText).toHaveBeenCalledWith(
+          "https://collect.example.org/app",
+        );
+      });
+      expect(assign).toHaveBeenCalledWith(
+        "x-safari-https://collect.example.org/app",
+      );
+    } finally {
+      vi.unstubAllGlobals();
+      Object.defineProperty(navigator, "standalone", {
+        configurable: true,
+        value: previous,
+      });
+    }
+  });
 });

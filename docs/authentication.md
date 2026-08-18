@@ -102,7 +102,10 @@ Administrator rights follow the allow-list, never the sign-in method.
   sheet opens in the browser; if the session lands there instead of in the
   installed app, the person signs in once in the browser and moves the
   session with a device code. The sign-in screen says so in the installed
-  app.
+  app. **Open in Safari** cannot use a same-origin `https://` link — the
+  installed app is still WebKit, so that navigation stays in the PWA. The
+  control uses Safari's `x-safari-https` scheme and copies the address so it
+  can be pasted if the system ignores the scheme.
 
 ---
 
