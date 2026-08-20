@@ -268,7 +268,7 @@ export function FlowDemo({
   const narrative = TAB_NARRATION[tab];
 
   return (
-    <div className="hp-flow-layout">
+    <div className="hp-flow-layout" data-homepage-reveal>
       <div className="hp-flow-copy">
         <div className="section-heading">
           <p className="eyebrow">Field Collection</p>
