@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { HomepageApp } from "./HomepageApp";
+import { LenisRoot } from "./LenisRoot";
 import "../styles.css";
 import "./homepage.css";
 
@@ -11,6 +12,8 @@ import "./homepage.css";
 // on this page records anything anywhere except the preview-request form.
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <HomepageApp />
+    <LenisRoot>
+      <HomepageApp />
+    </LenisRoot>
   </StrictMode>,
 );
