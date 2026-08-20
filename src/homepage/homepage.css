@@ -3394,3 +3394,225 @@ section[id] {
   margin: 6px 0 0;
   line-height: 1.4;
 }
+
+/* =========================================================================
+   Staple-informed landing polish
+
+   Keep the public landing calm and direct: one moving navigation surface,
+   durable focus states, viewport-aware hero composition, and deliberate
+   section entrances that never interfere with the native scroll model.
+   ========================================================================= */
+
+/* Navigation: the active section is a single moving surface rather than a
+   series of independently changing pills. */
+.hp-nav {
+  position: relative;
+}
+.hp-nav-indicator {
+  position: absolute;
+  inset: 3px auto 3px 0;
+  z-index: 0;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.06);
+  pointer-events: none;
+  transition:
+    width 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hp-topbar .hp-nav-link {
+  position: relative;
+  z-index: 1;
+}
+.hp-topbar .hp-nav-link.active,
+.hp-topbar .hp-nav-link.active:hover {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* The larger bar gives the menu and anchor targets the same breathing room
+   as Staple while preserving the safe-area inset. */
+.hp-topbar {
+  height: calc(60px + var(--sat));
+}
+.hp-topbar-inner {
+  height: 60px;
+}
+.hp-menu-root {
+  inset: calc(60px + var(--sat)) 0 0 0;
+}
+.hp-menu {
+  top: 8px;
+  left: max(14px, var(--sal));
+  right: max(14px, var(--sar));
+  padding: 8px;
+  border-radius: 22px;
+  transform-origin: top center;
+  animation: hp-menu-enter-polished 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hp-menu-link {
+  min-height: 52px;
+  transition:
+    color 0.16s ease,
+    background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.16s ease;
+}
+.hp-menu-link.active {
+  background: var(--paper);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.hp-menu-link:active,
+.hp-menu-btn:active,
+.hp-nav-link:active,
+.button:active {
+  transform: none;
+  opacity: 0.68;
+}
+@keyframes hp-menu-enter-polished {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Shared keyboard treatment: specific component rules may refine the ring,
+   but every interactive surface remains visible without a mouse. */
+:where(a, button, input, textarea, select):focus-visible {
+  outline: 2px solid var(--focus-ring, var(--text));
+  outline-offset: 3px;
+}
+
+/* Hero: reserve a real composition track on wide screens and let the copy
+   become a readable single column before the background image takes over. */
+.hp-hero {
+  min-height: clamp(620px, calc(100svh - 60px), 760px);
+  align-items: center;
+  padding-block: clamp(64px, 9vw, 112px);
+}
+.hp-hero-container {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  min-width: 0;
+}
+.hp-hero-inner {
+  width: min(100%, 470px);
+  max-width: none;
+  min-width: 0;
+}
+.hp-hero h1 {
+  max-width: 100%;
+  font-size: clamp(3.25rem, 5.4vw, 5.15rem);
+  line-height: 1.01;
+  text-wrap: balance;
+}
+.hp-hero-lede {
+  max-width: 35rem;
+  font-size: clamp(0.9375rem, 1.4vw, 1.0625rem);
+  line-height: 1.52;
+}
+.hp-capture {
+  max-width: 440px;
+}
+.hp-capture .button {
+  min-height: 52px;
+}
+
+/* Shared entrance layer. The root class is added only when the observer is
+   available, so unsupported browsers never hide content. */
+html.has-homepage-reveals [data-homepage-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  transition:
+    opacity 0.68s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.68s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+html.has-homepage-reveals [data-homepage-reveal].is-entered {
+  opacity: 1;
+  transform: none;
+}
+
+/* The story surface remains readable on smaller screens: scroll is allowed
+   to carry the phone, while tabs stay a single deliberate touch row. */
+@media (max-width: 960px) {
+  .hp-hero {
+    min-height: max(680px, calc(100svh - 60px));
+    align-items: flex-start;
+    padding-block: clamp(72px, 10vw, 96px) 64px;
+  }
+  .hp-hero-container {
+    display: block;
+  }
+  .hp-hero-inner {
+    width: min(100%, 600px);
+  }
+  .hp-flow-layout {
+    gap: clamp(24px, 6vw, 40px);
+  }
+  .hp-admin-tab-selector {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .hp-admin-tab-selector::-webkit-scrollbar {
+    display: none;
+  }
+  .hp-admin-step-btn {
+    flex: 0 0 auto;
+    min-height: 44px;
+  }
+  .hp-scrolly-panel {
+    padding-block: clamp(40px, 8vw, 64px) 64px;
+  }
+}
+
+@media (max-width: 680px) {
+  .hp-topbar-inner {
+    height: 60px;
+    padding-inline: max(16px, var(--sal));
+  }
+  .hp-hero {
+    min-height: max(640px, calc(100svh - 60px));
+    padding-block: 48px 32px;
+  }
+  .hp-hero h1 {
+    font-size: clamp(2.75rem, 12.5vw, 4rem);
+    line-height: 1.02;
+  }
+  .hp-hero-lede {
+    font-size: 0.975rem;
+  }
+  .hp-capture {
+    margin-top: 20px;
+  }
+  .hp-capture .button {
+    min-height: 50px;
+  }
+  .hp-menu {
+    left: max(10px, var(--sal));
+    right: max(10px, var(--sar));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-nav-indicator,
+  .hp-menu,
+  .hp-menu-link,
+  html.has-homepage-reveals [data-homepage-reveal] {
+    transition: none;
+    animation: none;
+  }
+  html.has-homepage-reveals [data-homepage-reveal],
+  html.has-homepage-reveals [data-homepage-reveal].is-entered {
+    opacity: 1;
+    transform: none;
+  }
+}
