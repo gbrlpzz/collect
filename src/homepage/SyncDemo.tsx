@@ -28,7 +28,7 @@ export function SyncDemo({
   const step = SYNC_STEPS[active];
 
   return (
-    <div className="hp-flow-layout">
+    <div className="hp-flow-layout" data-homepage-reveal>
       <div className="hp-flow-copy">
         <div className="section-heading">
           <p className="eyebrow">Synchronization</p>
