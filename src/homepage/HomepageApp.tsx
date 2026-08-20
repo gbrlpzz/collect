@@ -63,6 +63,31 @@ function TopBar({
   menuOpen: boolean;
   onMenuToggle: () => void;
 }) {
+  const navRef = useRef<HTMLElement>(null);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const update = () => {
+      const active = nav.querySelector<HTMLElement>(".hp-nav-link.active");
+      setIndicator(
+        active
+          ? { left: active.offsetLeft, width: active.offsetWidth }
+          : { left: 0, width: 0 },
+      );
+    };
+    update();
+    const resizeObserver =
+      typeof ResizeObserver === "function" ? new ResizeObserver(update) : null;
+    resizeObserver?.observe(nav);
+    window.addEventListener("resize", update);
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, [activeSection]);
+
   return (
     <header className="hp-topbar">
       <div className="hp-topbar-inner">
@@ -70,7 +95,15 @@ function TopBar({
           <CollectBrand compact />
         </a>
 
-        <nav className="hp-nav" aria-label="Sections">
+        <nav ref={navRef} className="hp-nav" aria-label="Sections">
+          <span
+            className="hp-nav-indicator"
+            aria-hidden="true"
+            style={{
+              width: `${indicator.width}px`,
+              transform: `translateX(${indicator.left}px)`,
+            }}
+          />
           {SECTION_LINKS.map((link) => (
             <a
               key={link.id}
@@ -402,7 +435,7 @@ function DifferentiationSummary() {
       <div className="hp-scrolly hp-scrolly-hold">
         <div className="hp-scrolly-panel">
           <div className="hp-diff-inner">
-            <div className="hp-diff-heading">
+            <div className="hp-diff-heading" data-homepage-reveal>
               <p className="eyebrow">Guarantees</p>
               <h2>Four guarantees for data collected in the wild.</h2>
               <p>
@@ -412,7 +445,7 @@ function DifferentiationSummary() {
               </p>
             </div>
 
-            <div className="hp-diff-grid">
+            <div className="hp-diff-grid" data-homepage-reveal>
               {items.map((item) => (
                 <div className="hp-diff-card" key={item.title}>
                   <span className="hp-diff-icon" aria-hidden="true">
@@ -434,7 +467,7 @@ function DifferentiationSummary() {
               ))}
             </div>
 
-            <div className="hp-diff-stats">
+            <div className="hp-diff-stats" data-homepage-reveal>
               {stats.map((stat) => (
                 <div className="hp-diff-stat" key={stat.value}>
                   <strong>{stat.value}</strong>
@@ -482,6 +515,39 @@ export function HomepageApp() {
   const sync = useScrollytelling<HTMLDivElement>(3);
   const admin = useScrollytelling<HTMLDivElement>(ADMIN_SCENES.length);
   const adminScene = ADMIN_SCENES[admin.active];
+
+  useEffect(() => {
+    if (
+      typeof IntersectionObserver !== "function" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    )
+      return;
+    document.documentElement.classList.add("has-homepage-reveals");
+    const nodes = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-homepage-reveal]"),
+    );
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-entered");
+          observer.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+    );
+    nodes.forEach((node, index) => {
+      node.style.setProperty(
+        "--reveal-delay",
+        `${Math.min(index * 45, 220)}ms`,
+      );
+      observer.observe(node);
+    });
+    return () => {
+      observer.disconnect();
+      document.documentElement.classList.remove("has-homepage-reveals");
+    };
+  }, []);
 
   useEffect(() => {
     setContribTab(CONTRIB_TABS[collection.active]);
@@ -562,7 +628,7 @@ export function HomepageApp() {
           >
             <div className="hp-scrolly-panel">
               <div className="hp-section-inner">
-                <div className="hp-flow-layout">
+                <div className="hp-flow-layout" data-homepage-reveal>
                   <div className="hp-flow-copy">
                     <div className="section-heading">
                       <p className="eyebrow">Setup & Operations</p>
@@ -645,7 +711,7 @@ export function HomepageApp() {
                   <DocLinks files={["attention-qa.md", "privacy.md"]} />
                 </div>
 
-                <div className="hp-integrity-grid">
+                <div className="hp-integrity-grid" data-homepage-reveal>
                   {/* Left rail: Attention QA + Storage Boundaries */}
                   <div className="hp-integrity-left-rail">
                     <div className="hp-integrity-card">
@@ -756,7 +822,11 @@ export function HomepageApp() {
                 </p>
 
                 {/* FAIR Compliance Principles from docs/dataset-standards.md */}
-                <div className="hp-fact-grid" style={cssVar("--fact-cols", 3)}>
+                <div
+                  className="hp-fact-grid"
+                  data-homepage-reveal
+                  style={cssVar("--fact-cols", 3)}
+                >
                   <div className="hp-fact-card">
                     <div className="hp-fact-header">
                       <Icon name="archive" size={16} />
@@ -807,7 +877,10 @@ export function HomepageApp() {
         >
           <div className="hp-scrolly hp-scrolly-hold">
             <div className="hp-scrolly-panel">
-              <div className="hp-section-inner hp-preview-layout">
+              <div
+                className="hp-section-inner hp-preview-layout"
+                data-homepage-reveal
+              >
                 <div className="hp-preview-copy">
                   <p className="eyebrow">Research Preview</p>
                   <h2 id="preview-title">Equip your next expedition.</h2>
