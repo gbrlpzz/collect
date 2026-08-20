@@ -12,6 +12,7 @@ import { Icon, type IconName } from "../components/Icon";
 import { CollectBrand } from "../components/CollectBrand";
 import { useSectionSpy } from "./useSectionSpy";
 import { useScrollytelling } from "./useScrollytelling";
+import { smoothScrollTo } from "./smoothScroll";
 
 const GITHUB_URL = "https://github.com/gbrlpzz/collect";
 
@@ -225,6 +226,7 @@ function MobileMenu({
         role="dialog"
         aria-modal="true"
         aria-label="Sections"
+        data-lenis-prevent
         ref={panelRef}
       >
         <nav>
@@ -495,10 +497,8 @@ export function HomepageApp() {
       globalThis.window?.matchMedia &&
       globalThis.window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     );
-    document.getElementById("preview")?.scrollIntoView({
-      behavior: reduceMotion ? "auto" : "smooth",
-      block: "start",
-    });
+    const preview = document.getElementById("preview");
+    if (preview) smoothScrollTo(preview, reduceMotion ? "auto" : "smooth");
   };
 
   const activeSection = useSectionSpy([
