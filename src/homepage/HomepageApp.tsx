@@ -80,7 +80,7 @@ function TopBar({
     };
     update();
     const resizeObserver =
-      typeof ResizeObserver === "function" ? new ResizeObserver(update) : null;
+      "ResizeObserver" in window ? new ResizeObserver(update) : null;
     resizeObserver?.observe(nav);
     window.addEventListener("resize", update);
     return () => {
@@ -518,7 +518,7 @@ export function HomepageApp() {
 
   useEffect(() => {
     if (
-      typeof IntersectionObserver !== "function" ||
+      !("IntersectionObserver" in window) ||
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
     )
       return;

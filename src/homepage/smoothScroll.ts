@@ -18,9 +18,9 @@ export function smoothScrollTo(
     return;
   }
 
-  if (typeof target === "number") {
-    window.scrollTo({ top: target, behavior });
-  } else {
+  if (target instanceof HTMLElement) {
     target.scrollIntoView({ behavior, block: "start" });
+  } else {
+    window.scrollTo({ top: target, behavior });
   }
 }
